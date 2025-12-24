@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Lớp Học</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&display=swap');
+        
+        body { font-family: 'Noto Sans Vietnamese', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
+        .tab-content { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .tab-content.active { display: block; opacity: 1; animation: fadeIn 0.4s forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* SEATING STYLES */
+        .desk-input { background: transparent; border: none; width: 100%; height: 100%; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; display: flex; align-items: center; justify-content: center; font-size: 1rem; padding: 4px; cursor: pointer; }
+        .desk-input:focus { background-color: rgba(255, 255, 255, 0.5); cursor: text; }
+        .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
+        .row-container:hover .merge-handle { opacity: 1; }
+        .merge-handle:hover { background-color: #3b82f6; color: white; transform: translateY(-50%) scale(1.1); }
+        .split-btn { position: absolute; top: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; transition: opacity 0.2s, color 0.2s; }
+        .desk-box:hover .split-btn { opacity: 1; }
+        .split-btn:hover { color: #ef4444; }
+        #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
+        .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
+        .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
+
+        /* TABLES */
+        .comp-table, .duty-table { width: 100%; border-collapse: collapse; background: white; }
+        .comp-table th { background: #1e40af; color: white; padding: 12px; border: 1px solid #1e3a8a; }
+        .comp-table td { border: 1px solid #cbd5e1; padding: 0; height: 40px; position: relative; }
+        .duty-table th { background: #e5e7eb; color: #1f2937; border: 1px solid #9ca3af; padding: 8px; font-weight: bold; font-size: 0.85rem; text-align: center; vertical-align: middle; }
+        .duty-table td { border: 1px solid #9ca3af; padding: 4px; height: 60px; text-align: center; font-size: 0.85rem; vertical-align: middle; line-height: 1.3; }
+        
+        .duty-header-container { text-align: center; margin-bottom: 15px; }
+        .duty-header-lg { font-size: 1.25rem; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+        .header-input { border: none; border-bottom: 2px solid #374151; width: 80px; text-align: center; font-size: 1.25rem; font-weight: bold; background: transparent; outline: none; color: #111827; }
+        .header-date-input { border: none; border-bottom: 2px solid #374151; width: 140px; text-align: center; font-size: 1.1rem; font-weight: bold; background: transparent; outline: none; color: #111827; cursor: pointer; }
+        .header-input:focus, .header-date-input:focus { border-bottom-color: #2563eb; }
+
+        .editable-cell { width: 100%; height: 100%; min-height: 40px; display: flex; align-items: center; justify-content: flex-start; outline: none; padding: 4px 8px; white-space: pre-wrap; flex-wrap: wrap; gap: 4px; cursor: pointer; font-size: 0.9rem; }
+        .editable-cell:hover { background-color: #f0f9ff; }
+        
+        .date-input { border: none; border-bottom: 1px solid #9ca3af; background: transparent; text-align: center; width: 40px; outline: none; font-weight: 500; color: #4b5563; }
+        .footer-cell { text-align: left !important; vertical-align: top; padding: 12px !important; }
+        .footer-content { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+        .footer-editable { outline: none; border-bottom: 1px dashed transparent; min-width: 100%; display: block; padding: 2px 0; transition: border 0.2s; white-space: pre-wrap; text-align: left; }
+        .footer-editable:focus { border-bottom-color: #2563eb; background-color: #eff6ff; }
+
+        .points-badge { font-size: 0.7rem; font-weight: bold; color: white; background-color: #ef4444; padding: 1px 4px; border-radius: 4px; margin-left: 4px; display: inline-block; white-space: nowrap; }
+
+        /* MODAL COMMON */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-content { background: white; padding: 20px; rounded: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s; max-height: 95vh; overflow-y: auto; }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+
+        /* DUTY MODAL SPECIFIC */
+        #duty-modal .modal-content { width: 95%; max-width: 1000px; }
+        .mini-row { cursor: pointer; padding: 4px; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; }
+        .mini-row:hover { background-color: #f3f4f6; border-color: #d1d5db; }
+        .duty-selected-class { background-color: #dcfce7 !important; border-color: #22c55e !important; } 
+        .duty-selected-class::after { content: 'Trực Lớp'; position: absolute; right: -70px; top: 50%; transform: translateY(-50%); color: #166534; font-size: 0.75rem; font-weight: bold; }
+        .duty-selected-area { background-color: #ffedd5 !important; border-color: #f97316 !important; }
+        .duty-selected-area::after { content: 'Trực Khu Vực'; position: absolute; right: -90px; top: 50%; transform: translateY(-50%); color: #9a3412; font-size: 0.75rem; font-weight: bold; }
+        .role-input { width: 100%; padding: 6px; border: 1px solid #d1d5db; rounded: 4px; font-size: 0.9rem; margin-top: 2px; }
+        .role-section label { font-size: 0.85rem; font-weight: 600; color: #374151; display: block; margin-top: 8px; }
+        .gender-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #e5e7eb; font-size: 0.9rem; }
+        .gender-label { cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; transition: all 0.2s; }
+        .is-male { background-color: #dbeafe; color: #1e40af; }
+        .is-female { background-color: #fce7f3; color: #db2777; }
+        .gender-label:hover { opacity: 0.8; }
+
+        /* INPUT DETAIL MODAL */
+        #input-modal .modal-content { width: 500px; }
+        .tag-btn { padding: 4px 10px; border-radius: 99px; border: 1px solid #e5e7eb; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: white; color: #374151; user-select: none; margin-bottom: 4px; display: inline-block; }
+        .tag-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+        .tag-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .tag-section-title { font-size: 0.75rem; font-weight: bold; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #eee; padding-bottom: 2px; }
+        .time-btn { padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 0.85rem; width: 100%; }
+        .time-btn.selected { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+
+        /* TEST MENU & ACTIONS */
+        .test-menu { position: relative; z-index: 60; }
+        .test-btn { background: #6b7280; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.2s; }
+        .test-btn:hover { background: #4b5563; }
+        .save-btn { background: #059669; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.2s; margin-left: 8px; }
+        .save-btn:hover { background: #047857; transform: translateY(-1px); }
+        .test-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 220px; overflow: hidden; }
+        .test-menu:hover .test-dropdown { display: block; }
+        .test-option { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 0.85rem; color: #374151; transition: background 0.2s; }
+        .test-option:hover { background: #f3f4f6; color: #1e40af; }
+
+        /* TOAST */
+        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 999; left: 50%; bottom: 30px; font-size: 1rem; opacity: 0; transition: opacity 0.5s, bottom 0.5s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* TOOLTIP */
+        .tooltip-container { position: relative; display: inline-block; }
+        .tooltip-text { visibility: hidden; width: 320px; background-color: #374151; color: #fff; text-align: left; border-radius: 6px; padding: 10px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -160px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; font-weight: normal; line-height: 1.4; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #374151 transparent transparent transparent; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gray-50">
+
+    <!-- HEADER -->
+    <div class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 relative">
+            <div class="flex items-center justify-between py-3">
+                <h1 class="text-xl font-bold text-slate-800 uppercase tracking-wide truncate mr-4">Quản Lý Lớp Học</h1>
+                
+                <div class="flex items-center gap-2">
+                    <!-- Tabs -->
+                    <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                        <button onclick="switchTab('seating')" id="btn-tab-seating" class="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap">Sơ Đồ</button>
+                        <button onclick="switchTab('competition')" id="btn-tab-competition" class="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap">Bảng Thi Đua</button>
+                    </div>
+
+                    <!-- Test Menu -->
+                    <div class="test-menu">
+                        <button class="test-btn whitespace-nowrap"><i class="fas fa-flask mr-1"></i>Mẫu</button>
+                        <div class="test-dropdown">
+                            <button onclick="loadScenario('zero')" class="test-option">1. Lớp Ngoan (0 lỗi)</button>
+                            <button onclick="loadScenario('offset')" class="test-option">2. Có lỗi nhưng Bù hết (0đ)</button>
+                            <button onclick="loadScenario('low')" class="test-option">3. Lỗi Nhẹ (< 12đ)</button>
+                            <button onclick="loadScenario('medium')" class="test-option">4. Lỗi Trung Bình (= 12đ)</button>
+                            <button onclick="loadScenario('high')" class="test-option">5. Lỗi Nặng (12 - 36đ)</button>
+                            <button onclick="loadScenario('full')" class="test-option text-red-600 font-bold">6. Lớp Cá Biệt (> 36đ)</button>
+                        </div>
+                    </div>
+                    
+                    <!-- SAVE BUTTON -->
+                    <button onclick="saveData()" class="save-btn whitespace-nowrap"><i class="fas fa-save mr-1"></i> Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow p-4 overflow-auto flex justify-center items-start">
+        
+        <!-- TAB 1: SƠ ĐỒ LỚP -->
+        <div id="tab-seating" class="tab-content active w-full flex flex-col items-center">
+            <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-wrap gap-2 items-center justify-center">
+                <div id="status-msg" class="hidden px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold animate-pulse border border-yellow-300 mr-2"><i class="fas fa-exchange-alt mr-1"></i> Chọn ô thứ 2...</div>
+                <button onclick="resetLayout()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded text-sm font-medium transition"><i class="fas fa-redo-alt mr-1"></i> Làm mới</button>
+                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                <div class="flex bg-gray-100 rounded p-0.5 border border-gray-200">
+                    <button onclick="rotateClass('up')" class="px-2 py-1 hover:bg-white rounded text-blue-600 text-sm transition"><i class="fas fa-arrow-up"></i></button>
+                    <button onclick="rotateClass('down')" class="px-2 py-1 hover:bg-white rounded text-blue-600 text-sm transition"><i class="fas fa-arrow-down"></i></button>
+                </div>
+                <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition ml-2"><i class="fas fa-download mr-1"></i> Tải Ảnh</button>
+            </div>
+            <div id="classroom-area" class="bg-white p-8 rounded-xl shadow-xl min-w-[1000px] border border-gray-300">
+                <!-- ĐÃ XÓA TIÊU ĐỀ "QUẢN LÝ LỚP HỌC" TẠI ĐÂY -->
+                <div class="mb-8"></div>
+                <div class="flex gap-16 justify-between relative">
+                    <div class="flex-1"><div class="flex items-center mb-4 text-red-600 font-bold border-l-4 border-red-500 pl-2 bg-red-50 py-2 w-32 rounded-r"><i class="fas fa-door-open mr-2"></i> Cửa Lớp</div><div id="left-rows-container" class="space-y-3"></div></div>
+                    <div class="w-8 flex flex-col items-center justify-center opacity-20"><div class="h-full w-0.5 bg-dashed border-l-2 border-gray-400 border-dashed"></div></div>
+                    <div class="flex-1 flex flex-col"><div class="self-end flex items-center justify-end mb-4 text-blue-600 font-bold border-r-4 border-blue-500 pr-2 bg-blue-50 py-2 w-48 rounded-l">Bàn Giáo Viên <i class="fas fa-chalkboard-teacher ml-2"></i></div><div id="right-rows-container" class="space-y-3 mt-auto"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: BẢNG THI ĐUA -->
+        <div id="tab-competition" class="tab-content w-full max-w-6xl">
+            <div id="view-competition-main" class="flex gap-6 items-start">
+                <div class="w-1/4 bg-white p-4 rounded-lg shadow-md border border-gray-200 sticky top-20">
+                    <h3 class="font-bold text-gray-700 mb-2"><i class="fas fa-user-edit mr-2"></i>Nhập Danh Sách</h3>
+                    <textarea id="student-list-input" class="w-full h-64 p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="Dán danh sách tên học sinh vào đây...&#10;Mỗi tên một dòng"></textarea>
+                    <button onclick="generateTable()" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium transition shadow mb-2"><i class="fas fa-sort-alpha-down mr-2"></i>Tạo Bảng (A-Z)</button>
+                    <button onclick="openDutyModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded font-medium transition shadow"><i class="fas fa-broom mr-2"></i>Phân Trực Nhật</button>
+                </div>
+                <div class="flex-1 bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col items-center">
+                     <div class="w-full flex justify-end mb-4 items-center gap-2">
+                        <div class="tooltip-container">
+                            <span class="text-xs text-gray-500 cursor-help border border-gray-300 rounded px-2 py-1 bg-gray-50 hover:bg-white"><i class="fas fa-question-circle mr-1"></i>Quy ước lỗi</span>
+                            <div class="tooltip-text">
+                                <strong>Lỗi Nặng (2đ):</strong> Vắng/Muộn kp, SĐB, SCĐ, Đánh nhau, Quay cóp, Ăn trong giờ, Nhuộm tóc, ĐT...<br><br>
+                                <strong>Lỗi Nhẹ (1đ):</strong> MTT, VS bẩn, Nhắc nhở, Không chép bài, Nói tục...<br><br>
+                                <strong>Bù điểm:</strong> 2 điểm tốt (8-10đ) trừ 1 lỗi SĐB.
+                            </div>
+                        </div>
+                        <button onclick="downloadImage('competition-board', 'Bang_thi_dua')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow flex items-center"><i class="fas fa-file-image mr-2"></i> Tải Ảnh Bảng</button>
+                    </div>
+                    <div id="competition-board" class="w-full bg-white p-8">
+                        <div class="text-center mb-6">
+                            <h2 class="text-2xl font-bold text-blue-800 uppercase">BẢNG THEO DÕI THI ĐUA</h2>
+                            <div class="flex justify-center items-center gap-4 mt-2 text-gray-600">
+                                <div class="flex items-center"><span>Tuần:</span><input type="text" class="date-input" placeholder="..."></div>
+                                <div class="flex items-center"><span>Tháng:</span><input type="text" class="date-input" placeholder="..."></div>
+                            </div>
+                        </div>
+                        <table class="comp-table">
+                            <thead><tr><th class="w-16 text-center">STT</th><th class="w-64 text-left pl-4">Họ và Tên</th><th class="text-center">Thành Tích</th><th class="text-center">Vi Phạm</th></tr></thead>
+                            <tbody id="competition-tbody"><tr><td colspan="4" class="text-center py-8 text-gray-400 italic">Chưa có dữ liệu.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-duty-schedule" class="hidden w-full">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col items-center">
+                    <div class="w-full flex justify-between mb-4">
+                        <button onclick="backToCompetition()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm font-medium transition shadow"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
+                        <button onclick="downloadImage('duty-board', 'Lich_truc_nhat')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow"><i class="fas fa-file-image mr-2"></i> Tải Lịch Trực</button>
+                    </div>
+                    <div id="duty-board" class="w-full bg-white p-8 min-w-[1000px]">
+                        
+                        <!-- HEADER STRUCTURE -->
+                        <div class="duty-header-container">
+                            <div class="duty-header-lg">LỊCH TRỰC NHẬT LỚP <input type="text" class="header-input" placeholder="..."> TUẦN <input type="text" class="header-input" placeholder="..."></div>
+                            <div class="duty-header-lg" style="font-size: 1.1rem; margin-top: 5px;">TỪ <input type="date" class="header-date-input"> ĐẾN <input type="date" class="header-date-input"></div>
+                        </div>
+
+                        <table class="duty-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="w-16">Thứ</th>
+                                    <th colspan="5">TRỰC VỆ SINH LỚP</th>
+                                    <th colspan="2">HS theo dõi</th>
+                                    <th rowspan="1" class="w-48 text-left italic font-normal text-xs p-2">Ghi chú: Ghi rõ<br>- HS nào thay làm ghi rõ<br>- Thực hiện đủ, sạch</th>
+                                </tr>
+                                <tr>
+                                    <th class="w-32">Quét lớp,<br>hành lang</th>
+                                    <th class="w-24">Đổ rác</th>
+                                    <th class="w-32">Giặt khăn,<br>lau bảng</th>
+                                    <th class="w-32">Trực VS<br>khu vực</th>
+                                    <th class="w-32">Đóng cửa<br>sổ, cửa chính</th>
+                                    <th class="w-20">Lớp</th>
+                                    <th class="w-20">Khu vực</th>
+                                    <th class="font-bold">Bê, cất ghế<br>chào cờ (4 Nam)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="duty-tbody"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6" class="footer-cell bg-gray-50"><div class="footer-content"><strong>Lau lớp:</strong><span id="duty-footer-class-list" class="footer-editable text-sm italic text-gray-700 w-full" contenteditable="true"></span></div></td>
+                                    <td colspan="2" class="text-center bg-gray-50">Tiết 5 thứ 6<br>hàng tuần</td><td class="bg-gray-50"></td>
+                                </tr>
+                                <tr><td colspan="9" class="text-left font-bold italic p-2 text-sm border-0">Quét mạng nhện trong lớp: ........................................................................<br>Lưu ý: Sau mỗi buổi học vệ sinh lớp sạch sẽ, đổ rác đúng nơi quy định.</td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast">Đã lưu dữ liệu thành công!</div>
+
+    <!-- DUTY MODAL -->
+    <div id="duty-modal" class="modal-overlay">
+        <div class="modal-content flex gap-6">
+            <div class="w-1/3 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto max-h-[85vh]">
+                <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2"><i class="fas fa-cog mr-2"></i>Thiết lập Nhân sự</h3>
+                <div class="role-section"><label>Lớp Trưởng:</label><input type="text" id="role-monitor" class="role-input" placeholder="Nhập tên..."><label>Bí Thư:</label><input type="text" id="role-secretary" class="role-input" placeholder="Nhập tên..."><label>Lớp Phó Lao Động:</label><input type="text" id="role-vice" class="role-input" placeholder="Nhập tên..."></div>
+                <div class="role-section mt-4 border-t pt-2"><label class="text-orange-600"><i class="fas fa-bolt mr-1"></i>Đội Xung Kích:</label><textarea id="role-xungkich-list" class="w-full h-20 p-2 border border-gray-300 rounded text-sm mt-1" placeholder="Nhập tên, cách nhau dấu phẩy"></textarea><label class="text-xs mt-2 mb-1 block">Xung kích bận vào:</label><div class="grid grid-cols-3 gap-2 text-sm"><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="2"> T2</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="3"> T3</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="4"> T4</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="5"> T5</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="6"> T6</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="7"> T7</label></div></div>
+                <div class="role-section mt-4 border-t pt-2"><label class="text-blue-600"><i class="fas fa-venus-mars mr-1"></i>Danh sách Giới tính:</label><div id="gender-list-container" class="bg-white border border-gray-300 rounded p-2 text-sm max-h-40 overflow-y-auto"><div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div></div></div>
+            </div>
+            <div class="flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="text-xl font-bold text-gray-800">Chọn Dãy Trực Nhật</h3><button onclick="closeDutyModal()" class="text-gray-500 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button></div>
+                <div class="mb-4 bg-blue-50 p-3 rounded text-sm text-blue-800"><ul class="list-disc ml-5"><li><span class="inline-block w-3 h-3 bg-green-500 rounded-sm mr-1"></span> Lần 1: <strong>Trực Lớp</strong> (Xanh)</li><li><span class="inline-block w-3 h-3 bg-orange-400 rounded-sm mr-1"></span> Lần 2: <strong>Trực Khu Vực</strong> (Cam)</li></ul></div>
+                <div class="flex gap-8 justify-center mb-6"><div class="flex-1"><div class="font-bold text-center mb-2 text-red-600">Dãy 1</div><div id="mini-map-left" class="space-y-2"></div></div><div class="w-px bg-gray-300"></div><div class="flex-1"><div class="font-bold text-center mb-2 text-blue-600">Dãy 2</div><div id="mini-map-right" class="space-y-2"></div></div></div>
+                <div class="mt-auto flex justify-end gap-3 pt-4 border-t"><button onclick="closeDutyModal()" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Hủy</button><button onclick="confirmDutyAssignment()" class="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 font-bold shadow">Xác nhận & Phân Lịch</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPUT DETAIL MODAL -->
+    <div id="input-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex justify-between items-center border-b pb-2 mb-3">
+                <h3 class="text-lg font-bold text-blue-800" id="modal-title">Chi tiết</h3>
+                <button onclick="closeInputModal()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mb-4">
+                <div class="tag-section-title">1. Chọn Thời Gian</div>
+                <div class="flex gap-2 mb-2 overflow-x-auto pb-1" id="modal-days"><button class="time-btn" onclick="selectModalTime('day', 'T2')">T2</button><button class="time-btn" onclick="selectModalTime('day', 'T3')">T3</button><button class="time-btn" onclick="selectModalTime('day', 'T4')">T4</button><button class="time-btn" onclick="selectModalTime('day', 'T5')">T5</button><button class="time-btn" onclick="selectModalTime('day', 'T6')">T6</button><button class="time-btn" onclick="selectModalTime('day', 'T7')">T7</button></div>
+                <div class="flex gap-2"><button class="time-btn" onclick="selectModalTime('session', 'Sáng')">Sáng</button><button class="time-btn" onclick="selectModalTime('session', 'Chiều')">Chiều</button></div>
+            </div>
+            <div id="modal-content-area"></div>
+            <div class="mt-4 pt-3 border-t flex justify-end gap-2"><button onclick="closeInputModal()" class="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-sm">Hủy</button><button onclick="saveInputModal()" class="px-4 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow">Thêm vào ô</button></div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTS ---
+        const HEAVY_FAULT_PATTERNS = [/(vắng|nghỉ).*(kp|không phép|ko phép)/i, /(muộn|đhm).*(kp|không phép|ko phép)/i, /sổ đầu bài|sđb/i, /sổ cờ đỏ|scđ/i, /\b[0-4]([\.,]\d+)?(đ|điểm)\b/i, /yếu|kém/i, /bỏ tiết|đánh nhau|quay cóp|chép bài|hút thuốc|tệ nạn|đánh bạc|atgt|công an|ca phạt|vô lễ|phá hoại/i, /ăn.*(quà|sáng|trong giờ)|mang đồ ăn/i, /nhuộm tóc/i, /điện thoại|đt|máy nghe nhạc/i];
+        const LIGHT_FAULT_PATTERNS = [/mất trật tự|mtt/i, /vệ sinh|trực nhật/i, /nhắc/i, /không chép bài|chép thiếu/i, /nói tục|chửi bậy/i, /vứt rác|viết vẽ bậy/i];
+        const SDB_FAULT_PATTERN = /sổ đầu bài|sđb/i;
+        const GOOD_MARK_PATTERN = /\b(8|9|10)(đ|điểm)\b|điểm tốt/gi;
+        const SAMPLE_NAMES = ["Nguyễn Văn A","Trần Thị B","Lê Văn C","Phạm Thị D","Hoàng Văn E","Vũ Thị F","Đặng Văn G","Bùi Thị H","Đỗ Văn I","Hồ Thị K","Ngô Văn L","Dương Thị M","Lý Văn N","Phan Thị O","Võ Văn P","Mai Thị Q","Trương Văn R","Đoàn Thị S","Lâm Văn T","Trịnh Thị U","Hà Văn V","Nguyễn Thị X","Trần Văn Y","Lê Thị Z","Phạm Văn An","Hoàng Thị Bình","Vũ Văn Cường","Đặng Thị Dung","Bùi Văn Dũng","Đỗ Thị Hạnh","Hồ Văn Hải","Ngô Thị Hoa","Dương Văn Hùng","Lý Thị Hương","Phan Văn Khánh","Võ Thị Lan","Mai Văn Long","Trương Thị Mai","Đoàn Văn Minh","Lâm Thị Ngọc"];
+        const VN_CHARS = "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
+
+        let leftSideData = [], rightSideData = [];
+        const ROW_COUNT = 6;
+        let swapSource = null, longPressTimer = null, dutySelection = {}, genderMap = {};
+        let currentCell = null, currentModalType = '', modalState = { day: 'T2', session: 'Sáng', content: '' };
+
+        const maleMiddleNames = ['Văn', 'Quang', 'Đức', 'Hữu', 'Mạnh', 'Tuấn', 'Minh', 'Hoàng', 'Thế', 'Huy', 'Công', 'Đăng', 'Bảo', 'Gia', 'Thành', 'Trọng', 'Việt', 'Duy', 'Sỹ', 'Tiến', 'Tùng', 'Nam', 'Đình', 'Xuân', 'Bá'];
+        const femaleMiddleNames = ['Thị', 'Thu', 'Phương', 'Mai', 'Thảo', 'Khánh', 'Hà', 'Huyền', 'Diệu', 'Tú', 'Thúy', 'Hồng', 'Kim', 'Lan', 'Linh', 'Tuyết', 'Như', 'Quỳnh', 'Ánh'];
+        const maleFirstNames = ['Hùng', 'Cường', 'Dũng', 'Nam', 'Trung', 'Hiếu', 'Nghĩa', 'Phong', 'Quân', 'Thắng', 'Tài', 'Lâm'];
+        const femaleFirstNames = ['Lan', 'Huệ', 'Mai', 'Cúc', 'Trúc', 'Quỳnh', 'Thư', 'Ly', 'Vy', 'Nhi', 'Nhung', 'Hằng', 'Nga'];
+        function isMaleName(n) { if(genderMap.hasOwnProperty(n)) return genderMap[n]; const p=n.trim().split(/\s+/); if(p.length<2) return true; const f=p[p.length-1]; const m=p.slice(1,p.length-1); for(let x of m){ if(x==='Thị') return false; if(x==='Văn') return true; } if(femaleFirstNames.includes(f)) return false; if(maleFirstNames.includes(f)) return true; for(let x of m){ if(femaleMiddleNames.includes(x)) return false; if(maleMiddleNames.includes(x)) return true; } return true; }
+
+        function generateRandomString(len){let r='';const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';for(let i=0;i<len;i++)r+=c.charAt(Math.floor(Math.random()*c.length));return r;}
+        function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:crypto.randomUUID(),name:"",width:1,merged:false});arr.push(r);}return arr;}
+        function sortVietnameseNames(names){return names.sort((a,b)=>{const k=n=>{const p=n.trim().split(/\s+/);if(!p.length)return"";const l=p[p.length-1];const s=p[p.length-2]||"";return /^[A-Z0-9]$/i.test(l)?s.toLowerCase():l.toLowerCase()};return k(a).localeCompare(k(b),'vi')||a.localeCompare(b,'vi');});}
+        const ABBREVIATIONS = {'kp': '(Không phép)', 'ko phép': '(Không phép)', 'kp)': '(Không phép)', 'p': '(Có phép)', 'phép': '(Có phép)', 'đ': ' Điểm', 'điểm': ' Điểm', 'scđ': 'Sổ Cờ Đỏ', 'sđb': 'Sổ Đầu Bài', 'vs': 'Vệ sinh', 'mtt': 'Mất trật tự', 'st': 'Sổ tổ', 'vp': 'Vi Phạm', 'ca': 'Công An', 'đhm': 'Đi học muộn'};
+        
+        function expandText(text){
+            if(!text) return "";
+            const keys = Object.keys(ABBREVIATIONS).sort((a, b) => b.length - a.length);
+            keys.forEach(key => {
+                let escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(^|[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ])(${escaped})(?=[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]|$)`, 'g');
+                text = text.replace(regex, `$1${ABBREVIATIONS[key]}`);
+            });
+            return text;
+        }
+
+        function calculateFaultPoints(text) {
+            if(!text) return 0;
+            const faults = text.split(/,|\n/);
+            let totalPoints = 0;
+            faults.forEach(f => { f = f.trim(); if(!f) return; if(HEAVY_FAULT_PATTERNS.some(p => p.test(f))) totalPoints += 2; else { let isLight = LIGHT_FAULT_PATTERNS.some(p => p.test(f)); if(isLight) totalPoints += 1; } });
+            return totalPoints;
+        }
+        
+        // --- SAVE & LOAD ---
+        function saveData() {
+            const data = {
+                seating: { left: leftSideData, right: rightSideData },
+                roles: {
+                    monitor: document.getElementById('role-monitor').value,
+                    secretary: document.getElementById('role-secretary').value,
+                    vice: document.getElementById('role-vice').value,
+                    xkList: document.getElementById('role-xungkich-list').value,
+                    xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value)
+                },
+                studentList: document.getElementById('student-list-input').value,
+                genderMap: genderMap,
+                // Scrape Competition Data (Name -> {ach, viol})
+                compData: {}
+            };
+            
+            const rows = document.querySelectorAll('#competition-tbody tr');
+            rows.forEach(r => {
+                if(r.children.length > 2) {
+                    const name = r.children[1].innerText.trim();
+                    const ach = r.children[2].innerText;
+                    const viol = r.children[3].innerText;
+                    data.compData[name] = { ach, viol };
+                }
+            });
+
+            localStorage.setItem('classApp_v20', JSON.stringify(data));
+            showToast();
+        }
+
+        function loadData() {
+            const raw = localStorage.getItem('classApp_v20');
+            if(!raw) { initData(); return; }
+            const data = JSON.parse(raw);
+            
+            // Restore Seating
+            leftSideData = data.seating.left || createDefaultArray(ROW_COUNT);
+            rightSideData = data.seating.right || createDefaultArray(ROW_COUNT);
+            renderAll();
+
+            // Restore Roles
+            if(data.roles) {
+                document.getElementById('role-monitor').value = data.roles.monitor || "";
+                document.getElementById('role-secretary').value = data.roles.secretary || "";
+                document.getElementById('role-vice').value = data.roles.vice || "";
+                document.getElementById('role-xungkich-list').value = data.roles.xkList || "";
+                if(data.roles.xkBusy) {
+                    document.querySelectorAll('.xk-day').forEach(c => { c.checked = data.roles.xkBusy.includes(c.value); });
+                }
+            }
+
+            // Restore Gender
+            genderMap = data.genderMap || {};
+
+            // Restore Table
+            if(data.studentList) {
+                document.getElementById('student-list-input').value = data.studentList;
+                generateTable(); // This builds empty rows
+                // Fill rows from compData
+                if(data.compData) {
+                    const rows = document.querySelectorAll('#competition-tbody tr');
+                    rows.forEach(r => {
+                        const name = r.children[1].innerText.trim();
+                        if(data.compData[name]) {
+                            r.children[2].querySelector('div').innerText = data.compData[name].ach;
+                            r.children[3].querySelector('div').innerText = data.compData[name].viol;
+                        }
+                    });
+                }
+            }
+        }
+
+        function showToast() {
+            const t = document.getElementById('toast');
+            t.className = "show";
+            setTimeout(()=>{ t.className = t.className.replace("show", ""); }, 3000);
+        }
+
+        // --- INIT ---
+        function initData(){ 
+            // Try load first, if empty then init default
+            if(localStorage.getItem('classApp_v20')) {
+                loadData();
+            } else {
+                leftSideData=createDefaultArray(ROW_COUNT);
+                rightSideData=createDefaultArray(ROW_COUNT);
+                renderAll();
+            }
+        }
+
+        // ... (Remaining Logic Functions are same as V19, just ensuring they are present)
+        function openInputModal(cell, type) {
+            currentCell = cell; currentModalType = type;
+            document.getElementById('modal-title').innerText = type === 'ach' ? 'Nhập Thành Tích' : 'Nhập Vi Phạm';
+            const container = document.getElementById('modal-content-area'); container.innerHTML = '';
+            if (type === 'ach') {
+                container.innerHTML = `<div class="tag-section-title">Điểm số</div><div class="flex gap-2 flex-wrap mb-3">${[10,9,8,7,6,5,4,3,2,1,0].map(n => `<span class="tag-btn" onclick="addToInput('${n}đ')">${n}</span>`).join('')}</div><div class="tag-section-title">Môn học</div><div class="flex gap-2 flex-wrap">${['Toán','Văn','Anh','Lý','Hóa','Sinh','Sử','Địa','GDCD','Tin','CN','TD'].map(s => `<span class="tag-btn" onclick="addToInput('${s}')">${s}</span>`).join('')}</div><div class="mt-3"><input type="text" id="manual-input" class="w-full p-2 border rounded" placeholder="Hoặc nhập tự do..."></div>`;
+            } else {
+                container.innerHTML = `
+                    <div class="overflow-y-auto max-h-[300px] pr-2">
+                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">1. Vắng & Muộn (Lỗi Nặng - 2đ)</div>
+                        <div class="flex gap-2 flex-wrap mb-4">
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vắng 15p đầu giờ (kp)')">Vắng 15p đầu giờ (kp)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vắng cả buổi (kp)')">Vắng cả buổi (kp)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vắng 1 tiết (kp)')">Vắng 1 tiết (kp)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Đi học muộn (kp)')">Đi học muộn (kp)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Nghỉ học (kp)')">Nghỉ học (kp)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Bỏ tiết')">Bỏ tiết</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Không thực hiện 15p')">Không thực hiện 15p</span>
+                        </div>
+                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">2. Sổ Đầu Bài (SĐB - Lỗi Nặng - 2đ)</div>
+                        <div class="flex gap-2 flex-wrap mb-4">
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Điểm kém <5 (SĐB)')">Điểm kém &lt;5 (SĐB)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Mất trật tự (SĐB)')">Mất trật tự (SĐB)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Ngủ trong giờ (SĐB)')">Ngủ trong giờ (SĐB)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Thiếu bài tập (SĐB)')">Thiếu bài tập (SĐB)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Lỗi VP khác (SĐB)')">Lỗi VP khác (SĐB)</span>
+                        </div>
+                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">3. Sổ Cờ Đỏ (SCĐ - Lỗi Nặng - 2đ)</div>
+                        <div class="flex gap-2 flex-wrap mb-4">
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Không đồng phục (SCĐ)')">Không đồng phục (SCĐ)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Không đi giày (SCĐ)')">Không đi giày (SCĐ)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vệ sinh bẩn (SCĐ)')">Vệ sinh bẩn (SCĐ)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Đi muộn (SCĐ)')">Đi muộn (SCĐ)</span>
+                        </div>
+                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">4. Kỷ Luật Chung (Lỗi Nặng - 2đ)</div>
+                        <div class="flex gap-2 flex-wrap mb-4">
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Đánh nhau')">Đánh nhau</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Quay cóp')">Quay cóp</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Hút thuốc')">Hút thuốc</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vi phạm ATGT (CA)')">Vi phạm ATGT (CA)</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vô lễ')">Vô lễ</span>
+                            <span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Phá hoại tài sản')">Phá hoại tài sản</span>
+                        </div>
+                        <div class="tag-section-title text-orange-500 border-b pb-1 mb-2">5. Lỗi Nhẹ (1đ)</div>
+                        <div class="flex gap-2 flex-wrap">
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Mất trật tự (ST)')">Mất trật tự (ST)</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Chưa vệ sinh (ST)')">Chưa vệ sinh (ST)</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Không chép bài')">Không chép bài</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Trực nhật muộn/bẩn (ST)')">Trực nhật muộn/bẩn (ST)</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Sử dụng ĐT trong giờ')">Sử dụng ĐT trong giờ</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Nói tục')">Nói tục</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Vứt rác bừa bãi')">Vứt rác bừa bãi</span>
+                            <span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Viết vẽ bậy')">Viết vẽ bậy</span>
+                        </div>
+                        <div class="mt-2 text-sm text-gray-600 font-bold">Lỗi: GV Nhắc Nhở (Chọn Môn):</div>
+                        <div class="flex gap-1 flex-wrap mt-1">
+                            ${['Toán','Văn','Anh','Lý','Hóa','Sinh','Sử','Địa','GDCD','Tin','CN','TD'].map(s => `<span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('GV nhắc (${s})')">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="mt-3"><input type="text" id="manual-input" class="w-full p-2 border rounded" placeholder="Hoặc nhập tự do..."></div>
+                `;
+            }
+            selectModalTime('day', 'T2'); selectModalTime('session', 'Sáng');
+            document.getElementById('input-modal').classList.add('open');
+        }
+        function closeInputModal() { document.getElementById('input-modal').classList.remove('open'); }
+        function selectModalTime(type, val) {
+            modalState[type] = val;
+            const parent = type === 'day' ? document.getElementById('modal-days') : document.getElementById('modal-days').nextElementSibling;
+            Array.from(parent.children).forEach(btn => { if(btn.innerText === val) btn.classList.add('selected'); else btn.classList.remove('selected'); });
+        }
+        function addToInput(val) {
+            const input = document.getElementById('manual-input'); let current = input.value;
+            if(currentModalType === 'ach') { if (val.includes('đ')) input.value = val + " " + current; else input.value = current + " " + val; } else { if(current) input.value = current + ", " + val; else input.value = val; }
+        }
+        function saveInputModal() {
+            const val = document.getElementById('manual-input').value.trim();
+            if(val) { const prefix = `[${modalState.day}-${modalState.session}]`; const finalStr = `${prefix} ${val}`; if (currentCell.innerText.trim()) { currentCell.innerText += ", " + finalStr; } else { currentCell.innerText = finalStr; } currentCell.dispatchEvent(new Event('blur')); }
+            closeInputModal();
+        }
+
+        // --- SCORING & PARSING ---
+        function getStatsFromRow(tr) {
+            const name = tr.children[1].innerText.trim();
+            const achText = tr.children[2].innerText.trim();
+            const violText = tr.children[3].innerText.trim();
+            const goodMatches = achText.match(GOOD_MARK_PATTERN);
+            const goodCount = goodMatches ? goodMatches.length : 0;
+            const faults = violText.split(/,|\n/).map(s=>s.trim()).filter(s=>s);
+            let totalHeavyPoints = 0; let totalLightPoints = 0;
+            faults.forEach(f => {
+                const isHeavy = HEAVY_FAULT_PATTERNS.some(p => p.test(f));
+                if(isHeavy) totalHeavyPoints += 2;
+                else { const isLight = LIGHT_FAULT_PATTERNS.some(p => p.test(f)); if(isLight) totalLightPoints += 1; }
+            });
+            let reduction = Math.floor(goodCount / 2) * 2;
+            if (reduction > 0) {
+                if (totalHeavyPoints >= reduction) { totalHeavyPoints -= reduction; reduction = 0; } 
+                else { reduction -= totalHeavyPoints; totalHeavyPoints = 0; if (totalLightPoints >= reduction) totalLightPoints -= reduction; else totalLightPoints = 0; }
+            }
+            return { name, heavyPts: totalHeavyPoints, lightPts: totalLightPoints, totalPts: totalHeavyPoints + totalLightPoints };
+        }
+
+        // --- ROW/WORKER UTILS ---
+        function getStudentsFromSelection(type) {
+            let list = [];
+            const extract = (data, side) => {
+                data.forEach((row, i) => { if (dutySelection[`${side}-${i}`] === type) row.forEach(s => { if(s.name&&s.name.trim()) list.push(s.name.trim()); }); });
+            };
+            extract(leftSideData, 'left'); extract(rightSideData, 'right');
+            return list;
+        }
+        function getWorkersFromSelection(type) {
+            let rowsMap = {}; let maxRow = 0;
+            const process = (data, side) => {
+                data.forEach((row, idx) => {
+                    if(!rowsMap[idx]) rowsMap[idx] = [];
+                    const key = `${side}-${idx}`;
+                    if(dutySelection[key] === type) { row.forEach(s => { if(s.name && s.name.trim()) rowsMap[idx].push(s.name.trim()); }); }
+                    if(idx > maxRow) maxRow = idx;
+                });
+            };
+            process(leftSideData, 'left'); process(rightSideData, 'right');
+            return { map: rowsMap, max: maxRow };
+        }
+
+        function calculateAdvancedDutySchedule() {
+            const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
+            if(rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) { alert("Bảng thi đua trống!"); return null; }
+            let students = rows.map(tr => getStatsFromRow(tr)).filter(s => s.name);
+            let totalClassPoints = students.reduce((sum, s) => sum + s.totalPts, 0);
+
+            const monitor = document.getElementById('role-monitor').value.trim();
+            const secretary = document.getElementById('role-secretary').value.trim();
+            const vice = document.getElementById('role-vice').value.trim();
+            const officers = [monitor, secretary, vice].filter(n => n !== "");
+            const xkStr = document.getElementById('role-xungkich-list').value;
+            const xkMembers = xkStr.split(',').map(s=>s.trim()).filter(s=>s!=="");
+            const xkBusyDays = Array.from(document.querySelectorAll('.xk-day:checked')).map(cb => cb.value);
+
+            if (totalClassPoints === 0) return calculateZeroFaultSchedule(officers);
+            else if (totalClassPoints < 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid');
+            else if (totalClassPoints === 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid');
+            else if (totalClassPoints < 36) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty');
+            else return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty');
+        }
+
+        function calculateZeroFaultSchedule(officers) {
+            let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
+            if(Object.keys(map).length===0) {d = getWorkersFromSelection('area'); map = d.map; max = d.max;}
+            if(Object.keys(map).length===0) { [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { if(!map[i]) map[i] = []; r.forEach(s => { if(s.name && !officers.includes(s.name)) map[i].push(s.name); }); })); }
+            
+            let allPool = Object.values(map).flat();
+            let cleaners = allPool.slice(0, 2); 
+            let dailyPool = allPool.filter(n => !cleaners.includes(n)); 
+
+            const days = ['2', '3', '4', '5', '6', '7']; let schedule = {}; let curRow = 0;
+            const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
+
+            const getW = (n, currentDayTasks) => { 
+                let w=[]; let a=0; 
+                while(w.length<n && a<15){ 
+                    let p=map[curRow]||[]; 
+                    let availableP = p.filter(name => {
+                        let load = 0; Object.values(currentDayTasks).forEach(arr => {if(Array.isArray(arr) && arr.includes(name)) load++;});
+                        return load < 2 && !cleaners.includes(name); 
+                    });
+                    if(availableP.length) {
+                        let take = Math.min(n-w.length, availableP.length);
+                        w = w.concat(availableP.slice(0, take));
+                    }
+                    if(w.length<n) curRow=(curRow+1)%(max+1); else break; 
+                    a++; 
+                } 
+                return w; 
+            };
+            
+            days.forEach((day, i) => {
+                curRow = i % (max+1);
+                let t = {sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:""};
+                if(day==='2'){ 
+                    let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n));
+                    t.chair = males.slice(0, 4);
+                }
+                let areaW = getW(4, t); t.area = areaW;
+                let sweepW = getW(2, t); t.sweep = sweepW;
+                let towelW = getW(1, t); t.towel = towelW;
+                let trashW = getW(1, t); t.trash = trashW;
+                let doorW = getW(1, t); t.door = doorW;
+                t.monitorClass = offSch[day].c; t.monitorArea = offSch[day].a;
+                schedule[day] = t;
+            });
+            return { schedule, cleaners: cleaners, mode: 'zero' };
+        }
+
+        function calculatePenaltyLogic(students, officers, xk, xkDays, mode) {
+            let hQ = [], lQ = [];
+            students.forEach(s => {
+                if(officers.includes(s.name)) return;
+                for(let i=0; i<s.heavyPts; i++) hQ.push(s.name);
+                for(let i=0; i<s.lightPts; i++) lQ.push(s.name);
+            });
+            hQ.sort(() => Math.random() - 0.5); lQ.sort(() => Math.random() - 0.5);
+
+            let areaD = getWorkersFromSelection('area'); let areaM = areaD.map; let areaMax = areaD.max;
+            if(!Object.keys(areaM).length) { areaD=getWorkersFromSelection('class'); areaM=areaD.map; areaMax=areaD.max; }
+            let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
+            let fullPool = Object.values(classM).flat();
+
+            let cleaners = fullPool.slice(0, 2); 
+            let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
+            let chairTeam = males.slice(0,4);
+            let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
+            const dMap = {'2':doorTeam[0],'3':doorTeam[0],'4':doorTeam[1],'5':doorTeam[1],'6':doorTeam[2],'7':doorTeam[2]};
+            const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
+
+            let schedule = {}; let curAreaR = 0, curClassR = 0;
+
+            ['2','3','4','5','6','7'].forEach((d, i) => {
+                let t = {sweep:[], trash:[], towel:[], area:[], door:[dMap[d]], chair: d==='2'?chairTeam:[]};
+                const canWork = (n) => {
+                    let load = 0; Object.values(t).forEach(arr => { if(Array.isArray(arr) && arr.includes(n)) load++; });
+                    return load < 2 && !cleaners.includes(n);
+                };
+                const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
+                
+                let k=0;
+                while(k<4 && hQ.length > 0) {
+                    let idx = hQ.findIndex(n => canArea(n));
+                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break; 
+                }
+                
+                if(mode !== 'penalty' && k<4) {
+                    let tries = 0; curAreaR = i % (areaMax+1);
+                    while(k<4 && tries<10) {
+                        let pool = areaM[curAreaR]||[];
+                        let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t.area.includes(n));
+                        let take = Math.min(4-k, candidates.length);
+                        t.area = t.area.concat(candidates.slice(0, take));
+                        k += take; if(k<4) curAreaR = (curAreaR+1)%(areaMax+1); tries++;
+                    }
+                }
+
+                const fillClassTask = (type, count, queue) => {
+                    let c = 0;
+                    while(c < count && queue.length > 0) {
+                        let idx = queue.findIndex(n => canWork(n));
+                        if(idx>-1) { t[type].push(queue[idx]); queue.splice(idx,1); c++; } else break;
+                    }
+                    if(c < count) {
+                        curClassR = i % (classMax+1); let tries = 0;
+                        while(c < count && tries < 10) {
+                            let pool = classM[curClassR]||[];
+                            let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t[type].includes(n));
+                            let take = Math.min(count-c, candidates.length);
+                            t[type] = t[type].concat(candidates.slice(0, take));
+                            c += take; if(c < count) curClassR = (curClassR+1)%(classMax+1); tries++;
+                        }
+                    }
+                };
+                fillClassTask('trash', 1, lQ);
+                fillClassTask('sweep', 2, lQ);
+                fillClassTask('towel', 1, hQ);
+                t.monitorClass = offSch[d].c; t.monitorArea = offSch[d].a;
+                schedule[d] = t;
+            });
+            return { schedule, cleaners: cleaners, mode: mode };
+        }
+
+        // --- TEST SCENARIOS ---
+        function loadScenario(type) {
+            resetLayout();
+            let pool = [...SAMPLE_NAMES].sort(() => Math.random() - 0.5);
+            let count = 0;
+            leftSideData.forEach(r => r.forEach(s => {if(count<pool.length) s.name = pool[count++];}));
+            rightSideData.forEach(r => r.forEach(s => {if(count<pool.length) s.name = pool[count++];}));
+            renderAll();
+
+            document.getElementById('role-monitor').value = "Nguyễn Văn An";
+            document.getElementById('role-secretary').value = "Trần Thị Bích";
+            document.getElementById('role-vice').value = "Lê Văn Cường";
+
+            const xk1 = pool[25], xk2 = pool[26];
+            document.getElementById('role-xungkich-list').value = `${xk1}, ${xk2}`;
+            document.querySelectorAll('.xk-day').forEach(c => c.checked = false);
+            document.querySelector('.xk-day[value="2"]').checked = true;
+            document.querySelector('.xk-day[value="5"]').checked = true;
+
+            let list = pool.slice(0, 30); document.getElementById('student-list-input').value = list.join('\n');
+            generateTable();
+
+            setTimeout(() => {
+                const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
+                if (type === 'offset') {
+                    rows[0].children[2].querySelector('div').innerText = "2 điểm 10 (T2)";
+                    rows[0].children[3].querySelector('div').innerText = "Vắng kp (T3)";
+                }
+                else if (type === 'low') { for(let i=0; i<5; i++) rows[i].children[3].querySelector('div').innerText = "mtt (T2)"; }
+                else if (type === 'medium') { for(let i=0; i<6; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T3)"; }
+                else if (type === 'high') { for(let i=0; i<10; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T4)"; }
+                else if (type === 'full') { for(let i=0; i<20; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T5)"; }
+
+                rows.forEach(r => {
+                    r.children[2].querySelector('div').dispatchEvent(new Event('blur'));
+                    r.children[3].querySelector('div').dispatchEvent(new Event('blur'));
+                });
+                alert("Đã nạp dữ liệu mẫu: " + type.toUpperCase());
+            }, 500);
+        }
+
+        // --- RENDER ---
+        function renderDutyTable(data) {
+            const tbody = document.getElementById('duty-tbody'); tbody.innerHTML = '';
+            if(!data) return;
+            const { schedule, cleaners } = data;
+            const days = ['2', '3', '4', '5', '6', '7'];
+            days.forEach(day => {
+                const tr = document.createElement('tr');
+                const t = schedule[day];
+                tr.innerHTML += `<td class="font-bold bg-gray-50">${day}</td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.sweep||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.trash||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.towel||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.area||[]).join(', ')}</div></td>`;
+                if (['2', '4', '6'].includes(day)) tr.innerHTML += `<td rowspan="2"><div class="editable-cell" contenteditable="true">${(t.door||[])[0]||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorClass||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorArea||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.chair||[]).join(', ')}</div></td>`;
+                tbody.appendChild(tr);
+            });
+            const footerSpan = document.getElementById('duty-footer-class-list');
+            footerSpan.innerText = cleaners.join(', ');
+        }
+
+        function renderSide(cid, data, side) {
+            const c = document.getElementById(cid); c.innerHTML='';
+            data.forEach((row, ri) => {
+                const div = document.createElement('div'); div.className='flex w-full gap-2 relative row-container';
+                row.forEach((seat, si) => {
+                    const cell = document.createElement('div');
+                    const w = seat.width===1?'w-1/4':(seat.width===2?'w-2/4':(seat.width===3?'w-3/4':'w-full'));
+                    const isSrc = swapSource && swapSource.side===side && swapSource.r===ri && swapSource.c===si;
+                    cell.className = `${w} desk-box h-16 rounded relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''}`;
+                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
+                    ta.oninput=e=>updateName(side,ri,si,e.target.value);
+                    const start=e=>{if(swapSource&&!isSrc)return; longPressTimer=setTimeout(()=>{e.preventDefault();activateSwapMode(side,ri,si)},500)};
+                    const cancel=()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}};
+                    const click=e=>{if(swapSource){if(isSrc)cancelSwapMode();else{e.preventDefault();executeSwap(side,ri,si)}}};
+                    ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
+                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
+                    cell.appendChild(ta);
+                    if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
+                    if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s)}
+                    div.appendChild(cell);
+                });
+                c.appendChild(div);
+            });
+        }
+
+        function openDutyModal() { document.getElementById('duty-modal').classList.add('open'); renderMiniMap('mini-map-left', leftSideData, 'left'); renderMiniMap('mini-map-right', rightSideData, 'right'); renderGenderList(); }
+        function closeDutyModal() { document.getElementById('duty-modal').classList.remove('open'); }
+        function renderMiniMap(cid, data, side) { const c = document.getElementById(cid); c.innerHTML=''; data.forEach((row, ri) => { const k = `${side}-${ri}`; const sel = dutySelection[k]; const d = document.createElement('div'); let cls = "mini-row flex gap-1 relative "; if(sel==='class') cls+="duty-selected-class"; else if(sel==='area') cls+="duty-selected-area"; else cls+="bg-white border-gray-200"; d.className = cls; d.onclick=()=>toggleDutySel(side,ri); row.forEach(s=>{ const sd=document.createElement('div'); sd.style.width=s.width===1?'25%':(s.width===2?'50%':(s.width===3?'75%':'100%')); sd.className="h-6 bg-gray-100 border border-gray-300 rounded text-[10px] flex items-center justify-center overflow-hidden text-gray-500 select-none"; sd.innerText=s.name?s.name.substring(0,4)+'..':''; d.appendChild(sd); }); c.appendChild(d); }); }
+        function toggleDutySel(s,r){ const k=`${s}-${r}`; const c=dutySelection[k]; if(!c)dutySelection[k]='class'; else if(c==='class')dutySelection[k]='area'; else delete dutySelection[k]; renderMiniMap('mini-map-left',leftSideData,'left'); renderMiniMap('mini-map-right',rightSideData,'right'); renderGenderList(); }
+        function renderGenderList() { const c=document.getElementById('gender-list-container'); c.innerHTML=''; let s=getStudentsFromSelection('class').concat(getStudentsFromSelection('area')); s=[...new Set(s)]; if(!s.length){c.innerHTML='<div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div>';return;} s.forEach(n=>{const d=document.createElement('div');d.className='gender-item';const m=isMaleName(n);const l=document.createElement('span');l.className=`gender-label ${m?'is-male':'is-female'}`;l.innerHTML=m?'<i class="fas fa-mars"></i> Nam':'<i class="fas fa-venus"></i> Nữ';l.onclick=()=>{genderMap[n]=!m;renderGenderList();};d.innerHTML=`<span>${n}</span>`;d.appendChild(l);c.appendChild(d);}); }
+        function confirmDutyAssignment() { closeDutyModal(); document.getElementById('view-competition-main').classList.add('hidden'); document.getElementById('view-duty-schedule').classList.remove('hidden'); renderDutyTable(calculateAdvancedDutySchedule()); }
+        function backToCompetition() { document.getElementById('view-duty-schedule').classList.add('hidden'); document.getElementById('view-competition-main').classList.remove('hidden'); }
+        function generateTable() { const inp=document.getElementById('student-list-input').value; const tb=document.getElementById('competition-tbody'); let l=inp.split('\n').filter(x=>x.trim()); if(!l.length){alert("Nhập danh sách!");return;} l=sortVietnameseNames(l); tb.innerHTML=''; l.forEach((n,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="text-center font-semibold text-gray-600">${i+1}</td><td class="pl-4 font-medium text-gray-800">${n.trim()}</td>`;const tdA=document.createElement('td');const dA=document.createElement('div');dA.className="editable-cell";dA.contentEditable=true;dA.onclick=()=>openInputModal(dA,'ach');dA.addEventListener('blur',function(){this.innerText=expandText(this.innerText);});tdA.appendChild(dA);tr.appendChild(tdA);const tdV=document.createElement('td');const dV=document.createElement('div');dV.className="editable-cell";dV.contentEditable=true;dV.onclick=()=>openInputModal(dV,'viol');dV.addEventListener('blur',function(){let t=this.innerText;t=expandText(t);t=t.replace(/\[\d+đ\]/g,'').trim();const s=calculateFaultPoints(t);this.innerText=t;if(s>0){/*No badge*/}});tdV.appendChild(dV);tr.appendChild(tdV);tb.appendChild(tr);}); }
+        function switchTab(id) { document.querySelectorAll('button[id^="btn-tab-"]').forEach(b=>b.className="px-4 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all"); document.getElementById(`btn-tab-${id}`).className="px-4 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm"; document.querySelectorAll('.tab-content').forEach(c=>{c.classList.remove('active');setTimeout(()=>{if(!c.classList.contains('active'))c.style.display='none'},300)}); const t=document.getElementById(`tab-${id}`); t.style.display='block'; requestAnimationFrame(()=>t.classList.add('active')); }
+        function downloadImage(eid, pre) { if(swapSource)cancelSwapMode(); const el=document.getElementById(eid); html2canvas(el,{scale:2,backgroundColor:null,useCORS:true}).then(c=>{const l=document.createElement('a'); l.download=`${pre}_${Date.now()}_${generateRandomString(10)}.png`; l.href=c.toDataURL("image/png"); l.click()}); }
+        function renderAll() { renderSide('left-rows-container', leftSideData, 'left'); renderSide('right-rows-container', rightSideData, 'right'); updateStatusUI(); }
+        function updateName(s,r,c,v){ (s==='left'?leftSideData:rightSideData)[r][c].name=v; }
+        function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
+        function cancelSwapMode(){ swapSource=null; renderAll(); }
+        function executeSwap(ts,tr,tc){ const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); }
+        function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold animate-pulse border border-yellow-300 mr-2 block":"hidden"; }
+        function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); }
+        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; rw[c].width-=1; if(rw[c].width===1)rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:"",width:1,merged:false}); renderAll(); }
+        function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); dutySelection={}; genderMap={}; }
+        function resetLayout(){ swapSource=null; initData(); dutySelection={}; genderMap={}; }
+        document.addEventListener('click', (e)=>{if(swapSource&&!e.target.closest('.desk-input'))cancelSwapMode()});
+        initData(); switchTab('seating');
+    </script>
+</body>
+</html>
