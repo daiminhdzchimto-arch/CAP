@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: 
 
-Sitemap: https://daiminhdzchimto-arch.github.io/CAP/sitemap.xml
+Sitemap: https://daiminhdzchimto-arch.github.io/CAP/sitemap-index.xml
