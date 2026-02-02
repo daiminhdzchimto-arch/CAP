@@ -20,6 +20,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&display=swap');
@@ -156,6 +157,7 @@
                         </div>
                     </div>
                     <button onclick="saveData()" class="save-btn whitespace-nowrap"><i class="fas fa-save mr-1"></i> Lưu</button>
+                    <button onclick="openShareModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-semibold transition-all shadow-sm whitespace-nowrap"><i class="fas fa-share-alt mr-1"></i> Chia sẻ</button>
                 </div>
             </div>
         </div>
@@ -331,6 +333,47 @@
                 </div>
                 <div class="flex gap-8 justify-center mb-6"><div class="flex-1"><div class="font-bold text-center mb-2 text-red-600">Dãy 1</div><div id="mini-map-left" class="space-y-2"></div></div><div class="w-px bg-gray-300"></div><div class="flex-1"><div class="font-bold text-center mb-2 text-blue-600">Dãy 2</div><div id="mini-map-right" class="space-y-2"></div></div></div>
                 <div class="mt-auto flex justify-end gap-3 pt-4 border-t"><button onclick="closeDutyModal()" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Hủy</button><button onclick="confirmDutyAssignment()" class="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 font-bold shadow">Xác nhận & Phân Lịch</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARE MODAL -->
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex justify-between items-center border-b pb-2 mb-3">
+                <h3 class="text-lg font-bold text-purple-800"><i class="fas fa-share-alt mr-2"></i>Chia sẻ dữ liệu</h3>
+                <button onclick="closeShareModal()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Mã chia sẻ (Dùng để gửi cho người khác):</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="share-code-input" readonly class="flex-1 p-2 border rounded bg-gray-50 text-sm overflow-ellipsis" placeholder="Đang tạo mã...">
+                        <button onclick="copyShareCode()" class="bg-blue-600 text-white px-3 py-2 rounded text-sm font-bold hover:bg-blue-700 transition"><i class="fas fa-copy"></i></button>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1 italic">* Mã này chứa toàn bộ dữ liệu sơ đồ, danh sách và cài đặt của bạn.</p>
+                </div>
+                
+                <div class="border-t pt-3">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nhập mã chia sẻ:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="import-code-input" class="flex-1 p-2 border rounded text-sm" placeholder="Dán mã chia sẻ vào đây...">
+                        <button onclick="importFromCode()" class="bg-green-600 text-white px-3 py-2 rounded text-sm font-bold hover:bg-green-700 transition">Nhập</button>
+                    </div>
+                </div>
+
+                <div class="border-t pt-3 flex flex-wrap gap-2">
+                    <button onclick="exportToFile()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-bold border border-gray-300 transition">
+                        <i class="fas fa-file-download mr-1"></i> Xuất File (.cap)
+                    </button>
+                    <button onclick="document.getElementById('file-import').click()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-bold border border-gray-300 transition">
+                        <i class="fas fa-file-upload mr-1"></i> Nhập File
+                    </button>
+                    <input type="file" id="file-import" class="hidden" accept=".cap,.json" onchange="importFromFile(this)">
+                </div>
+            </div>
+            <div class="mt-6 pt-3 border-t flex justify-end">
+                <button onclick="closeShareModal()" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm font-bold">Đóng</button>
             </div>
         </div>
     </div>
@@ -1296,6 +1339,145 @@
             }
         });
         
+        // --- SHARE LOGIC ---
+        function openShareModal() {
+            const data = { 
+                seating: { left: leftSideData, right: rightSideData }, 
+                roles: { 
+                    officerList: getOfficers(), 
+                    xkList: document.getElementById('role-xungkich-list').value, 
+                    xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) 
+                }, 
+                studentList: document.getElementById('student-list-input').value, 
+                genderMap: genderMap, 
+                dutyDebt: dutyDebtData,
+                dutySettings: {
+                    dayOffs,
+                    excludedMembers,
+                    morningOff,
+                    afternoonOff
+                }
+            };
+            const jsonStr = JSON.stringify(data);
+            const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+            document.getElementById('share-code-input').value = compressed;
+            document.getElementById('share-modal').classList.add('open');
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.remove('open');
+        }
+
+        function copyShareCode() {
+            const input = document.getElementById('share-code-input');
+            input.select();
+            document.execCommand('copy');
+            alert('Đã sao chép mã chia sẻ vào bộ nhớ tạm!');
+        }
+
+        function importFromCode() {
+            const code = document.getElementById('import-code-input').value.trim();
+            if (!code) return alert('Vui lòng dán mã chia sẻ!');
+            
+            try {
+                const decompressed = LZString.decompressFromEncodedURIComponent(code);
+                if (!decompressed) throw new Error('Mã không hợp lệ');
+                const data = JSON.parse(decompressed);
+                if (confirm('Bạn có chắc chắn muốn nhập dữ liệu này? Dữ liệu hiện tại sẽ bị ghi đè.')) {
+                    applyImportedData(data);
+                    alert('Đã nhập dữ liệu thành công!');
+                    closeShareModal();
+                }
+            } catch (e) {
+                alert('Lỗi: Mã chia sẻ không hợp lệ hoặc đã bị hỏng.');
+            }
+        }
+
+        function exportToFile() {
+            const data = { 
+                seating: { left: leftSideData, right: rightSideData }, 
+                roles: { 
+                    officerList: getOfficers(), 
+                    xkList: document.getElementById('role-xungkich-list').value, 
+                    xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) 
+                }, 
+                studentList: document.getElementById('student-list-input').value, 
+                genderMap: genderMap, 
+                dutyDebt: dutyDebtData,
+                dutySettings: {
+                    dayOffs,
+                    excludedMembers,
+                    morningOff,
+                    afternoonOff
+                }
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `LopHoc_${new Date().toISOString().slice(0,10)}.cap`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (confirm('Bạn có chắc chắn muốn nhập dữ liệu từ file này? Dữ liệu hiện tại sẽ bị ghi đè.')) {
+                        applyImportedData(data);
+                        alert('Đã nhập dữ liệu thành công!');
+                        closeShareModal();
+                    }
+                } catch (err) {
+                    alert('Lỗi: File không hợp lệ.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function applyImportedData(data) {
+            // Ghi đè dữ liệu
+            leftSideData = data.seating?.left || createDefaultArray(ROW_COUNT);
+            rightSideData = data.seating?.right || createDefaultArray(ROW_COUNT);
+            genderMap = data.genderMap || {};
+            dutyDebtData = data.dutyDebt || {};
+            
+            if (data.roles) {
+                officerList = data.roles.officerList || [];
+                document.getElementById('role-xungkich-list').value = data.roles.xkList || "";
+                if (data.roles.xkBusy) {
+                    document.querySelectorAll('.xk-day').forEach(c => { 
+                        c.checked = data.roles.xkBusy.includes(c.value); 
+                    });
+                }
+            }
+            
+            if (data.dutySettings) {
+                dayOffs = data.dutySettings.dayOffs || [];
+                excludedMembers = data.dutySettings.excludedMembers || [];
+                morningOff = data.dutySettings.morningOff || false;
+                afternoonOff = data.dutySettings.afternoonOff || false;
+            }
+            
+            if (data.studentList) {
+                document.getElementById('student-list-input').value = data.studentList;
+            }
+            
+            // Lưu vào localStorage
+            localStorage.setItem('classApp_v24.1', JSON.stringify(data));
+            localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+            
+            // Cập nhật giao diện
+            renderAll();
+            renderOfficerList();
+            generateTable();
+        }
+
         // Khởi động
         initData(); 
         switchTab('seating');
