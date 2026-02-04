@@ -42,6 +42,8 @@
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
         .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
         .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
+        .desk-box.is-fixed { border-color: #ef4444 !important; border-width: 3px !important; }
+        .fixed-badge { position: absolute; top: -8px; left: -8px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         /* TABLES */
         .comp-table, .duty-table { width: 100%; border-collapse: collapse; background: white; }
@@ -127,10 +129,15 @@
         /* CUSTOM CHECKBOX */
         .custom-checkbox { display: flex; align-items: center; cursor: pointer; }
         .custom-checkbox input[type="checkbox"] { display: none; }
-        .custom-checkbox .checkmark { width: 18px; height: 18px; border: 2px solid #d1d5db; border-radius: 4px; margin-right: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .custom-checkbox .checkmark { width: 18px; height: 18px; border: 2px solid #d1d1db; border-radius: 4px; margin-right: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .custom-checkbox input[type="checkbox"]:checked + .checkmark { background-color: #3b82f6; border-color: #3b82f6; }
         .custom-checkbox input[type="checkbox"]:checked + .checkmark::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
         .custom-checkbox:hover .checkmark { border-color: #9ca3af; }
+
+        /* SHUFFLE MODAL */
+        .shuffle-option-btn { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
+        .shuffle-option-btn:hover { background-color: #f0f9ff; border-color: #3b82f6; color: #1e40af; }
+        .shuffle-option-btn i { width: 20px; text-align: center; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-gray-50">
@@ -170,6 +177,7 @@
             <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-wrap gap-2 items-center justify-center">
                 <div id="status-msg" class="hidden px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold animate-pulse border border-yellow-300 mr-2"><i class="fas fa-exchange-alt mr-1"></i> Chọn ô thứ 2...</div>
                 <button onclick="resetLayout()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded text-sm font-medium transition"><i class="fas fa-redo-alt mr-1"></i> Làm mới</button>
+                <button onclick="openShuffleModal()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-sm font-medium transition shadow-sm"><i class="fas fa-random mr-1"></i> Sắp xếp</button>
                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
                 <div class="flex bg-gray-100 rounded p-0.5 border border-gray-200">
                     <button onclick="rotateClass('up')" class="px-2 py-1 hover:bg-white rounded text-blue-600 text-sm transition"><i class="fas fa-arrow-up"></i></button>
@@ -249,155 +257,188 @@
                                     <th colspan="2">HS theo dõi</th>
                                     <th rowspan="1" class="w-48 text-left italic font-normal text-xs p-2">Ghi chú: Ghi rõ<br>- HS nào thay làm ghi rõ<br>- Thực hiện đủ, sạch</th>
                                 </tr>
-                                <tr><th class="w-32">Quét lớp,<br>hành lang</th><th class="w-24">Đổ rác</th><th class="w-32">Giặt khăn,<br>lau bảng</th><th class="w-32">Trực VS<br>khu vực</th><th class="w-32">Đóng cửa<br>sổ, cửa chính</th><th class="w-20">Lớp</th><th class="w-20">Khu vực</th><th class="font-bold">Bê, cất ghế<br>chào cờ (4 Nam)</th></tr>
+                                <tr>
+                                    <th class="w-32">Quét lớp</th>
+                                    <th class="w-32">Đổ rác</th>
+                                    <th class="w-32">Giặt giẻ lau</th>
+                                    <th class="w-32">Trực khu vực</th>
+                                    <th class="w-32">Đóng cửa/Tắt điện</th>
+                                    <th class="w-32">Trực nhật lớp</th>
+                                    <th class="w-32">Trực khu vực</th>
+                                    <th class="w-48">HS Nợ Trực</th>
+                                </tr>
                             </thead>
                             <tbody id="duty-tbody"></tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="6" class="footer-cell bg-gray-50">
+                                    <td colspan="9" class="footer-cell">
                                         <div class="lau-lop-container">
-                                            <strong>Lau lớp:</strong>
-                                            <span id="duty-footer-class-list" class="footer-editable ml-2" contenteditable="true"></span>
+                                            <span class="font-bold">Lau lớp:</span>
+                                            <div id="cleaners-list" class="footer-editable ml-2" contenteditable="true">...</div>
                                         </div>
-                                        <div class="spider-web-line">Quét mạng nhện trong lớp: ........................................................................</div>
+                                        <div class="spider-web-line">Quét mạng nhện: Thứ 7 hàng tuần</div>
+                                        <div class="duty-note-outside">Lưu ý: Các tổ trực nhật tự giác thực hiện nhiệm vụ. Nếu vi phạm sẽ phải trực bù vào tuần kế tiếp.</div>
                                     </td>
-                                    <td colspan="2" class="text-center bg-gray-50">Tiết 5 thứ 6<br>hàng tuần</td><td class="bg-gray-50"></td>
                                 </tr>
                             </tfoot>
                         </table>
-                        <div class="duty-note-outside">Lưu ý: Sau mỗi buổi học vệ sinh lớp sạch sẽ, đổ rác đúng nơi quy định.</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TOAST -->
+    <!-- MODALS -->
+    <div id="duty-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-xl font-bold text-blue-800"><i class="fas fa-broom mr-2"></i>Cài Đặt Trực Nhật</h2>
+                <button onclick="closeDutyModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <h3 class="font-bold text-gray-700 mb-3 flex items-center"><i class="fas fa-th mr-2 text-blue-500"></i>Chọn Dãy Trực Nhật (Click để chọn)</h3>
+                    <div class="flex gap-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-red-500 mb-2 uppercase">Dãy Cửa Lớp</div>
+                            <div id="mini-map-left" class="space-y-1"></div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-blue-500 mb-2 uppercase text-right">Dãy Giáo Viên</div>
+                            <div id="mini-map-right" class="space-y-1"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                            <h4 class="text-sm font-bold text-blue-800 mb-2">Ngày Nghỉ Trong Tuần</h4>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="2"><span class="checkmark"></span>T2</label>
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="3"><span class="checkmark"></span>T3</label>
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="4"><span class="checkmark"></span>T4</label>
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="5"><span class="checkmark"></span>T5</label>
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="6"><span class="checkmark"></span>T6</label>
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="7"><span class="checkmark"></span>T7</label>
+                            </div>
+                        </div>
+                        <div class="bg-orange-50 p-3 rounded border border-orange-100">
+                            <h4 class="text-sm font-bold text-orange-800 mb-2">Buổi Nghỉ</h4>
+                            <div class="flex gap-4">
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" id="morning-off"><span class="checkmark"></span>Sáng</label>
+                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" id="afternoon-off"><span class="checkmark"></span>Chiều</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex-grow">
+                        <h3 class="font-bold text-gray-700 mb-2 text-sm">Giới Tính (Click để đổi)</h3>
+                        <div id="gender-list-container" class="max-h-64 overflow-y-auto pr-2"></div>
+                    </div>
+                    
+                    <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                        <h3 class="font-bold text-red-800 mb-2 text-sm">HS Không Trực Nhật</h3>
+                        <textarea id="excluded-members" class="w-full h-24 p-2 text-xs border border-red-200 rounded focus:outline-none focus:ring-1 focus:ring-red-400" placeholder="Nhập tên HS không tham gia trực nhật (mỗi tên 1 dòng)..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t flex justify-between items-center">
+                <div class="role-section flex gap-4 items-center">
+                    <div class="flex flex-col">
+                        <label>Cán sự lớp (Cách nhau bằng dấu phẩy)</label>
+                        <input type="text" id="role-officer-list" class="role-input w-64" placeholder="Lớp trưởng, Lớp phó...">
+                    </div>
+                    <div class="flex flex-col">
+                        <label>Xung kích (Cách nhau bằng dấu phẩy)</label>
+                        <input type="text" id="role-xungkich-list" class="role-input w-64" placeholder="Tên các bạn xung kích...">
+                    </div>
+                </div>
+                <button onclick="confirmDutyAssignment()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transition transform hover:scale-105"><i class="fas fa-check-circle mr-2"></i>XÁC NHẬN & TẠO LỊCH</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 600px;">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-xl font-bold text-purple-800"><i class="fas fa-share-alt mr-2"></i>Chia Sẻ Dữ Liệu</h2>
+                <button onclick="closeShareModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-bold text-gray-700 mb-2">Mã Chia Sẻ (Dùng để gửi cho người khác)</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="share-code-input" readonly class="flex-1 p-2 bg-gray-100 border border-gray-300 rounded text-sm font-mono focus:outline-none">
+                        <button onclick="copyShareCode()" class="bg-purple-600 text-white px-4 py-2 rounded font-medium hover:bg-purple-700 transition"><i class="fas fa-copy mr-1"></i> Sao chép</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 italic">* Mã này chứa toàn bộ dữ liệu sơ đồ, thi đua và trực nhật của bạn.</p>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="font-bold text-gray-700 mb-2">Nhập Mã Chia Sẻ</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="import-code-input" class="flex-1 p-2 border border-gray-300 rounded text-sm font-mono focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="Dán mã chia sẻ vào đây...">
+                        <button onclick="importFromCode()" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition"><i class="fas fa-file-import mr-1"></i> Nhập</button>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4 flex justify-between">
+                    <button onclick="exportToFile()" class="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition"><i class="fas fa-file-export mr-1"></i> Xuất ra File (.cap)</button>
+                    <label class="bg-orange-500 text-white px-4 py-2 rounded font-medium hover:bg-orange-600 transition cursor-pointer">
+                        <i class="fas fa-file-upload mr-1"></i> Nhập từ File
+                        <input type="file" class="hidden" accept=".cap" onchange="importFromFile(this)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHUFFLE MODAL -->
+    <div id="shuffle-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 400px;">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-xl font-bold text-orange-600"><i class="fas fa-random mr-2"></i>Tùy Chọn Sắp Xếp</h2>
+                <button onclick="closeShuffleModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-2">
+                <button onclick="shuffleSeating('all')" class="shuffle-option-btn">
+                    <i class="fas fa-users text-blue-500"></i>
+                    <div>
+                        <div class="text-sm">Toàn bộ lớp</div>
+                        <div class="text-xs font-normal text-gray-500">Sắp xếp lại tất cả học sinh trong lớp</div>
+                    </div>
+                </button>
+                <button onclick="shuffleSeating('door')" class="shuffle-option-btn">
+                    <i class="fas fa-door-open text-red-500"></i>
+                    <div>
+                        <div class="text-sm">Dãy gần cửa</div>
+                        <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên trái</div>
+                    </div>
+                </button>
+                <button onclick="shuffleSeating('teacher')" class="shuffle-option-btn">
+                    <i class="fas fa-chalkboard-teacher text-green-500"></i>
+                    <div>
+                        <div class="text-sm">Dãy gần bàn giáo viên</div>
+                        <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên phải</div>
+                    </div>
+                </button>
+            </div>
+            <div class="mt-4 text-xs text-gray-500 italic border-t pt-3">
+                * Mẹo: Chuột phải vào ô chỗ ngồi để <b>Cố định</b> học sinh (không bị đổi chỗ).
+            </div>
+        </div>
+    </div>
+
     <div id="toast">Đã lưu dữ liệu thành công!</div>
 
-    <!-- DUTY MODAL -->
-    <div id="duty-modal" class="modal-overlay">
-        <div class="modal-content flex gap-6">
-            <div class="w-1/3 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto max-h-[85vh]">
-                <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2"><i class="fas fa-cog mr-2"></i>Thiết lập Nhân sự</h3>
-                <div class="role-section">
-                    <div class="flex justify-between items-center mb-2">
-                        <label>Cán bộ lớp (Theo dõi):</label>
-                        <button onclick="addOfficerRow('')" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200">+ Thêm</button>
-                    </div>
-                    <div id="officers-list"></div>
-                </div>
-                <div class="role-section mt-4 border-t pt-2"><label class="text-orange-600"><i class="fas fa-bolt mr-1"></i>Đội Xung Kích:</label><textarea id="role-xungkich-list" class="w-full h-20 p-2 border border-gray-300 rounded text-sm mt-1" placeholder="Nhập tên, cách nhau dấu phẩy"></textarea><label class="text-xs mt-2 mb-1 block">Xung kích bận vào:</label><div class="grid grid-cols-3 gap-2 text-sm"><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="2"> T2</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="3"> T3</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="4"> T4</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="5"> T5</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="6"> T6</label><label class="inline-flex items-center"><input type="checkbox" class="xk-day" value="7"> T7</label></div></div>
-                
-                <!-- THÊM PHẦN THIẾT LẬP NGÀY NGHỈ VÀ THÀNH VIÊN KHÔNG TRỰC -->
-                <div class="role-section mt-4 border-t pt-2">
-                    <label class="text-red-600"><i class="fas fa-calendar-times mr-1"></i>Thiết lập Ngày Nghỉ & Loại Trừ</label>
-                    
-                    <div class="mt-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Ngày nghỉ trong tuần:</label>
-                        <div class="grid grid-cols-3 gap-2 text-sm">
-                            <label class="custom-checkbox"><input type="checkbox" class="day-off" value="2"> <span class="checkmark"></span> <span>Thứ 2</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" class="day-off" value="3"> <span class="checkmark"></span> <span>Thứ 3</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" class="day-off" value="4"> <span class="checkmark"></span> <span>Thứ 4</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" class="day-off" value="5"> <span class="checkmark"></span> <span>Thứ 5</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" class="day-off" value="6"> <span class="checkmark"></span> <span>Thứ 6</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" class="day-off" value="7"> <span class="checkmark"></span> <span>Thứ 7</span></label>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Thành viên không trực nhật:</label>
-                        <textarea id="excluded-members" class="w-full h-24 p-2 border border-gray-300 rounded text-sm" placeholder="Nhập tên học sinh không tham gia trực nhật (mỗi tên một dòng)&#10;Ví dụ:&#10;Nguyễn Văn A&#10;Trần Thị B"></textarea>
-                        <div class="text-xs text-gray-500 mt-1">Các học sinh này sẽ không được phân công trực nhật</div>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Buổi nghỉ (nếu có):</label>
-                        <div class="flex gap-4">
-                            <label class="custom-checkbox"><input type="checkbox" id="morning-off"> <span class="checkmark"></span> <span>Nghỉ buổi sáng</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" id="afternoon-off"> <span class="checkmark"></span> <span>Nghỉ buổi chiều</span></label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="role-section mt-4 border-t pt-2"><label class="text-blue-600"><i class="fas fa-venus-mars mr-1"></i>Danh sách Giới tính:</label><div id="gender-list-container" class="bg-white border border-gray-300 rounded p-2 text-sm max-h-40 overflow-y-auto"><div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div></div></div>
-            </div>
-            <div class="flex-1 flex flex-col">
-                <div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="text-xl font-bold text-gray-800">Chọn Dãy Trực Nhật</h3><button onclick="closeDutyModal()" class="text-gray-500 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button></div>
-                <div class="mb-4 bg-blue-50 p-3 rounded text-sm text-blue-800">
-                    <ul class="list-disc ml-5">
-                        <li><span class="inline-block w-3 h-3 bg-green-500 rounded-sm mr-1"></span> Lần 1: <strong>Trực Lớp</strong> (Xanh)</li>
-                        <li><span class="inline-block w-3 h-3 bg-orange-400 rounded-sm mr-1"></span> Lần 2: <strong>Trực Khu Vực</strong> (Cam)</li>
-                        <li class="mt-2 text-red-600"><i class="fas fa-info-circle mr-1"></i> Ngày nghỉ sẽ được đánh dấu và không phân công trực nhật</li>
-                    </ul>
-                </div>
-                <div class="flex gap-8 justify-center mb-6"><div class="flex-1"><div class="font-bold text-center mb-2 text-red-600">Dãy 1</div><div id="mini-map-left" class="space-y-2"></div></div><div class="w-px bg-gray-300"></div><div class="flex-1"><div class="font-bold text-center mb-2 text-blue-600">Dãy 2</div><div id="mini-map-right" class="space-y-2"></div></div></div>
-                <div class="mt-auto flex justify-end gap-3 pt-4 border-t"><button onclick="closeDutyModal()" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Hủy</button><button onclick="confirmDutyAssignment()" class="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 font-bold shadow">Xác nhận & Phân Lịch</button></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SHARE MODAL -->
-    <div id="share-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="text-lg font-bold text-purple-800"><i class="fas fa-share-alt mr-2"></i>Chia sẻ dữ liệu</h3>
-                <button onclick="closeShareModal()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Mã chia sẻ (Dùng để gửi cho người khác):</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="share-code-input" readonly class="flex-1 p-2 border rounded bg-gray-50 text-sm overflow-ellipsis" placeholder="Đang tạo mã...">
-                        <button onclick="copyShareCode()" class="bg-blue-600 text-white px-3 py-2 rounded text-sm font-bold hover:bg-blue-700 transition"><i class="fas fa-copy"></i></button>
-                    </div>
-                    <p class="text-[10px] text-gray-500 mt-1 italic">* Mã này chứa toàn bộ dữ liệu sơ đồ, danh sách và cài đặt của bạn.</p>
-                </div>
-                
-                <div class="border-t pt-3">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Nhập mã chia sẻ:</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="import-code-input" class="flex-1 p-2 border rounded text-sm" placeholder="Dán mã chia sẻ vào đây...">
-                        <button onclick="importFromCode()" class="bg-green-600 text-white px-3 py-2 rounded text-sm font-bold hover:bg-green-700 transition">Nhập</button>
-                    </div>
-                </div>
-
-                <div class="border-t pt-3 flex flex-wrap gap-2">
-                    <button onclick="exportToFile()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-bold border border-gray-300 transition">
-                        <i class="fas fa-file-download mr-1"></i> Xuất File (.cap)
-                    </button>
-                    <button onclick="document.getElementById('file-import').click()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-bold border border-gray-300 transition">
-                        <i class="fas fa-file-upload mr-1"></i> Nhập File
-                    </button>
-                    <input type="file" id="file-import" class="hidden" accept=".cap,.json" onchange="importFromFile(this)">
-                </div>
-            </div>
-            <div class="mt-6 pt-3 border-t flex justify-end">
-                <button onclick="closeShareModal()" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm font-bold">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- INPUT DETAIL MODAL -->
-    <div id="input-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="flex justify-between items-center border-b pb-2 mb-3"><h3 class="text-lg font-bold text-blue-800" id="modal-title">Chi tiết</h3><button onclick="closeInputModal()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button></div>
-            <div class="mb-4"><div class="tag-section-title">1. Chọn Thời Gian</div><div class="flex gap-2 mb-2 overflow-x-auto pb-1" id="modal-days"><button class="time-btn" onclick="selectModalTime('day', 'T2')">T2</button><button class="time-btn" onclick="selectModalTime('day', 'T3')">T3</button><button class="time-btn" onclick="selectModalTime('day', 'T4')">T4</button><button class="time-btn" onclick="selectModalTime('day', 'T5')">T5</button><button class="time-btn" onclick="selectModalTime('day', 'T6')">T6</button><button class="time-btn" onclick="selectModalTime('day', 'T7')">T7</button></div><div class="flex gap-2"><button class="time-btn" onclick="selectModalTime('session', 'Sáng')">Sáng</button><button class="time-btn" onclick="selectModalTime('session', 'Chiều')">Chiều</button></div></div>
-            <div id="modal-content-area"></div>
-            <div class="mt-4 pt-3 border-t flex justify-end gap-2"><button onclick="closeInputModal()" class="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-sm">Hủy</button><button onclick="saveInputModal()" class="px-4 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow">Thêm vào ô</button></div>
-        </div>
-    </div>
-
     <script>
-        // --- CONSTANTS ---
-        const DUTY_DEBT_KEY = 'classApp_dutyDebt_v1';
-        let dutyDebtData = JSON.parse(localStorage.getItem(DUTY_DEBT_KEY) || '{}');
-
-        const HEAVY_FAULT_PATTERNS = [/(vắng|nghỉ).*(kp|không phép|ko phép)/i, /(muộn|đhm).*(kp|không phép|ko phép)/i, /sổ đầu bài|sđb/i, /sổ cờ đỏ|scđ/i, /\b[0-4]([\.,]\d+)?(đ|điểm)\b/i, /yếu|kém/i, /bỏ tiết|đánh nhau|quay cóp|chép bài|hút thuốc|tệ nạn|đánh bạc|atgt|công an|ca phạt|vô lễ|phá hoại/i, /ăn.*(quà|sáng|trong giờ)|mang đồ ăn/i, /nhuộm tóc/i, /điện thoại|đt|máy nghe nhạc/i];
-        const LIGHT_FAULT_PATTERNS = [/mất trật tự|mtt/i, /vệ sinh|trực nhật/i, /nhắc/i, /không chép bài|chép thiếu/i, /nói tục|chửi bậy/i, /vứt rác|viết vẽ bậy/i];
-        const SDB_FAULT_PATTERN = /sổ đầu bài|sđb/i;
-        const GOOD_MARK_PATTERN = /\b(8|9|10)(đ|điểm)\b|điểm tốt/gi;
-        const SAMPLE_NAMES = ["Nguyễn Văn A","Trần Thị B","Lê Văn C","Phạm Thị D","Hoàng Văn E","Vũ Thị F","Đặng Văn G","Bùi Thị H","Đỗ Văn I","Hồ Thị K","Ngô Văn L","Dương Thị M","Lý Văn N","Phan Thị O","Võ Văn P","Mai Thị Q","Trương Văn R","Đoàn Thị S","Lâm Văn T","Trịnh Thị U","Hà Văn V","Nguyễn Thị X","Trần Văn Y","Lê Thị Z","Phạm Văn An","Hoàng Thị Bình","Vũ Văn Cường","Đặng Thị Dung","Bùi Văn Dũng","Đỗ Thị Hạnh","Hồ Văn Hải","Ngô Thị Hoa","Dương Văn Hùng","Lý Thị Hương","Phan Văn Khánh","Võ Thị Lan","Mai Văn Long","Trương Thị Mai","Đoàn Văn Minh","Lâm Thị Ngọc"];
+        // --- CONSTANTS & STATE ---
+        const SAMPLE_NAMES = ["Nguyễn Văn An", "Trần Thị Bích", "Lê Văn Cường", "Phạm Minh Đức", "Hoàng Thu Hà", "Vũ Việt Hùng", "Đặng Lan Hương", "Bùi Quang Huy", "Đỗ Gia Bảo", "Ngô Minh Khôi", "Lý Diệu Linh", "Trịnh Xuân Mạnh", "Phan Thanh Nam", "Mai Phương Nhi", "Đào Việt Phong", "Tạ Minh Quân", "Lương Thắng", "Hà Thu Thảo", "Tô Anh Thư", "Trương Công Tiến", "Võ Minh Tùng", "Diệp Bảo Vy", "Quách Gia Thành", "Phùng Mỹ Hạnh", "Cao Minh Triết", "Vi Văn Định", "Nông Thị Mai", "Lâm Gia Hào", "Dương Thúy Quỳnh", "Âu Dương Phong"];
+        const DUTY_DEBT_KEY = 'classApp_duty_debt';
         const VN_CHARS = "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
 
         let leftSideData = [], rightSideData = [];
@@ -405,11 +446,12 @@
         let swapSource = null, longPressTimer = null, dutySelection = {}, genderMap = {};
         let currentCell = null, currentModalType = '', modalState = { day: 'T2', session: 'Sáng', content: '' };
         let officerList = [];
-        let dayOffMode = false; // Biến để theo dõi trạng thái hiển thị ngày nghỉ
-        let excludedMembers = []; // Danh sách thành viên không trực nhật
-        let dayOffs = []; // Danh sách ngày nghỉ
-        let morningOff = false; // Nghỉ buổi sáng
-        let afternoonOff = false; // Nghỉ buổi chiều
+        let dayOffMode = false; 
+        let excludedMembers = []; 
+        let dayOffs = []; 
+        let morningOff = false; 
+        let afternoonOff = false; 
+        let fixedMembers = []; // Danh sách ID các ô bị cố định
 
         // --- CORE UI ---
         function renderAll() { renderSide('left-rows-container', leftSideData, 'left'); renderSide('right-rows-container', rightSideData, 'right'); updateStatusUI(); }
@@ -421,9 +463,25 @@
                     const cell = document.createElement('div');
                     const w = seat.width===1?'w-1/4':(seat.width===2?'w-2/4':(seat.width===3?'w-3/4':'w-full'));
                     const isSrc = swapSource && swapSource.side===side && swapSource.r===ri && swapSource.c===si;
-                    cell.className = `${w} desk-box h-16 rounded relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''}`;
+                    const isFixed = fixedMembers.includes(seat.id);
+                    cell.className = `${w} desk-box h-16 rounded relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''}`;
+                    
+                    if(isFixed) {
+                        const badge = document.createElement('div');
+                        badge.className = 'fixed-badge';
+                        badge.innerHTML = '<i class="fas fa-lock"></i>';
+                        cell.appendChild(badge);
+                    }
+
                     const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
                     ta.oninput=e=>updateName(side,ri,si,e.target.value);
+                    
+                    // Right click to toggle fixed
+                    ta.oncontextmenu = e => {
+                        e.preventDefault();
+                        toggleFixed(seat.id);
+                    };
+
                     const start=e=>{if(swapSource&&!isSrc)return; longPressTimer=setTimeout(()=>{e.preventDefault();activateSwapMode(side,ri,si)},500)};
                     const cancel=()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}};
                     const click=e=>{if(swapSource){if(isSrc)cancelSwapMode();else{e.preventDefault();executeSwap(side,ri,si)}}};
@@ -445,7 +503,68 @@
         function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); }
         function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; rw[c].width-=1; if(rw[c].width===1)rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:"",width:1,merged:false}); renderAll(); }
         function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); dutySelection={}; genderMap={}; }
-        function resetLayout(){ swapSource=null; initData(); dutySelection={}; genderMap={}; officerList=[]; }
+        function resetLayout(){ swapSource=null; initData(); dutySelection={}; genderMap={}; officerList=[]; fixedMembers=[]; }
+
+        function toggleFixed(id) {
+            const idx = fixedMembers.indexOf(id);
+            if(idx > -1) fixedMembers.splice(idx, 1);
+            else fixedMembers.push(id);
+            renderAll();
+        }
+
+        // --- SHUFFLE LOGIC ---
+        function openShuffleModal() { document.getElementById('shuffle-modal').classList.add('open'); }
+        function closeShuffleModal() { document.getElementById('shuffle-modal').classList.remove('open'); }
+
+        function shuffleSeating(type) {
+            let seatsToShuffle = [];
+            
+            const collect = (data, side) => {
+                data.forEach((row, ri) => {
+                    row.forEach((seat, si) => {
+                        if(!fixedMembers.includes(seat.id) && seat.name.trim() !== "") {
+                            seatsToShuffle.push({ name: seat.name, side, ri, si });
+                        }
+                    });
+                });
+            };
+
+            if(type === 'all') {
+                collect(leftSideData, 'left');
+                collect(rightSideData, 'right');
+            } else if(type === 'door') {
+                collect(leftSideData, 'left');
+            } else if(type === 'teacher') {
+                collect(rightSideData, 'right');
+            }
+
+            if(seatsToShuffle.length < 2) {
+                alert("Không đủ học sinh để sắp xếp (hoặc các ô đã bị cố định)!");
+                closeShuffleModal();
+                return;
+            }
+
+            // Shuffle names
+            let names = seatsToShuffle.map(s => s.name);
+            for (let i = names.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [names[i], names[j]] = [names[j], names[i]];
+            }
+
+            // Assign back
+            seatsToShuffle.forEach((seat, i) => {
+                if(seat.side === 'left') leftSideData[seat.ri][seat.si].name = names[i];
+                else rightSideData[seat.ri][seat.si].name = names[i];
+            });
+
+            renderAll();
+            closeShuffleModal();
+            
+            const t=document.getElementById('toast'); 
+            t.innerText = "Đã sắp xếp chỗ ngồi!";
+            t.className="show"; 
+            setTimeout(()=>{ t.className=t.className.replace("show",""); t.innerText = "Đã lưu dữ liệu thành công!"; }, 2000);
+        }
 
         // --- DUTY MODAL ---
         function openDutyModal() { 
@@ -454,52 +573,31 @@
             renderMiniMap('mini-map-right', rightSideData, 'right'); 
             renderGenderList(); 
             
-            // Load saved settings
             const savedSettings = JSON.parse(localStorage.getItem('classApp_duty_settings') || '{}');
-            
-            // Load day offs
             dayOffs = savedSettings.dayOffs || [];
             dayOffs.forEach(day => {
                 const checkbox = document.querySelector(`.day-off[value="${day}"]`);
                 if (checkbox) checkbox.checked = true;
             });
             
-            // Load excluded members
             excludedMembers = savedSettings.excludedMembers || [];
             document.getElementById('excluded-members').value = excludedMembers.join('\n');
             
-            // Load session offs
             morningOff = savedSettings.morningOff || false;
             afternoonOff = savedSettings.afternoonOff || false;
             document.getElementById('morning-off').checked = morningOff;
             document.getElementById('afternoon-off').checked = afternoonOff;
         }
         
-        function closeDutyModal() { 
-            // Save settings before closing
-            saveDutySettings();
-            document.getElementById('duty-modal').classList.remove('open'); 
-        }
+        function closeDutyModal() { saveDutySettings(); document.getElementById('duty-modal').classList.remove('open'); }
         
         function saveDutySettings() {
-            // Get day offs
             dayOffs = Array.from(document.querySelectorAll('.day-off:checked')).map(cb => cb.value);
-            
-            // Get excluded members
             const excludedText = document.getElementById('excluded-members').value;
             excludedMembers = excludedText.split('\n').map(s => s.trim()).filter(s => s !== '');
-            
-            // Get session offs
             morningOff = document.getElementById('morning-off').checked;
             afternoonOff = document.getElementById('afternoon-off').checked;
-            
-            // Save to localStorage
-            const settings = {
-                dayOffs,
-                excludedMembers,
-                morningOff,
-                afternoonOff
-            };
+            const settings = { dayOffs, excludedMembers, morningOff, afternoonOff };
             localStorage.setItem('classApp_duty_settings', JSON.stringify(settings));
         }
         
@@ -544,10 +642,7 @@
             c.innerHTML=''; 
             let s=getStudentsFromSelection('class').concat(getStudentsFromSelection('area')); 
             s=[...new Set(s)]; 
-            if(!s.length){
-                c.innerHTML='<div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div>';
-                return;
-            } 
+            if(!s.length){ c.innerHTML='<div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div>'; return; } 
             s.forEach(n=>{
                 const isExcluded = excludedMembers.includes(n);
                 const d=document.createElement('div');
@@ -568,9 +663,7 @@
             document.getElementById('view-competition-main').classList.add('hidden'); 
             document.getElementById('view-duty-schedule').classList.remove('hidden'); 
             const schedule = calculateAdvancedDutySchedule();
-            if (schedule) {
-                renderDutyTable(schedule);
-            }
+            if (schedule) renderDutyTable(schedule);
         }
         
         function backToCompetition() { 
@@ -578,7 +671,6 @@
             document.getElementById('view-competition-main').classList.remove('hidden'); 
         }
         
-        // --- TOGGLE DAY OFF MODE ---
         function toggleDayOffMode() {
             dayOffMode = !dayOffMode;
             const btn = document.getElementById('day-off-btn-text');
@@ -605,50 +697,48 @@
             return true; 
         }
         
-        function generateRandomString(len){let r='';const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';for(let i=0;i<len;i++)r+=c.charAt(Math.floor(Math.random()*c.length));return r;}
-        function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:crypto.randomUUID(),name:"",width:1,merged:false});arr.push(r);}return arr;}
-        function sortVietnameseNames(names){return names.sort((a,b)=>{const k=n=>{const p=n.trim().split(/\s+/);if(!p.length)return"";const l=p[p.length-1];const s=p[p.length-2]||"";return /^[A-Z0-9]$/i.test(l)?s.toLowerCase():l.toLowerCase()};return k(a).localeCompare(k(b),'vi')||a.localeCompare(b,'vi');});}
-        const ABBREVIATIONS = {'kp': '(Không phép)', 'ko phép': '(Không phép)', 'kp)': '(Không phép)', 'p': '(Có phép)', 'phép': '(Có phép)', 'đ': ' Điểm', 'điểm': ' Điểm', 'scđ': 'Sổ Cờ Đỏ', 'sđb': 'Sổ Đầu Bài', 'vs': 'Vệ sinh', 'mtt': 'Mất trật tự', 'st': 'Sổ tổ', 'vp': 'Vi Phạm', 'ca': 'Công An', 'đhm': 'Đi học muộn'};
-        function expandText(text){if(!text)return"";const keys=Object.keys(ABBREVIATIONS).sort((a,b)=>b.length-a.length); keys.forEach(key=>{let escaped=key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const regex=new RegExp(`(^|[^${VN_CHARS}])(${escaped})(?=[^${VN_CHARS}]|$)`,'g');text=text.replace(regex,`$1${ABBREVIATIONS[key]}`);});return text;}
-        function calculateFaultPoints(text) { if(!text) return 0; const faults = text.split(/,|\n/); let totalPoints = 0; faults.forEach(f => { f = f.trim(); if(!f) return; if(HEAVY_FAULT_PATTERNS.some(p => p.test(f))) totalPoints += 2; else { let isLight = LIGHT_FAULT_PATTERNS.some(p => p.test(f)); if(isLight) totalPoints += 1; } }); return totalPoints; }
-
-        // --- OFFICER MGMT ---
-        function renderOfficerList() { const container=document.getElementById('officers-list'); container.innerHTML=''; if(!officerList || officerList.length===0){ addOfficerRow(''); addOfficerRow(''); addOfficerRow(''); } else { officerList.forEach(n=>addOfficerRow(n)); } }
-        function addOfficerRow(val) { const c=document.getElementById('officers-list'); const d=document.createElement('div'); d.className='officer-row'; d.innerHTML=`<input type="text" class="officer-input" placeholder="Tên cán bộ..." value="${val}"><button class="officer-remove-btn" onclick="this.parentElement.remove()">X</button>`; c.appendChild(d); }
-        function getOfficers() { const inputs=document.querySelectorAll('.officer-input'); return Array.from(inputs).map(i=>i.value.trim()).filter(v=>v!==""); }
-        function distributeMonitors(officers) { 
-            const days=['2','3','4','5','6','7'].filter(day => !dayOffs.includes(day)); // Loại bỏ ngày nghỉ
-            const schedule={}; 
-            if(officers.length===0){ 
-                days.forEach(d=>schedule[d]={c:"",a:""}); 
-                return schedule; 
-            } 
-            let idx=0; 
-            days.forEach(d=>{ 
-                const c=officers[idx%officers.length]; 
-                idx++; 
-                const a=officers[idx%officers.length]; 
-                idx++; 
-                schedule[d]={c:c,a:a}; 
+        function switchTab(t) { 
+            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
+            document.getElementById('tab-'+t).classList.add('active'); 
+            document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
+            document.getElementById('btn-tab-'+t).className="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap"; 
+        }
+        
+        function generateTable() { 
+            const input = document.getElementById('student-list-input').value; 
+            const names = input.split('\n').map(n=>n.trim()).filter(n=>n!=="").sort((a,b)=>{
+                const getLastName = n => n.split(' ').pop();
+                return getLastName(a).localeCompare(getLastName(b), 'vi');
             }); 
-            return schedule; 
+            const tbody = document.getElementById('competition-tbody'); 
+            tbody.innerHTML = names.length ? names.map((n,i)=>`<tr><td class="text-center font-medium text-gray-500">${i+1}</td><td class="pl-4 font-semibold text-gray-700">${n}</td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td></tr>`).join('') : '<tr><td colspan="4" class="text-center py-8 text-gray-400 italic">Chưa có dữ liệu.</td></tr>'; 
         }
-
-        // --- DEBT ---
-        function updateDutyDebtFromViolations() {
-            const rows = document.querySelectorAll('#competition-tbody tr');
-            rows.forEach(tr => { if(tr.children.length > 3) { const name = tr.children[1].innerText.trim(); const violText = tr.children[3].innerText; if(violText) { const missed = violText.match(/không trực|bỏ trực|chưa trực|trốn trực|trực nhật muộn\/bẩn/gi); if(missed) { if(!dutyDebtData[name]) dutyDebtData[name] = 0; const count = (violText.match(/(\d+)\s*(buổi|lần)/i) || [])[1] || 1; dutyDebtData[name] += parseInt(count); } } } });
-            localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+        
+        function updatePoints(el) { 
+            const text = el.innerText; 
+            const cell = el.parentElement; 
+            cell.querySelectorAll('.points-badge').forEach(b=>b.remove()); 
+            const matches = text.match(/\d+/g); 
+            if(matches) { 
+                const total = matches.reduce((a,b)=>a+parseInt(b), 0); 
+                const badge = document.createElement('span'); 
+                badge.className = 'points-badge'; 
+                badge.innerText = total + 'đ'; 
+                cell.appendChild(badge); 
+            } 
         }
-        function getStudentDutyDebt(name) { return dutyDebtData[name] || 0; }
-        function reduceDutyDebt(name, count) { if(dutyDebtData[name]) { dutyDebtData[name] = Math.max(0, dutyDebtData[name] - count); if(dutyDebtData[name]===0) delete dutyDebtData[name]; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); } }
+        
+        function getOfficers() { return document.getElementById('role-officer-list').value.split(',').map(s=>s.trim()).filter(s=>s!==""); }
+        function renderOfficerList() { document.getElementById('role-officer-list').value = officerList.join(', '); }
+        function getStudentDutyDebt(n) { return dutyDebtData[n] || 0; }
+        
+        let dutyDebtData = {}; 
         function addDutyDebtManagementUI() { const tab = document.querySelector('#tab-seating .bg-white.p-2'); if(tab && !document.getElementById('duty-debt-btn')) { const sep = document.createElement('div'); sep.className = 'w-px h-6 bg-gray-300 mx-1'; const btn = document.createElement('button'); btn.id='duty-debt-btn'; btn.className='bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm font-medium transition ml-2'; btn.innerHTML = '<i class="fas fa-calendar-times mr-1"></i> Nợ trực'; btn.onclick = showDutyDebtModal; tab.appendChild(sep); tab.appendChild(btn); } }
         function showDutyDebtModal() { const m = document.createElement('div'); m.className = 'modal-overlay open'; m.innerHTML = `<div class="modal-content" style="width: 500px;"><div class="flex justify-between items-center border-b pb-2 mb-3"><h3 class="text-lg font-bold text-purple-800">Quản lý Nợ</h3><button onclick="this.closest('.modal-overlay').remove()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button></div><div class="mb-4 max-h-96 overflow-y-auto"><table class="w-full border-collapse"><thead><tr class="bg-gray-100"><th class="p-2 border">Học sinh</th><th class="p-2 border">Số buổi</th><th class="p-2 border">Thao tác</th></tr></thead><tbody>${Object.keys(dutyDebtData).map(n=>`<tr><td class="p-2 border">${n}</td><td class="p-2 border text-center">${dutyDebtData[n]}</td><td class="p-2 border text-center"><button onclick="adjustDebt('${n}',-1)" class="bg-red-100 text-red-600 px-2 rounded mr-1">-1</button><button onclick="adjustDebt('${n}',1)" class="bg-green-100 text-green-600 px-2 rounded mr-1">+1</button><button onclick="deleteDebt('${n}')" class="bg-gray-200 px-2 rounded">Xóa</button></td></tr>`).join('')||'<tr><td colspan="3" class="p-4 text-center text-gray-400">Không có dữ liệu</td></tr>'}</tbody></table></div><div class="flex gap-2"><input id="manual-debt-name" class="border p-2 flex-1 rounded" placeholder="Tên HS"><input id="manual-debt-count" type="number" class="border p-2 w-20 rounded" value="1"><button onclick="addManualDebt()" class="bg-purple-600 text-white px-4 rounded">Thêm</button></div></div>`; document.body.appendChild(m); }
         function adjustDebt(n, d) { dutyDebtData[n] = Math.max(0, (dutyDebtData[n]||0)+d); if(dutyDebtData[n]===0) delete dutyDebtData[n]; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); document.querySelector('.modal-overlay').remove(); showDutyDebtModal(); }
         function deleteDebt(n) { delete dutyDebtData[n]; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); document.querySelector('.modal-overlay').remove(); showDutyDebtModal(); }
         function addManualDebt() { const n=document.getElementById('manual-debt-name').value.trim(); const c=parseInt(document.getElementById('manual-debt-count').value)||1; if(n){dutyDebtData[n]=(dutyDebtData[n]||0)+c; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); document.querySelector('.modal-overlay').remove(); showDutyDebtModal();} }
 
-        // --- SCHEDULING WITH DAY OFFS ---
         function getStudentsFromSelection(type) { 
             let list = []; 
             const extract = (data, side) => { 
@@ -691,152 +781,87 @@
         
         function calculateAdvancedDutySchedule() {
             const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
-            if(rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) { 
-                alert("Bảng thi đua trống!"); 
-                return null; 
-            }
+            if(rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) { alert("Bảng thi đua trống!"); return null; }
             
-            let students = rows.map(tr => getStatsFromRow(tr)).filter(s => s.name && !excludedMembers.includes(s.name));
-            let totalClassPoints = students.reduce((sum, s) => sum + s.totalPts, 0);
+            let students = [];
+            rows.forEach(r => {
+                const name = r.children[1].innerText;
+                const achievementText = r.children[2].querySelector('div').innerText;
+                const penaltyText = r.children[3].querySelector('div').innerText;
+                const getPts = t => { const m = t.match(/\d+/g); return m ? m.reduce((a,b)=>a+parseInt(b),0) : 0; };
+                students.push({ name, heavyPts: getPts(penaltyText), lightPts: getPts(achievementText) });
+            });
+
+            const totalClassPoints = students.reduce((a,s)=>a+s.heavyPts, 0);
             const officers = getOfficers().filter(o => !excludedMembers.includes(o));
             const xkStr = document.getElementById('role-xungkich-list').value;
             const xkMembers = xkStr.split(',').map(s=>s.trim()).filter(s=>s!=="" && !excludedMembers.includes(s));
             const xkBusyDays = Array.from(document.querySelectorAll('.xk-day:checked')).map(cb => cb.value);
-            
-            // Filter out days off
             const allDays = ['2', '3', '4', '5', '6', '7'];
             const activeDays = allDays.filter(day => !dayOffs.includes(day));
             
-            if (activeDays.length === 0) {
-                alert("Tất cả các ngày trong tuần đều được chọn là ngày nghỉ! Vui lòng chọn ít nhất một ngày học.");
-                return null;
-            }
+            if (activeDays.length === 0) { alert("Vui lòng chọn ít nhất một ngày học."); return null; }
             
             if (totalClassPoints === 0) return calculateZeroFaultSchedule(officers, activeDays);
-            else if (totalClassPoints < 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid', activeDays);
-            else if (totalClassPoints === 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid', activeDays);
-            else if (totalClassPoints < 36) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty', activeDays);
-            else return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty', activeDays);
+            else return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, totalClassPoints < 12 ? 'hybrid' : 'penalty', activeDays);
         }
 
         function calculateZeroFaultSchedule(officers, activeDays) {
-            let d = getWorkersFromSelection('class'); 
-            let map = d.map; 
-            let max = d.max;
-            
-            if(Object.keys(map).length===0) {
-                d = getWorkersFromSelection('area'); 
-                map = d.map; 
-                max = d.max;
-            }
-            
+            let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
+            if(Object.keys(map).length===0) { d = getWorkersFromSelection('area'); map = d.map; max = d.max; }
             if(Object.keys(map).length===0) { 
                 [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { 
                     if(!map[i]) map[i] = []; 
-                    r.forEach(s => { 
-                        if(s.name && !officers.includes(s.name) && !excludedMembers.includes(s.name)) {
-                            map[i].push(s.name); 
-                        }
-                    }); 
+                    r.forEach(s => { if(s.name && !officers.includes(s.name) && !excludedMembers.includes(s.name)) map[i].push(s.name); }); 
                 })); 
             }
             
             let allPool = Object.values(map).flat();
             let cleaners = allPool.slice(0, 2); 
             let dailyPool = allPool.filter(n => !cleaners.includes(n)); 
-            
             const offSch = distributeMonitors(officers);
-            let schedule = {}; 
-            let curRow = 0;
+            let schedule = {}; let curRow = 0;
             
             const getW = (n, currentDayTasks, currentDay) => { 
-                let w=[]; 
-                let a=0; 
+                let w=[]; let a=0; 
                 while(w.length<n && a<15){ 
                     let p=map[curRow]||[]; 
                     let availableP = p.filter(name => { 
                         let load = 0; 
-                        Object.values(currentDayTasks).forEach(arr => {
-                            if(Array.isArray(arr) && arr.includes(name)) load++;
-                        }); 
+                        Object.values(currentDayTasks).forEach(arr => { if(Array.isArray(arr) && arr.includes(name)) load++; }); 
                         return load < 2 && !cleaners.includes(name) && !excludedMembers.includes(name);
                     }); 
-                    if(availableP.length) { 
-                        let take = Math.min(n-w.length, availableP.length); 
-                        w = w.concat(availableP.slice(0, take)); 
-                    } 
-                    if(w.length<n) curRow=(curRow+1)%(max+1); 
-                    else break; 
-                    a++; 
+                    if(availableP.length) { let take = Math.min(n-w.length, availableP.length); w = w.concat(availableP.slice(0, take)); } 
+                    if(w.length<n) curRow=(curRow+1)%(max+1); else break; a++; 
                 } 
                 return w; 
             };
             
-            // Handle day offs - create empty schedule for off days
             ['2', '3', '4', '5', '6', '7'].forEach(day => {
-                if (dayOffs.includes(day)) {
-                    schedule[day] = { isOff: true };
-                } else if (activeDays.includes(day)) {
-                    const dayIndex = activeDays.indexOf(day);
-                    curRow = dayIndex % (max+1); 
-                    let t = {
-                        sweep:[], trash:[], towel:[], area:[], door:[], chair:[], 
-                        monitorClass:"", monitorArea:"", isOff: false
-                    }; 
-                    
-                    if(day==='2'){ 
-                        let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n) && !excludedMembers.includes(n)); 
-                        t.chair = males.slice(0, 4); 
-                    } 
-                    
-                    let areaW = getW(4, t, day); 
-                    t.area = areaW; 
-                    let sweepW = getW(2, t, day); 
-                    t.sweep = sweepW; 
-                    let towelW = getW(1, t, day); 
-                    t.towel = towelW; 
-                    let trashW = getW(1, t, day); 
-                    t.trash = trashW; 
-                    let doorW = getW(1, t, day); 
-                    t.door = doorW; 
-                    t.monitorClass = offSch[day]?.c || ""; 
-                    t.monitorArea = offSch[day]?.a || ""; 
-                    schedule[day] = t;
+                if (dayOffs.includes(day)) schedule[day] = { isOff: true };
+                else if (activeDays.includes(day)) {
+                    const dayIndex = activeDays.indexOf(day); curRow = dayIndex % (max+1); 
+                    let t = { sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:"", isOff: false }; 
+                    if(day==='2'){ let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n) && !excludedMembers.includes(n)); t.chair = males.slice(0, 4); } 
+                    t.area = getW(4, t, day); t.sweep = getW(2, t, day); t.towel = getW(1, t, day); t.trash = getW(1, t, day); t.door = getW(1, t, day); 
+                    t.monitorClass = offSch[day]?.c || ""; t.monitorArea = offSch[day]?.a || ""; schedule[day] = t;
                 }
             });
-            
             return { schedule, cleaners: cleaners, mode: 'zero' };
         }
 
         function calculatePenaltyLogic(students, officers, xk, xkDays, mode, activeDays) {
             let hQ = [], lQ = [], debtQ = [];
-            
             students.forEach(s => { 
                 if(officers.includes(s.name) || excludedMembers.includes(s.name)) return; 
-                let debt = getStudentDutyDebt(s.name); 
-                for(let i=0; i<debt; i++) debtQ.push(s.name); 
-                for(let i=0; i<s.heavyPts; i++) hQ.push(s.name); 
-                for(let i=0; i<s.lightPts; i++) lQ.push(s.name); 
+                let debt = getStudentDutyDebt(s.name); for(let i=0; i<debt; i++) debtQ.push(s.name); 
+                for(let i=0; i<s.heavyPts; i++) hQ.push(s.name); for(let i=0; i<s.lightPts; i++) lQ.push(s.name); 
             });
+            hQ.sort(() => Math.random() - 0.5); lQ.sort(() => Math.random() - 0.5); debtQ.sort(() => Math.random() - 0.5);
             
-            hQ.sort(() => Math.random() - 0.5); 
-            lQ.sort(() => Math.random() - 0.5); 
-            debtQ.sort(() => Math.random() - 0.5);
-            
-            let areaD = getWorkersFromSelection('area'); 
-            let areaM = areaD.map; 
-            let areaMax = areaD.max;
-            
-            if(!Object.keys(areaM).length) { 
-                areaD=getWorkersFromSelection('class'); 
-                areaM=areaD.map; 
-                areaMax=areaD.max; 
-            }
-            
-            let classD = getWorkersFromSelection('class'); 
-            let classM = classD.map; 
-            let classMax = classD.max;
-            
+            let areaD = getWorkersFromSelection('area'); let areaM = areaD.map; let areaMax = areaD.max;
+            if(!Object.keys(areaM).length) { areaD=getWorkersFromSelection('class'); areaM=areaD.map; areaMax=areaD.max; }
+            let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
             let fullPool = Object.values(classM).flat().filter(n => !excludedMembers.includes(n));
             let cleaners = fullPool.slice(0, 2); 
             let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
@@ -844,665 +869,184 @@
             let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
             const dMap = {'2':doorTeam[0],'3':doorTeam[0],'4':doorTeam[1],'5':doorTeam[1],'6':doorTeam[2],'7':doorTeam[2]};
             const offSch = distributeMonitors(officers);
-            let schedule = {}; 
-            let curAreaR = 0, curClassR = 0; 
-            let assignedCount = {}; 
+            let schedule = {}; let curAreaR = 0, curClassR = 0; let assignedCount = {}; 
             
-            // Handle all days, including off days
             ['2','3','4','5','6','7'].forEach((d, i) => {
-                if (dayOffs.includes(d)) {
-                    schedule[d] = { isOff: true };
-                    return;
-                }
-                
-                if (!activeDays.includes(d)) {
-                    schedule[d] = { isOff: true };
-                    return;
-                }
-                
-                let t = {
-                    sweep:[], trash:[], towel:[], area:[], door:[dMap[d]], chair: d==='2'?chairTeam:[], 
-                    monitorClass:"", monitorArea:"", isOff: false
-                };
-                
-                const canWork = (n) => { 
-                    let load = 0; 
-                    Object.values(t).forEach(arr => { 
-                        if(Array.isArray(arr) && arr.includes(n)) load++; 
-                    }); 
-                    return load < 2 && !cleaners.includes(n) && !excludedMembers.includes(n);
-                };
-                
+                if (dayOffs.includes(d) || !activeDays.includes(d)) { schedule[d] = { isOff: true }; return; }
+                let t = { sweep:[], trash:[], towel:[], area:[], door:[dMap[d]], chair: d==='2'?chairTeam:[], monitorClass:"", monitorArea:"", isOff: false };
+                const canWork = (n) => { let load = 0; Object.values(t).forEach(arr => { if(Array.isArray(arr) && arr.includes(n)) load++; }); return load < 2 && !cleaners.includes(n) && !excludedMembers.includes(n); };
                 const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
                 
                 let k=0;
-                while(k<4 && debtQ.length>0) { 
-                    let idx = debtQ.findIndex(n => canArea(n)); 
-                    if(idx>-1) { 
-                        t.area.push(debtQ[idx]); 
-                        debtQ.splice(idx,1); 
-                        assignedCount[t.area[t.area.length-1]] = (assignedCount[t.area[t.area.length-1]]||0)+1; 
-                        k++; 
-                    } else break; 
-                }
-                
-                while(k<4 && hQ.length > 0) { 
-                    let idx = hQ.findIndex(n => canArea(n)); 
-                    if(idx>-1) { 
-                        t.area.push(hQ[idx]); 
-                        hQ.splice(idx,1); 
-                        k++; 
-                    } else break; 
-                }
-                
+                while(k<4 && debtQ.length>0) { let idx = debtQ.findIndex(n => canArea(n)); if(idx>-1) { t.area.push(debtQ[idx]); debtQ.splice(idx,1); assignedCount[t.area[t.area.length-1]] = (assignedCount[t.area[t.area.length-1]]||0)+1; k++; } else break; }
+                while(k<4 && hQ.length > 0) { let idx = hQ.findIndex(n => canArea(n)); if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break; }
                 if(mode !== 'penalty' && k<4) { 
-                    let tries = 0; 
-                    curAreaR = i % (areaMax+1); 
+                    let tries = 0; curAreaR = i % (areaMax+1); 
                     while(k<4 && tries<10) { 
                         let pool = areaM[curAreaR]||[]; 
                         let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t.area.includes(n) && !excludedMembers.includes(n)); 
-                        let take = Math.min(4-k, candidates.length); 
-                        t.area = t.area.concat(candidates.slice(0, take)); 
-                        k += take; 
-                        if(k<4) curAreaR = (curAreaR+1)%(areaMax+1); 
-                        tries++; 
+                        let take = Math.min(4-k, candidates.length); t.area = t.area.concat(candidates.slice(0, take)); k += take; 
+                        if(k<4) curAreaR = (curAreaR+1)%(areaMax+1); tries++; 
                     } 
                 }
                 
                 const fillClassTask = (type, count, queue) => {
                     let c = 0;
-                    while(c < count && debtQ.length>0) { 
-                        let idx = debtQ.findIndex(n => canWork(n)); 
-                        if(idx>-1) { 
-                            t[type].push(debtQ[idx]); 
-                            debtQ.splice(idx,1); 
-                            assignedCount[t[type][t[type].length-1]] = (assignedCount[t[type][t[type].length-1]]||0)+1; 
-                            c++; 
-                        } else break; 
-                    }
-                    
-                    while(c < count && queue.length > 0) { 
-                        let idx = queue.findIndex(n => canWork(n)); 
-                        if(idx>-1) { 
-                            t[type].push(queue[idx]); 
-                            queue.splice(idx,1); 
-                            c++; 
-                        } else break; 
-                    }
-                    
-                    if(c < count) { 
-                        curClassR = i % (classMax+1); 
-                        let tries = 0; 
-                        while(c < count && tries < 10) { 
-                            let pool = classM[curClassR]||[]; 
-                            let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t[type].includes(n) && !excludedMembers.includes(n)); 
-                            let take = Math.min(count-c, candidates.length); 
-                            t[type] = t[type].concat(candidates.slice(0, take)); 
-                            c += take; 
-                            if(c < count) curClassR = (curClassR+1)%(classMax+1); 
-                            tries++; 
-                        } 
+                    while(c < count && debtQ.length>0) { let idx = debtQ.findIndex(n => canWork(n)); if(idx>-1) { t[type].push(debtQ[idx]); debtQ.splice(idx,1); assignedCount[t[type][t[type].length-1]] = (assignedCount[t[type][t[type].length-1]]||0)+1; c++; } else break; }
+                    while(c < count && queue.length > 0) { let idx = queue.findIndex(n => canWork(n)); if(idx>-1) { t[type].push(queue[idx]); queue.splice(idx,1); c++; } else break; }
+                    if(mode !== 'penalty' && c < count) {
+                        let tries = 0; curClassR = i % (classMax+1);
+                        while(c < count && tries < 10) {
+                            let pool = classM[curClassR]||[];
+                            let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t[type].includes(n) && !excludedMembers.includes(n));
+                            let take = Math.min(count-c, candidates.length); t[type] = t[type].concat(candidates.slice(0, take)); c += take;
+                            if(c < count) curClassR = (curClassR+1)%(classMax+1); tries++;
+                        }
                     }
                 };
-                
-                fillClassTask('trash', 1, lQ); 
-                fillClassTask('sweep', 2, lQ); 
-                fillClassTask('towel', 1, hQ);
-                
-                t.monitorClass = offSch[d]?.c || ""; 
-                t.monitorArea = offSch[d]?.a || ""; 
-                schedule[d] = t;
+                fillClassTask('sweep', 2, hQ); fillClassTask('trash', 1, lQ); fillClassTask('towel', 1, lQ);
+                t.monitorClass = offSch[d]?.c || ""; t.monitorArea = offSch[d]?.a || ""; schedule[d] = t;
             });
-            
-            Object.keys(assignedCount).forEach(n => reduceDutyDebt(n, assignedCount[n]));
-            return { schedule, cleaners: cleaners, mode: mode };
+            return { schedule, cleaners, mode };
         }
 
-        // --- RENDER & EXPORT ---
+        function distributeMonitors(officers) {
+            let sch = {}; const days = ['2','3','4','5','6','7'];
+            if(officers.length === 0) return sch;
+            let cIdx = 0, aIdx = officers.length > 1 ? 1 : 0;
+            days.forEach(d => {
+                sch[d] = { c: officers[cIdx], a: officers[aIdx] };
+                cIdx = (cIdx + 1) % officers.length; aIdx = (aIdx + 1) % officers.length;
+            });
+            return sch;
+        }
+
         let currentSchedule = null;
-        
         function renderDutyTable(data) {
-            if (!data) return;
-            currentSchedule = data;
-            
-            const tbody = document.getElementById('duty-tbody'); 
-            tbody.innerHTML = '';
-            
-            const { schedule, cleaners } = data;
-            const days = ['2', '3', '4', '5', '6', '7'];
-            
-            days.forEach(day => {
+            if(!data) return; currentSchedule = data;
+            const tbody = document.getElementById('duty-tbody'); tbody.innerHTML = '';
+            const days = ['2','3','4','5','6','7'];
+            days.forEach(d => {
+                const t = data.schedule[d];
+                if(t.isOff && !dayOffMode) return;
                 const tr = document.createElement('tr');
-                const t = schedule[day];
-                
-                // Check if day is off
-                const isDayOff = t?.isOff || false;
-                
-                if (isDayOff && dayOffMode) {
-                    tr.className = 'day-off';
-                    tr.innerHTML = `
-                        <td class="font-bold bg-gray-100 text-gray-500 italic">${day} (Nghỉ)</td>
-                        <td colspan="8" class="text-center italic text-gray-500">Không học</td>
-                    `;
-                } else if (isDayOff && !dayOffMode) {
-                    // Don't show off days when dayOffMode is false
-                    return;
-                } else {
-                    tr.innerHTML += `<td class="font-bold bg-gray-50">${day}</td>`;
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t?.sweep||[]).join(', ')}</div></td>`;
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t?.trash||[]).join(', ')}</div></td>`;
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t?.towel||[]).join(', ')}</div></td>`;
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t?.area||[]).join(', ')}</div></td>`;
-                    
-                    // Handle door schedule (rowspan for even days)
-                    if (['2', '4', '6'].includes(day)) {
-                        tr.innerHTML += `<td rowspan="2"><div class="editable-cell" contenteditable="true">${(t?.door||[])[0]||""}</div></td>`;
-                    }
-                    
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t?.monitorClass||""}</div></td>`;
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t?.monitorArea||""}</div></td>`;
-                    tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t?.chair||[]).join(', ')}</div></td>`;
-                }
-                
+                if(t.isOff) tr.className = 'day-off';
+                const debtNames = Object.keys(dutyDebtData).join(', ');
+                tr.innerHTML = `<td class="font-bold text-blue-800">Thứ ${d}</td>
+                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.sweep.join(', ')}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.trash.join(', ')}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.towel.join(', ')}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.area.join(', ')}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.door.join(', ')}</div></td>
+                    <td class="font-semibold text-blue-700"><div class="editable-cell" contenteditable="true">${t.isOff?'':t.monitorClass}</div></td>
+                    <td class="font-semibold text-orange-700"><div class="editable-cell" contenteditable="true">${t.isOff?'':t.monitorArea}</div></td>
+                    <td class="text-red-600 font-medium text-xs"><div class="editable-cell" contenteditable="true">${debtNames}</div></td>`;
                 tbody.appendChild(tr);
             });
-            
-            const footerSpan = document.getElementById('duty-footer-class-list');
-            footerSpan.innerText = cleaners.join(', ');
-        }
-        
-        function getStatsFromRow(tr) { 
-            const name = tr.children[1].innerText.trim(); 
-            const achText = tr.children[2].innerText.trim(); 
-            const violText = tr.children[3].innerText.trim(); 
-            const goodMatches = achText.match(GOOD_MARK_PATTERN); 
-            const goodCount = goodMatches ? goodMatches.length : 0; 
-            const faults = violText.split(/,|\n/).map(s=>s.trim()).filter(s=>s); 
-            let totalHeavyPoints = 0; 
-            let totalLightPoints = 0; 
-            faults.forEach(f => { 
-                const isHeavy = HEAVY_FAULT_PATTERNS.some(p => p.test(f)); 
-                if(isHeavy) totalHeavyPoints += 2; 
-                else { 
-                    const isLight = LIGHT_FAULT_PATTERNS.some(p => p.test(f)); 
-                    if(isLight) totalLightPoints += 1; 
-                } 
-            }); 
-            let reduction = Math.floor(goodCount / 2) * 2; 
-            if (reduction > 0) { 
-                if (totalHeavyPoints >= reduction) { 
-                    totalHeavyPoints -= reduction; 
-                    reduction = 0; 
-                } else { 
-                    reduction -= totalHeavyPoints; 
-                    totalHeavyPoints = 0; 
-                    if (totalLightPoints >= reduction) totalLightPoints -= reduction; 
-                    else totalLightPoints = 0; 
-                } 
-            } 
-            return { name, heavyPts: totalHeavyPoints, lightPts: totalLightPoints, totalPts: totalHeavyPoints + totalLightPoints }; 
+            document.getElementById('cleaners-list').innerText = data.cleaners.join(', ');
         }
 
-        // --- MODAL & INPUT ---
-        function openInputModal(cell, type) { 
-            currentCell = cell; 
-            currentModalType = type; 
-            document.getElementById('modal-title').innerText = type === 'ach' ? 'Nhập Thành Tích' : 'Nhập Vi Phạm'; 
-            const container = document.getElementById('modal-content-area'); 
-            container.innerHTML = ''; 
-            
-            if (type === 'ach') { 
-                container.innerHTML = `
-                    <div class="tag-section-title">Điểm số</div>
-                    <div class="flex gap-2 flex-wrap mb-3">
-                        ${[10,9,8,7,6,5,4,3,2,1,0].map(n => `<span class="tag-btn" onclick="addToInput('${n}đ')">${n}</span>`).join('')}
-                    </div>
-                    <div class="tag-section-title">Môn học</div>
-                    <div class="flex gap-2 flex-wrap">
-                        ${['Toán','Văn','Anh','Lý','Hóa','Sinh','Sử','Địa','GDCD','Tin','CN','TD'].map(s => `<span class="tag-btn" onclick="addToInput('${s}')">${s}</span>`).join('')}
-                    </div>
-                    <div class="mt-3">
-                        <input type="text" id="manual-input" class="w-full p-2 border rounded" placeholder="Hoặc nhập tự do...">
-                    </div>
-                `; 
-            } else { 
-                container.innerHTML = `
-                    <div class="overflow-y-auto max-h-[300px] pr-2">
-                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">1. Vắng & Muộn (Lỗi Nặng - 2đ)</div>
-                        <div class="flex gap-2 flex-wrap mb-4">
-                            ${['Vắng 15p đầu giờ (kp)', 'Vắng cả buổi (kp)', 'Vắng 1 tiết (kp)', 'Đi học muộn (kp)', 'Nghỉ học (kp)', 'Bỏ tiết', 'Không thực hiện 15p']
-                                .map(text => `<span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('${text}')">${text}</span>`).join('')}
-                        </div>
-                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">2. Sổ Đầu Bài (SĐB - Lỗi Nặng - 2đ)</div>
-                        <div class="flex gap-2 flex-wrap mb-4">
-                            ${['Điểm kém <5 (SĐB)', 'Mất trật tự (SĐB)', 'Ngủ trong giờ (SĐB)', 'Thiếu bài tập (SĐB)', 'Lỗi VP khác (SĐB)']
-                                .map(text => `<span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('${text}')">${text}</span>`).join('')}
-                        </div>
-                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">3. Sổ Cờ Đỏ (SCĐ - Lỗi Nặng - 2đ)</div>
-                        <div class="flex gap-2 flex-wrap mb-4">
-                            ${['Không đồng phục (SCĐ)', 'Không đi giày (SCĐ)', 'Vệ sinh bẩn (SCĐ)', 'Đi muộn (SCĐ)']
-                                .map(text => `<span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('${text}')">${text}</span>`).join('')}
-                        </div>
-                        <div class="tag-section-title text-red-600 border-b pb-1 mb-2">4. Kỷ Luật Chung (Lỗi Nặng - 2đ)</div>
-                        <div class="flex gap-2 flex-wrap mb-4">
-                            ${['Đánh nhau', 'Quay cóp', 'Hút thuốc', 'Vi phạm ATGT (CA)', 'Vô lễ', 'Phá hoại tài sản']
-                                .map(text => `<span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('${text}')">${text}</span>`).join('')}
-                        </div>
-                        <div class="tag-section-title text-orange-500 border-b pb-1 mb-2">5. Lỗi Nhẹ (1đ)</div>
-                        <div class="flex gap-2 flex-wrap">
-                            ${['Mất trật tự (ST)', 'Chưa vệ sinh (ST)', 'Không chép bài', 'Trực nhật muộn/bẩn (ST)', 'Sử dụng ĐT trong giờ', 'Nói tục', 'Vứt rác bừa bãi', 'Viết vẽ bậy']
-                                .map(text => `<span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('${text}')">${text}</span>`).join('')}
-                        </div>
-                        <div class="mt-2 text-sm text-gray-600 font-bold">Lỗi: GV Nhắc Nhở (Chọn Môn):</div>
-                        <div class="flex gap-1 flex-wrap mt-1">
-                            ${['Toán','Văn','Anh','Lý','Hóa','Sinh','Sử','Địa','GDCD','Tin','CN','TD']
-                                .map(s => `<span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('GV nhắc (${s})')">${s}</span>`).join('')}
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <input type="text" id="manual-input" class="w-full p-2 border rounded" placeholder="Hoặc nhập tự do...">
-                    </div>
-                `; 
-            } 
-            
-            selectModalTime('day', 'T2'); 
-            selectModalTime('session', 'Sáng'); 
-            document.getElementById('input-modal').classList.add('open'); 
-        }
-        
-        function closeInputModal() { document.getElementById('input-modal').classList.remove('open'); }
-        function selectModalTime(type, val) { modalState[type] = val; const parent = type === 'day' ? document.getElementById('modal-days') : document.getElementById('modal-days').nextElementSibling; Array.from(parent.children).forEach(btn => { if(btn.innerText === val) btn.classList.add('selected'); else btn.classList.remove('selected'); }); }
-        function addToInput(val) { const input = document.getElementById('manual-input'); let current = input.value; if(currentModalType === 'ach') { if (val.includes('đ')) input.value = val + " " + current; else input.value = current + " " + val; } else { if(current) input.value = current + ", " + val; else input.value = val; } }
-        function saveInputModal() { const val = document.getElementById('manual-input').value.trim(); if(val) { const prefix = `[${modalState.day}-${modalState.session}]`; const finalStr = `${prefix} ${val}`; if (currentCell.innerText.trim()) { currentCell.innerText += ", " + finalStr; } else { currentCell.innerText = finalStr; } currentCell.dispatchEvent(new Event('blur')); } closeInputModal(); }
-
-        // --- BẢNG THI ĐUA ---
-        function generateTable() {
-            const input = document.getElementById('student-list-input').value.trim();
-            let names = input.split('\n').map(n => n.trim()).filter(n => n !== '');
-            
-            // Nếu không có tên, sử dụng tên từ sơ đồ
-            if (names.length === 0) {
-                const allNames = [];
-                leftSideData.forEach(row => row.forEach(seat => { if(seat.name && seat.name.trim()) allNames.push(seat.name.trim()); }));
-                rightSideData.forEach(row => row.forEach(seat => { if(seat.name && seat.name.trim()) allNames.push(seat.name.trim()); }));
-                names = [...new Set(allNames)];
-            }
-            
-            names = sortVietnameseNames(names);
-            const tbody = document.getElementById('competition-tbody');
-            tbody.innerHTML = '';
-            
-            names.forEach((name, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="text-center font-bold bg-gray-50">${index + 1}</td>
-                    <td class="pl-4 font-medium">${name}</td>
-                    <td><div class="editable-cell" contenteditable="true" onclick="openInputModal(this, 'ach')" onblur="updateCompetitionCell(this)"></div></td>
-                    <td><div class="editable-cell" contenteditable="true" onclick="openInputModal(this, 'fault')" onblur="updateCompetitionCell(this)"></div></td>
-                `;
-                tbody.appendChild(tr);
-            });
-            
-            // Cập nhật dutyDebtData từ vi phạm
-            updateDutyDebtFromViolations();
-        }
-        
-        function updateCompetitionCell(cell) {
-            const text = cell.innerText.trim();
-            const expanded = expandText(text);
-            if (expanded !== text) {
-                cell.innerText = expanded;
-            }
-            
-            // Tính điểm và hiển thị badge nếu có điểm
-            const points = calculateFaultPoints(expanded);
-            if (points > 0) {
-                // Xóa badge cũ nếu có
-                const oldBadge = cell.querySelector('.points-badge');
-                if (oldBadge) oldBadge.remove();
-                
-                const badge = document.createElement('span');
-                badge.className = 'points-badge';
-                badge.innerText = `${points}đ`;
-                cell.appendChild(badge);
-            } else {
-                // Xóa badge nếu không có điểm
-                const oldBadge = cell.querySelector('.points-badge');
-                if (oldBadge) oldBadge.remove();
-            }
-        }
-
-        function switchTab(id) { 
-            document.querySelectorAll('button[id^="btn-tab-"]').forEach(b=>{
-                b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap";
-            }); 
-            document.getElementById(`btn-tab-${id}`).className="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap"; 
-            document.querySelectorAll('.tab-content').forEach(c=>{
-                c.classList.remove('active');
-                setTimeout(()=>{
-                    if(!c.classList.contains('active')) c.style.display='none';
-                },300);
-            }); 
-            const t=document.getElementById(`tab-${id}`); 
-            t.style.display='block'; 
-            requestAnimationFrame(()=>t.classList.add('active')); 
-        }
-        
-        function downloadImage(eid, pre) { 
-            if(swapSource) cancelSwapMode(); 
-            const el=document.getElementById(eid);
-            html2canvas(el,{
-                scale:2,
-                backgroundColor:null,
-                useCORS:true,
-                logging: false
-            }).then(c=>{
-                const l=document.createElement('a'); 
+        function downloadImage(id, pre) {
+            const area = document.getElementById(id);
+            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+                const l = document.createElement('a');
+                const generateRandomString = n => Math.random().toString(36).substring(2, 2+n);
                 l.download=`${pre}_${new Date().toISOString().slice(0,10)}_${generateRandomString(6)}.png`; 
-                l.href=c.toDataURL("image/png"); 
-                l.click();
+                l.href=c.toDataURL("image/png"); l.click();
             }); 
         }
         
         function saveData() { 
             const data = { 
                 seating: { left: leftSideData, right: rightSideData }, 
-                roles: { 
-                    officerList: getOfficers(), 
-                    xkList: document.getElementById('role-xungkich-list').value, 
-                    xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) 
-                }, 
+                roles: { officerList: getOfficers(), xkList: document.getElementById('role-xungkich-list').value, xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) }, 
                 studentList: document.getElementById('student-list-input').value, 
-                genderMap: genderMap, 
-                dutyDebt: dutyDebtData,
-                dutySettings: {
-                    dayOffs,
-                    excludedMembers,
-                    morningOff,
-                    afternoonOff
-                },
-                titles: {
-                    classroomTitle: document.getElementById('classroom-title').value,
-                    schoolYear: document.getElementById('school-year').value
-                }
+                genderMap: genderMap, dutyDebt: dutyDebtData,
+                dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
+                titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value },
+                fixedMembers: fixedMembers
             }; 
             localStorage.setItem('classApp_v24.1', JSON.stringify(data)); 
             localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); 
             saveDutySettings();
-            
-            const t=document.getElementById('toast'); 
-            t.className="show"; 
-            setTimeout(()=>{
-                t.className=t.className.replace("show","");
-            },3000); 
+            const t=document.getElementById('toast'); t.className="show"; setTimeout(()=>{ t.className=t.className.replace("show",""); },3000); 
         }
         
         function loadData() { 
             const raw = localStorage.getItem('classApp_v24.1') || localStorage.getItem('classApp_v24') || localStorage.getItem('classApp_v23');
-            if(!raw) { 
-                initData(); 
-                return; 
-            } 
+            if(!raw) { initData(); return; } 
             const data = JSON.parse(raw); 
             leftSideData = data.seating?.left || createDefaultArray(ROW_COUNT); 
             rightSideData = data.seating?.right || createDefaultArray(ROW_COUNT); 
+            fixedMembers = data.fixedMembers || [];
             renderAll(); 
-            
-            if(data.roles) { 
-                officerList = data.roles.officerList || []; 
-                renderOfficerList(); 
-                document.getElementById('role-xungkich-list').value = data.roles.xkList || ""; 
-                if(data.roles.xkBusy) {
-                    document.querySelectorAll('.xk-day').forEach(c => { 
-                        c.checked = data.roles.xkBusy.includes(c.value); 
-                    }); 
-                }
-            } 
-            
-            genderMap = data.genderMap || {}; 
-            dutyDebtData = data.dutyDebt || JSON.parse(localStorage.getItem(DUTY_DEBT_KEY) || '{}'); 
-            
-            // Load duty settings
-            if (data.dutySettings) {
-                dayOffs = data.dutySettings.dayOffs || [];
-                excludedMembers = data.dutySettings.excludedMembers || [];
-                morningOff = data.dutySettings.morningOff || false;
-                afternoonOff = data.dutySettings.afternoonOff || false;
-            }
-            
-            if(data.studentList) { 
-                document.getElementById('student-list-input').value = data.studentList; 
-                generateTable(); 
-            } 
-
-            if(data.titles) {
-                if(data.titles.classroomTitle) document.getElementById('classroom-title').value = data.titles.classroomTitle;
-                if(data.titles.schoolYear) document.getElementById('school-year').value = data.titles.schoolYear;
-            }
+            if(data.roles) { officerList = data.roles.officerList || []; renderOfficerList(); document.getElementById('role-xungkich-list').value = data.roles.xkList || ""; if(data.roles.xkBusy) { document.querySelectorAll('.xk-day').forEach(c => { c.checked = data.roles.xkBusy.includes(c.value); }); } } 
+            genderMap = data.genderMap || {}; dutyDebtData = data.dutyDebt || JSON.parse(localStorage.getItem(DUTY_DEBT_KEY) || '{}'); 
+            if (data.dutySettings) { dayOffs = data.dutySettings.dayOffs || []; excludedMembers = data.dutySettings.excludedMembers || []; morningOff = data.dutySettings.morningOff || false; afternoonOff = data.dutySettings.afternoonOff || false; }
+            if(data.studentList) { document.getElementById('student-list-input').value = data.studentList; generateTable(); } 
+            if(data.titles) { if(data.titles.classroomTitle) document.getElementById('classroom-title').value = data.titles.classroomTitle; if(data.titles.schoolYear) document.getElementById('school-year').value = data.titles.schoolYear; }
         }
         
         function loadScenario(type) { 
-            resetLayout(); 
-            let pool=[...SAMPLE_NAMES].sort(()=>Math.random()-0.5); 
-            let c=0; 
+            resetLayout(); let pool=[...SAMPLE_NAMES].sort(()=>Math.random()-0.5); let c=0; 
             leftSideData.forEach(r=>r.forEach(s=>{if(c<pool.length)s.name=pool[c++]})); 
             rightSideData.forEach(r=>r.forEach(s=>{if(c<pool.length)s.name=pool[c++]})); 
-            renderAll(); 
-            
-            officerList = ["Nguyễn Văn An", "Trần Thị Bích", "Lê Văn Cường"]; 
-            renderOfficerList(); 
-            
-            // Add some excluded members for testing
-            excludedMembers = ["Nguyễn Văn A", "Trần Thị B"];
-            dayOffs = ["7"]; // Sunday off
-            
-            let list=pool.slice(0,30); 
-            document.getElementById('student-list-input').value=list.join('\n'); 
-            generateTable(); 
-            
+            renderAll(); officerList = ["Nguyễn Văn An", "Trần Thị Bích", "Lê Văn Cường"]; renderOfficerList(); 
+            excludedMembers = ["Nguyễn Văn A", "Trần Thị B"]; dayOffs = ["7"]; 
+            let list=pool.slice(0,30); document.getElementById('student-list-input').value=list.join('\n'); generateTable(); 
             setTimeout(()=>{ 
                 const rows=Array.from(document.querySelectorAll('#competition-tbody tr')); 
-                if(type==='zero'){
-                    // Không có lỗi
-                } else if(type==='offset'){
-                    rows[0].children[2].querySelector('div').innerText="2 điểm 10 (T2)";
-                    rows[0].children[3].querySelector('div').innerText="Vắng kp (T3)";
-                } else if(type==='low'){
-                    for(let i=0;i<5;i++) rows[i].children[3].querySelector('div').innerText="mtt (T2)";
-                } else if(type==='medium'){
-                    for(let i=0;i<6;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T3)";
-                } else if(type==='high'){
-                    for(let i=0;i<10;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T4)";
-                } else if(type==='full'){
-                    for(let i=0;i<20;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T5)";
-                } 
-                
-                rows.forEach(r=>{
-                    if(r.children[2]?.querySelector('div')) {
-                        r.children[2].querySelector('div').dispatchEvent(new Event('blur'));
-                    }
-                    if(r.children[3]?.querySelector('div')) {
-                        r.children[3].querySelector('div').dispatchEvent(new Event('blur'));
-                    }
-                }); 
-                
+                if(type==='offset'){ rows[0].children[2].querySelector('div').innerText="2 điểm 10 (T2)"; rows[0].children[3].querySelector('div').innerText="Vắng kp (T3)"; } 
+                else if(type==='low'){ for(let i=0;i<5;i++) rows[i].children[3].querySelector('div').innerText="mtt (T2)"; } 
+                else if(type==='medium'){ for(let i=0;i<6;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T3)"; } 
+                else if(type==='high'){ for(let i=0;i<10;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T4)"; } 
+                else if(type==='full'){ for(let i=0;i<20;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T5)"; } 
+                rows.forEach(r=>{ if(r.children[2]?.querySelector('div')) r.children[2].querySelector('div').dispatchEvent(new Event('blur')); if(r.children[3]?.querySelector('div')) r.children[3].querySelector('div').dispatchEvent(new Event('blur')); }); 
                 alert("Đã nạp dữ liệu mẫu: "+type.toUpperCase()); 
             },500); 
         }
 
         function initData(){ 
-            if(localStorage.getItem('classApp_v24.1') || localStorage.getItem('classApp_v24') || localStorage.getItem('classApp_v23')) { 
-                loadData(); 
-            } else { 
-                leftSideData=createDefaultArray(ROW_COUNT); 
-                rightSideData=createDefaultArray(ROW_COUNT); 
-                renderAll(); 
-                renderOfficerList(); 
-            } 
+            if(localStorage.getItem('classApp_v24.1') || localStorage.getItem('classApp_v24') || localStorage.getItem('classApp_v23')) loadData(); 
+            else { leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); renderAll(); renderOfficerList(); } 
             setTimeout(addDutyDebtManagementUI, 500); 
         }
         
-        document.addEventListener('click', (e)=>{
-            if(swapSource && !e.target.closest('.desk-input')) {
-                cancelSwapMode();
-            }
-        });
+        function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:crypto.randomUUID(),name:"",width:1,merged:false});arr.push(r);}return arr;}
+
+        document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
         
         // --- SHARE LOGIC ---
         function openShareModal() {
-            const data = { 
-                seating: { left: leftSideData, right: rightSideData }, 
-                roles: { 
-                    officerList: getOfficers(), 
-                    xkList: document.getElementById('role-xungkich-list').value, 
-                    xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) 
-                }, 
-                studentList: document.getElementById('student-list-input').value, 
-                genderMap: genderMap, 
-                dutyDebt: dutyDebtData,
-                dutySettings: {
-                    dayOffs,
-                    excludedMembers,
-                    morningOff,
-                    afternoonOff
-                },
-                titles: {
-                    classroomTitle: document.getElementById('classroom-title').value,
-                    schoolYear: document.getElementById('school-year').value
-                }
-            };
-            const jsonStr = JSON.stringify(data);
-            const compressed = LZString.compressToEncodedURIComponent(jsonStr);
-            document.getElementById('share-code-input').value = compressed;
-            document.getElementById('share-modal').classList.add('open');
+            const data = { seating: { left: leftSideData, right: rightSideData }, roles: { officerList: getOfficers(), xkList: document.getElementById('role-xungkich-list').value, xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) }, studentList: document.getElementById('student-list-input').value, genderMap: genderMap, dutyDebt: dutyDebtData, dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }, titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value }, fixedMembers: fixedMembers };
+            const jsonStr = JSON.stringify(data); const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+            document.getElementById('share-code-input').value = compressed; document.getElementById('share-modal').classList.add('open');
         }
-
-        function closeShareModal() {
-            document.getElementById('share-modal').classList.remove('open');
-        }
-
-        function copyShareCode() {
-            const input = document.getElementById('share-code-input');
-            input.select();
-            document.execCommand('copy');
-            alert('Đã sao chép mã chia sẻ vào bộ nhớ tạm!');
-        }
-
+        function closeShareModal() { document.getElementById('share-modal').classList.remove('open'); }
+        function copyShareCode() { const input = document.getElementById('share-code-input'); input.select(); document.execCommand('copy'); alert('Đã sao chép mã chia sẻ!'); }
         function importFromCode() {
-            const code = document.getElementById('import-code-input').value.trim();
-            if (!code) return alert('Vui lòng dán mã chia sẻ!');
-            
-            try {
-                const decompressed = LZString.decompressFromEncodedURIComponent(code);
-                if (!decompressed) throw new Error('Mã không hợp lệ');
-                const data = JSON.parse(decompressed);
-                if (confirm('Bạn có chắc chắn muốn nhập dữ liệu này? Dữ liệu hiện tại sẽ bị ghi đè.')) {
-                    applyImportedData(data);
-                    alert('Đã nhập dữ liệu thành công!');
-                    closeShareModal();
-                }
-            } catch (e) {
-                alert('Lỗi: Mã chia sẻ không hợp lệ hoặc đã bị hỏng.');
-            }
+            const code = document.getElementById('import-code-input').value.trim(); if (!code) return alert('Vui lòng dán mã!');
+            try { const decompressed = LZString.decompressFromEncodedURIComponent(code); if (!decompressed) throw new Error('Mã không hợp lệ'); const data = JSON.parse(decompressed); if (confirm('Nhập dữ liệu mới?')) { applyImportedData(data); alert('Thành công!'); closeShareModal(); } } catch (e) { alert('Lỗi mã chia sẻ.'); }
         }
-
         function exportToFile() {
-            const data = { 
-                seating: { left: leftSideData, right: rightSideData }, 
-                roles: { 
-                    officerList: getOfficers(), 
-                    xkList: document.getElementById('role-xungkich-list').value, 
-                    xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) 
-                }, 
-                studentList: document.getElementById('student-list-input').value, 
-                genderMap: genderMap, 
-                dutyDebt: dutyDebtData,
-                dutySettings: {
-                    dayOffs,
-                    excludedMembers,
-                    morningOff,
-                    afternoonOff
-                },
-                titles: {
-                    classroomTitle: document.getElementById('classroom-title').value,
-                    schoolYear: document.getElementById('school-year').value
-                }
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `LopHoc_${new Date().toISOString().slice(0,10)}.cap`;
-            a.click();
-            URL.revokeObjectURL(url);
+            const data = { seating: { left: leftSideData, right: rightSideData }, roles: { officerList: getOfficers(), xkList: document.getElementById('role-xungkich-list').value, xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) }, studentList: document.getElementById('student-list-input').value, genderMap: genderMap, dutyDebt: dutyDebtData, dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }, titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value }, fixedMembers: fixedMembers };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `LopHoc_${new Date().toISOString().slice(0,10)}.cap`; a.click(); URL.revokeObjectURL(url);
         }
-
         function importFromFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (confirm('Bạn có chắc chắn muốn nhập dữ liệu từ file này? Dữ liệu hiện tại sẽ bị ghi đè.')) {
-                        applyImportedData(data);
-                        alert('Đã nhập dữ liệu thành công!');
-                        closeShareModal();
-                    }
-                } catch (err) {
-                    alert('Lỗi: File không hợp lệ.');
-                }
-            };
+            const file = input.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (confirm('Nhập dữ liệu từ file?')) { applyImportedData(data); alert('Thành công!'); closeShareModal(); } } catch (err) { alert('File không hợp lệ.'); } };
             reader.readAsText(file);
         }
-
         function applyImportedData(data) {
-            // Ghi đè dữ liệu
-            leftSideData = data.seating?.left || createDefaultArray(ROW_COUNT);
-            rightSideData = data.seating?.right || createDefaultArray(ROW_COUNT);
-            genderMap = data.genderMap || {};
-            dutyDebtData = data.dutyDebt || {};
-            
-            if (data.roles) {
-                officerList = data.roles.officerList || [];
-                document.getElementById('role-xungkich-list').value = data.roles.xkList || "";
-                if (data.roles.xkBusy) {
-                    document.querySelectorAll('.xk-day').forEach(c => { 
-                        c.checked = data.roles.xkBusy.includes(c.value); 
-                    });
-                }
-            }
-            
-            if (data.dutySettings) {
-                dayOffs = data.dutySettings.dayOffs || [];
-                excludedMembers = data.dutySettings.excludedMembers || [];
-                morningOff = data.dutySettings.morningOff || false;
-                afternoonOff = data.dutySettings.afternoonOff || false;
-            }
-            
-            if (data.studentList) {
-                document.getElementById('student-list-input').value = data.studentList;
-            }
-
-            if (data.titles) {
-                if (data.titles.classroomTitle) document.getElementById('classroom-title').value = data.titles.classroomTitle;
-                if (data.titles.schoolYear) document.getElementById('school-year').value = data.titles.schoolYear;
-            }
-            
-            // Lưu vào localStorage
-            localStorage.setItem('classApp_v24.1', JSON.stringify(data));
-            localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
-            
-            // Cập nhật giao diện
-            renderAll();
-            renderOfficerList();
-            generateTable();
+            leftSideData = data.seating?.left || createDefaultArray(ROW_COUNT); rightSideData = data.seating?.right || createDefaultArray(ROW_COUNT); genderMap = data.genderMap || {}; dutyDebtData = data.dutyDebt || {}; fixedMembers = data.fixedMembers || [];
+            if (data.roles) { officerList = data.roles.officerList || []; document.getElementById('role-officer-list').value = officerList.join(', '); document.getElementById('role-xungkich-list').value = data.roles.xkList || ""; if (data.roles.xkBusy) { document.querySelectorAll('.xk-day').forEach(c => { c.checked = data.roles.xkBusy.includes(c.value); }); } }
+            if (data.dutySettings) { dayOffs = data.dutySettings.dayOffs || []; excludedMembers = data.dutySettings.excludedMembers || []; morningOff = data.dutySettings.morningOff || false; afternoonOff = data.dutySettings.afternoonOff || false; }
+            if (data.studentList) document.getElementById('student-list-input').value = data.studentList;
+            if (data.titles) { if (data.titles.classroomTitle) document.getElementById('classroom-title').value = data.titles.classroomTitle; if (data.titles.schoolYear) document.getElementById('school-year').value = data.titles.schoolYear; }
+            localStorage.setItem('classApp_v24.1', JSON.stringify(data)); localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); renderAll(); renderOfficerList(); generateTable();
         }
 
-        // Khởi động
-        initData(); 
-        switchTab('seating');
+        initData(); switchTab('seating');
     </script>
 </body>
 </html>
