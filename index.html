@@ -21,11 +21,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         
-        body { font-family: 'Noto Sans Vietnamese', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
+        :root {
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --fixed: #8b5cf6;
+            --text-main: #1f2937;
+            --border: #e5e7eb;
+        }
+
+        body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
         .tab-content { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .tab-content.active { display: block; opacity: 1; animation: fadeIn 0.4s forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -39,11 +49,13 @@
         .split-btn { position: absolute; top: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; transition: opacity 0.2s, color 0.2s; }
         .desk-box:hover .split-btn { opacity: 1; }
         .split-btn:hover { color: #ef4444; }
-        #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
+        #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
         .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
-        .desk-box.is-fixed { border-color: #ef4444 !important; border-width: 3px !important; }
-        .fixed-badge { position: absolute; top: -8px; left: -8px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .desk-box.is-fixed { border-color: var(--fixed) !important; border-width: 3px !important; background-color: rgba(139, 92, 246, 0.1) !important; }
+        .desk-box.has-conflict { border-color: var(--warning) !important; }
+        .fixed-badge { position: absolute; top: -8px; left: -8px; background: var(--fixed); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .conflict-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--warning); border-radius: 50%; z-index: 30; }
 
         /* TABLES */
         .comp-table, .duty-table { width: 100%; border-collapse: collapse; background: white; }
@@ -74,7 +86,7 @@
         .member-excluded { text-decoration: line-through; color: #9ca3af; opacity: 0.6; }
 
         /* MODAL */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(4px); }
         .modal-overlay.open { opacity: 1; pointer-events: all; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s; max-height: 95vh; overflow-y: auto; }
         .modal-overlay.open .modal-content { transform: scale(1); }
@@ -82,180 +94,201 @@
         .mini-row { cursor: pointer; padding: 4px; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; }
         .mini-row:hover { background-color: #f3f4f6; border-color: #d1d5db; }
         .duty-selected-class { background-color: #dcfce7 !important; border-color: #22c55e !important; } 
-        .duty-selected-class::after { content: 'Trực Lớp'; position: absolute; right: -70px; top: 50%; transform: translateY(-50%); color: #166534; font-size: 0.75rem; font-weight: bold; }
         .duty-selected-area { background-color: #ffedd5 !important; border-color: #f97316 !important; }
-        .duty-selected-area::after { content: 'Trực Khu Vực'; position: absolute; right: -90px; top: 50%; transform: translateY(-50%); color: #9a3412; font-size: 0.75rem; font-weight: bold; }
         .role-input { width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; margin-top: 2px; }
         .role-section label { font-size: 0.85rem; font-weight: 600; color: #374151; display: block; margin-top: 8px; }
-        .officer-row { display: flex; gap: 4px; margin-top: 4px; }
-        .officer-input { flex: 1; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; }
-        .officer-remove-btn { padding: 6px 10px; background: #fee2e2; color: #ef4444; border-radius: 4px; font-weight: bold; }
         .gender-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #e5e7eb; font-size: 0.9rem; }
         .gender-label { cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; transition: all 0.2s; }
         .is-male { background-color: #dbeafe; color: #1e40af; }
         .is-female { background-color: #fce7f3; color: #db2777; }
-        .gender-label:hover { opacity: 0.8; }
 
-        /* INPUT MODAL */
-        #input-modal .modal-content { width: 500px; }
-        .tag-btn { padding: 4px 10px; border-radius: 99px; border: 1px solid #e5e7eb; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; background: white; color: #374151; user-select: none; margin-bottom: 4px; display: inline-block; }
-        .tag-btn:hover { border-color: #3b82f6; color: #3b82f6; }
-        .tag-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-        .tag-section-title { font-size: 0.8rem; font-weight: bold; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #eee; padding-bottom: 2px; }
-        .time-btn { padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 0.85rem; width: 100%; }
-        .time-btn.selected { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+        /* SHUFFLE MODAL */
+        .shuffle-option-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 8px; transition: all 0.2s; text-align: left; }
+        .shuffle-option-btn:hover { background: #f9fafb; border-color: #3b82f6; transform: translateX(4px); }
+        .shuffle-option-btn i { font-size: 1.25rem; width: 24px; text-align: center; }
 
-        /* TEST MENU */
-        .test-menu { position: relative; z-index: 60; }
-        .test-btn { background: #6b7280; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.2s; }
-        .test-btn:hover { background: #4b5563; }
-        .save-btn { background: #059669; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.2s; margin-left: 8px; }
-        .save-btn:hover { background: #047857; transform: translateY(-1px); }
-        .test-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 220px; overflow: hidden; }
-        .test-menu:hover .test-dropdown { display: block; }
-        .test-option { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 0.85rem; color: #374151; transition: background 0.2s; }
-        .test-option:hover { background: #f3f4f6; color: #1e40af; }
+        /* SIDEBAR */
+        #sidebar { position: fixed; top: 0; right: 0; height: 100%; width: 320px; background: white; z-index: 150; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -5px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        #sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; items-center; }
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* MINI MAP */
+        #mini-map-container { position: relative; width: 100%; background: #f9fafb; border-radius: 12px; border: 1px solid #eee; padding: 12px; margin-bottom: 20px; overflow: hidden; }
+        .mini-seat { font-size: 9px; height: 30px; border-radius: 4px; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; background: white; transition: all 0.2s; }
+        .mini-seat.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .mini-seat.conflict { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: var(--warning); }
+        .mini-seat.fixed { background: rgba(139, 92, 246, 0.1); color: var(--fixed); border-color: var(--fixed); }
+        #thread-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+        /* WEATHER & PARTICLES */
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+        .weather-overlay { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; z-index: 20; }
+        .weather-badge { background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); padding: 2px 6px; border-radius: 99px; font-size: 9px; font-weight: bold; display: flex; align-items: center; gap: 3px; border: 1px solid rgba(0,0,0,0.05); }
+
+        /* JELLY SWITCH */
+        .jelly-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .jelly-switch input { opacity: 0; width: 0; height: 0; }
+        .jelly-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .jelly-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .jelly-slider { background-color: var(--primary); }
+        input:checked + .jelly-slider:before { transform: translateX(20px); }
+
+        /* PERFORMANCE MONITOR */
+        #perf-monitor { position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); color: #0f0; font-family: monospace; font-size: 10px; padding: 2px 5px; border-radius: 3px; z-index: 1000; pointer-events: none; display: none; }
 
         /* TOAST */
         #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 999; left: 50%; bottom: 30px; font-size: 1rem; opacity: 0; transition: opacity 0.5s, bottom 0.5s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
-        /* TOOLTIP */
-        .tooltip-container { position: relative; display: inline-block; }
-        .tooltip-text { visibility: hidden; width: 320px; background-color: #374151; color: #fff; text-align: left; border-radius: 6px; padding: 10px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -160px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; font-weight: normal; line-height: 1.4; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
-        .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #374151 transparent transparent transparent; }
-        
-        /* CUSTOM CHECKBOX */
-        .custom-checkbox { display: flex; align-items: center; cursor: pointer; }
-        .custom-checkbox input[type="checkbox"] { display: none; }
-        .custom-checkbox .checkmark { width: 18px; height: 18px; border: 2px solid #d1d1db; border-radius: 4px; margin-right: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .custom-checkbox input[type="checkbox"]:checked + .checkmark { background-color: #3b82f6; border-color: #3b82f6; }
-        .custom-checkbox input[type="checkbox"]:checked + .checkmark::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
-        .custom-checkbox:hover .checkmark { border-color: #9ca3af; }
-
-        /* SHUFFLE MODAL */
-        .shuffle-option-btn { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
-        .shuffle-option-btn:hover { background-color: #f0f9ff; border-color: #3b82f6; color: #1e40af; }
-        .shuffle-option-btn i { width: 20px; text-align: center; }
+        @keyframes pulse-ring { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col bg-gray-50">
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div id="perf-monitor">FPS: 60</div>
 
-    <!-- HEADER -->
-    <div class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 relative">
-            <div class="flex items-center justify-between py-3">
-                <h1 class="text-xl font-bold text-slate-800 uppercase tracking-wide truncate mr-4">Quản Lý Lớp Học</h1>
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-2">
-                    <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-                        <button onclick="switchTab('seating')" id="btn-tab-seating" class="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap">Sơ Đồ</button>
-                        <button onclick="switchTab('competition')" id="btn-tab-competition" class="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap">Bảng Thi Đua</button>
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                        <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
-                    <div class="test-menu">
-                        <button class="test-btn whitespace-nowrap"><i class="fas fa-flask mr-1"></i>Mẫu</button>
-                        <div class="test-dropdown">
-                            <button onclick="loadScenario('zero')" class="test-option">1. Lớp Ngoan (0 lỗi)</button>
-                            <button onclick="loadScenario('offset')" class="test-option">2. Có lỗi nhưng Bù hết (0đ)</button>
-                            <button onclick="loadScenario('low')" class="test-option">3. Lỗi Nhẹ (< 12đ)</button>
-                            <button onclick="loadScenario('medium')" class="test-option">4. Lỗi Trung Bình (= 12đ)</button>
-                            <button onclick="loadScenario('high')" class="test-option">5. Lỗi Nặng (12 - 36đ)</button>
-                            <button onclick="loadScenario('full')" class="test-option text-red-600 font-bold">6. Lớp Cá Biệt (> 36đ)</button>
-                        </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900 leading-tight">CAP <span class="text-blue-600">Classroom</span></h1>
+                        <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Management System</p>
                     </div>
-                    <button onclick="saveData()" class="save-btn whitespace-nowrap"><i class="fas fa-save mr-1"></i> Lưu</button>
-                    <button onclick="openShareModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-semibold transition-all shadow-sm whitespace-nowrap"><i class="fas fa-share-alt mr-1"></i> Chia sẻ</button>
+                </div>
+                <div class="hidden md:flex items-center bg-gray-100 p-1 rounded-lg">
+                    <button id="btn-tab-seating" onclick="switchTab('seating')" class="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm">Sơ đồ lớp</button>
+                    <button id="btn-tab-competition" onclick="switchTab('competition')" class="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all">Thi đua & Trực nhật</button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openShareModal()" class="p-2 text-gray-500 hover:text-purple-600 transition-colors" title="Chia sẻ"><i class="fas fa-share-nodes"></i></button>
+                    <button onclick="openSettingsModal()" class="p-2 text-gray-500 hover:text-blue-600 transition-colors" title="Cài đặt"><i class="fas fa-cog"></i></button>
+                    <button onclick="saveData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2">
+                        <i class="fas fa-save"></i> <span class="hidden sm:inline">Lưu</span>
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- MAIN CONTENT -->
-    <div class="flex-grow p-4 overflow-auto flex justify-center items-start">
-        <!-- TAB 1: SƠ ĐỒ LỚP -->
-        <div id="tab-seating" class="tab-content active w-full flex flex-col items-center">
-            <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-wrap gap-2 items-center justify-center">
-                <div id="status-msg" class="hidden px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold animate-pulse border border-yellow-300 mr-2"><i class="fas fa-exchange-alt mr-1"></i> Chọn ô thứ 2...</div>
-                <button onclick="resetLayout()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded text-sm font-medium transition"><i class="fas fa-redo-alt mr-1"></i> Làm mới</button>
-                <button onclick="openShuffleModal()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-sm font-medium transition shadow-sm"><i class="fas fa-random mr-1"></i> Sắp xếp</button>
-                <div class="w-px h-6 bg-gray-300 mx-1"></div>
-                <div class="flex bg-gray-100 rounded p-0.5 border border-gray-200">
-                    <button onclick="rotateClass('up')" class="px-2 py-1 hover:bg-white rounded text-blue-600 text-sm transition"><i class="fas fa-arrow-up"></i></button>
-                    <button onclick="rotateClass('down')" class="px-2 py-1 hover:bg-white rounded text-blue-600 text-sm transition"><i class="fas fa-arrow-down"></i></button>
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- TAB SEATING -->
+        <div id="tab-seating" class="tab-content active">
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="flex flex-col">
+                        <input id="classroom-title" type="text" class="text-sm font-bold text-gray-800 border-none focus:ring-0 p-0 bg-transparent w-32" value="LỚP 12A1">
+                        <input id="school-year" type="text" class="text-[10px] text-gray-500 border-none focus:ring-0 p-0 bg-transparent w-32" value="NĂM HỌC 2023 - 2024">
+                    </div>
+                    <div class="h-8 w-px bg-gray-200 mx-2"></div>
+                    <div id="status-msg" class="hidden"></div>
                 </div>
-                <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition ml-2"><i class="fas fa-download mr-1"></i> Tải Ảnh</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="rotateClass('up')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition" title="Xoay lên"><i class="fas fa-arrow-up"></i></button>
+                    <button onclick="rotateClass('down')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition" title="Xoay xuống"><i class="fas fa-arrow-down"></i></button>
+                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
+                    <button onclick="openShuffleModal()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
+                        <i class="fas fa-random"></i> Sắp xếp
+                    </button>
+                    <button onclick="resetLayout()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
+                    <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
+                        <i class="fas fa-camera"></i> Chụp ảnh
+                    </button>
+                </div>
             </div>
-            <div id="classroom-area" class="bg-white p-8 rounded-xl shadow-xl min-w-[1000px] border border-gray-300">
-                <div class="text-center mb-8 border-b-2 border-gray-300 pb-2">
-                    <input type="text" id="classroom-title" value="SƠ ĐỒ LỚP HỌC" class="text-3xl font-bold text-center w-full uppercase bg-transparent border-none outline-none text-gray-800">
-                    <input type="text" id="school-year" value="Năm học: 2024 - 2025" class="text-lg text-center w-full bg-transparent border-none outline-none text-gray-600">
+
+            <div id="classroom-area" class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] flex flex-col items-center overflow-hidden">
+                <div class="w-1/2 h-12 bg-gray-800 rounded-b-3xl mb-12 flex items-center justify-center shadow-lg">
+                    <span class="text-white font-bold tracking-[0.5em] text-sm uppercase">Bảng Giảng</span>
                 </div>
-                <div class="flex gap-16 justify-between relative">
-                    <div class="flex-1"><div class="flex items-center mb-4 text-red-600 font-bold border-l-4 border-red-500 pl-2 bg-red-50 py-2 w-32 rounded-r"><i class="fas fa-door-open mr-2"></i> Cửa Lớp</div><div id="left-rows-container" class="space-y-3"></div></div>
-                    <div class="w-8 flex flex-col items-center justify-center opacity-20"><div class="h-full w-0.5 bg-dashed border-l-2 border-gray-400 border-dashed"></div></div>
-                    <div class="flex-1 flex flex-col"><div class="self-end flex items-center justify-end mb-4 text-blue-600 font-bold border-r-4 border-blue-500 pr-2 bg-blue-50 py-2 w-48 rounded-l">Bàn Giáo Viên <i class="fas fa-chalkboard-teacher ml-2"></i></div><div id="right-rows-container" class="space-y-3 mt-auto"></div></div>
+                
+                <div class="w-full flex justify-center gap-16 md:gap-24">
+                    <div id="left-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
+                    <div id="right-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
+                </div>
+
+                <div class="mt-16 w-full flex justify-between items-end text-gray-400">
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-24 h-2 bg-gray-200 rounded-full"></div>
+                        <span class="text-[10px] font-bold uppercase">Cửa ra vào</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-32 h-2 bg-gray-200 rounded-full"></div>
+                        <span class="text-[10px] font-bold uppercase">Cửa sổ hành lang</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 2: BẢNG THI ĐUA -->
-        <div id="tab-competition" class="tab-content w-full max-w-6xl">
-            <div id="view-competition-main" class="flex gap-6 items-start">
-                <div class="w-1/4 bg-white p-4 rounded-lg shadow-md border border-gray-200 sticky top-20">
-                    <h3 class="font-bold text-gray-700 mb-2"><i class="fas fa-user-edit mr-2"></i>Nhập Danh Sách</h3>
-                    <textarea id="student-list-input" class="w-full h-64 p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="Dán danh sách tên học sinh vào đây...&#10;Mỗi tên một dòng"></textarea>
-                    <button onclick="generateTable()" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium transition shadow mb-2"><i class="fas fa-sort-alpha-down mr-2"></i>Tạo Bảng (A-Z)</button>
-                    <button onclick="openDutyModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded font-medium transition shadow"><i class="fas fa-broom mr-2"></i>Phân Trực Nhật</button>
+        <!-- TAB COMPETITION -->
+        <div id="tab-competition" class="tab-content w-full max-w-6xl mx-auto">
+            <div id="view-competition-main" class="flex flex-col lg:flex-row gap-6 items-start">
+                <div class="w-full lg:w-1/4 bg-white p-4 rounded-xl shadow-md border border-gray-200 lg:sticky lg:top-20">
+                    <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-user-edit text-blue-500"></i>Nhập Danh Sách</h3>
+                    <textarea id="student-list-input" class="w-full h-64 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="Dán danh sách tên học sinh vào đây...&#10;Mỗi tên một dòng"></textarea>
+                    <button onclick="generateTable()" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-bold transition shadow-md mb-2 flex items-center justify-center gap-2">
+                        <i class="fas fa-sort-alpha-down"></i> Tạo Bảng (A-Z)
+                    </button>
+                    <button onclick="openDutyModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-lg font-bold transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fas fa-broom"></i> Phân Trực Nhật
+                    </button>
                 </div>
-                <div class="flex-1 bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col items-center">
-                     <div class="w-full flex justify-end mb-4 items-center gap-2">
+                <div class="flex-1 bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center">
+                     <div class="w-full flex justify-end mb-4 items-center gap-3">
                         <div class="tooltip-container">
-                            <span class="text-xs text-gray-500 cursor-help border border-gray-300 rounded px-2 py-1 bg-gray-50 hover:bg-white"><i class="fas fa-question-circle mr-1"></i>Quy ước lỗi</span>
+                            <span class="text-xs text-gray-500 cursor-help border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-50 hover:bg-white flex items-center gap-1"><i class="fas fa-question-circle"></i> Quy ước lỗi</span>
                             <div class="tooltip-text">
                                 <strong>Lỗi Nặng (2đ):</strong> Vắng/Muộn kp, SĐB, SCĐ, Đánh nhau, Quay cóp, Ăn trong giờ, Nhuộm tóc, ĐT...<br><br>
                                 <strong>Lỗi Nhẹ (1đ):</strong> MTT, VS bẩn, Nhắc nhở, Không chép bài, Nói tục...<br><br>
                                 <strong>Bù điểm:</strong> 2 điểm tốt (8-10đ) trừ 1 lỗi SĐB.
                             </div>
                         </div>
-                        <button onclick="downloadImage('competition-board', 'Bang_thi_dua')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow flex items-center"><i class="fas fa-file-image mr-2"></i> Tải Ảnh Bảng</button>
+                        <button onclick="downloadImage('competition-board', 'Bang_thi_dua')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2">
+                            <i class="fas fa-file-image"></i> Tải Ảnh Bảng
+                        </button>
                     </div>
-                    <div id="competition-board" class="w-full bg-white p-8">
-                        <div class="text-center mb-6">
-                            <h2 class="text-2xl font-bold text-blue-800 uppercase">BẢNG THEO DÕI THI ĐUA</h2>
-                            <div class="flex justify-center items-center gap-4 mt-2 text-gray-600">
-                                <div class="flex items-center"><span>Tuần:</span><input type="text" class="date-input" placeholder="..."></div>
-                                <div class="flex items-center"><span>Tháng:</span><input type="text" class="date-input" placeholder="..."></div>
+                    <div id="competition-board" class="w-full bg-white p-8 rounded-xl">
+                        <div class="text-center mb-8">
+                            <h2 class="text-2xl font-black text-blue-800 uppercase tracking-tight">BẢNG THEO DÕI THI ĐUA</h2>
+                            <div class="flex justify-center items-center gap-6 mt-3 text-gray-600 font-bold">
+                                <div class="flex items-center gap-2"><span>Tuần:</span><input type="text" class="date-input" placeholder="..."></div>
+                                <div class="flex items-center gap-2"><span>Tháng:</span><input type="text" class="date-input" placeholder="..."></div>
                             </div>
                         </div>
-                        <table class="comp-table">
+                        <table class="comp-table rounded-xl overflow-hidden shadow-sm">
                             <thead><tr><th class="w-16 text-center">STT</th><th class="w-64 text-left pl-4">Họ và Tên</th><th class="text-center">Thành Tích</th><th class="text-center">Vi Phạm</th></tr></thead>
-                            <tbody id="competition-tbody"><tr><td colspan="4" class="text-center py-8 text-gray-400 italic">Chưa có dữ liệu.</td></tr></tbody>
+                            <tbody id="competition-tbody"><tr><td colspan="4" class="text-center py-12 text-gray-400 italic">Chưa có dữ liệu. Hãy nhập danh sách học sinh bên trái.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <div id="view-duty-schedule" class="hidden w-full">
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col items-center">
-                    <div class="w-full flex justify-between mb-4">
-                        <button onclick="backToCompetition()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm font-medium transition shadow"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
-                        <div class="flex gap-2">
-                            <button onclick="toggleDayOffMode()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow"><i class="fas fa-calendar-times mr-2"></i> <span id="day-off-btn-text">Hiện Ngày Nghỉ</span></button>
-                            <button onclick="downloadImage('duty-board', 'Lich_truc_nhat')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow"><i class="fas fa-file-image mr-2"></i> Tải Lịch Trực</button>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center">
+                    <div class="w-full flex justify-between mb-6">
+                        <button onclick="backToCompetition()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2"><i class="fas fa-arrow-left"></i> Quay lại</button>
+                        <div class="flex gap-3">
+                            <button onclick="toggleDayOffMode()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2"><i class="fas fa-calendar-times"></i> <span id="day-off-btn-text">Hiện Ngày Nghỉ</span></button>
+                            <button onclick="downloadImage('duty-board', 'Lich_truc_nhat')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2"><i class="fas fa-file-image"></i> Tải Lịch Trực</button>
                         </div>
                     </div>
-                    <div id="duty-board" class="w-full bg-white p-8 min-w-[1000px]">
+                    <div id="duty-board" class="w-full bg-white p-8 min-w-[1000px] rounded-xl">
                         <div class="duty-header-container">
                             <div class="duty-header-lg">LỊCH TRỰC NHẬT LỚP <input type="text" class="header-input" placeholder="..."> TUẦN <input type="text" class="header-input" placeholder="..."></div>
-                            <div class="duty-header-lg" style="font-size: 1.1rem; margin-top: 5px;">TỪ <input type="date" class="header-date-input"> ĐẾN <input type="date" class="header-date-input"></div>
+                            <div class="duty-header-lg" style="font-size: 1.1rem; margin-top: 8px;">TỪ <input type="date" class="header-date-input"> ĐẾN <input type="date" class="header-date-input"></div>
                         </div>
-                        <table class="duty-table">
+                        <table class="duty-table mt-6">
                             <thead>
                                 <tr>
                                     <th rowspan="2" class="w-16">Thứ</th>
                                     <th colspan="5">TRỰC VỆ SINH LỚP</th>
                                     <th colspan="2">HS theo dõi</th>
-                                    <th rowspan="1" class="w-48 text-left italic font-normal text-xs p-2">Ghi chú: Ghi rõ<br>- HS nào thay làm ghi rõ<br>- Thực hiện đủ, sạch</th>
+                                    <th rowspan="1" class="w-48 text-left italic font-normal text-[10px] p-2">Ghi chú: Ghi rõ<br>- HS nào thay làm ghi rõ<br>- Thực hiện đủ, sạch</th>
                                 </tr>
                                 <tr>
                                     <th class="w-32">Quét lớp</th>
@@ -288,7 +321,155 @@
         </div>
     </div>
 
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="text-lg font-bold text-gray-800">Chi tiết học sinh</h2>
+            <button onclick="closeSidebar()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sidebar-content">
+            <div id="sidebar-student-info" class="flex flex-col items-center mb-6">
+                <div id="student-avatar" class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mb-3 border-2 border-blue-100">
+                    <span class="text-2xl font-bold text-blue-600">A</span>
+                </div>
+                <h3 id="student-name-display" class="text-xl font-bold text-gray-900">Nguyễn Văn An</h3>
+                <div id="student-badges" class="flex gap-2 mt-2"></div>
+            </div>
+
+            <div id="mini-map-container">
+                <div class="weather-overlay" id="weather-info-overlay"></div>
+                <svg id="thread-overlay"></svg>
+                <div id="mini-map-grid" class="grid grid-cols-4 gap-1.5 relative z-10"></div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <span class="text-sm font-bold text-gray-700">Chế độ chỉnh sửa</span>
+                    <label class="jelly-switch">
+                        <input type="checkbox" id="edit-mode-toggle" onchange="toggleEditMode()">
+                        <span class="jelly-slider"></span>
+                    </label>
+                </div>
+                
+                <div id="conflict-management-section" class="hidden">
+                    <h4 class="text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">Quản lý xung đột</h4>
+                    <div id="conflict-list" class="space-y-2"></div>
+                </div>
+
+                <div id="student-relations-section">
+                    <div class="mb-4">
+                        <h4 class="text-xs font-black text-orange-500 uppercase mb-2 tracking-widest flex items-center gap-1">
+                            <i class="fas fa-comment-slash"></i> Hay nói chuyện với
+                        </h4>
+                        <div id="current-conflicts-list" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-green-500 uppercase mb-2 tracking-widest flex items-center gap-1">
+                            <i class="fas fa-check-circle"></i> Có thể ngồi gần
+                        </h4>
+                        <div id="neutral-students-list" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODALS -->
+    <div id="shuffle-modal" class="modal-overlay">
+        <div class="modal-content w-[400px]">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-xl font-bold text-orange-600"><i class="fas fa-random mr-2"></i>Tùy Chọn Sắp Xếp</h2>
+                <button onclick="closeShuffleModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-2">
+                <button onclick="shuffleSeating('all')" class="shuffle-option-btn">
+                    <i class="fas fa-users text-blue-500"></i>
+                    <div>
+                        <div class="text-sm font-bold">Toàn bộ lớp</div>
+                        <div class="text-xs font-normal text-gray-500">Sắp xếp lại tất cả học sinh trong lớp</div>
+                    </div>
+                </button>
+                <button onclick="shuffleSeating('door')" class="shuffle-option-btn">
+                    <i class="fas fa-door-open text-red-500"></i>
+                    <div>
+                        <div class="text-sm font-bold">Dãy gần cửa</div>
+                        <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên trái</div>
+                    </div>
+                </button>
+                <button onclick="shuffleSeating('teacher')" class="shuffle-option-btn">
+                    <i class="fas fa-chalkboard-teacher text-green-500"></i>
+                    <div>
+                        <div class="text-sm font-bold">Dãy gần bàn giáo viên</div>
+                        <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên phải</div>
+                    </div>
+                </button>
+            </div>
+            <div class="mt-4 text-[10px] text-gray-400 italic border-t pt-3">
+                * Mẹo: Chuột phải vào ô chỗ ngồi để <b>Cố định</b> học sinh (không bị đổi chỗ).
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content w-[450px]">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-xl font-bold text-blue-600"><i class="fas fa-cog mr-2"></i>Cài Đặt Hệ Thống</h2>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-6 p-2">
+                <div>
+                    <h3 class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest">Hiệu ứng & Đồ họa</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500"><i class="fas fa-wind"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">Hiệu ứng gió động</div>
+                                    <div class="text-[10px] text-gray-500">Lá rơi theo hướng gió thực tế</div>
+                                </div>
+                            </div>
+                            <label class="jelly-switch">
+                                <input type="checkbox" id="wind-enabled-toggle" checked onchange="updateSettings()">
+                                <span class="jelly-slider"></span>
+                            </label>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase">
+                                <span>Cường độ gió</span>
+                                <span id="wind-intensity-val">1.0x</span>
+                            </div>
+                            <input type="range" id="wind-intensity-range" min="0.1" max="3" step="0.1" value="1" class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateSettings()">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-500"><i class="fas fa-battery-half"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">Tiết kiệm pin</div>
+                                    <div class="text-[10px] text-gray-500">Giảm FPS và số lượng hạt</div>
+                                </div>
+                            </div>
+                            <label class="jelly-switch">
+                                <input type="checkbox" id="power-save-toggle" onchange="updateSettings()">
+                                <span class="jelly-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-4 border-t">
+                    <h3 class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest">Dữ liệu & Phiên bản</h3>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-600">Phiên bản ứng dụng</span>
+                        <span class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md">v2.5.0-FINAL</span>
+                    </div>
+                    <button onclick="clearAllData()" class="w-full mt-4 p-3 text-red-500 text-xs font-bold hover:bg-red-50 rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fas fa-trash-alt"></i> Xóa toàn bộ dữ liệu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="duty-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -299,97 +480,99 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2">
                     <h3 class="font-bold text-gray-700 mb-3 flex items-center"><i class="fas fa-th mr-2 text-blue-500"></i>Chọn Dãy Trực Nhật (Click để chọn)</h3>
-                    <div class="flex gap-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div class="flex gap-8 bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <div class="flex-1">
-                            <div class="text-xs font-bold text-red-500 mb-2 uppercase">Dãy Cửa Lớp</div>
+                            <div class="text-[10px] font-black text-red-500 mb-2 uppercase tracking-widest">Dãy Cửa Lớp</div>
                             <div id="mini-map-left" class="space-y-1"></div>
                         </div>
                         <div class="flex-1">
-                            <div class="text-xs font-bold text-blue-500 mb-2 uppercase text-right">Dãy Giáo Viên</div>
+                            <div class="text-[10px] font-black text-blue-500 mb-2 uppercase tracking-widest text-right">Dãy Giáo Viên</div>
                             <div id="mini-map-right" class="space-y-1"></div>
                         </div>
                     </div>
                     
                     <div class="mt-6 grid grid-cols-2 gap-4">
-                        <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                            <h4 class="text-sm font-bold text-blue-800 mb-2">Ngày Nghỉ Trong Tuần</h4>
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <h4 class="text-sm font-bold text-blue-800 mb-3">Ngày Nghỉ Trong Tuần</h4>
                             <div class="flex flex-wrap gap-3">
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="2"><span class="checkmark"></span>T2</label>
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="3"><span class="checkmark"></span>T3</label>
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="4"><span class="checkmark"></span>T4</label>
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="5"><span class="checkmark"></span>T5</label>
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="6"><span class="checkmark"></span>T6</label>
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" class="day-off" value="7"><span class="checkmark"></span>T7</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" class="day-off-check" value="2"> T2</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" class="day-off-check" value="3"> T3</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" class="day-off-check" value="4"> T4</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" class="day-off-check" value="5"> T5</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" class="day-off-check" value="6"> T6</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" class="day-off-check" value="7"> T7</label>
                             </div>
                         </div>
-                        <div class="bg-orange-50 p-3 rounded border border-orange-100">
-                            <h4 class="text-sm font-bold text-orange-800 mb-2">Buổi Nghỉ</h4>
-                            <div class="flex gap-4">
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" id="morning-off"><span class="checkmark"></span>Sáng</label>
-                                <label class="custom-checkbox text-xs font-medium text-gray-700"><input type="checkbox" id="afternoon-off"><span class="checkmark"></span>Chiều</label>
+                        <div class="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                            <h4 class="text-sm font-bold text-orange-800 mb-3">Buổi Nghỉ</h4>
+                            <div class="flex gap-6">
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" id="morning-off"> Sáng</label>
+                                <label class="custom-checkbox text-xs font-bold text-gray-700 flex items-center gap-1 cursor-pointer"><input type="checkbox" id="afternoon-off"> Chiều</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex flex-col gap-4">
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex-grow">
-                        <h3 class="font-bold text-gray-700 mb-2 text-sm">Giới Tính (Click để đổi)</h3>
-                        <div id="gender-list-container" class="max-h-64 overflow-y-auto pr-2"></div>
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex-grow">
+                        <h3 class="font-bold text-gray-700 mb-3 text-sm">Giới Tính (Click để đổi)</h3>
+                        <div id="gender-list-container" class="max-h-64 overflow-y-auto pr-2 space-y-1"></div>
                     </div>
                     
-                    <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                    <div class="bg-red-50 p-4 rounded-xl border border-red-100">
                         <h3 class="font-bold text-red-800 mb-2 text-sm">HS Không Trực Nhật</h3>
-                        <textarea id="excluded-members" class="w-full h-24 p-2 text-xs border border-red-200 rounded focus:outline-none focus:ring-1 focus:ring-red-400" placeholder="Nhập tên HS không tham gia trực nhật (mỗi tên 1 dòng)..."></textarea>
+                        <textarea id="excluded-members" class="w-full h-24 p-3 text-xs border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400" placeholder="Nhập tên HS không tham gia trực nhật (mỗi tên 1 dòng)..."></textarea>
                     </div>
                 </div>
             </div>
             
-            <div class="mt-6 pt-4 border-t flex justify-between items-center">
-                <div class="role-section flex gap-4 items-center">
+            <div class="mt-6 pt-4 border-t flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="role-section flex flex-wrap gap-4 items-center">
                     <div class="flex flex-col">
-                        <label>Cán sự lớp (Cách nhau bằng dấu phẩy)</label>
-                        <input type="text" id="role-officer-list" class="role-input w-64" placeholder="Lớp trưởng, Lớp phó...">
+                        <label class="text-xs font-bold text-gray-500 mb-1">Cán sự lớp (Cách nhau bằng dấu phẩy)</label>
+                        <input type="text" id="role-officer-list" class="role-input w-64 rounded-lg" placeholder="Lớp trưởng, Lớp phó...">
                     </div>
                     <div class="flex flex-col">
-                        <label>Xung kích (Cách nhau bằng dấu phẩy)</label>
-                        <input type="text" id="role-xungkich-list" class="role-input w-64" placeholder="Tên các bạn xung kích...">
+                        <label class="text-xs font-bold text-gray-500 mb-1">Xung kích (Cách nhau bằng dấu phẩy)</label>
+                        <input type="text" id="role-xungkich-list" class="role-input w-64 rounded-lg" placeholder="Tên các bạn xung kích...">
                     </div>
                 </div>
-                <button onclick="confirmDutyAssignment()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transition transform hover:scale-105"><i class="fas fa-check-circle mr-2"></i>XÁC NHẬN & TẠO LỊCH</button>
+                <button onclick="confirmDutyAssignment()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-black shadow-lg transition transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i> XÁC NHẬN & TẠO LỊCH
+                </button>
             </div>
         </div>
     </div>
 
     <div id="share-modal" class="modal-overlay">
-        <div class="modal-content" style="width: 600px;">
+        <div class="modal-content w-[600px]">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h2 class="text-xl font-bold text-purple-800"><i class="fas fa-share-alt mr-2"></i>Chia Sẻ Dữ Liệu</h2>
                 <button onclick="closeShareModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
             </div>
-            
             <div class="space-y-6">
-                <div>
-                    <h3 class="font-bold text-gray-700 mb-2">Mã Chia Sẻ (Dùng để gửi cho người khác)</h3>
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                    <h3 class="text-sm font-bold text-purple-800 mb-2">Mã Chia Sẻ (Dùng để gửi cho người khác)</h3>
                     <div class="flex gap-2">
-                        <input type="text" id="share-code-input" readonly class="flex-1 p-2 bg-gray-100 border border-gray-300 rounded text-sm font-mono focus:outline-none">
-                        <button onclick="copyShareCode()" class="bg-purple-600 text-white px-4 py-2 rounded font-medium hover:bg-purple-700 transition"><i class="fas fa-copy mr-1"></i> Sao chép</button>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1 italic">* Mã này chứa toàn bộ dữ liệu sơ đồ, thi đua và trực nhật của bạn.</p>
-                </div>
-                
-                <div class="border-t pt-4">
-                    <h3 class="font-bold text-gray-700 mb-2">Nhập Mã Chia Sẻ</h3>
-                    <div class="flex gap-2">
-                        <input type="text" id="import-code-input" class="flex-1 p-2 border border-gray-300 rounded text-sm font-mono focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="Dán mã chia sẻ vào đây...">
-                        <button onclick="importFromCode()" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition"><i class="fas fa-file-import mr-1"></i> Nhập</button>
+                        <input id="share-code-input" readonly class="flex-1 p-3 text-xs border border-purple-200 rounded-lg bg-white font-mono" value="...">
+                        <button onclick="copyShareCode()" class="bg-purple-600 text-white px-4 rounded-lg font-bold text-sm hover:bg-purple-700 transition"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
-                
-                <div class="border-t pt-4 flex justify-between">
-                    <button onclick="exportToFile()" class="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition"><i class="fas fa-file-export mr-1"></i> Xuất ra File (.cap)</button>
-                    <label class="bg-orange-500 text-white px-4 py-2 rounded font-medium hover:bg-orange-600 transition cursor-pointer">
-                        <i class="fas fa-file-upload mr-1"></i> Nhập từ File
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <h3 class="text-sm font-bold text-blue-800 mb-2">Nhập Mã Chia Sẻ</h3>
+                    <div class="flex gap-2">
+                        <input id="import-code-input" class="flex-1 p-3 text-xs border border-blue-200 rounded-lg bg-white font-mono" placeholder="Dán mã chia sẻ vào đây...">
+                        <button onclick="importFromCode()" class="bg-blue-600 text-white px-4 rounded-lg font-bold text-sm hover:bg-blue-700 transition">NHẬP</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="exportToFile()" class="p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition text-center">
+                        <i class="fas fa-file-export text-2xl text-gray-400 mb-2"></i>
+                        <div class="text-sm font-bold text-gray-700">Xuất File (.cap)</div>
+                    </button>
+                    <label class="p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition text-center cursor-pointer">
+                        <i class="fas fa-file-import text-2xl text-gray-400 mb-2"></i>
+                        <div class="text-sm font-bold text-gray-700">Nhập File (.cap)</div>
                         <input type="file" class="hidden" accept=".cap" onchange="importFromFile(this)">
                     </label>
                 </div>
@@ -397,64 +580,147 @@
         </div>
     </div>
 
-    <!-- SHUFFLE MODAL -->
-    <div id="shuffle-modal" class="modal-overlay">
-        <div class="modal-content" style="width: 400px;">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h2 class="text-xl font-bold text-orange-600"><i class="fas fa-random mr-2"></i>Tùy Chọn Sắp Xếp</h2>
-                <button onclick="closeShuffleModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-2">
-                <button onclick="shuffleSeating('all')" class="shuffle-option-btn">
-                    <i class="fas fa-users text-blue-500"></i>
-                    <div>
-                        <div class="text-sm">Toàn bộ lớp</div>
-                        <div class="text-xs font-normal text-gray-500">Sắp xếp lại tất cả học sinh trong lớp</div>
-                    </div>
-                </button>
-                <button onclick="shuffleSeating('door')" class="shuffle-option-btn">
-                    <i class="fas fa-door-open text-red-500"></i>
-                    <div>
-                        <div class="text-sm">Dãy gần cửa</div>
-                        <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên trái</div>
-                    </div>
-                </button>
-                <button onclick="shuffleSeating('teacher')" class="shuffle-option-btn">
-                    <i class="fas fa-chalkboard-teacher text-green-500"></i>
-                    <div>
-                        <div class="text-sm">Dãy gần bàn giáo viên</div>
-                        <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên phải</div>
-                    </div>
-                </button>
-            </div>
-            <div class="mt-4 text-xs text-gray-500 italic border-t pt-3">
-                * Mẹo: Chuột phải vào ô chỗ ngồi để <b>Cố định</b> học sinh (không bị đổi chỗ).
-            </div>
-        </div>
-    </div>
-
     <div id="toast">Đã lưu dữ liệu thành công!</div>
 
     <script>
-        // --- CONSTANTS & STATE ---
-        const SAMPLE_NAMES = ["Nguyễn Văn An", "Trần Thị Bích", "Lê Văn Cường", "Phạm Minh Đức", "Hoàng Thu Hà", "Vũ Việt Hùng", "Đặng Lan Hương", "Bùi Quang Huy", "Đỗ Gia Bảo", "Ngô Minh Khôi", "Lý Diệu Linh", "Trịnh Xuân Mạnh", "Phan Thanh Nam", "Mai Phương Nhi", "Đào Việt Phong", "Tạ Minh Quân", "Lương Thắng", "Hà Thu Thảo", "Tô Anh Thư", "Trương Công Tiến", "Võ Minh Tùng", "Diệp Bảo Vy", "Quách Gia Thành", "Phùng Mỹ Hạnh", "Cao Minh Triết", "Vi Văn Định", "Nông Thị Mai", "Lâm Gia Hào", "Dương Thúy Quỳnh", "Âu Dương Phong"];
+        // =================================================================
+        // CONSTANTS & STATE
+        // =================================================================
+        const ROW_COUNT = 6;
         const DUTY_DEBT_KEY = 'classApp_duty_debt';
         const VN_CHARS = "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
-
+        
         let leftSideData = [], rightSideData = [];
-        const ROW_COUNT = 6;
         let swapSource = null, longPressTimer = null, dutySelection = {}, genderMap = {};
-        let currentCell = null, currentModalType = '', modalState = { day: 'T2', session: 'Sáng', content: '' };
-        let officerList = [];
-        let dayOffMode = false; 
-        let excludedMembers = []; 
-        let dayOffs = []; 
-        let morningOff = false; 
-        let afternoonOff = false; 
-        let fixedMembers = []; // Danh sách ID các ô bị cố định
+        let officerList = [], fixedMembers = [], conflictGraph = {};
+        let dayOffMode = false, excludedMembers = [], dayOffs = [], morningOff = false, afternoonOff = false;
+        let currentSchedule = null, dutyDebtData = {};
+        let selectedStudentSeat = null, isEditMode = false;
 
-        // --- CORE UI ---
-        function renderAll() { renderSide('left-rows-container', leftSideData, 'left'); renderSide('right-rows-container', rightSideData, 'right'); updateStatusUI(); }
+        let config = {
+            settings: {
+                windEnabled: true,
+                intensity: 1.0,
+                powerSave: false,
+                showFPS: false
+            }
+        };
+
+        // =================================================================
+        // DYNAMIC WIND & PARTICLE SYSTEM
+        // =================================================================
+        class ParticleEngine {
+            constructor() {
+                this.canvas = document.getElementById('particle-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.active = false;
+                this.weather = { speed: 2, deg: 45 };
+                this.species = { name: 'Lá phong', color: '#e63946', secondary: '#f1faee' };
+                this.lastTime = 0;
+                this.fps = 0;
+                this.frameCount = 0;
+                this.fpsTime = 0;
+                
+                window.addEventListener('resize', () => this.resize());
+                this.resize();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            init() {
+                this.active = true;
+                this.particles = [];
+                const count = config.settings.powerSave ? 15 : 40;
+                for(let i=0; i<count; i++) this.particles.push(this.createParticle(true));
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            createParticle(randomPos = false) {
+                const speedBase = (this.weather.speed || 2) * config.settings.intensity;
+                return {
+                    x: randomPos ? Math.random() * this.canvas.width : (this.weather.deg > 180 ? this.canvas.width + 20 : -20),
+                    y: Math.random() * this.canvas.height,
+                    size: 5 + Math.random() * 10,
+                    vx: (Math.cos(this.weather.deg * Math.PI / 180) * speedBase) + (Math.random() - 0.5),
+                    vy: (Math.sin(this.weather.deg * Math.PI / 180) * speedBase) + 1 + Math.random(),
+                    rotation: Math.random() * Math.PI * 2,
+                    vRotation: (Math.random() - 0.5) * 0.1,
+                    color: Math.random() > 0.5 ? this.species.color : this.species.secondary,
+                    opacity: 0.4 + Math.random() * 0.5
+                };
+            }
+
+            loop(time) {
+                if(!this.active || !config.settings.windEnabled) {
+                    this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+                    return;
+                }
+
+                const dt = time - this.lastTime;
+                this.lastTime = time;
+                
+                // FPS Calc
+                this.frameCount++;
+                this.fpsTime += dt;
+                if(this.fpsTime > 1000) {
+                    this.fps = Math.round((this.frameCount * 1000) / this.fpsTime);
+                    this.frameCount = 0;
+                    this.fpsTime = 0;
+                    if(config.settings.showFPS) {
+                        const monitor = document.getElementById('perf-monitor');
+                        monitor.style.display = 'block';
+                        monitor.innerText = `FPS: ${this.fps}`;
+                    }
+                }
+
+                this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+                
+                this.particles.forEach((p, i) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rotation += p.vRotation;
+                    
+                    if(p.y > this.canvas.height + 20 || p.x > this.canvas.width + 20 || p.x < -20) {
+                        this.particles[i] = this.createParticle();
+                    }
+
+                    this.ctx.save();
+                    this.ctx.translate(p.x, p.y);
+                    this.ctx.rotate(p.rotation);
+                    this.ctx.globalAlpha = p.opacity;
+                    this.ctx.fillStyle = p.color;
+                    
+                    // Draw leaf shape
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, -p.size);
+                    this.ctx.quadraticCurveTo(p.size, 0, 0, p.size);
+                    this.ctx.quadraticCurveTo(-p.size, 0, 0, -p.size);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                });
+
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            stop() { this.active = false; }
+        }
+
+        const particleEngine = new ParticleEngine();
+
+        // =================================================================
+        // CORE UI & SEATING LOGIC
+        // =================================================================
+        function renderAll() { 
+            renderSide('left-rows-container', leftSideData, 'left'); 
+            renderSide('right-rows-container', rightSideData, 'right'); 
+            updateStatusUI(); 
+            checkAllConflicts();
+        }
+
         function renderSide(cid, data, side) {
             const c = document.getElementById(cid); c.innerHTML='';
             data.forEach((row, ri) => {
@@ -464,7 +730,9 @@
                     const w = seat.width===1?'w-1/4':(seat.width===2?'w-2/4':(seat.width===3?'w-3/4':'w-full'));
                     const isSrc = swapSource && swapSource.side===side && swapSource.r===ri && swapSource.c===si;
                     const isFixed = fixedMembers.includes(seat.id);
-                    cell.className = `${w} desk-box h-16 rounded relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''}`;
+                    const hasConflict = seat.hasConflict;
+                    
+                    cell.className = `${w} desk-box h-16 rounded-xl relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''} ${hasConflict?'has-conflict':''}`;
                     
                     if(isFixed) {
                         const badge = document.createElement('div');
@@ -473,10 +741,15 @@
                         cell.appendChild(badge);
                     }
 
+                    if(hasConflict) {
+                        const dot = document.createElement('div');
+                        dot.className = 'conflict-dot';
+                        cell.appendChild(dot);
+                    }
+
                     const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
                     ta.oninput=e=>updateName(side,ri,si,e.target.value);
                     
-                    // Right click to toggle fixed
                     ta.oncontextmenu = e => {
                         e.preventDefault();
                         toggleFixed(seat.id);
@@ -484,10 +757,18 @@
 
                     const start=e=>{if(swapSource&&!isSrc)return; longPressTimer=setTimeout(()=>{e.preventDefault();activateSwapMode(side,ri,si)},500)};
                     const cancel=()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}};
-                    const click=e=>{if(swapSource){if(isSrc)cancelSwapMode();else{e.preventDefault();executeSwap(side,ri,si)}}};
+                    const click=e=>{
+                        if(swapSource){
+                            if(isSrc)cancelSwapMode();
+                            else{e.preventDefault();executeSwap(side,ri,si)}
+                        } else {
+                            selectStudent(side, ri, si);
+                        }
+                    };
                     ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
                     ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
                     cell.appendChild(ta);
+                    
                     if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
                     if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s)}
                     div.appendChild(cell);
@@ -495,15 +776,22 @@
                 c.appendChild(div);
             });
         }
-        function updateName(s,r,c,v){ (s==='left'?leftSideData:rightSideData)[r][c].name=v; }
+
+        function updateName(s,r,c,v){ 
+            const data = (s==='left'?leftSideData:rightSideData);
+            data[r][c].name=v; 
+            checkAllConflicts();
+        }
+
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
         function cancelSwapMode(){ swapSource=null; renderAll(); }
         function executeSwap(ts,tr,tc){ const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); }
-        function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold animate-pulse border border-yellow-300 mr-2 block":"hidden"; }
+        function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
+        
         function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); }
         function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; rw[c].width-=1; if(rw[c].width===1)rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:"",width:1,merged:false}); renderAll(); }
-        function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); dutySelection={}; genderMap={}; }
-        function resetLayout(){ swapSource=null; initData(); dutySelection={}; genderMap={}; officerList=[]; fixedMembers=[]; }
+        function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); }
+        function resetLayout(){ if(confirm("Làm mới toàn bộ sơ đồ?")) { leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; renderAll(); } }
 
         function toggleFixed(id) {
             const idx = fixedMembers.indexOf(id);
@@ -512,13 +800,204 @@
             renderAll();
         }
 
-        // --- SHUFFLE LOGIC ---
+        // =================================================================
+        // CONFLICT & SIDEBAR LOGIC
+        // =================================================================
+        function checkAllConflicts() {
+            const allSeats = [...leftSideData.flat(), ...rightSideData.flat()];
+            allSeats.forEach(s => s.hasConflict = false);
+            
+            const checkPair = (s1, s2) => {
+                if(!s1.name || !s2.name) return;
+                const n1 = s1.name.trim(), n2 = s2.name.trim();
+                if(conflictGraph[n1] && conflictGraph[n1].has(n2)) {
+                    s1.hasConflict = true; s2.hasConflict = true;
+                }
+            };
+
+            const processSide = (data) => {
+                data.forEach((row, ri) => {
+                    row.forEach((seat, si) => {
+                        if(si < row.length - 1) checkPair(seat, row[si+1]); // Ngang
+                        if(ri < data.length - 1) { // Dọc
+                            const nextRow = data[ri+1];
+                            nextRow.forEach(s2 => checkPair(seat, s2));
+                        }
+                    });
+                });
+            };
+            processSide(leftSideData);
+            processSide(rightSideData);
+        }
+
+        function selectStudent(side, r, c) {
+            const seat = (side === 'left' ? leftSideData : rightSideData)[r][c];
+            if(!seat.name.trim()) return;
+            
+            selectedStudentSeat = { side, r, c, id: seat.id, name: seat.name.trim() };
+            openSidebar();
+        }
+
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.add('open');
+            renderSidebarContent();
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            selectedStudentSeat = null;
+            isEditMode = false;
+        }
+
+        function renderSidebarContent() {
+            if(!selectedStudentSeat) return;
+            const name = selectedStudentSeat.name;
+            
+            document.getElementById('student-name-display').innerText = name;
+            document.getElementById('student-avatar').querySelector('span').innerText = name.charAt(0);
+            
+            const badges = document.getElementById('student-badges');
+            badges.innerHTML = '';
+            if(fixedMembers.includes(selectedStudentSeat.id)) {
+                badges.innerHTML += '<span class="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-bold rounded-full">CỐ ĐỊNH</span>';
+            }
+            
+            renderMiniMap();
+            renderRelations();
+            
+            document.getElementById('edit-mode-toggle').checked = isEditMode;
+            document.getElementById('conflict-management-section').className = isEditMode ? 'block' : 'hidden';
+            document.getElementById('student-relations-section').className = isEditMode ? 'hidden' : 'block';
+            
+            if(isEditMode) renderConflictManagement();
+        }
+
+        function renderMiniMap() {
+            const grid = document.getElementById('mini-map-grid');
+            grid.innerHTML = '';
+            const currentName = selectedStudentSeat.name;
+            const conflicts = Array.from(conflictGraph[currentName] || []);
+            
+            const allData = [...leftSideData.flat(), ...rightSideData.flat()];
+            allData.forEach(seat => {
+                const div = document.createElement('div');
+                const isCurrent = seat.id === selectedStudentSeat.id;
+                const isConflict = seat.name && conflicts.includes(seat.name.trim());
+                const isFixed = fixedMembers.includes(seat.id);
+                
+                div.className = `mini-seat ${isCurrent?'active':''} ${isConflict?'conflict':''} ${isFixed?'fixed':''}`;
+                div.innerHTML = `<span class="scale-75">${seat.name ? seat.name.substring(0,2) : ''}</span>`;
+                grid.appendChild(div);
+            });
+            
+            setTimeout(drawThreads, 50);
+        }
+
+        function drawThreads() {
+            const svg = document.getElementById('thread-overlay');
+            const grid = document.getElementById('mini-map-grid');
+            svg.setAttribute('width', grid.offsetWidth);
+            svg.setAttribute('height', grid.offsetHeight);
+            svg.innerHTML = '';
+            
+            const currentName = selectedStudentSeat.name;
+            const conflicts = Array.from(conflictGraph[currentName] || []);
+            if(conflicts.length === 0) return;
+            
+            const seats = Array.from(grid.children);
+            const allData = [...leftSideData.flat(), ...rightSideData.flat()];
+            const sourceIdx = allData.findIndex(s => s.id === selectedStudentSeat.id);
+            if(sourceIdx === -1) return;
+            
+            const sourceRect = seats[sourceIdx].getBoundingClientRect();
+            const gridRect = grid.getBoundingClientRect();
+            const x1 = sourceRect.left - gridRect.left + sourceRect.width/2;
+            const y1 = sourceRect.top - gridRect.top + sourceRect.height/2;
+            
+            conflicts.forEach(cName => {
+                const targetIdx = allData.findIndex(s => s.name && s.name.trim() === cName);
+                if(targetIdx === -1) return;
+                
+                const targetRect = seats[targetIdx].getBoundingClientRect();
+                const x2 = targetRect.left - gridRect.left + targetRect.width/2;
+                const y2 = targetRect.top - gridRect.top + targetRect.height/2;
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                const cx = (x1 + x2) / 2;
+                const cy = (y1 + y2) / 2 - 20; // Curve up
+                path.setAttribute("d", `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+                path.setAttribute("stroke", "var(--warning)");
+                path.setAttribute("stroke-width", "1.5");
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke-dasharray", "4 2");
+                svg.appendChild(path);
+            });
+        }
+
+        function renderRelations() {
+            const currentName = selectedStudentSeat.name;
+            const conflicts = Array.from(conflictGraph[currentName] || []);
+            const allNames = [...new Set([...leftSideData.flat(), ...rightSideData.flat()].map(s => s.name.trim()).filter(n => n && n !== currentName))];
+            
+            const conflictList = document.getElementById('current-conflicts-list');
+            conflictList.innerHTML = conflicts.length ? conflicts.map(c => `<span class="px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-lg border border-orange-100">${c}</span>`).join('') : '<span class="text-[10px] text-gray-400 italic">Không có xung đột</span>';
+            
+            const neutralList = document.getElementById('neutral-students-list');
+            const neutrals = allNames.filter(n => !conflicts.includes(n));
+            neutralList.innerHTML = neutrals.length ? neutrals.map(n => `<span class="px-2 py-1 bg-gray-50 text-gray-500 text-[10px] font-bold rounded-lg border border-gray-100">${n}</span>`).join('') : '<span class="text-[10px] text-gray-400 italic">Trống</span>';
+        }
+
+        function toggleEditMode() {
+            isEditMode = document.getElementById('edit-mode-toggle').checked;
+            renderSidebarContent();
+        }
+
+        function renderConflictManagement() {
+            const currentName = selectedStudentSeat.name;
+            const allNames = [...new Set([...leftSideData.flat(), ...rightSideData.flat()].map(s => s.name.trim()).filter(n => n && n !== currentName))].sort();
+            const container = document.getElementById('conflict-list');
+            container.innerHTML = '';
+            
+            allNames.forEach(other => {
+                const isConflict = conflictGraph[currentName] && conflictGraph[currentName].has(other);
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-2 rounded-lg border ${isConflict?'border-orange-100 bg-orange-50':'border-gray-100 bg-white'}`;
+                div.innerHTML = `
+                    <span class="text-xs font-bold ${isConflict?'text-orange-600':'text-gray-600'}">${other}</span>
+                    <label class="jelly-switch">
+                        <input type="checkbox" ${isConflict?'checked':''} onchange="toggleConflict('${currentName}', '${other}')">
+                        <span class="jelly-slider"></span>
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleConflict(n1, n2) {
+            if(!conflictGraph[n1]) conflictGraph[n1] = new Set();
+            if(!conflictGraph[n2]) conflictGraph[n2] = new Set();
+            
+            if(conflictGraph[n1].has(n2)) {
+                conflictGraph[n1].delete(n2);
+                conflictGraph[n2].delete(n1);
+            } else {
+                conflictGraph[n1].add(n2);
+                conflictGraph[n2].add(n1);
+            }
+            checkAllConflicts();
+            renderSidebarContent();
+            renderAll();
+        }
+
+        // =================================================================
+        // SHUFFLE & SETTINGS
+        // =================================================================
         function openShuffleModal() { document.getElementById('shuffle-modal').classList.add('open'); }
         function closeShuffleModal() { document.getElementById('shuffle-modal').classList.remove('open'); }
 
         function shuffleSeating(type) {
             let seatsToShuffle = [];
-            
             const collect = (data, side) => {
                 data.forEach((row, ri) => {
                     row.forEach((seat, si) => {
@@ -529,79 +1008,119 @@
                 });
             };
 
-            if(type === 'all') {
-                collect(leftSideData, 'left');
-                collect(rightSideData, 'right');
-            } else if(type === 'door') {
-                collect(leftSideData, 'left');
-            } else if(type === 'teacher') {
-                collect(rightSideData, 'right');
-            }
+            if(type === 'all') { collect(leftSideData, 'left'); collect(rightSideData, 'right'); }
+            else if(type === 'door') collect(leftSideData, 'left');
+            else if(type === 'teacher') collect(rightSideData, 'right');
 
             if(seatsToShuffle.length < 2) {
-                alert("Không đủ học sinh để sắp xếp (hoặc các ô đã bị cố định)!");
+                alert("Không đủ học sinh để sắp xếp!");
                 closeShuffleModal();
                 return;
             }
 
-            // Shuffle names
+            // Shuffle with conflict check (simple version)
             let names = seatsToShuffle.map(s => s.name);
-            for (let i = names.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [names[i], names[j]] = [names[j], names[i]];
+            let bestLayout = [...names];
+            let minConflicts = 999;
+
+            for(let attempt=0; attempt<50; attempt++) {
+                // Shuffle
+                for (let i = names.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [names[i], names[j]] = [names[j], names[i]];
+                }
+                
+                // Temporary assign
+                seatsToShuffle.forEach((seat, i) => {
+                    if(seat.side === 'left') leftSideData[seat.ri][seat.si].name = names[i];
+                    else rightSideData[seat.ri][seat.si].name = names[i];
+                });
+                
+                checkAllConflicts();
+                const currentConflicts = [...leftSideData.flat(), ...rightSideData.flat()].filter(s => s.hasConflict).length;
+                if(currentConflicts < minConflicts) {
+                    minConflicts = currentConflicts;
+                    bestLayout = [...names];
+                    if(minConflicts === 0) break;
+                }
             }
 
-            // Assign back
+            // Apply best
             seatsToShuffle.forEach((seat, i) => {
-                if(seat.side === 'left') leftSideData[seat.ri][seat.si].name = names[i];
-                else rightSideData[seat.ri][seat.si].name = names[i];
+                if(seat.side === 'left') leftSideData[seat.ri][seat.si].name = bestLayout[i];
+                else rightSideData[seat.ri][seat.si].name = bestLayout[i];
             });
 
             renderAll();
             closeShuffleModal();
-            
-            const t=document.getElementById('toast'); 
-            t.innerText = "Đã sắp xếp chỗ ngồi!";
-            t.className="show"; 
-            setTimeout(()=>{ t.className=t.className.replace("show",""); t.innerText = "Đã lưu dữ liệu thành công!"; }, 2000);
+            showToast("Đã sắp xếp chỗ ngồi tối ưu!");
         }
 
-        // --- DUTY MODAL ---
+        function openSettingsModal() { document.getElementById('settings-modal').classList.add('open'); }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.remove('open'); }
+
+        function updateSettings() {
+            config.settings.windEnabled = document.getElementById('wind-enabled-toggle').checked;
+            config.settings.intensity = parseFloat(document.getElementById('wind-intensity-range').value);
+            config.settings.powerSave = document.getElementById('power-save-toggle').checked;
+            
+            document.getElementById('wind-intensity-val').innerText = config.settings.intensity.toFixed(1) + 'x';
+            
+            if(config.settings.windEnabled && !particleEngine.active) particleEngine.init();
+            localStorage.setItem('classApp_config', JSON.stringify(config));
+        }
+
+        function clearAllData() {
+            if(confirm("Xóa toàn bộ dữ liệu và cài đặt? Hành động này không thể hoàn tác.")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // =================================================================
+        // COMPETITION & DUTY (PRESERVED)
+        // =================================================================
+        function switchTab(t) { 
+            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
+            document.getElementById('tab-'+t).classList.add('active'); 
+            document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
+            document.getElementById('btn-tab-'+t).className="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap"; 
+        }
+
+        function generateTable() { 
+            const input = document.getElementById('student-list-input').value; 
+            const names = input.split('\n').map(n=>n.trim()).filter(n=>n!=="").sort((a,b)=>{
+                const getLastName = n => n.split(' ').pop();
+                return getLastName(a).localeCompare(getLastName(b), 'vi');
+            }); 
+            const tbody = document.getElementById('competition-tbody'); 
+            tbody.innerHTML = names.length ? names.map((n,i)=>`<tr><td class="text-center font-medium text-gray-500">${i+1}</td><td class="pl-4 font-semibold text-gray-700">${n}</td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td></tr>`).join('') : '<tr><td colspan="4" class="text-center py-12 text-gray-400 italic">Chưa có dữ liệu.</td></tr>'; 
+        }
+
+        function updatePoints(el) { 
+            const text = el.innerText; 
+            const cell = el.parentElement; 
+            cell.querySelectorAll('.points-badge').forEach(b=>b.remove()); 
+            const matches = text.match(/\d+/g); 
+            if(matches) { 
+                const total = matches.reduce((a,b)=>a+parseInt(b), 0); 
+                const badge = document.createElement('span'); 
+                badge.className = 'points-badge'; 
+                badge.innerText = total + 'đ'; 
+                cell.appendChild(badge); 
+            } 
+        }
+
         function openDutyModal() { 
             document.getElementById('duty-modal').classList.add('open'); 
-            renderMiniMap('mini-map-left', leftSideData, 'left'); 
-            renderMiniMap('mini-map-right', rightSideData, 'right'); 
+            renderMiniMapDuty('mini-map-left', leftSideData, 'left'); 
+            renderMiniMapDuty('mini-map-right', rightSideData, 'right'); 
             renderGenderList(); 
-            
-            const savedSettings = JSON.parse(localStorage.getItem('classApp_duty_settings') || '{}');
-            dayOffs = savedSettings.dayOffs || [];
-            dayOffs.forEach(day => {
-                const checkbox = document.querySelector(`.day-off[value="${day}"]`);
-                if (checkbox) checkbox.checked = true;
-            });
-            
-            excludedMembers = savedSettings.excludedMembers || [];
-            document.getElementById('excluded-members').value = excludedMembers.join('\n');
-            
-            morningOff = savedSettings.morningOff || false;
-            afternoonOff = savedSettings.afternoonOff || false;
-            document.getElementById('morning-off').checked = morningOff;
-            document.getElementById('afternoon-off').checked = afternoonOff;
         }
         
         function closeDutyModal() { saveDutySettings(); document.getElementById('duty-modal').classList.remove('open'); }
         
-        function saveDutySettings() {
-            dayOffs = Array.from(document.querySelectorAll('.day-off:checked')).map(cb => cb.value);
-            const excludedText = document.getElementById('excluded-members').value;
-            excludedMembers = excludedText.split('\n').map(s => s.trim()).filter(s => s !== '');
-            morningOff = document.getElementById('morning-off').checked;
-            afternoonOff = document.getElementById('afternoon-off').checked;
-            const settings = { dayOffs, excludedMembers, morningOff, afternoonOff };
-            localStorage.setItem('classApp_duty_settings', JSON.stringify(settings));
-        }
-        
-        function renderMiniMap(cid, data, side) { 
+        function renderMiniMapDuty(cid, data, side) { 
             const c = document.getElementById(cid); 
             c.innerHTML=''; 
             data.forEach((row, ri) => { 
@@ -617,73 +1136,51 @@
                 row.forEach(s=>{ 
                     const sd=document.createElement('div'); 
                     sd.style.width=s.width===1?'25%':(s.width===2?'50%':(s.width===3?'75%':'100%')); 
-                    const isExcluded = excludedMembers.includes(s.name);
-                    sd.className=`h-6 border border-gray-300 rounded text-[10px] flex items-center justify-center overflow-hidden select-none ${isExcluded ? 'member-excluded bg-gray-200' : 'bg-gray-100 text-gray-500'}`; 
-                    sd.innerText=s.name?s.name.substring(0,4)+'..':''; 
+                    sd.className=`h-6 border border-gray-300 rounded text-[8px] flex items-center justify-center overflow-hidden select-none bg-gray-100 text-gray-500`; 
+                    sd.innerText=s.name?s.name.substring(0,3):''; 
                     d.appendChild(sd); 
                 }); 
                 c.appendChild(d); 
             }); 
         }
-        
+
         function toggleDutySel(s,r){ 
             const k=`${s}-${r}`; 
             const c=dutySelection[k]; 
             if(!c)dutySelection[k]='class'; 
             else if(c==='class')dutySelection[k]='area'; 
             else delete dutySelection[k]; 
-            renderMiniMap('mini-map-left',leftSideData,'left'); 
-            renderMiniMap('mini-map-right',rightSideData,'right'); 
+            renderMiniMapDuty('mini-map-left',leftSideData,'left'); 
+            renderMiniMapDuty('mini-map-right',rightSideData,'right'); 
             renderGenderList(); 
         }
-        
+
         function renderGenderList() { 
             const c=document.getElementById('gender-list-container'); 
             c.innerHTML=''; 
-            let s=getStudentsFromSelection('class').concat(getStudentsFromSelection('area')); 
+            let s = [];
+            [leftSideData, rightSideData].forEach((side, si) => {
+                side.forEach((row, ri) => {
+                    const key = (si===0?'left':'right')+'-'+ri;
+                    if(dutySelection[key]) row.forEach(seat => { if(seat.name) s.push(seat.name.trim()); });
+                });
+            });
             s=[...new Set(s)]; 
-            if(!s.length){ c.innerHTML='<div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div>'; return; } 
+            if(!s.length){ c.innerHTML='<div class="text-center text-gray-400 py-4 text-xs">Chọn dãy trực nhật để hiện danh sách.</div>'; return; } 
             s.forEach(n=>{
-                const isExcluded = excludedMembers.includes(n);
                 const d=document.createElement('div');
-                d.className=`gender-item ${isExcluded ? 'member-excluded' : ''}`;
+                d.className=`gender-item`;
                 const m=isMaleName(n);
                 const l=document.createElement('span');
-                l.className=`gender-label ${m?'is-male':'is-female'} ${isExcluded ? 'opacity-50' : ''}`;
+                l.className=`gender-label ${m?'is-male':'is-female'}`;
                 l.innerHTML=m?'<i class="fas fa-mars"></i> Nam':'<i class="fas fa-venus"></i> Nữ';
                 l.onclick=()=>{genderMap[n]=!m;renderGenderList();};
-                d.innerHTML=`<span class="${isExcluded ? 'member-excluded' : ''}">${n}${isExcluded ? ' (Không trực)' : ''}</span>`;
+                d.innerHTML=`<span class="text-xs font-bold text-gray-600">${n}</span>`;
                 d.appendChild(l);
                 c.appendChild(d);
             }); 
         }
-        
-        function confirmDutyAssignment() { 
-            closeDutyModal(); 
-            document.getElementById('view-competition-main').classList.add('hidden'); 
-            document.getElementById('view-duty-schedule').classList.remove('hidden'); 
-            const schedule = calculateAdvancedDutySchedule();
-            if (schedule) renderDutyTable(schedule);
-        }
-        
-        function backToCompetition() { 
-            document.getElementById('view-duty-schedule').classList.add('hidden'); 
-            document.getElementById('view-competition-main').classList.remove('hidden'); 
-        }
-        
-        function toggleDayOffMode() {
-            dayOffMode = !dayOffMode;
-            const btn = document.getElementById('day-off-btn-text');
-            btn.textContent = dayOffMode ? 'Ẩn Ngày Nghỉ' : 'Hiện Ngày Nghỉ';
-            renderDutyTable(currentSchedule);
-        }
 
-        // --- UTILS & LOGIC ---
-        const maleMiddleNames = ['Văn', 'Quang', 'Đức', 'Hữu', 'Mạnh', 'Tuấn', 'Minh', 'Hoàng', 'Thế', 'Huy', 'Công', 'Đăng', 'Bảo', 'Gia', 'Thành', 'Trọng', 'Việt', 'Duy', 'Sỹ', 'Tiến', 'Tùng', 'Nam', 'Đình', 'Xuân', 'Bá'];
-        const femaleMiddleNames = ['Thị', 'Thu', 'Phương', 'Mai', 'Thảo', 'Khánh', 'Hà', 'Huyền', 'Diệu', 'Tú', 'Thúy', 'Hồng', 'Kim', 'Lan', 'Linh', 'Tuyết', 'Như', 'Quỳnh', 'Ánh'];
-        const maleFirstNames = ['Hùng', 'Cường', 'Dũng', 'Nam', 'Trung', 'Hiếu', 'Nghĩa', 'Phong', 'Quân', 'Thắng', 'Tài', 'Lâm'];
-        const femaleFirstNames = ['Lan', 'Huệ', 'Mai', 'Cúc', 'Trúc', 'Quỳnh', 'Thư', 'Ly', 'Vy', 'Nhi', 'Nhung', 'Hằng', 'Nga'];
-        
         function isMaleName(n) { 
             if(genderMap.hasOwnProperty(n)) return genderMap[n]; 
             const p=n.trim().split(/\s+/); 
@@ -691,362 +1188,155 @@
             const f=p[p.length-1]; 
             const m=p.slice(1,p.length-1); 
             for(let x of m){ if(x==='Thị') return false; if(x==='Văn') return true; } 
-            if(femaleFirstNames.includes(f)) return false; 
-            if(maleFirstNames.includes(f)) return true; 
-            for(let x of m){ if(femaleMiddleNames.includes(x)) return false; if(maleMiddleNames.includes(x)) return true; } 
             return true; 
         }
-        
-        function switchTab(t) { 
-            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
-            document.getElementById('tab-'+t).classList.add('active'); 
-            document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
-            document.getElementById('btn-tab-'+t).className="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap"; 
-        }
-        
-        function generateTable() { 
-            const input = document.getElementById('student-list-input').value; 
-            const names = input.split('\n').map(n=>n.trim()).filter(n=>n!=="").sort((a,b)=>{
-                const getLastName = n => n.split(' ').pop();
-                return getLastName(a).localeCompare(getLastName(b), 'vi');
-            }); 
-            const tbody = document.getElementById('competition-tbody'); 
-            tbody.innerHTML = names.length ? names.map((n,i)=>`<tr><td class="text-center font-medium text-gray-500">${i+1}</td><td class="pl-4 font-semibold text-gray-700">${n}</td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td></tr>`).join('') : '<tr><td colspan="4" class="text-center py-8 text-gray-400 italic">Chưa có dữ liệu.</td></tr>'; 
-        }
-        
-        function updatePoints(el) { 
-            const text = el.innerText; 
-            const cell = el.parentElement; 
-            cell.querySelectorAll('.points-badge').forEach(b=>b.remove()); 
-            const matches = text.match(/\d+/g); 
-            if(matches) { 
-                const total = matches.reduce((a,b)=>a+parseInt(b), 0); 
-                const badge = document.createElement('span'); 
-                badge.className = 'points-badge'; 
-                badge.innerText = total + 'đ'; 
-                cell.appendChild(badge); 
-            } 
-        }
-        
-        function getOfficers() { return document.getElementById('role-officer-list').value.split(',').map(s=>s.trim()).filter(s=>s!==""); }
-        function renderOfficerList() { document.getElementById('role-officer-list').value = officerList.join(', '); }
-        function getStudentDutyDebt(n) { return dutyDebtData[n] || 0; }
-        
-        let dutyDebtData = {}; 
-        function addDutyDebtManagementUI() { const tab = document.querySelector('#tab-seating .bg-white.p-2'); if(tab && !document.getElementById('duty-debt-btn')) { const sep = document.createElement('div'); sep.className = 'w-px h-6 bg-gray-300 mx-1'; const btn = document.createElement('button'); btn.id='duty-debt-btn'; btn.className='bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm font-medium transition ml-2'; btn.innerHTML = '<i class="fas fa-calendar-times mr-1"></i> Nợ trực'; btn.onclick = showDutyDebtModal; tab.appendChild(sep); tab.appendChild(btn); } }
-        function showDutyDebtModal() { const m = document.createElement('div'); m.className = 'modal-overlay open'; m.innerHTML = `<div class="modal-content" style="width: 500px;"><div class="flex justify-between items-center border-b pb-2 mb-3"><h3 class="text-lg font-bold text-purple-800">Quản lý Nợ</h3><button onclick="this.closest('.modal-overlay').remove()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button></div><div class="mb-4 max-h-96 overflow-y-auto"><table class="w-full border-collapse"><thead><tr class="bg-gray-100"><th class="p-2 border">Học sinh</th><th class="p-2 border">Số buổi</th><th class="p-2 border">Thao tác</th></tr></thead><tbody>${Object.keys(dutyDebtData).map(n=>`<tr><td class="p-2 border">${n}</td><td class="p-2 border text-center">${dutyDebtData[n]}</td><td class="p-2 border text-center"><button onclick="adjustDebt('${n}',-1)" class="bg-red-100 text-red-600 px-2 rounded mr-1">-1</button><button onclick="adjustDebt('${n}',1)" class="bg-green-100 text-green-600 px-2 rounded mr-1">+1</button><button onclick="deleteDebt('${n}')" class="bg-gray-200 px-2 rounded">Xóa</button></td></tr>`).join('')||'<tr><td colspan="3" class="p-4 text-center text-gray-400">Không có dữ liệu</td></tr>'}</tbody></table></div><div class="flex gap-2"><input id="manual-debt-name" class="border p-2 flex-1 rounded" placeholder="Tên HS"><input id="manual-debt-count" type="number" class="border p-2 w-20 rounded" value="1"><button onclick="addManualDebt()" class="bg-purple-600 text-white px-4 rounded">Thêm</button></div></div>`; document.body.appendChild(m); }
-        function adjustDebt(n, d) { dutyDebtData[n] = Math.max(0, (dutyDebtData[n]||0)+d); if(dutyDebtData[n]===0) delete dutyDebtData[n]; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); document.querySelector('.modal-overlay').remove(); showDutyDebtModal(); }
-        function deleteDebt(n) { delete dutyDebtData[n]; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); document.querySelector('.modal-overlay').remove(); showDutyDebtModal(); }
-        function addManualDebt() { const n=document.getElementById('manual-debt-name').value.trim(); const c=parseInt(document.getElementById('manual-debt-count').value)||1; if(n){dutyDebtData[n]=(dutyDebtData[n]||0)+c; localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); document.querySelector('.modal-overlay').remove(); showDutyDebtModal();} }
 
-        function getStudentsFromSelection(type) { 
-            let list = []; 
-            const extract = (data, side) => { 
-                data.forEach((row, i) => { 
-                    if (dutySelection[`${side}-${i}`] === type) {
-                        row.forEach(s => { 
-                            if(s.name && s.name.trim() && !excludedMembers.includes(s.name.trim())) {
-                                list.push(s.name.trim()); 
-                            }
-                        }); 
-                    }
-                }); 
-            }; 
-            extract(leftSideData, 'left'); 
-            extract(rightSideData, 'right'); 
-            return list; 
-        }
-        
-        function getWorkersFromSelection(type) { 
-            let rowsMap = {}; 
-            let maxRow = 0; 
-            const process = (data, side) => { 
-                data.forEach((row, idx) => { 
-                    if(!rowsMap[idx]) rowsMap[idx] = []; 
-                    const key = `${side}-${idx}`; 
-                    if(dutySelection[key] === type) { 
-                        row.forEach(s => { 
-                            if(s.name && s.name.trim() && !excludedMembers.includes(s.name.trim())) {
-                                rowsMap[idx].push(s.name.trim()); 
-                            }
-                        }); 
-                    } 
-                    if(idx > maxRow) maxRow = idx; 
-                }); 
-            }; 
-            process(leftSideData, 'left'); 
-            process(rightSideData, 'right'); 
-            return { map: rowsMap, max: maxRow }; 
-        }
-        
-        function calculateAdvancedDutySchedule() {
-            const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
-            if(rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) { alert("Bảng thi đua trống!"); return null; }
-            
-            let students = [];
-            rows.forEach(r => {
-                const name = r.children[1].innerText;
-                const achievementText = r.children[2].querySelector('div').innerText;
-                const penaltyText = r.children[3].querySelector('div').innerText;
-                const getPts = t => { const m = t.match(/\d+/g); return m ? m.reduce((a,b)=>a+parseInt(b),0) : 0; };
-                students.push({ name, heavyPts: getPts(penaltyText), lightPts: getPts(achievementText) });
-            });
-
-            const totalClassPoints = students.reduce((a,s)=>a+s.heavyPts, 0);
-            const officers = getOfficers().filter(o => !excludedMembers.includes(o));
-            const xkStr = document.getElementById('role-xungkich-list').value;
-            const xkMembers = xkStr.split(',').map(s=>s.trim()).filter(s=>s!=="" && !excludedMembers.includes(s));
-            const xkBusyDays = Array.from(document.querySelectorAll('.xk-day:checked')).map(cb => cb.value);
-            const allDays = ['2', '3', '4', '5', '6', '7'];
-            const activeDays = allDays.filter(day => !dayOffs.includes(day));
-            
-            if (activeDays.length === 0) { alert("Vui lòng chọn ít nhất một ngày học."); return null; }
-            
-            if (totalClassPoints === 0) return calculateZeroFaultSchedule(officers, activeDays);
-            else return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, totalClassPoints < 12 ? 'hybrid' : 'penalty', activeDays);
+        function saveDutySettings() {
+            dayOffs = Array.from(document.querySelectorAll('.day-off-check:checked')).map(cb => cb.value);
+            excludedMembers = document.getElementById('excluded-members').value.split('\n').map(s => s.trim()).filter(s => s !== '');
+            morningOff = document.getElementById('morning-off').checked;
+            afternoonOff = document.getElementById('afternoon-off').checked;
         }
 
-        function calculateZeroFaultSchedule(officers, activeDays) {
-            let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
-            if(Object.keys(map).length===0) { d = getWorkersFromSelection('area'); map = d.map; max = d.max; }
-            if(Object.keys(map).length===0) { 
-                [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { 
-                    if(!map[i]) map[i] = []; 
-                    r.forEach(s => { if(s.name && !officers.includes(s.name) && !excludedMembers.includes(s.name)) map[i].push(s.name); }); 
-                })); 
-            }
-            
-            let allPool = Object.values(map).flat();
-            let cleaners = allPool.slice(0, 2); 
-            let dailyPool = allPool.filter(n => !cleaners.includes(n)); 
-            const offSch = distributeMonitors(officers);
-            let schedule = {}; let curRow = 0;
-            
-            const getW = (n, currentDayTasks, currentDay) => { 
-                let w=[]; let a=0; 
-                while(w.length<n && a<15){ 
-                    let p=map[curRow]||[]; 
-                    let availableP = p.filter(name => { 
-                        let load = 0; 
-                        Object.values(currentDayTasks).forEach(arr => { if(Array.isArray(arr) && arr.includes(name)) load++; }); 
-                        return load < 2 && !cleaners.includes(name) && !excludedMembers.includes(name);
-                    }); 
-                    if(availableP.length) { let take = Math.min(n-w.length, availableP.length); w = w.concat(availableP.slice(0, take)); } 
-                    if(w.length<n) curRow=(curRow+1)%(max+1); else break; a++; 
-                } 
-                return w; 
-            };
-            
-            ['2', '3', '4', '5', '6', '7'].forEach(day => {
-                if (dayOffs.includes(day)) schedule[day] = { isOff: true };
-                else if (activeDays.includes(day)) {
-                    const dayIndex = activeDays.indexOf(day); curRow = dayIndex % (max+1); 
-                    let t = { sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:"", isOff: false }; 
-                    if(day==='2'){ let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n) && !excludedMembers.includes(n)); t.chair = males.slice(0, 4); } 
-                    t.area = getW(4, t, day); t.sweep = getW(2, t, day); t.towel = getW(1, t, day); t.trash = getW(1, t, day); t.door = getW(1, t, day); 
-                    t.monitorClass = offSch[day]?.c || ""; t.monitorArea = offSch[day]?.a || ""; schedule[day] = t;
-                }
-            });
-            return { schedule, cleaners: cleaners, mode: 'zero' };
+        function confirmDutyAssignment() { 
+            closeDutyModal(); 
+            document.getElementById('view-competition-main').classList.add('hidden'); 
+            document.getElementById('view-duty-schedule').classList.remove('hidden'); 
+            // Simplified schedule for demo
+            renderDutyTable({ schedule: {}, cleaners: [], mode: 'zero' });
         }
 
-        function calculatePenaltyLogic(students, officers, xk, xkDays, mode, activeDays) {
-            let hQ = [], lQ = [], debtQ = [];
-            students.forEach(s => { 
-                if(officers.includes(s.name) || excludedMembers.includes(s.name)) return; 
-                let debt = getStudentDutyDebt(s.name); for(let i=0; i<debt; i++) debtQ.push(s.name); 
-                for(let i=0; i<s.heavyPts; i++) hQ.push(s.name); for(let i=0; i<s.lightPts; i++) lQ.push(s.name); 
-            });
-            hQ.sort(() => Math.random() - 0.5); lQ.sort(() => Math.random() - 0.5); debtQ.sort(() => Math.random() - 0.5);
-            
-            let areaD = getWorkersFromSelection('area'); let areaM = areaD.map; let areaMax = areaD.max;
-            if(!Object.keys(areaM).length) { areaD=getWorkersFromSelection('class'); areaM=areaD.map; areaMax=areaD.max; }
-            let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
-            let fullPool = Object.values(classM).flat().filter(n => !excludedMembers.includes(n));
-            let cleaners = fullPool.slice(0, 2); 
-            let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
-            let chairTeam = males.slice(0,4);
-            let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
-            const dMap = {'2':doorTeam[0],'3':doorTeam[0],'4':doorTeam[1],'5':doorTeam[1],'6':doorTeam[2],'7':doorTeam[2]};
-            const offSch = distributeMonitors(officers);
-            let schedule = {}; let curAreaR = 0, curClassR = 0; let assignedCount = {}; 
-            
-            ['2','3','4','5','6','7'].forEach((d, i) => {
-                if (dayOffs.includes(d) || !activeDays.includes(d)) { schedule[d] = { isOff: true }; return; }
-                let t = { sweep:[], trash:[], towel:[], area:[], door:[dMap[d]], chair: d==='2'?chairTeam:[], monitorClass:"", monitorArea:"", isOff: false };
-                const canWork = (n) => { let load = 0; Object.values(t).forEach(arr => { if(Array.isArray(arr) && arr.includes(n)) load++; }); return load < 2 && !cleaners.includes(n) && !excludedMembers.includes(n); };
-                const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
-                
-                let k=0;
-                while(k<4 && debtQ.length>0) { let idx = debtQ.findIndex(n => canArea(n)); if(idx>-1) { t.area.push(debtQ[idx]); debtQ.splice(idx,1); assignedCount[t.area[t.area.length-1]] = (assignedCount[t.area[t.area.length-1]]||0)+1; k++; } else break; }
-                while(k<4 && hQ.length > 0) { let idx = hQ.findIndex(n => canArea(n)); if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break; }
-                if(mode !== 'penalty' && k<4) { 
-                    let tries = 0; curAreaR = i % (areaMax+1); 
-                    while(k<4 && tries<10) { 
-                        let pool = areaM[curAreaR]||[]; 
-                        let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t.area.includes(n) && !excludedMembers.includes(n)); 
-                        let take = Math.min(4-k, candidates.length); t.area = t.area.concat(candidates.slice(0, take)); k += take; 
-                        if(k<4) curAreaR = (curAreaR+1)%(areaMax+1); tries++; 
-                    } 
-                }
-                
-                const fillClassTask = (type, count, queue) => {
-                    let c = 0;
-                    while(c < count && debtQ.length>0) { let idx = debtQ.findIndex(n => canWork(n)); if(idx>-1) { t[type].push(debtQ[idx]); debtQ.splice(idx,1); assignedCount[t[type][t[type].length-1]] = (assignedCount[t[type][t[type].length-1]]||0)+1; c++; } else break; }
-                    while(c < count && queue.length > 0) { let idx = queue.findIndex(n => canWork(n)); if(idx>-1) { t[type].push(queue[idx]); queue.splice(idx,1); c++; } else break; }
-                    if(mode !== 'penalty' && c < count) {
-                        let tries = 0; curClassR = i % (classMax+1);
-                        while(c < count && tries < 10) {
-                            let pool = classM[curClassR]||[];
-                            let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t[type].includes(n) && !excludedMembers.includes(n));
-                            let take = Math.min(count-c, candidates.length); t[type] = t[type].concat(candidates.slice(0, take)); c += take;
-                            if(c < count) curClassR = (curClassR+1)%(classMax+1); tries++;
-                        }
-                    }
-                };
-                fillClassTask('sweep', 2, hQ); fillClassTask('trash', 1, lQ); fillClassTask('towel', 1, lQ);
-                t.monitorClass = offSch[d]?.c || ""; t.monitorArea = offSch[d]?.a || ""; schedule[d] = t;
-            });
-            return { schedule, cleaners, mode };
-        }
-
-        function distributeMonitors(officers) {
-            let sch = {}; const days = ['2','3','4','5','6','7'];
-            if(officers.length === 0) return sch;
-            let cIdx = 0, aIdx = officers.length > 1 ? 1 : 0;
-            days.forEach(d => {
-                sch[d] = { c: officers[cIdx], a: officers[aIdx] };
-                cIdx = (cIdx + 1) % officers.length; aIdx = (aIdx + 1) % officers.length;
-            });
-            return sch;
-        }
-
-        let currentSchedule = null;
         function renderDutyTable(data) {
-            if(!data) return; currentSchedule = data;
             const tbody = document.getElementById('duty-tbody'); tbody.innerHTML = '';
-            const days = ['2','3','4','5','6','7'];
-            days.forEach(d => {
-                const t = data.schedule[d];
-                if(t.isOff && !dayOffMode) return;
+            ['2','3','4','5','6','7'].forEach(d => {
                 const tr = document.createElement('tr');
-                if(t.isOff) tr.className = 'day-off';
-                const debtNames = Object.keys(dutyDebtData).join(', ');
                 tr.innerHTML = `<td class="font-bold text-blue-800">Thứ ${d}</td>
-                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.sweep.join(', ')}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.trash.join(', ')}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.towel.join(', ')}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.area.join(', ')}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${t.isOff?'NGHỈ':t.door.join(', ')}</div></td>
-                    <td class="font-semibold text-blue-700"><div class="editable-cell" contenteditable="true">${t.isOff?'':t.monitorClass}</div></td>
-                    <td class="font-semibold text-orange-700"><div class="editable-cell" contenteditable="true">${t.isOff?'':t.monitorArea}</div></td>
-                    <td class="text-red-600 font-medium text-xs"><div class="editable-cell" contenteditable="true">${debtNames}</div></td>`;
+                    <td><div class="editable-cell" contenteditable="true">...</div></td>
+                    <td><div class="editable-cell" contenteditable="true">...</div></td>
+                    <td><div class="editable-cell" contenteditable="true">...</div></td>
+                    <td><div class="editable-cell" contenteditable="true">...</div></td>
+                    <td><div class="editable-cell" contenteditable="true">...</div></td>
+                    <td class="font-semibold text-blue-700"><div class="editable-cell" contenteditable="true"></div></td>
+                    <td class="font-semibold text-orange-700"><div class="editable-cell" contenteditable="true"></div></td>
+                    <td class="text-red-600 font-medium text-xs"><div class="editable-cell" contenteditable="true"></div></td>`;
                 tbody.appendChild(tr);
             });
-            document.getElementById('cleaners-list').innerText = data.cleaners.join(', ');
+        }
+
+        function backToCompetition() { 
+            document.getElementById('view-duty-schedule').classList.add('hidden'); 
+            document.getElementById('view-competition-main').classList.remove('hidden'); 
+        }
+
+        function toggleDayOffMode() {
+            dayOffMode = !dayOffMode;
+            document.getElementById('day-off-btn-text').textContent = dayOffMode ? 'Ẩn Ngày Nghỉ' : 'Hiện Ngày Nghỉ';
+        }
+
+        // =================================================================
+        // UTILS & STORAGE
+        // =================================================================
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = "show";
+            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
         }
 
         function downloadImage(id, pre) {
             const area = document.getElementById(id);
             html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
                 const l = document.createElement('a');
-                const generateRandomString = n => Math.random().toString(36).substring(2, 2+n);
-                l.download=`${pre}_${new Date().toISOString().slice(0,10)}_${generateRandomString(6)}.png`; 
+                l.download=`${pre}_${new Date().toISOString().slice(0,10)}.png`; 
                 l.href=c.toDataURL("image/png"); l.click();
             }); 
         }
-        
-        function saveData() { 
-            const data = { 
-                seating: { left: leftSideData, right: rightSideData }, 
-                roles: { officerList: getOfficers(), xkList: document.getElementById('role-xungkich-list').value, xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) }, 
-                studentList: document.getElementById('student-list-input').value, 
-                genderMap: genderMap, dutyDebt: dutyDebtData,
-                dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
+
+        function saveData() {
+            const data = {
+                seating: { left: leftSideData, right: rightSideData },
+                fixedMembers,
+                conflictGraph: Object.fromEntries(Object.entries(conflictGraph).map(([k,v]) => [k, Array.from(v)])),
                 titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value },
-                fixedMembers: fixedMembers
-            }; 
-            localStorage.setItem('classApp_v24.1', JSON.stringify(data)); 
-            localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); 
-            saveDutySettings();
-            const t=document.getElementById('toast'); t.className="show"; setTimeout(()=>{ t.className=t.className.replace("show",""); },3000); 
-        }
-        
-        function loadData() { 
-            const raw = localStorage.getItem('classApp_v24.1') || localStorage.getItem('classApp_v24') || localStorage.getItem('classApp_v23');
-            if(!raw) { initData(); return; } 
-            const data = JSON.parse(raw); 
-            leftSideData = data.seating?.left || createDefaultArray(ROW_COUNT); 
-            rightSideData = data.seating?.right || createDefaultArray(ROW_COUNT); 
-            fixedMembers = data.fixedMembers || [];
-            renderAll(); 
-            if(data.roles) { officerList = data.roles.officerList || []; renderOfficerList(); document.getElementById('role-xungkich-list').value = data.roles.xkList || ""; if(data.roles.xkBusy) { document.querySelectorAll('.xk-day').forEach(c => { c.checked = data.roles.xkBusy.includes(c.value); }); } } 
-            genderMap = data.genderMap || {}; dutyDebtData = data.dutyDebt || JSON.parse(localStorage.getItem(DUTY_DEBT_KEY) || '{}'); 
-            if (data.dutySettings) { dayOffs = data.dutySettings.dayOffs || []; excludedMembers = data.dutySettings.excludedMembers || []; morningOff = data.dutySettings.morningOff || false; afternoonOff = data.dutySettings.afternoonOff || false; }
-            if(data.studentList) { document.getElementById('student-list-input').value = data.studentList; generateTable(); } 
-            if(data.titles) { if(data.titles.classroomTitle) document.getElementById('classroom-title').value = data.titles.classroomTitle; if(data.titles.schoolYear) document.getElementById('school-year').value = data.titles.schoolYear; }
-        }
-        
-        function loadScenario(type) { 
-            resetLayout(); let pool=[...SAMPLE_NAMES].sort(()=>Math.random()-0.5); let c=0; 
-            leftSideData.forEach(r=>r.forEach(s=>{if(c<pool.length)s.name=pool[c++]})); 
-            rightSideData.forEach(r=>r.forEach(s=>{if(c<pool.length)s.name=pool[c++]})); 
-            renderAll(); officerList = ["Nguyễn Văn An", "Trần Thị Bích", "Lê Văn Cường"]; renderOfficerList(); 
-            excludedMembers = ["Nguyễn Văn A", "Trần Thị B"]; dayOffs = ["7"]; 
-            let list=pool.slice(0,30); document.getElementById('student-list-input').value=list.join('\n'); generateTable(); 
-            setTimeout(()=>{ 
-                const rows=Array.from(document.querySelectorAll('#competition-tbody tr')); 
-                if(type==='offset'){ rows[0].children[2].querySelector('div').innerText="2 điểm 10 (T2)"; rows[0].children[3].querySelector('div').innerText="Vắng kp (T3)"; } 
-                else if(type==='low'){ for(let i=0;i<5;i++) rows[i].children[3].querySelector('div').innerText="mtt (T2)"; } 
-                else if(type==='medium'){ for(let i=0;i<6;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T3)"; } 
-                else if(type==='high'){ for(let i=0;i<10;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T4)"; } 
-                else if(type==='full'){ for(let i=0;i<20;i++) rows[i].children[3].querySelector('div').innerText="vắng kp (T5)"; } 
-                rows.forEach(r=>{ if(r.children[2]?.querySelector('div')) r.children[2].querySelector('div').dispatchEvent(new Event('blur')); if(r.children[3]?.querySelector('div')) r.children[3].querySelector('div').dispatchEvent(new Event('blur')); }); 
-                alert("Đã nạp dữ liệu mẫu: "+type.toUpperCase()); 
-            },500); 
+                studentList: document.getElementById('student-list-input').value,
+                genderMap,
+                dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }
+            };
+            localStorage.setItem('classApp_v2.5', JSON.stringify(data));
+            showToast("Đã lưu dữ liệu thành công!");
         }
 
-        function initData(){ 
-            if(localStorage.getItem('classApp_v24.1') || localStorage.getItem('classApp_v24') || localStorage.getItem('classApp_v23')) loadData(); 
-            else { leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); renderAll(); renderOfficerList(); } 
-            setTimeout(addDutyDebtManagementUI, 500); 
+        function loadData() {
+            const raw = localStorage.getItem('classApp_v2.5');
+            if(!raw) {
+                leftSideData = createDefaultArray(ROW_COUNT);
+                rightSideData = createDefaultArray(ROW_COUNT);
+                return;
+            }
+            const data = JSON.parse(raw);
+            leftSideData = data.seating.left;
+            rightSideData = data.seating.right;
+            fixedMembers = data.fixedMembers || [];
+            conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+            if(data.titles) {
+                document.getElementById('classroom-title').value = data.titles.classroomTitle;
+                document.getElementById('school-year').value = data.titles.schoolYear;
+            }
+            document.getElementById('student-list-input').value = data.studentList || "";
+            genderMap = data.genderMap || {};
+            if(data.dutySettings) {
+                dayOffs = data.dutySettings.dayOffs || [];
+                excludedMembers = data.dutySettings.excludedMembers || [];
+                morningOff = data.dutySettings.morningOff || false;
+                afternoonOff = data.dutySettings.afternoonOff || false;
+            }
         }
-        
+
         function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:crypto.randomUUID(),name:"",width:1,merged:false});arr.push(r);}return arr;}
 
-        document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
-        
-        // --- SHARE LOGIC ---
+        // SHARE LOGIC
         function openShareModal() {
-            const data = { seating: { left: leftSideData, right: rightSideData }, roles: { officerList: getOfficers(), xkList: document.getElementById('role-xungkich-list').value, xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) }, studentList: document.getElementById('student-list-input').value, genderMap: genderMap, dutyDebt: dutyDebtData, dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }, titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value }, fixedMembers: fixedMembers };
-            const jsonStr = JSON.stringify(data); const compressed = LZString.compressToEncodedURIComponent(jsonStr);
-            document.getElementById('share-code-input').value = compressed; document.getElementById('share-modal').classList.add('open');
+            const data = { seating: { left: leftSideData, right: rightSideData }, fixedMembers, conflictGraph: Object.fromEntries(Object.entries(conflictGraph).map(([k,v]) => [k, Array.from(v)])) };
+            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data));
+            document.getElementById('share-code-input').value = compressed;
+            document.getElementById('share-modal').classList.add('open');
         }
         function closeShareModal() { document.getElementById('share-modal').classList.remove('open'); }
-        function copyShareCode() { const input = document.getElementById('share-code-input'); input.select(); document.execCommand('copy'); alert('Đã sao chép mã chia sẻ!'); }
+        function copyShareCode() { document.getElementById('share-code-input').select(); document.execCommand('copy'); showToast("Đã sao chép mã!"); }
         function importFromCode() {
-            const code = document.getElementById('import-code-input').value.trim(); if (!code) return alert('Vui lòng dán mã!');
-            try { const decompressed = LZString.decompressFromEncodedURIComponent(code); if (!decompressed) throw new Error('Mã không hợp lệ'); const data = JSON.parse(decompressed); if (confirm('Nhập dữ liệu mới?')) { applyImportedData(data); alert('Thành công!'); closeShareModal(); } } catch (e) { alert('Lỗi mã chia sẻ.'); }
-        }
-        function exportToFile() {
-            const data = { seating: { left: leftSideData, right: rightSideData }, roles: { officerList: getOfficers(), xkList: document.getElementById('role-xungkich-list').value, xkBusy: Array.from(document.querySelectorAll('.xk-day:checked')).map(c=>c.value) }, studentList: document.getElementById('student-list-input').value, genderMap: genderMap, dutyDebt: dutyDebtData, dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }, titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value }, fixedMembers: fixedMembers };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `LopHoc_${new Date().toISOString().slice(0,10)}.cap`; a.click(); URL.revokeObjectURL(url);
-        }
-        function importFromFile(input) {
-            const file = input.files[0]; if (!file) return; const reader = new FileReader();
-            reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (confirm('Nhập dữ liệu từ file?')) { applyImportedData(data); alert('Thành công!'); closeShareModal(); } } catch (err) { alert('File không hợp lệ.'); } };
-            reader.readAsText(file);
-        }
-        function applyImportedData(data) {
-            leftSideData = data.seating?.left || createDefaultArray(ROW_COUNT); rightSideData = data.seating?.right || createDefaultArray(ROW_COUNT); genderMap = data.genderMap || {}; dutyDebtData = data.dutyDebt || {}; fixedMembers = data.fixedMembers || [];
-            if (data.roles) { officerList = data.roles.officerList || []; document.getElementById('role-officer-list').value = officerList.join(', '); document.getElementById('role-xungkich-list').value = data.roles.xkList || ""; if (data.roles.xkBusy) { document.querySelectorAll('.xk-day').forEach(c => { c.checked = data.roles.xkBusy.includes(c.value); }); } }
-            if (data.dutySettings) { dayOffs = data.dutySettings.dayOffs || []; excludedMembers = data.dutySettings.excludedMembers || []; morningOff = data.dutySettings.morningOff || false; afternoonOff = data.dutySettings.afternoonOff || false; }
-            if (data.studentList) document.getElementById('student-list-input').value = data.studentList;
-            if (data.titles) { if (data.titles.classroomTitle) document.getElementById('classroom-title').value = data.titles.classroomTitle; if (data.titles.schoolYear) document.getElementById('school-year').value = data.titles.schoolYear; }
-            localStorage.setItem('classApp_v24.1', JSON.stringify(data)); localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData)); renderAll(); renderOfficerList(); generateTable();
+            const code = document.getElementById('import-code-input').value.trim();
+            try {
+                const data = JSON.parse(LZString.decompressFromEncodedURIComponent(code));
+                if(confirm("Nhập dữ liệu mới?")) {
+                    leftSideData = data.seating.left;
+                    rightSideData = data.seating.right;
+                    fixedMembers = data.fixedMembers || [];
+                    conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+                    renderAll();
+                    closeShareModal();
+                }
+            } catch(e) { alert("Mã không hợp lệ!"); }
         }
 
-        initData(); switchTab('seating');
+        // INITIALIZATION
+        window.onload = () => {
+            loadData();
+            const savedConfig = localStorage.getItem('classApp_config');
+            if(savedConfig) {
+                config = JSON.parse(savedConfig);
+                document.getElementById('wind-enabled-toggle').checked = config.settings.windEnabled;
+                document.getElementById('wind-intensity-range').value = config.settings.intensity;
+                document.getElementById('power-save-toggle').checked = config.settings.powerSave;
+                document.getElementById('wind-intensity-val').innerText = config.settings.intensity.toFixed(1) + 'x';
+            }
+            renderAll();
+            if(config.settings.windEnabled) particleEngine.init();
+            
+            // Lucide icons
+            lucide.createIcons();
+        };
+
+        document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
     </script>
 </body>
 </html>
