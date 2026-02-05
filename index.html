@@ -50,7 +50,12 @@
         .desk-box:hover .split-btn { opacity: 1; }
         .split-btn:hover { color: #ef4444; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
+        .classroom-info-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 5; pointer-events: none; width: 100%; }
+        .classroom-info-overlay h2 { font-size: 2.5rem; font-weight: 900; color: rgba(31, 41, 55, 0.1); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; line-height: 1; }
+        .classroom-info-overlay p { font-size: 1rem; font-weight: 700; color: rgba(107, 114, 128, 0.1); margin: 5px 0 0 0; }
         .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
+        .is-fixed-hidden .fixed-badge { display: none !important; }
+        .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
         .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
         .desk-box.is-fixed { border-color: var(--fixed) !important; border-width: 3px !important; background-color: rgba(139, 92, 246, 0.1) !important; }
         .desk-box.has-conflict { border-color: var(--warning) !important; }
@@ -202,25 +207,32 @@
                 </div>
             </div>
 
-            <div id="classroom-area" class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] flex flex-col items-center overflow-hidden">
-                <div class="w-1/2 h-12 bg-gray-800 rounded-b-3xl mb-12 flex items-center justify-center shadow-lg">
-                    <span class="text-white font-bold tracking-[0.5em] text-sm uppercase">Bảng Giảng</span>
-                </div>
-                
-                <div class="w-full flex justify-center gap-16 md:gap-24">
-                    <div id="left-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
-                    <div id="right-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
+            <div id="classroom-area" class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] flex flex-col items-center overflow-hidden relative">
+                <div class="classroom-info-overlay">
+                    <h2 id="overlay-title">LỚP 12A1</h2>
+                    <p id="overlay-year">NĂM HỌC 2023 - 2024</p>
                 </div>
 
-                <div class="mt-16 w-full flex justify-between items-end text-gray-400">
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="w-24 h-2 bg-gray-200 rounded-full"></div>
-                        <span class="text-[10px] font-bold uppercase">Cửa ra vào</span>
+                <div class="w-full flex justify-between items-start mb-8 z-10">
+                    <div class="flex flex-col items-center gap-1 text-gray-400">
+                        <div class="w-16 h-1.5 bg-gray-200 rounded-full"></div>
+                        <span class="text-[9px] font-bold uppercase">Cửa ra vào</span>
                     </div>
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="w-32 h-2 bg-gray-200 rounded-full"></div>
-                        <span class="text-[10px] font-bold uppercase">Cửa sổ hành lang</span>
+                    
+                    <div class="w-1/2 h-12 bg-gray-800 rounded-b-3xl flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold tracking-[0.5em] text-sm uppercase">Bảng Giảng</span>
                     </div>
+
+                    <div class="flex flex-col items-center gap-1 text-gray-400">
+                        <div class="w-20 h-10 bg-gray-100 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center">
+                            <span class="text-[8px] font-bold uppercase text-gray-300">Bàn Giáo Viên</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-full flex justify-center gap-16 md:gap-24 mt-4">
+                    <div id="left-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
+                    <div id="right-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
                 </div>
             </div>
         </div>
@@ -781,6 +793,9 @@
             const data = (s==='left'?leftSideData:rightSideData);
             data[r][c].name=v; 
             checkAllConflicts();
+            if(s==='left' && r===0 && c===0) { // Sync overlay if needed or just use global listener
+                // Handled by global input listeners
+            }
         }
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
@@ -1245,7 +1260,11 @@
 
         function downloadImage(id, pre) {
             const area = document.getElementById(id);
+            const fixedSeats = area.querySelectorAll('.is-fixed');
+            fixedSeats.forEach(s => s.classList.add('is-fixed-hidden'));
+            
             html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+                fixedSeats.forEach(s => s.classList.remove('is-fixed-hidden'));
                 const l = document.createElement('a');
                 l.download=`${pre}_${new Date().toISOString().slice(0,10)}.png`; 
                 l.href=c.toDataURL("image/png"); l.click();
@@ -1263,7 +1282,66 @@
                 dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }
             };
             localStorage.setItem('classApp_v2.5', JSON.stringify(data));
+            syncOverlays();
             showToast("Đã lưu dữ liệu thành công!");
+        }
+
+        function syncOverlays() {
+            document.getElementById('overlay-title').innerText = document.getElementById('classroom-title').value;
+            document.getElementById('overlay-year').innerText = document.getElementById('school-year').value;
+        }
+
+        function exportToFile() {
+            const data = {
+                seating: { left: leftSideData, right: rightSideData },
+                fixedMembers,
+                conflictGraph: Object.fromEntries(Object.entries(conflictGraph).map(([k,v]) => [k, Array.from(v)])),
+                titles: { classroomTitle: document.getElementById('classroom-title').value, schoolYear: document.getElementById('school-year').value },
+                studentList: document.getElementById('student-list-input').value,
+                genderMap,
+                dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff }
+            };
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ClassroomData_${document.getElementById('classroom-title').value || 'Export'}.cap`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Đã xuất file thành công!");
+        }
+
+        function importFromFile(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(confirm("Nhập dữ liệu từ file? Dữ liệu hiện tại sẽ bị thay thế.")) {
+                        leftSideData = data.seating.left;
+                        rightSideData = data.seating.right;
+                        fixedMembers = data.fixedMembers || [];
+                        conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+                        if(data.titles) {
+                            document.getElementById('classroom-title').value = data.titles.classroomTitle;
+                            document.getElementById('school-year').value = data.titles.schoolYear;
+                        }
+                        document.getElementById('student-list-input').value = data.studentList || "";
+                        genderMap = data.genderMap || {};
+                        if(data.dutySettings) {
+                            dayOffs = data.dutySettings.dayOffs || [];
+                            excludedMembers = data.dutySettings.excludedMembers || [];
+                            morningOff = data.dutySettings.morningOff || false;
+                            afternoonOff = data.dutySettings.afternoonOff || false;
+                        }
+                        syncOverlays();
+                        renderAll();
+                        showToast("Đã nhập dữ liệu thành công!");
+                    }
+                } catch(err) { alert("File không hợp lệ!"); }
+            };
+            reader.readAsText(file);
         }
 
         function loadData() {
@@ -1321,6 +1399,7 @@
         // INITIALIZATION
         window.onload = () => {
             loadData();
+            syncOverlays();
             const savedConfig = localStorage.getItem('classApp_config');
             if(savedConfig) {
                 config = JSON.parse(savedConfig);
@@ -1331,6 +1410,10 @@
             }
             renderAll();
             if(config.settings.windEnabled) particleEngine.init();
+            
+            // Sync overlays on input
+            document.getElementById('classroom-title').addEventListener('input', syncOverlays);
+            document.getElementById('school-year').addEventListener('input', syncOverlays);
             
             // Lucide icons
             lucide.createIcons();
