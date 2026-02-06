@@ -50,9 +50,9 @@
         .desk-box:hover .split-btn { opacity: 1; }
         .split-btn:hover { color: #ef4444; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
-        .classroom-info-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 5; pointer-events: none; width: 100%; }
-        .classroom-info-overlay h2 { font-size: 2.5rem; font-weight: 900; color: rgba(31, 41, 55, 0.1); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; line-height: 1; }
-        .classroom-info-overlay p { font-size: 1rem; font-weight: 700; color: rgba(107, 114, 128, 0.1); margin: 5px 0 0 0; }
+        .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
+        .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
+        .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
         .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
         .is-fixed-hidden .fixed-badge { display: none !important; }
         .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
@@ -208,7 +208,7 @@
             </div>
 
             <div id="classroom-area" class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] flex flex-col items-center overflow-hidden relative">
-                <div class="classroom-info-overlay">
+                <div class="classroom-info-header">
                     <h2 id="overlay-title">LỚP 12A1</h2>
                     <p id="overlay-year">NĂM HỌC 2023 - 2024</p>
                 </div>
