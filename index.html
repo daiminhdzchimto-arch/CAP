@@ -50,9 +50,9 @@
         .desk-box:hover .split-btn { opacity: 1; }
         .split-btn:hover { color: #ef4444; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
-        .classroom-info-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 5; pointer-events: none; width: 100%; }
-        .classroom-info-overlay h2 { font-size: 2.5rem; font-weight: 900; color: rgba(31, 41, 55, 0.1); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; line-height: 1; }
-        .classroom-info-overlay p { font-size: 1rem; font-weight: 700; color: rgba(107, 114, 128, 0.1); margin: 5px 0 0 0; }
+        .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
+        .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
+        .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
         .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
         .is-fixed-hidden .fixed-badge { display: none !important; }
         .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
@@ -208,7 +208,7 @@
             </div>
 
             <div id="classroom-area" class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] flex flex-col items-center overflow-hidden relative">
-                <div class="classroom-info-overlay">
+                <div class="classroom-info-header">
                     <h2 id="overlay-title">LỚP 12A1</h2>
                     <p id="overlay-year">NĂM HỌC 2023 - 2024</p>
                 </div>
@@ -804,7 +804,7 @@
         function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
         
         function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); }
-        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; rw[c].width-=1; if(rw[c].width===1)rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:"",width:1,merged:false}); renderAll(); }
+        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); }
         function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); }
         function resetLayout(){ if(confirm("Làm mới toàn bộ sơ đồ?")) { leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; renderAll(); } }
 
