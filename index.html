@@ -415,6 +415,13 @@
                         <div class="text-xs font-normal text-gray-500">Chỉ sắp xếp học sinh ở dãy bên phải</div>
                     </div>
                 </button>
+                <button onclick="flipSeatingVertically()" class="shuffle-option-btn">
+                    <i class="fas fa-arrow-up-down text-purple-500"></i>
+                    <div>
+                        <div class="text-sm font-bold">Lật/Xoay Dọc</div>
+                        <div class="text-xs font-normal text-gray-500">Đảo ngược thứ tự các hàng từ trên xuống dưới</div>
+                    </div>
+                </button>
             </div>
             <div class="mt-4 text-[10px] text-gray-400 italic border-t pt-3">
                 * Mẹo: Chuột phải vào ô chỗ ngồi để <b>Cố định</b> học sinh (không bị đổi chỗ).
@@ -1069,6 +1076,17 @@
             renderAll();
             closeShuffleModal();
             showToast("Đã sắp xếp chỗ ngồi tối ưu!");
+        }
+
+        function flipSeatingVertically() {
+            // Flip left side data
+            leftSideData.reverse();
+            // Flip right side data
+            rightSideData.reverse();
+            
+            renderAll();
+            closeShuffleModal();
+            showToast("Đã lật/xoay dọc sơ đồ chỗ ngồi!");
         }
 
         function openSettingsModal() { document.getElementById('settings-modal').classList.add('open'); }
