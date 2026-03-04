@@ -807,7 +807,7 @@
         function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); }
         function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); }
         function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); }
-        function resetLayout(){ if(confirm("Đắm mới toàn bộ sơ đồ?")) { leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; genderMap={}; dayOffs=[]; excludedMembers=[]; morningOff=false; afternoonOff=false; document.querySelectorAll('input[type="file"]').forEach(input => input.value = ''); localStorage.removeItem('classApp_v2.5'); renderAll(); showToast("Đã làm mới toàn bộ dữ liệu!"); } }
+        function resetLayout(){ leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; genderMap={}; dayOffs=[]; excludedMembers=[]; morningOff=false; afternoonOff=false; document.querySelectorAll('input[type="file"]').forEach(input => input.value = ''); localStorage.removeItem('classApp_v2.5'); renderAll(); showToast("Đã làm mới toàn bộ dữ liệu!"); }
 
         function toggleFixed(id) {
             const idx = fixedMembers.indexOf(id);
@@ -1029,7 +1029,7 @@
             else if(type === 'teacher') collect(rightSideData, 'right');
 
             if(seatsToShuffle.length < 2) {
-                alert("Không đủ học sinh để sắp xếp!");
+                showToast("Không đủ học sinh để sắp xếp!");
                 closeShuffleModal();
                 return;
             }
@@ -1106,10 +1106,8 @@
         }
 
         function clearAllData() {
-            if(confirm("Xóa toàn bộ dữ liệu và cài đặt? Hành động này không thể hoàn tác.")) {
-                localStorage.clear();
-                location.reload();
-            }
+            localStorage.clear();
+            location.reload();
         }
 
         // =================================================================
@@ -1338,8 +1336,7 @@
             reader.onload = e => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if(confirm("Nhập dữ liệu từ file? Dữ liệu hiện tại sẽ bị thay thế.")) {
-                        leftSideData = data.seating.left;
+                    leftSideData = data.seating.left;
                         rightSideData = data.seating.right;
                         fixedMembers = data.fixedMembers || [];
                         conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
@@ -1358,8 +1355,7 @@
                         syncOverlays();
                         renderAll();
                         showToast("Đã nhập dữ liệu thành công!");
-                    }
-                } catch(err) { alert("File không hợp lệ!"); }
+                } catch(err) { showToast("File không hợp lệ!"); }
             };
             reader.readAsText(file);
         }
@@ -1405,15 +1401,13 @@
             const code = document.getElementById('import-code-input').value.trim();
             try {
                 const data = JSON.parse(LZString.decompressFromEncodedURIComponent(code));
-                if(confirm("Nhập dữ liệu mới?")) {
-                    leftSideData = data.seating.left;
+                leftSideData = data.seating.left;
                     rightSideData = data.seating.right;
                     fixedMembers = data.fixedMembers || [];
                     conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
                     renderAll();
                     closeShareModal();
-                }
-            } catch(e) { alert("Mã không hợp lệ!"); }
+            } catch(e) { showToast("Mã không hợp lệ!"); }
         }
 
         // INITIALIZATION
