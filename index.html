@@ -1076,6 +1076,17 @@
             // Swap left and right sides
             [leftSideData, rightSideData] = [rightSideData, leftSideData];
             
+            // Reverse column order in each row to maintain relative positions
+            // (gần đường đi lại stays gần đường đi lại, gần tường stays gần tường)
+            const reverseRowColumns = (data) => {
+                data.forEach(row => {
+                    row.reverse();
+                });
+            };
+            
+            reverseRowColumns(leftSideData);
+            reverseRowColumns(rightSideData);
+            
             renderAll();
             showToast("Đã hoán đổi dãy cửa lớp và dãy bàn giáo viên!");
         }
