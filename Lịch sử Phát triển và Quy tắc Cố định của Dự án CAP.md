@@ -34,8 +34,12 @@ Dự án đạt bước tiến lớn về mặt kỹ thuật trong commit `67163
 
 Trong các commit tiếp theo như `c7a569a5a4e96b98c60caf3eefd18a20fda4b983` và `99263d38bd8bab7ed1bc69aee59b162bb52c1282`, giao diện đã được tinh chỉnh để tối ưu không gian, như việc di chuyển thông tin lớp học ra sau bảng đen và thay thế hành lang bằng bàn giáo viên. Các tính năng bị mất cũng được khôi phục, bao gồm hàm `syncNamesFromSeating()` để tự động đồng bộ danh sách học sinh và logic phân công trực nhật dựa trên điểm thi đua tuần trước.
 
-### Trạng thái Hiện tại (Baseline Commit: `11f86f5abd138269da48f06ec57bbb6cd0ccb45d`)
-**Phiên bản này được chỉ định là "Phiên bản Gốc Chuẩn" (Gold Standard/Baseline) của dự án CAP.** Nó chứa toàn bộ các tính năng, cấu trúc và cơ chế cốt lõi đã được xác nhận là ổn định và đáng tin cậy. Mọi thành phần từ CSS đến Logic JavaScript đều được tối ưu hóa để đảm bảo khi xuất ảnh qua phương thức `toDataURL`, sơ đồ lớp học trông chuyên nghiệp, rõ nét và đầy đủ thông tin nhất. Các thay đổi trong tương lai phải được xây dựng dựa trên phiên bản này, và mọi nỗ lực khôi phục sẽ quay về commit này làm điểm tham chiếu.
+### 🛡️ Phiên bản Dự phòng và Cơ sở (Baseline & Recovery Version): Commit `11f86f5abd138269da48f06ec57bbb6cd0ccb45d`
+
+**Phiên bản này được chính thức chỉ định là "Phiên bản Dự phòng kiêm Phiên bản Cơ sở" (Baseline & Recovery Version) của dự án CAP.** Nó chứa toàn bộ các tính năng, cấu trúc giao diện và cơ chế hoạt động nền tảng đã được xác nhận là ổn định và đáng tin cậy. Đây là điểm tham chiếu cốt lõi cho mọi hoạt động phát triển và khôi phục trong tương lai.
+
+*   **Mục đích**: Dùng để khôi phục trạng thái ổn định nếu các phiên bản sau gặp lỗi nghiêm trọng hoặc mất tính năng. Đảm bảo tính toàn vẹn và khả năng hoạt động của ứng dụng.
+*   **Quy ước**: Mọi AI Agent khi phát triển tính năng mới **BẮT BUỘC** phải tham chiếu đến cấu trúc và logic của phiên bản này để đảm bảo không làm mất đi các cơ chế cốt lõi. Nếu có sự sai lệch không mong muốn, AI Agent phải tự động khôi phục dựa trên logic của phiên bản cơ sở này. Các thay đổi trong tương lai phải được xây dựng dựa trên nền tảng vững chắc này.
 
 ---
 
