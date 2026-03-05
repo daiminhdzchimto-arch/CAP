@@ -1333,7 +1333,8 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `ClassroomData_${document.getElementById('classroom-title').value || 'Export'}.cap`;
+            const randomID = generateComplexID(124);
+            a.download = `ClassroomData_${document.getElementById('classroom-title').value || 'Export'}_${randomID}.cap`;
             a.click();
             URL.revokeObjectURL(url);
             showToast("Đã xuất file thành công!");
