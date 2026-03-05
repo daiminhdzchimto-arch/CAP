@@ -1288,10 +1288,30 @@
         function downloadImage(id, pre) {
             const area = document.getElementById(id);
             const fixedSeats = area.querySelectorAll('.is-fixed');
-            fixedSeats.forEach(s => s.classList.add('is-fixed-hidden'));
+            const conflictBoxes = area.querySelectorAll('.has-conflict');
+            const conflictDots = area.querySelectorAll('.conflict-dot');
             
-            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+            fixedSeats.forEach(s => s.classList.add('is-fixed-hidden'));
+            conflictBoxes.forEach(b => b.classList.add('hide-conflict-border'));
+            conflictDots.forEach(d => d.style.display = 'none');
+            
+            html2canvas(area, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: "#ffffff",
+                onclone: (clonedDoc) => {
+                    // Đảm bảo các phần tử ẩn trong bản clone
+                    const clonedArea = clonedDoc.getElementById(id);
+                    clonedArea.querySelectorAll('.is-fixed-hidden').forEach(s => s.style.opacity = '0');
+                    clonedArea.querySelectorAll('.hide-conflict-border').forEach(b => {
+                        b.style.borderColor = '#e5e7eb'; // Màu xám nhạt mặc định của border-gray-200
+                    });
+                }
+            }).then(c => {
                 fixedSeats.forEach(s => s.classList.remove('is-fixed-hidden'));
+                conflictBoxes.forEach(b => b.classList.remove('hide-conflict-border'));
+                conflictDots.forEach(d => d.style.display = '');
+                
                 const l = document.createElement('a');
                 const randomID = generateComplexID(124);
                 l.download=`${pre}_${randomID}.png`; 
