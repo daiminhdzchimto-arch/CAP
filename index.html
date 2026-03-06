@@ -1448,6 +1448,25 @@
             return seat;
         }
 
+        function normalizeImportedSide(sidePayload, restoredFixed) {
+            const sideRows = Array.isArray(sidePayload) ? sidePayload : [];
+            const normalizedSide = [];
+
+            for (let ri = 0; ri < ROW_COUNT; ri++) {
+                const sourceRow = Array.isArray(sideRows[ri]) ? sideRows[ri] : [];
+                const normalizedRow = [];
+
+                for (let ci = 0; ci < 4; ci++) {
+                    const seatToken = sourceRow[ci] || '';
+                    normalizedRow.push(decodeSeatToken(seatToken, restoredFixed));
+                }
+
+                normalizedSide.push(normalizedRow);
+            }
+
+            return normalizedSide;
+        }
+
         // ==========================================
         // 2. HÀM ĐỌC MÃ CHIA SẺ RÚT GỌN (IMPORT)
         // ==========================================
@@ -1461,8 +1480,8 @@
                 if (!payload || !Array.isArray(payload.s) || payload.s.length < 2) throw new Error('Sai định dạng dữ liệu');
 
                 const restoredFixed = [];
-                leftSideData = (payload.s[0] || []).map(row => row.map(seatStr => decodeSeatToken(seatStr, restoredFixed)));
-                rightSideData = (payload.s[1] || []).map(row => row.map(seatStr => decodeSeatToken(seatStr, restoredFixed)));
+                leftSideData = normalizeImportedSide(payload.s[0], restoredFixed);
+                rightSideData = normalizeImportedSide(payload.s[1], restoredFixed);
                 fixedMembers = restoredFixed;
 
                 conflictGraph = Object.fromEntries(Object.entries(payload.c || {}).map(([k, v]) => [k, new Set(v)]));
