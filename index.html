@@ -1414,10 +1414,26 @@
         }
 
         function encodeSeatToken(seat) {
-            if (!seat || !seat.name || seat.name.trim() === '') return '';
-            const safeName = seat.name.trim().replace(/\*/g, '');
+            if (!seat) return '';
+
+            const safeName = (seat.name || '').trim().replace(/\*/g, '');
+            const width = Number.isFinite(seat.width) ? Math.max(1, seat.width) : 1;
+            const isMerged = !!seat.merged;
             const isFixed = fixedMembers.includes(seat.id);
-            return isFixed ? `${safeName}*` : safeName;
+
+            // Token rỗng cho bàn mặc định để giữ mã ngắn nhất.
+            if (!safeName && width === 1 && !isMerged && !isFixed) return '';
+
+            // Giữ định dạng CAPX2 cũ cho trường hợp đơn giản để tương thích ngược.
+            if (safeName && width === 1 && !isMerged) return isFixed ? `${safeName}*` : safeName;
+
+            // Với ô gộp/ô trống có kích thước đặc biệt cần lưu đầy đủ metadata.
+            return {
+                n: safeName,
+                w: width,
+                m: isMerged ? 1 : 0,
+                f: isFixed ? 1 : 0
+            };
         }
 
         // ==========================================
@@ -1434,18 +1450,59 @@
             return SHARE_CODE_PREFIX + LZString.compressToBase64(rawJson);
         }
 
-        function decodeSeatToken(seatStr, restoredFixed) {
-            const token = (seatStr || '').trim();
-            const isFixed = token.endsWith('*');
-            const name = isFixed ? token.slice(0, -1) : token;
+        function decodeSeatToken(seatToken, restoredFixed) {
+            let name = '';
+            let width = 1;
+            let merged = false;
+            let isFixed = false;
+
+            if (typeof seatToken === 'string') {
+                const token = seatToken.trim();
+                isFixed = token.endsWith('*');
+                name = isFixed ? token.slice(0, -1) : token;
+            } else if (seatToken && typeof seatToken === 'object') {
+                name = String(seatToken.n || '').trim();
+                width = Number.isFinite(seatToken.w) ? Math.max(1, seatToken.w) : 1;
+                merged = !!seatToken.m;
+                isFixed = !!seatToken.f;
+            }
+
             const seat = {
                 id: crypto.randomUUID(),
                 name,
-                width: 1,
-                merged: false
+                width,
+                merged
             };
             if (isFixed && name) restoredFixed.push(seat.id);
             return seat;
+        }
+
+        function normalizeRowWidth(row) {
+            let totalWidth = row.reduce((sum, seat) => sum + (Number.isFinite(seat.width) ? seat.width : 1), 0);
+
+            while (totalWidth < 4) {
+                row.push({ id: crypto.randomUUID(), name: '', width: 1, merged: false });
+                totalWidth += 1;
+            }
+
+            while (totalWidth > 4 && row.length > 0) {
+                const last = row[row.length - 1];
+                if ((last.width || 1) <= totalWidth - 4) {
+                    totalWidth -= (last.width || 1);
+                    row.pop();
+                } else {
+                    const shrink = totalWidth - 4;
+                    last.width = Math.max(1, (last.width || 1) - shrink);
+                    if (last.width === 1) last.merged = false;
+                    totalWidth = 4;
+                }
+            }
+
+            row.forEach(seat => {
+                if ((seat.width || 1) === 1) seat.merged = false;
+            });
+
+            return row;
         }
 
         function normalizeImportedSide(sidePayload, restoredFixed) {
@@ -1454,14 +1511,17 @@
 
             for (let ri = 0; ri < ROW_COUNT; ri++) {
                 const sourceRow = Array.isArray(sideRows[ri]) ? sideRows[ri] : [];
-                const normalizedRow = [];
+                const normalizedRow = sourceRow.map(seatToken => decodeSeatToken(seatToken, restoredFixed));
 
-                for (let ci = 0; ci < 4; ci++) {
-                    const seatToken = sourceRow[ci] || '';
-                    normalizedRow.push(decodeSeatToken(seatToken, restoredFixed));
+                // Mã CAPX2 cũ chỉ chứa tên, cần khôi phục đúng 4 cột mặc định.
+                if (normalizedRow.length === 0 || sourceRow.every(token => typeof token === 'string')) {
+                    while (normalizedRow.length < 4) {
+                        normalizedRow.push(decodeSeatToken('', restoredFixed));
+                    }
+                    normalizedRow.length = 4;
                 }
 
-                normalizedSide.push(normalizedRow);
+                normalizedSide.push(normalizeRowWidth(normalizedRow));
             }
 
             return normalizedSide;
