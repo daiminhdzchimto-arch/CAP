@@ -1407,68 +1407,105 @@
         function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:crypto.randomUUID(),name:"",width:1,merged:false});arr.push(r);}return arr;}
 
         // SHARE LOGIC
-        const SHARE_CODE_PREFIX = 'CAPX1:';
+        const SHARE_CODE_PREFIX = 'CAPX2:';
 
-        function collectShareIds(left, right, fixed, conflictPairs) {
-            const ordered = [];
-            const idSet = new Set();
-            const addId = (id) => {
-                if (!id || idSet.has(id)) return;
-                idSet.add(id);
-                ordered.push(id);
+        function buildCompactConflictGraph() {
+            return Object.fromEntries(Object.entries(conflictGraph).map(([k, v]) => [k, Array.from(v)]));
+        }
+
+        function encodeSeatToken(seat) {
+            if (!seat) return '';
+            const rawName = (seat.name || '').trim();
+            const safeName = rawName.replace(/\*/g, '');
+            const isFixed = fixedMembers.includes(seat.id);
+            const token = rawName ? (isFixed ? `${safeName}*` : safeName) : '';
+            const width = Number.isInteger(seat.width) ? seat.width : 1;
+            const merged = !!seat.merged;
+            if (width === 1 && !merged) return token;
+            return [token, width, merged ? 1 : 0];
+        }
+
+        // ==========================================
+        // 1. HÀM TẠO MÃ CHIA SẺ RÚT GỌN (EXPORT)
+        // ==========================================
+        function generateOptimizedShareCode() {
+            const compactState = [leftSideData, rightSideData].map(side => side.map(row => row.map(encodeSeatToken)));
+            const payload = {
+                s: compactState,
+                c: buildCompactConflictGraph(),
+                d: { dayOffs, excludedMembers, morningOff, afternoonOff }
             };
-            [left, right].forEach(side => side.forEach(row => row.forEach(cell => addId(cell.id))));
-            fixed.forEach(addId);
-            conflictPairs.forEach(([a, b]) => { addId(a); addId(b); });
-            return ordered;
+            const rawJson = JSON.stringify(payload);
+            return SHARE_CODE_PREFIX + LZString.compressToBase64(rawJson);
         }
 
-        function encodeSeatingRows(rows, idToIndex) {
-            return rows.map(row => row.map(cell => {
-                const packed = [idToIndex.get(cell.id), cell.name || ''];
-                if (cell.width !== 1 || cell.merged) packed.push(cell.width);
-                if (cell.merged) packed.push(1);
-                return packed;
-            }));
-        }
-
-        function decodeSeatingRows(rows, ids) {
-            return rows.map(row => row.map(cell => ({
-                id: ids[cell[0]],
-                name: cell[1] || '',
-                width: cell.length > 2 ? cell[2] : 1,
-                merged: cell.length > 3 ? !!cell[3] : false
-            })));
-        }
-
-        function buildCompactSharePayload() {
-            const conflictPairs = [];
-            Object.entries(conflictGraph).forEach(([name, set]) => Array.from(set).forEach(target => conflictPairs.push([name, target])));
-            const ids = collectShareIds(leftSideData, rightSideData, fixedMembers, conflictPairs);
-            const idToIndex = new Map(ids.map((id, index) => [id, index]));
-            return {
-                v: 1,
-                ids,
-                l: encodeSeatingRows(leftSideData, idToIndex),
-                r: encodeSeatingRows(rightSideData, idToIndex),
-                f: fixedMembers.map(id => idToIndex.get(id)).filter(index => Number.isInteger(index)),
-                c: conflictPairs.map(([a, b]) => [idToIndex.get(a), idToIndex.get(b)]).filter(([a, b]) => Number.isInteger(a) && Number.isInteger(b))
+        function decodeSeatToken(seatData, restoredFixed) {
+            const data = Array.isArray(seatData) ? seatData : [seatData, 1, 0];
+            const token = (data[0] || '').trim();
+            const isFixed = token.endsWith('*');
+            const name = isFixed ? token.slice(0, -1) : token;
+            const widthRaw = Number(data[1]);
+            const width = Number.isFinite(widthRaw) && widthRaw > 0 ? widthRaw : 1;
+            const merged = data[2] ? true : false;
+            const seat = {
+                id: crypto.randomUUID(),
+                name,
+                width,
+                merged
             };
+            if (isFixed && name) restoredFixed.push(seat.id);
+            return seat;
         }
 
-        function unpackCompactSharePayload(payload) {
-            if (!payload || payload.v !== 1 || !Array.isArray(payload.ids)) throw new Error('Unsupported compact payload');
-            const ids = payload.ids;
-            leftSideData = decodeSeatingRows(payload.l || [], ids);
-            rightSideData = decodeSeatingRows(payload.r || [], ids);
-            fixedMembers = (payload.f || []).map(index => ids[index]).filter(Boolean);
-            conflictGraph = {};
-            (payload.c || []).forEach(([a, b]) => {
-                const source = ids[a], target = ids[b];
-                if (!source || !target) return;
-                if (!conflictGraph[source]) conflictGraph[source] = new Set();
-                conflictGraph[source].add(target);
+        function normalizeDecodedRows(rows) {
+            const normalized = (rows || []).map(row => {
+                const seats = (row || []).slice(0).map(seat => ({ ...seat }));
+                let widthSum = seats.reduce((sum, seat) => sum + (Number.isFinite(seat.width) ? seat.width : 1), 0);
+                while (widthSum < 4) {
+                    seats.push({ id: crypto.randomUUID(), name: '', width: 1, merged: false });
+                    widthSum += 1;
+                }
+                return seats;
             });
+
+            while (normalized.length < ROW_COUNT) {
+                normalized.push(createDefaultArray(1)[0]);
+            }
+            return normalized.slice(0, ROW_COUNT);
+        }
+
+        // ==========================================
+        // 2. HÀM ĐỌC MÃ CHIA SẺ RÚT GỌN (IMPORT)
+        // ==========================================
+        function parseOptimizedShareCode(shortCode) {
+            try {
+                const rawCode = shortCode.startsWith(SHARE_CODE_PREFIX) ? shortCode.slice(SHARE_CODE_PREFIX.length) : shortCode;
+                const decompressed = LZString.decompressFromBase64(rawCode);
+                if (!decompressed) throw new Error('Mã không hợp lệ hoặc bị hỏng');
+
+                const payload = JSON.parse(decompressed);
+                if (!payload || !Array.isArray(payload.s) || payload.s.length < 2) throw new Error('Sai định dạng dữ liệu');
+
+                const restoredFixed = [];
+                leftSideData = normalizeDecodedRows((payload.s[0] || []).map(row => row.map(seatStr => decodeSeatToken(seatStr, restoredFixed))));
+                rightSideData = normalizeDecodedRows((payload.s[1] || []).map(row => row.map(seatStr => decodeSeatToken(seatStr, restoredFixed))));
+                fixedMembers = restoredFixed;
+
+                conflictGraph = Object.fromEntries(Object.entries(payload.c || {}).map(([k, v]) => [k, new Set(v)]));
+                if (payload.d) {
+                    dayOffs = payload.d.dayOffs || [];
+                    excludedMembers = payload.d.excludedMembers || [];
+                    morningOff = payload.d.morningOff || false;
+                    afternoonOff = payload.d.afternoonOff || false;
+                }
+
+                saveData();
+                renderAll();
+                return true;
+            } catch (error) {
+                console.error('Lỗi Import:', error);
+                return false;
+            }
         }
 
         function decodeLegacyShareCode(code) {
@@ -1476,15 +1513,14 @@
         }
 
         function openShareModal() {
-            const compactData = buildCompactSharePayload();
-            const compactCode = SHARE_CODE_PREFIX + LZString.compressToEncodedURIComponent(JSON.stringify(compactData));
+            const compactCode = generateOptimizedShareCode();
 
             const legacyData = { seating: { left: leftSideData, right: rightSideData }, fixedMembers, conflictGraph: Object.fromEntries(Object.entries(conflictGraph).map(([k,v]) => [k, Array.from(v)])) };
             const legacyCode = LZString.compressToEncodedURIComponent(JSON.stringify(legacyData));
 
             document.getElementById('share-code-input').value = compactCode;
             const ratio = legacyCode.length ? Math.max(0, Math.round((1 - compactCode.length / legacyCode.length) * 100)) : 0;
-            document.getElementById('share-code-stats').innerText = `Bộ biên dịch CAPX1: ${compactCode.length} ký tự (ngắn hơn ~${ratio}% so với mã cũ).`;
+            document.getElementById('share-code-stats').innerText = `Bộ biên dịch CAPX2: ${compactCode.length} ký tự (ngắn hơn ~${ratio}% so với mã cũ).`;
             document.getElementById('share-modal').classList.add('open');
         }
         function closeShareModal() { document.getElementById('share-modal').classList.remove('open'); }
@@ -1493,16 +1529,19 @@
             const code = document.getElementById('import-code-input').value.trim();
             try {
                 if (code.startsWith(SHARE_CODE_PREFIX)) {
-                    const compactPayload = JSON.parse(LZString.decompressFromEncodedURIComponent(code.slice(SHARE_CODE_PREFIX.length)));
-                    unpackCompactSharePayload(compactPayload);
+                    if (!parseOptimizedShareCode(code)) throw new Error('Mã không hợp lệ!');
                 } else {
-                    const data = decodeLegacyShareCode(code);
-                    leftSideData = data.seating.left;
-                    rightSideData = data.seating.right;
-                    fixedMembers = data.fixedMembers || [];
-                    conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+                    const parsedOptimized = parseOptimizedShareCode(code);
+                    if (!parsedOptimized) {
+                        const data = decodeLegacyShareCode(code);
+                        leftSideData = normalizeDecodedRows(data.seating.left || []);
+                        rightSideData = normalizeDecodedRows(data.seating.right || []);
+                        fixedMembers = data.fixedMembers || [];
+                        conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+                        saveData();
+                        renderAll();
+                    }
                 }
-                renderAll();
                 closeShareModal();
                 showToast("Đã nhập dữ liệu thành công!");
             } catch(e) { showToast("Mã không hợp lệ!"); }
