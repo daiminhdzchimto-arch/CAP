@@ -1287,6 +1287,8 @@
 
         function downloadImage(id, pre) {
             const area = document.getElementById(id);
+            if (!area) return;
+
             const fixedSeats = area.querySelectorAll('.is-fixed');
             fixedSeats.forEach(s => s.classList.add('is-fixed-hidden'));
 
