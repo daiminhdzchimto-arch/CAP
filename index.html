@@ -1287,30 +1287,11 @@
 
         function downloadImage(id, pre) {
             const area = document.getElementById(id);
-            const conflictBoxes = area.querySelectorAll('.has-conflict');
-            const conflictDots = area.querySelectorAll('.conflict-dot');
+            const fixedSeats = area.querySelectorAll('.is-fixed');
+            fixedSeats.forEach(s => s.classList.add('is-fixed-hidden'));
             
-            conflictBoxes.forEach(b => b.classList.add('hide-conflict-border'));
-            conflictDots.forEach(d => d.style.display = 'none');
-            
-            html2canvas(area, { 
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: "#ffffff",
-                onclone: (clonedDoc) => {
-                    const clonedArea = clonedDoc.getElementById(id);
-                    clonedArea.querySelectorAll('.hide-conflict-border').forEach(b => {
-                        // Nếu ô có xung đột nhưng cũng đang được cố định (viền tím), 
-                        // ta giữ nguyên viền tím thay vì chuyển về xám.
-                        if (!b.classList.contains('is-fixed')) {
-                            b.style.borderColor = '#e5e7eb'; // Màu xám nhạt mặc định
-                        }
-                    });
-                }
-            }).then(c => {
-                conflictBoxes.forEach(b => b.classList.remove('hide-conflict-border'));
-                conflictDots.forEach(d => d.style.display = '');
-                
+            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+                fixedSeats.forEach(s => s.classList.remove('is-fixed-hidden'));
                 const l = document.createElement('a');
                 const randomID = generateComplexID(124);
                 l.download=`${pre}_${randomID}.png`; 
