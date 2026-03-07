@@ -105,22 +105,6 @@
         .modal-content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s; max-height: 95vh; overflow-y: auto; }
         .modal-overlay.open .modal-content { transform: scale(1); }
         #duty-modal .modal-content { width: 95%; max-width: 1100px; }
-
-        /* 3D First-Person Seat View */
-        #pov-modal .modal-content { width: min(1100px, 96vw); background: linear-gradient(160deg, #020617, #0f172a); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.35); }
-        #pov-viewport { position: relative; height: min(65vh, 560px); border-radius: 14px; border: 1px solid rgba(148, 163, 184, 0.25); overflow: hidden; background: radial-gradient(circle at center, #1e293b 0%, #020617 68%); perspective: 1200px; cursor: grab; }
-        #pov-viewport.dragging { cursor: grabbing; }
-        .pov-camera { position: absolute; inset: 0; transform-style: preserve-3d; }
-        .pov-ground { position: absolute; left: 50%; top: 54%; width: 1200px; height: 1200px; transform: translate3d(-50%, -50%, -260px) rotateX(90deg); background:
-            linear-gradient(90deg, rgba(71, 85, 105, 0.2) 1px, transparent 1px) 0 0/70px 70px,
-            linear-gradient(rgba(71, 85, 105, 0.2) 1px, transparent 1px) 0 0/70px 70px,
-            radial-gradient(circle at center, rgba(14, 165, 233, 0.15), transparent 65%);
-        }
-        .pov-avatar { position: absolute; width: 120px; height: 170px; transform-style: preserve-3d; pointer-events: none; }
-        .pov-avatar-body { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: 60px; height: 96px; border-radius: 24px; background: linear-gradient(180deg, #38bdf8, #0369a1); box-shadow: 0 0 20px rgba(14, 165, 233, 0.35); }
-        .pov-avatar-head { position: absolute; left: 50%; bottom: 108px; transform: translateX(-50%); width: 42px; height: 42px; border-radius: 999px; background: #f8fafc; border: 2px solid #e2e8f0; }
-        .pov-avatar-name { position: absolute; left: 50%; bottom: 158px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(148, 163, 184, 0.6); border-radius: 999px; padding: 4px 10px; }
-        .pov-self-indicator { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); background: rgba(14, 165, 233, 0.2); border: 1px solid rgba(56, 189, 248, 0.6); border-radius: 999px; font-size: 11px; padding: 4px 10px; }
         .mini-row { cursor: pointer; padding: 4px; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; }
         .mini-row:hover { background-color: #f3f4f6; border-color: #d1d5db; }
         .duty-selected-class { background-color: #dcfce7 !important; border-color: #22c55e !important; } 
@@ -230,9 +214,6 @@
                     </button>
                     <button onclick="resetLayout()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
                     <div class="h-6 w-px bg-gray-200 mx-1"></div>
-                    <button onclick="showPovHint()" class="bg-sky-600 hover:bg-sky-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Xem góc nhìn 3D (click 3 lần vào bàn ghế)">
-                        <i class="fas fa-vr-cardboard"></i>
-                    </button>
                     <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Chụp ảnh">
                         <i class="fas fa-camera"></i>
                     </button>
@@ -260,7 +241,7 @@
                     </div>
 
                     <div class="flex flex-col items-center gap-1 text-gray-500">
-                        <div id="teacher-desk-anchor" onclick="registerPovClick({type:'teacher'})" title="Click 3 lần để xem góc nhìn giáo viên" class="w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative cursor-pointer hover:ring-2 hover:ring-sky-300 transition">
+                        <div class="w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative">
                             <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-2 bg-amber-200 border border-amber-300 rounded-sm"></div>
                             <div class="text-[8px] font-bold uppercase tracking-wide text-amber-700">Bàn Giáo Viên</div>
                         </div>
@@ -653,22 +634,6 @@
         </div>
     </div>
 
-    <div id="pov-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="flex items-center justify-between gap-3 border-b border-slate-700 pb-3 mb-3">
-                <div>
-                    <h2 class="text-lg md:text-xl font-bold text-sky-300"><i class="fas fa-vr-cardboard mr-2"></i>Góc Nhìn 3D Góc Thứ Nhất</h2>
-                    <p id="pov-subtitle" class="text-xs text-slate-300">Click 3 lần vào ô ghế để đứng ở vị trí người đó.</p>
-                </div>
-                <button onclick="closeSeatPovModal()" class="text-slate-300 hover:text-red-400 transition"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div id="pov-viewport">
-                <div id="pov-camera" class="pov-camera"></div>
-                <div class="pov-self-indicator">Giữ chuột/kéo để xoay 360° • Cuộn để đổi góc nhìn</div>
-            </div>
-        </div>
-    </div>
-
     <div id="toast">Đã lưu dữ liệu thành công!</div>
 
     <!-- Thời tiết Overlay -->
@@ -711,8 +676,6 @@
         let dayOffMode = false, excludedMembers = [], dayOffs = [], morningOff = false, afternoonOff = false;
         let currentSchedule = null, dutyDebtData = {};
         let selectedStudentSeat = null, isEditMode = false;
-        let povClickState = { key: null, count: 0, ts: 0 };
-        let povViewState = { target: null, yaw: 0, pitch: -8, distance: 580, drag: false, px: 0, py: 0 };
 
         let config = {
             settings: {
@@ -1027,9 +990,7 @@
                         if(swapSource){
                             if(isSrc)cancelSwapMode();
                             else{e.preventDefault();executeSwap(side,ri,si)}
-                            return;
                         }
-                        registerPovClick({ type:'student', side, ri, si });
                     };
                     const inputClick=e=>{
                         e.stopPropagation();
@@ -1122,166 +1083,6 @@
             fixedMembers = [];
             renderAll();
             showToast('Đã bỏ ghim toàn bộ bàn ghế trên sơ đồ!');
-        }
-
-        function showPovHint() {
-            showToast('Mẹo: Click 3 lần liên tiếp vào bàn ghế bất kỳ (hoặc bàn giáo viên) để mở góc nhìn 3D.');
-        }
-
-        function registerPovClick(payload) {
-            const now = Date.now();
-            const clickKey = payload.type === 'teacher' ? 'teacher' : `${payload.side}-${payload.ri}-${payload.si}`;
-
-            if (povClickState.key === clickKey && now - povClickState.ts <= 1600) povClickState.count += 1;
-            else povClickState = { key: clickKey, count: 1, ts: now };
-            povClickState.ts = now;
-
-            if (povClickState.count >= 3) {
-                povClickState = { key: null, count: 0, ts: 0 };
-                openSeatPovModal(payload);
-            }
-        }
-
-        function collectSeatPointsForPov() {
-            const points = [];
-            const xStep = 120;
-            const zStep = 130;
-            const laneGap = 220;
-
-            const pushPoints = (sideData, side) => {
-                const sideOffset = side === 'left' ? -laneGap : laneGap;
-                sideData.forEach((row, ri) => {
-                    let cursor = -xStep * 1.5;
-                    row.forEach((seat, si) => {
-                        const seatWidth = Math.max(1, Number(seat.width) || 1);
-                        const centerX = cursor + ((seatWidth * xStep) / 2);
-                        cursor += seatWidth * xStep;
-                        points.push({
-                            type: 'student',
-                            id: seat.id,
-                            name: (seat.name || '').trim() || 'Trống',
-                            side,
-                            ri,
-                            si,
-                            x: centerX + sideOffset,
-                            z: (ri - (ROW_COUNT - 1) / 2) * zStep
-                        });
-                    });
-                });
-            };
-
-            pushPoints(leftSideData, 'left');
-            pushPoints(rightSideData, 'right');
-            points.push({ type: 'teacher', id: 'teacher', name: 'Giáo viên', x: 0, z: -(ROW_COUNT * zStep * 0.65) });
-            return points;
-        }
-
-        function openSeatPovModal(target) {
-            const allPoints = collectSeatPointsForPov();
-            const picked = target.type === 'teacher'
-                ? allPoints.find(p => p.type === 'teacher')
-                : allPoints.find(p => p.side === target.side && p.ri === target.ri && p.si === target.si);
-
-            if (!picked) {
-                showToast('Không tìm thấy vị trí để mở góc nhìn 3D.');
-                return;
-            }
-
-            povViewState.target = picked;
-            povViewState.yaw = 0;
-            povViewState.pitch = -8;
-            povViewState.distance = 580;
-            document.getElementById('pov-subtitle').innerText = `Bạn đang đứng tại vị trí: ${picked.name}. Kéo để xoay, cuộn để đổi góc nhìn.`;
-            renderSeatPovScene();
-            document.getElementById('pov-modal').classList.add('open');
-        }
-
-        function closeSeatPovModal() {
-            document.getElementById('pov-modal').classList.remove('open');
-            povViewState.target = null;
-        }
-
-        function renderSeatPovScene() {
-            const cam = document.getElementById('pov-camera');
-            const target = povViewState.target;
-            if (!cam || !target) return;
-
-            const points = collectSeatPointsForPov();
-            cam.innerHTML = '<div class="pov-ground"></div>';
-
-            points.forEach(point => {
-                if (point.id === target.id) return;
-                const relX = point.x - target.x;
-                const relZ = point.z - target.z;
-                if (Math.abs(relX) > 720 || Math.abs(relZ) > 760) return;
-
-                const avatar = document.createElement('div');
-                avatar.className = 'pov-avatar';
-                avatar.style.transform = `translate3d(calc(50% + ${relX}px), calc(56% + ${relZ * 0.62}px), 0)`;
-                avatar.innerHTML = `<div class="pov-avatar-name">${point.name}</div><div class="pov-avatar-head"></div><div class="pov-avatar-body"></div>`;
-                cam.appendChild(avatar);
-            });
-
-            const rot = `rotateX(${povViewState.pitch}deg) rotateY(${povViewState.yaw}deg)`;
-            const zoom = `translateZ(${povViewState.distance}px)`;
-            cam.style.transform = `${zoom} ${rot}`;
-        }
-
-        function bindPovViewport() {
-            const viewport = document.getElementById('pov-viewport');
-            if (!viewport) return;
-
-            viewport.addEventListener('mousedown', (e) => {
-                povViewState.drag = true;
-                povViewState.px = e.clientX;
-                povViewState.py = e.clientY;
-                viewport.classList.add('dragging');
-            });
-            window.addEventListener('mouseup', () => {
-                povViewState.drag = false;
-                viewport.classList.remove('dragging');
-            });
-            window.addEventListener('mousemove', (e) => {
-                if (!povViewState.drag || !povViewState.target) return;
-                const dx = e.clientX - povViewState.px;
-                const dy = e.clientY - povViewState.py;
-                povViewState.px = e.clientX;
-                povViewState.py = e.clientY;
-                povViewState.yaw += dx * 0.32;
-                povViewState.pitch = Math.max(-48, Math.min(35, povViewState.pitch - dy * 0.2));
-                renderSeatPovScene();
-            });
-
-            viewport.addEventListener('wheel', (e) => {
-                if (!povViewState.target) return;
-                e.preventDefault();
-                povViewState.distance = Math.max(380, Math.min(900, povViewState.distance - e.deltaY * 0.45));
-                renderSeatPovScene();
-            }, { passive: false });
-
-            viewport.addEventListener('touchstart', (e) => {
-                const t = e.touches[0];
-                if (!t) return;
-                povViewState.drag = true;
-                povViewState.px = t.clientX;
-                povViewState.py = t.clientY;
-            }, { passive: true });
-            viewport.addEventListener('touchmove', (e) => {
-                if (!povViewState.drag || !povViewState.target) return;
-                const t = e.touches[0];
-                if (!t) return;
-                const dx = t.clientX - povViewState.px;
-                const dy = t.clientY - povViewState.py;
-                povViewState.px = t.clientX;
-                povViewState.py = t.clientY;
-                povViewState.yaw += dx * 0.35;
-                povViewState.pitch = Math.max(-48, Math.min(35, povViewState.pitch - dy * 0.22));
-                renderSeatPovScene();
-            }, { passive: true });
-            viewport.addEventListener('touchend', () => {
-                povViewState.drag = false;
-                viewport.classList.remove('dragging');
-            }, { passive: true });
         }
 
         // =================================================================
@@ -2132,7 +1933,6 @@
             renderAll();
             if(config.settings.windEnabled) particleEngine.init();
             WeatherAdapter.init();
-            bindPovViewport();
             
             // Sync overlays on input
             document.getElementById('classroom-title').addEventListener('input', syncOverlays);
@@ -2143,8 +1943,6 @@
         };
 
         document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSeatPovModal(); });
-        document.getElementById('pov-modal').addEventListener('click', (e) => { if (e.target.id === 'pov-modal') closeSeatPovModal(); });
     </script>
 </body>
 </html>
