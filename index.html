@@ -1256,11 +1256,17 @@
             return wrapped < 0 ? wrapped + 360 : wrapped;
         }
 
+        function addPovListener(target, eventName, handler, options) {
+            if (!target || !handler) return;
+            target.addEventListener(eventName, handler, options);
+            povRuntime.listeners.push({ target, eventName, handler, options });
+        }
+
         function startPovViewer() {
             const viewport = document.getElementById('pov-viewport');
-            if (!viewport || povRuntime.active) return;
+            if (!viewport) return;
+            if (povRuntime.active) stopPovViewer();
 
-            stopPovViewer();
             povRuntime.active = true;
             queuePovRender();
 
@@ -1286,6 +1292,9 @@
             };
             const onPointerUp = (e) => {
                 if (povRuntime.pointerId !== null && e.pointerId !== povRuntime.pointerId) return;
+                if (viewport.releasePointerCapture && povRuntime.pointerId !== null) {
+                    try { viewport.releasePointerCapture(povRuntime.pointerId); } catch (_) {}
+                }
                 povViewState.drag = false;
                 povRuntime.pointerId = null;
                 viewport.classList.remove('dragging');
@@ -1299,26 +1308,45 @@
             const onReset = () => resetPovViewDirection();
             const onExit = () => closeSeatPovModal();
 
-            viewport.addEventListener('pointerdown', onPointerDown);
-            viewport.addEventListener('pointermove', onPointerMove);
-            viewport.addEventListener('pointerup', onPointerUp);
-            viewport.addEventListener('pointercancel', onPointerUp);
-            viewport.addEventListener('wheel', onWheel, { passive: false });
+            const supportPointer = typeof window.PointerEvent !== 'undefined';
+            if (supportPointer) {
+                addPovListener(viewport, 'pointerdown', onPointerDown);
+                addPovListener(viewport, 'pointermove', onPointerMove);
+                addPovListener(viewport, 'pointerup', onPointerUp);
+                addPovListener(viewport, 'pointercancel', onPointerUp);
+                addPovListener(window, 'pointerup', onPointerUp);
+            } else {
+                const onMouseDown = (e) => onPointerDown({ clientX: e.clientX, clientY: e.clientY, pointerId: 1 });
+                const onMouseMove = (e) => onPointerMove({ clientX: e.clientX, clientY: e.clientY, pointerId: 1 });
+                const onMouseUp = () => onPointerUp({ pointerId: 1 });
+                const onTouchStart = (e) => {
+                    const t = e.touches[0];
+                    if (!t) return;
+                    onPointerDown({ clientX: t.clientX, clientY: t.clientY, pointerId: 2 });
+                };
+                const onTouchMove = (e) => {
+                    const t = e.touches[0];
+                    if (!t) return;
+                    onPointerMove({ clientX: t.clientX, clientY: t.clientY, pointerId: 2 });
+                    e.preventDefault();
+                };
+                const onTouchEnd = () => onPointerUp({ pointerId: 2 });
+
+                addPovListener(viewport, 'mousedown', onMouseDown);
+                addPovListener(window, 'mousemove', onMouseMove);
+                addPovListener(window, 'mouseup', onMouseUp);
+                addPovListener(viewport, 'touchstart', onTouchStart, { passive: true });
+                addPovListener(viewport, 'touchmove', onTouchMove, { passive: false });
+                addPovListener(viewport, 'touchend', onTouchEnd, { passive: true });
+                addPovListener(viewport, 'touchcancel', onTouchEnd, { passive: true });
+            }
+
+            addPovListener(viewport, 'wheel', onWheel, { passive: false });
 
             const resetBtn = document.getElementById('pov-reset-btn');
             const exitBtn = document.getElementById('pov-exit-btn');
-            if (resetBtn) resetBtn.addEventListener('click', onReset);
-            if (exitBtn) exitBtn.addEventListener('click', onExit);
-
-            povRuntime.listeners = [
-                [viewport, 'pointerdown', onPointerDown],
-                [viewport, 'pointermove', onPointerMove],
-                [viewport, 'pointerup', onPointerUp],
-                [viewport, 'pointercancel', onPointerUp],
-                [viewport, 'wheel', onWheel],
-                [resetBtn, 'click', onReset],
-                [exitBtn, 'click', onExit]
-            ];
+            addPovListener(resetBtn, 'click', onReset);
+            addPovListener(exitBtn, 'click', onExit);
 
             const loop = () => {
                 if (!povRuntime.active) return;
@@ -1341,9 +1369,9 @@
                 povRuntime.rafId = null;
             }
 
-            povRuntime.listeners.forEach(([target, eventName, handler]) => {
+            povRuntime.listeners.forEach(({ target, eventName, handler, options }) => {
                 if (!target || !handler) return;
-                target.removeEventListener(eventName, handler);
+                target.removeEventListener(eventName, handler, options);
             });
             povRuntime.listeners = [];
 
@@ -1358,7 +1386,7 @@
         }
 
         function bindPovViewport() {
-            // giữ API cũ để giảm xung đột khi merge với các nhánh đang gọi hàm này
+            // Compatibility shim cho các nhánh cũ; vòng đời POV được quản lý bởi open/close modal.
         }
 
 
