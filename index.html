@@ -51,15 +51,15 @@
         .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .split-btn { right: 0; }
         .details-btn { left: 0; top: auto; bottom: 0; }
-        .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        .seat3d-view-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
-        .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
+        .desk-box:hover .seat3d-view-btn, .desk-box:focus-within .seat3d-view-btn { opacity: 1; pointer-events: auto; }
         .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
         .split-btn:hover { color: #ef4444; }
         .details-btn:hover { color: #3b82f6; }
-        .view-3d-btn:hover { color: #0284c7; }
-        .teacher-vr-btn { position: absolute; right: -8px; top: -8px; width: 26px; height: 26px; border-radius: 9999px; background: #0284c7; color: #fff; border: 2px solid #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(2,132,199,0.35); transition: transform 0.2s, background-color 0.2s; }
-        .teacher-vr-btn:hover { background: #0369a1; transform: scale(1.08); }
+        .seat3d-view-btn:hover { color: #0284c7; }
+        .seat3d-teacher-vr-btn { position: absolute; right: -8px; top: -8px; width: 26px; height: 26px; border-radius: 9999px; background: #0284c7; color: #fff; border: 2px solid #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(2,132,199,0.35); transition: transform 0.2s, background-color 0.2s; }
+        .seat3d-teacher-vr-btn:hover { background: #0369a1; transform: scale(1.08); }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -250,7 +250,7 @@
                         <div class="w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative">
                             <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-2 bg-amber-200 border border-amber-300 rounded-sm"></div>
                             <div class="text-[8px] font-bold uppercase tracking-wide text-amber-700">Bàn Giáo Viên</div>
-                            <button type="button" class="teacher-vr-btn" title="Xem 3D từ vị trí giáo viên" onclick="openTeacher3DView()" aria-label="Xem 3D từ vị trí giáo viên">
+                            <button type="button" class="seat3d-teacher-vr-btn" title="Xem 3D từ vị trí giáo viên" onclick="openTeacher3DView()" aria-label="Xem 3D từ vị trí giáo viên">
                                 <i class="fas fa-vr-cardboard"></i>
                             </button>
                         </div>
@@ -1041,7 +1041,7 @@
                     let hasActions = false;
                     const view3DBtn=document.createElement('button');
                     view3DBtn.type='button';
-                    view3DBtn.className='view-3d-btn';
+                    view3DBtn.className='seat3d-view-btn';
                     view3DBtn.title='Xem vị trí 3D góc nhìn thứ nhất';
                     view3DBtn.setAttribute('aria-label','Xem vị trí 3D góc nhìn thứ nhất');
                     view3DBtn.innerHTML='<i class="fas fa-vr-cardboard"></i>';
