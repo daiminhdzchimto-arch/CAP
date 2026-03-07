@@ -1550,14 +1550,22 @@
                         textLayer.style.display = 'flex';
                         textLayer.style.alignItems = 'center';
                         textLayer.style.justifyContent = 'center';
+                        textLayer.style.textAlign = 'center';
                         textLayer.style.cursor = 'default';
                         textLayer.style.overflow = 'hidden';
                         textLayer.style.width = '100%';
                         textLayer.style.maxWidth = '100%';
+                        textLayer.style.height = '100%';
                         textLayer.style.minHeight = '48px';
+                        textLayer.style.padding = '6px 8px';
+                        textLayer.style.lineHeight = '1.25';
+                        textLayer.style.fontSize = '0.95rem';
+                        textLayer.style.fontWeight = '600';
+                        textLayer.style.fontFamily = "'Noto Sans Vietnamese', 'Inter', sans-serif";
                         textLayer.style.whiteSpace = 'pre-wrap';
                         textLayer.style.overflowWrap = 'anywhere';
                         textLayer.style.wordBreak = 'break-word';
+                        textLayer.style.hyphens = 'auto';
 
                         input.replaceWith(textLayer);
                     });
