@@ -55,6 +55,8 @@
         .split-btn:hover { color: #ef4444; }
         .details-btn:hover { color: #3b82f6; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
+        #seating-3d-canvas { width: 100%; height: 520px; background: #0f172a; border-radius: 1rem; overflow: hidden; position: relative; }
+        #seating-3d-canvas canvas { display: block; width: 100%; height: 100%; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
         .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
@@ -233,6 +235,9 @@
                     <button onclick="showPovHint()" class="bg-sky-600 hover:bg-sky-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Xem góc nhìn 3D (click 3 lần vào bàn ghế)">
                         <i class="fas fa-vr-cardboard"></i>
                     </button>
+                    <button id="btn-toggle-seating-3d" onclick="toggleSeating3DMode()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center gap-2" title="Bật/Tắt sơ đồ 3D">
+                        <i class="fas fa-cube"></i><span>Chế độ 3D</span>
+                    </button>
                     <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Chụp ảnh">
                         <i class="fas fa-camera"></i>
                     </button>
@@ -270,6 +275,12 @@
                 <div id="seating-layout-row" class="w-full flex justify-center gap-16 md:gap-24 mt-4">
                     <div id="left-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
                     <div id="right-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
+                </div>
+            </div>
+            <div id="seating-3d-wrapper" class="hidden mt-6">
+                <div class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-4">
+                    <div class="text-sm font-semibold text-gray-700 mb-3">Sơ đồ lớp 3D (đồng bộ từ dữ liệu hiện tại)</div>
+                    <div id="seating-3d-canvas"></div>
                 </div>
             </div>
         </div>
@@ -985,6 +996,7 @@
             renderSide('right-rows-container', rightSideData, 'right'); 
             updateStatusUI(); 
             checkAllConflicts();
+            document.dispatchEvent(new CustomEvent('cap:seating-updated'));
         }
 
         function renderSide(cid, data, side) {
@@ -2114,6 +2126,27 @@
             } catch(e) { showToast("Mã không hợp lệ!"); }
         }
 
+        function toggleSeating3DMode() {
+            const wrapper = document.getElementById('seating-3d-wrapper');
+            const isHidden = wrapper.classList.toggle('hidden');
+            const btn = document.getElementById('btn-toggle-seating-3d');
+            btn.classList.toggle('bg-indigo-600', isHidden);
+            btn.classList.toggle('hover:bg-indigo-700', isHidden);
+            btn.classList.toggle('bg-indigo-800', !isHidden);
+            btn.classList.toggle('hover:bg-indigo-900', !isHidden);
+            document.dispatchEvent(new CustomEvent('cap:seating-3d-toggle', { detail: { enabled: !isHidden } }));
+        }
+
+        window.__CAP_SEATING_3D__ = {
+            getState: () => ({
+                rowCount: ROW_COUNT,
+                leftSideData,
+                rightSideData,
+                fixedMembers
+            })
+        };
+
+
         // INITIALIZATION
         window.onload = () => {
             loadData();
@@ -2146,5 +2179,6 @@
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSeatPovModal(); });
         document.getElementById('pov-modal').addEventListener('click', (e) => { if (e.target.id === 'pov-modal') closeSeatPovModal(); });
     </script>
+    <script type="module" src="js/seating3d.js"></script>
 </body>
 </html>
