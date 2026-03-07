@@ -41,7 +41,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* SEATING */
-        .desk-input { background: transparent; border: none; width: 100%; height: 100%; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; display: flex; align-items: center; justify-content: center; font-size: 1rem; line-height: 1.25; padding: 8px 4px; cursor: pointer; overflow: hidden; word-break: break-word; }
+        .desk-input { background: transparent; border: none; width: 100%; height: 100%; text-align: center; font-weight: 600; color: #1f2937; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word; hyphens: auto; display: flex; align-items: center; justify-content: center; }
         .desk-input:focus { background-color: rgba(255, 255, 255, 0.5); cursor: text; }
         .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
         .row-container:hover .merge-handle { opacity: 1; }
@@ -951,8 +951,8 @@
                         cell.appendChild(dot);
                     }
 
-                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
-                    ta.oninput=e=>updateName(side,ri,si,e.target.value);
+                    const ta = document.createElement('div'); ta.className='desk-input'; ta.contentEditable='true'; ta.spellcheck=false; ta.innerText=seat.name;
+                    ta.oninput=e=>{ updateName(side,ri,si,normalizeDeskName(e.target.innerText)); fitDeskInputText(e.target); };
                     
                     ta.oncontextmenu = e => {
                         e.preventDefault();
@@ -974,6 +974,7 @@
                     ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',inputClick);
                     cell.addEventListener('click', click);
                     cell.appendChild(ta);
+                    requestAnimationFrame(() => fitDeskInputText(ta));
 
                     let hasActions = false;
                     if(seat.name.trim()){
@@ -1003,6 +1004,28 @@
             checkAllConflicts();
             if(s==='left' && r===0 && c===0) { // Sync overlay if needed or just use global listener
                 // Handled by global input listeners
+            }
+        }
+
+        function normalizeDeskName(name) {
+            return (name || '').replace(/\u00A0/g, ' ').replace(/\r/g, '');
+        }
+
+        function fitDeskInputText(input) {
+            if (!input) return;
+
+            const baseFontPx = 16;
+            const minFontPx = 11;
+            let currentFontPx = baseFontPx;
+
+            input.style.fontSize = `${baseFontPx}px`;
+            input.style.lineHeight = '1.2';
+            input.scrollTop = 0;
+
+            const maxHeight = Math.max(0, input.clientHeight - 2);
+            while (input.scrollHeight > maxHeight && currentFontPx > minFontPx) {
+                currentFontPx -= 1;
+                input.style.fontSize = `${currentFontPx}px`;
             }
         }
 
@@ -1501,11 +1524,25 @@
             conflictSeats.forEach(s => s.classList.add('is-conflict-hidden'));
             deskInputs.forEach(input => {
                 input.blur();
-                input.scrollLeft = 0;
                 input.scrollTop = 0;
+                fitDeskInputText(input);
             });
             
-            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+            html2canvas(area, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                onclone: (doc) => {
+                    doc.querySelectorAll('.desk-input').forEach(node => {
+                        node.textContent = normalizeDeskName(node.innerText || node.textContent || '');
+                        node.style.overflow = 'hidden';
+                        node.style.whiteSpace = 'pre-wrap';
+                        node.style.overflowWrap = 'break-word';
+                        node.style.wordBreak = 'break-word';
+                        node.style.hyphens = 'auto';
+                    });
+                }
+            }).then(c => {
                 const l = document.createElement('a');
                 const randomID = generateComplexID(124);
                 l.download=`${pre}_${randomID}.png`; 
