@@ -727,7 +727,7 @@
         const POV_PITCH_MIN = -80;
         const POV_PITCH_MAX = 80;
         let povViewState = { target: null, yaw: 0, pitch: -8, distance: 580, drag: false, px: 0, py: 0, dirty: false };
-        let povRuntime = { active: false, rafId: null, listeners: [] };
+        let povRuntime = { active: false, rafId: null, listeners: [], pointerId: null };
 
         let config = {
             settings: {
@@ -1204,7 +1204,7 @@
 
             povViewState.target = picked;
             resetPovViewDirection();
-            document.getElementById('pov-subtitle').innerText = `Bạn đang đứng tại vị trí: ${picked.name}. Kéo/vuốt để xoay camera.`;
+            document.getElementById('pov-subtitle').innerText = `Bạn đang đứng tại vị trí: ${picked.name}. Kéo/vuốt để xoay camera • Cuộn để đổi góc nhìn.`;
             document.getElementById('pov-modal').classList.add('open');
             startPovViewer();
         }
@@ -1251,70 +1251,59 @@
             cam.style.transform = `${zoom} ${rot}`;
         }
 
+        function normalizePovYaw(yaw) {
+            const wrapped = yaw % 360;
+            return wrapped < 0 ? wrapped + 360 : wrapped;
+        }
+
         function startPovViewer() {
             const viewport = document.getElementById('pov-viewport');
             if (!viewport || povRuntime.active) return;
 
+            stopPovViewer();
             povRuntime.active = true;
             queuePovRender();
 
-            const onMouseDown = (e) => {
+            const onPointerDown = (e) => {
                 if (!povViewState.target) return;
                 povViewState.drag = true;
                 povViewState.px = e.clientX;
                 povViewState.py = e.clientY;
+                povRuntime.pointerId = e.pointerId;
                 viewport.classList.add('dragging');
+                if (viewport.setPointerCapture) viewport.setPointerCapture(e.pointerId);
             };
-            const onMouseUp = () => {
-                povViewState.drag = false;
-                viewport.classList.remove('dragging');
-            };
-            const onMouseMove = (e) => {
+            const onPointerMove = (e) => {
                 if (!povViewState.drag || !povViewState.target) return;
+                if (povRuntime.pointerId !== null && e.pointerId !== povRuntime.pointerId) return;
                 const dx = e.clientX - povViewState.px;
                 const dy = e.clientY - povViewState.py;
                 povViewState.px = e.clientX;
                 povViewState.py = e.clientY;
-                povViewState.yaw += dx * 0.3;
-                povViewState.pitch = Math.max(POV_PITCH_MIN, Math.min(POV_PITCH_MAX, povViewState.pitch - dy * 0.2));
-                queuePovRender();
-            };
-            const onTouchStart = (e) => {
-                if (!povViewState.target) return;
-                const t = e.touches[0];
-                if (!t) return;
-                povViewState.drag = true;
-                povViewState.px = t.clientX;
-                povViewState.py = t.clientY;
-                viewport.classList.add('dragging');
-            };
-            const onTouchMove = (e) => {
-                if (!povViewState.drag || !povViewState.target) return;
-                const t = e.touches[0];
-                if (!t) return;
-                const dx = t.clientX - povViewState.px;
-                const dy = t.clientY - povViewState.py;
-                povViewState.px = t.clientX;
-                povViewState.py = t.clientY;
-                povViewState.yaw += dx * 0.32;
+                povViewState.yaw = normalizePovYaw(povViewState.yaw + dx * 0.32);
                 povViewState.pitch = Math.max(POV_PITCH_MIN, Math.min(POV_PITCH_MAX, povViewState.pitch - dy * 0.22));
                 queuePovRender();
-                e.preventDefault();
             };
-            const onTouchEnd = () => {
+            const onPointerUp = (e) => {
+                if (povRuntime.pointerId !== null && e.pointerId !== povRuntime.pointerId) return;
                 povViewState.drag = false;
+                povRuntime.pointerId = null;
                 viewport.classList.remove('dragging');
+            };
+            const onWheel = (e) => {
+                if (!povViewState.target) return;
+                e.preventDefault();
+                povViewState.distance = Math.max(380, Math.min(900, povViewState.distance - e.deltaY * 0.45));
+                queuePovRender();
             };
             const onReset = () => resetPovViewDirection();
             const onExit = () => closeSeatPovModal();
 
-            viewport.addEventListener('mousedown', onMouseDown);
-            window.addEventListener('mouseup', onMouseUp);
-            window.addEventListener('mousemove', onMouseMove);
-            viewport.addEventListener('touchstart', onTouchStart, { passive: true });
-            viewport.addEventListener('touchmove', onTouchMove, { passive: false });
-            viewport.addEventListener('touchend', onTouchEnd, { passive: true });
-            viewport.addEventListener('touchcancel', onTouchEnd, { passive: true });
+            viewport.addEventListener('pointerdown', onPointerDown);
+            viewport.addEventListener('pointermove', onPointerMove);
+            viewport.addEventListener('pointerup', onPointerUp);
+            viewport.addEventListener('pointercancel', onPointerUp);
+            viewport.addEventListener('wheel', onWheel, { passive: false });
 
             const resetBtn = document.getElementById('pov-reset-btn');
             const exitBtn = document.getElementById('pov-exit-btn');
@@ -1322,13 +1311,11 @@
             if (exitBtn) exitBtn.addEventListener('click', onExit);
 
             povRuntime.listeners = [
-                [viewport, 'mousedown', onMouseDown],
-                [window, 'mouseup', onMouseUp],
-                [window, 'mousemove', onMouseMove],
-                [viewport, 'touchstart', onTouchStart],
-                [viewport, 'touchmove', onTouchMove],
-                [viewport, 'touchend', onTouchEnd],
-                [viewport, 'touchcancel', onTouchEnd],
+                [viewport, 'pointerdown', onPointerDown],
+                [viewport, 'pointermove', onPointerMove],
+                [viewport, 'pointerup', onPointerUp],
+                [viewport, 'pointercancel', onPointerUp],
+                [viewport, 'wheel', onWheel],
                 [resetBtn, 'click', onReset],
                 [exitBtn, 'click', onExit]
             ];
@@ -1347,6 +1334,7 @@
         function stopPovViewer() {
             povRuntime.active = false;
             povViewState.drag = false;
+            povRuntime.pointerId = null;
 
             if (povRuntime.rafId) {
                 cancelAnimationFrame(povRuntime.rafId);
@@ -1367,6 +1355,10 @@
                 cam.innerHTML = '';
                 cam.style.transform = 'none';
             }
+        }
+
+        function bindPovViewport() {
+            // giữ API cũ để giảm xung đột khi merge với các nhánh đang gọi hàm này
         }
 
 
@@ -2218,6 +2210,7 @@
             renderAll();
             if(config.settings.windEnabled) particleEngine.init();
             WeatherAdapter.init();
+            bindPovViewport();
             
             // Sync overlays on input
             document.getElementById('classroom-title').addEventListener('input', syncOverlays);
