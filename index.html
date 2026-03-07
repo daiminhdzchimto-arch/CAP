@@ -965,8 +965,12 @@
                             selectStudent(side, ri, si);
                         }
                     };
+                    const inputClick=e=>{
+                        e.stopPropagation();
+                    };
                     ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
-                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
+                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',inputClick);
+                    cell.addEventListener('click', click);
                     cell.appendChild(ta);
                     
                     if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
