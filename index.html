@@ -967,8 +967,12 @@
                             else{e.preventDefault();executeSwap(side,ri,si)}
                         }
                     };
+                    const inputClick=e=>{
+                        e.stopPropagation();
+                    };
                     ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
-                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
+                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',inputClick);
+                    cell.addEventListener('click', click);
                     cell.appendChild(ta);
 
                     let hasActions = false;
