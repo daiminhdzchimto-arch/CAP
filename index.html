@@ -41,7 +41,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* SEATING */
-        .desk-input { background: transparent; border: none; width: 100%; height: 100%; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; display: flex; align-items: center; justify-content: center; font-size: 1rem; padding: 4px; cursor: pointer; }
+        .desk-input { background: transparent; border: none; width: 100%; height: 100%; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; display: flex; align-items: center; justify-content: center; font-size: 1rem; line-height: 1.25; padding: 8px 4px; cursor: pointer; overflow: hidden; word-break: break-word; }
         .desk-input:focus { background-color: rgba(255, 255, 255, 0.5); cursor: text; }
         .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
         .row-container:hover .merge-handle { opacity: 1; }
@@ -1496,8 +1496,14 @@
             const area = document.getElementById(id);
             const fixedSeats = area.querySelectorAll('.is-fixed');
             const conflictSeats = area.querySelectorAll('.has-conflict');
+            const deskInputs = area.querySelectorAll('.desk-input');
             fixedSeats.forEach(s => s.classList.add('is-fixed-hidden'));
             conflictSeats.forEach(s => s.classList.add('is-conflict-hidden'));
+            deskInputs.forEach(input => {
+                input.blur();
+                input.scrollLeft = 0;
+                input.scrollTop = 0;
+            });
             
             html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
                 const l = document.createElement('a');
