@@ -1532,7 +1532,37 @@
                 input.scrollTop = 0;
             });
 
-            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+            html2canvas(area, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                onclone: (clonedDocument) => {
+                    const clonedArea = clonedDocument.getElementById(id);
+                    if (!clonedArea) return;
+
+                    clonedArea.querySelectorAll('.desk-input').forEach((input) => {
+                        const textLayer = clonedDocument.createElement('div');
+
+                        textLayer.className = 'desk-input';
+                        textLayer.textContent = input.value || '';
+
+                        textLayer.style.cssText = input.style.cssText;
+                        textLayer.style.display = 'flex';
+                        textLayer.style.alignItems = 'center';
+                        textLayer.style.justifyContent = 'center';
+                        textLayer.style.cursor = 'default';
+                        textLayer.style.overflow = 'hidden';
+                        textLayer.style.width = '100%';
+                        textLayer.style.maxWidth = '100%';
+                        textLayer.style.minHeight = '48px';
+                        textLayer.style.whiteSpace = 'pre-wrap';
+                        textLayer.style.overflowWrap = 'anywhere';
+                        textLayer.style.wordBreak = 'break-word';
+
+                        input.replaceWith(textLayer);
+                    });
+                }
+            }).then(c => {
                 const l = document.createElement('a');
                 const randomID = generateComplexID(124);
                 l.download=`${pre}_${randomID}.png`;
