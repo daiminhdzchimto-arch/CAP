@@ -207,6 +207,9 @@
                     <button onclick="openShuffleModal()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
                         <i class="fas fa-random"></i> Sắp xếp
                     </button>
+                    <button onclick="clearAllFixedMembers()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2" title="Xoá toàn bộ trạng thái ghim bàn ghế">
+                        <i class="fas fa-unlock"></i> Bỏ ghim tất cả
+                    </button>
                     <button onclick="resetLayout()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
                     <div class="h-6 w-px bg-gray-200 mx-1"></div>
                     <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
@@ -1048,6 +1051,20 @@
             if(idx > -1) fixedMembers.splice(idx, 1);
             else fixedMembers.push(id);
             renderAll();
+        }
+
+        function clearAllFixedMembers() {
+            if (fixedMembers.length === 0) {
+                showToast('Hiện không có bàn ghế nào đang được ghim.');
+                return;
+            }
+
+            const confirmed = confirm('Bạn có chắc muốn xoá toàn bộ trạng thái ghim hiện có trên sơ đồ không?');
+            if (!confirmed) return;
+
+            fixedMembers = [];
+            renderAll();
+            showToast('Đã bỏ ghim toàn bộ bàn ghế trên sơ đồ!');
         }
 
         // =================================================================
