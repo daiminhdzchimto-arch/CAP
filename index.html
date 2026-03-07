@@ -59,6 +59,8 @@
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
         .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
         .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; display: flex; align-items: center; justify-content: center; min-height: 48px; }
+        #classroom-area.teacher-view #classroom-reference-row,
+        #classroom-area.teacher-view #seating-layout-row { flex-direction: row-reverse; }
         .is-fixed-hidden .fixed-badge { display: none !important; }
         .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
         .is-conflict-hidden.desk-box.has-conflict { border-color: #374151 !important; }
@@ -224,7 +226,7 @@
                     <p id="overlay-year">NĂM HỌC 2023 - 2024</p>
                 </div>
 
-                <div class="w-full flex justify-between items-start mb-8 z-10">
+                <div id="classroom-reference-row" class="w-full flex justify-between items-start mb-8 z-10">
                     <div class="flex flex-col items-center gap-1 text-gray-500">
                         <div class="w-16 h-12 bg-amber-700 border-2 border-amber-900 rounded-t-xl rounded-b-sm shadow-sm relative overflow-hidden">
                             <div class="absolute inset-y-0 left-1/2 w-px bg-amber-900/70"></div>
@@ -246,7 +248,7 @@
                     </div>
                 </div>
                 
-                <div class="w-full flex justify-center gap-16 md:gap-24 mt-4">
+                <div id="seating-layout-row" class="w-full flex justify-center gap-16 md:gap-24 mt-4">
                     <div id="left-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
                     <div id="right-rows-container" class="flex flex-col gap-6 w-full max-w-md"></div>
                 </div>
@@ -481,6 +483,19 @@
                                 <span class="jelly-slider"></span>
                             </label>
                         </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500"><i class="fas fa-chalkboard-teacher"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">Góc nhìn giáo viên</div>
+                                    <div class="text-[10px] text-gray-500">Đảo chiều sơ đồ để nhìn từ bàn giáo viên xuống lớp</div>
+                                </div>
+                            </div>
+                            <label class="jelly-switch">
+                                <input type="checkbox" id="teacher-view-toggle" onchange="updateSettings()">
+                                <span class="jelly-slider"></span>
+                            </label>
+                        </div>
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg mt-3">
                             <div>
                                 <h4 class="text-sm font-semibold text-gray-700">Thời tiết thực tế</h4>
@@ -667,7 +682,8 @@
                 windEnabled: true,
                 intensity: 1.0,
                 powerSave: false,
-                showFPS: false
+                showFPS: false,
+                teacherView: false
             }
         };
 
@@ -1347,12 +1363,19 @@
         function openSettingsModal() { document.getElementById('settings-modal').classList.add('open'); }
         function closeSettingsModal() { document.getElementById('settings-modal').classList.remove('open'); }
 
+        function applyClassroomViewMode() {
+            const area = document.getElementById('classroom-area');
+            area.classList.toggle('teacher-view', !!config.settings.teacherView);
+        }
+
         function updateSettings() {
             config.settings.windEnabled = document.getElementById('wind-enabled-toggle').checked;
             config.settings.intensity = parseFloat(document.getElementById('wind-intensity-range').value);
             config.settings.powerSave = document.getElementById('power-save-toggle').checked;
+            config.settings.teacherView = document.getElementById('teacher-view-toggle').checked;
             
             document.getElementById('wind-intensity-val').innerText = config.settings.intensity.toFixed(1) + 'x';
+            applyClassroomViewMode();
             
             if(config.settings.windEnabled && !particleEngine.active) particleEngine.init();
             localStorage.setItem('classApp_config', JSON.stringify(config));
@@ -1902,8 +1925,11 @@
                 document.getElementById('wind-enabled-toggle').checked = config.settings.windEnabled;
                 document.getElementById('wind-intensity-range').value = config.settings.intensity;
                 document.getElementById('power-save-toggle').checked = config.settings.powerSave;
+                document.getElementById('teacher-view-toggle').checked = !!config.settings.teacherView;
                 document.getElementById('wind-intensity-val').innerText = config.settings.intensity.toFixed(1) + 'x';
             }
+            document.getElementById('teacher-view-toggle').checked = !!config.settings.teacherView;
+            applyClassroomViewMode();
             renderAll();
             if(config.settings.windEnabled) particleEngine.init();
             WeatherAdapter.init();
