@@ -1246,107 +1246,272 @@
         function buildVietnamClassroomEnvironment(scene) {
             const roomWidth = 24;
             const roomDepth = 28;
-            const wallHeight = 6.5;
+            const wallHeight = 8;
 
-            scene.background = new THREE.Color(0x9ec9ff);
-            scene.fog = new THREE.Fog(0x9ec9ff, 22, 48);
+            scene.background = new THREE.Color(0x93c5fd);
+            scene.fog = new THREE.Fog(0x93c5fd, 18, 50);
 
             const floor = new THREE.Mesh(
                 new THREE.PlaneGeometry(roomWidth, roomDepth),
-                new THREE.MeshStandardMaterial({ color: 0xe7ddbf, roughness: 0.88 })
+                new THREE.MeshStandardMaterial({ color: 0xccb28b, roughness: 0.72 })
             );
             floor.rotation.x = -Math.PI / 2;
             floor.position.set(0, 0, 6);
             floor.receiveShadow = true;
             scene.add(floor);
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf9efc5, roughness: 1 });
+            const ceiling = new THREE.Mesh(
+                new THREE.PlaneGeometry(roomWidth, roomDepth),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 })
+            );
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.set(0, wallHeight, 6);
+            scene.add(ceiling);
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8f4e3, roughness: 1 });
             const backWall = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, wallHeight), wallMat);
             backWall.position.set(0, wallHeight / 2, 20);
             backWall.rotation.y = Math.PI;
-
             const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, wallHeight), wallMat);
             frontWall.position.set(0, wallHeight / 2, -8);
-
             const sideWallGeo = new THREE.PlaneGeometry(roomDepth, wallHeight);
             const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
             leftWall.position.set(-roomWidth / 2, wallHeight / 2, 6);
             leftWall.rotation.y = Math.PI / 2;
-
             const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
             rightWall.position.set(roomWidth / 2, wallHeight / 2, 6);
             rightWall.rotation.y = -Math.PI / 2;
-
             scene.add(backWall, frontWall, leftWall, rightWall);
 
-            const boardFrame = new THREE.Mesh(
-                new THREE.BoxGeometry(11.8, 3.9, 0.18),
-                new THREE.MeshStandardMaterial({ color: 0x5b3a1c })
+            const boardBorder = new THREE.Mesh(
+                new THREE.BoxGeometry(10.2, 3.7, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0x451a03 })
             );
-            boardFrame.position.set(0, 3.5, -7.9);
-            scene.add(boardFrame);
+            boardBorder.position.set(0, 4, -7.95);
+            scene.add(boardBorder);
 
             const board = new THREE.Mesh(
-                new THREE.PlaneGeometry(11.2, 3.3),
-                new THREE.MeshStandardMaterial({ color: 0x0f6b3a, roughness: 0.96 })
+                new THREE.PlaneGeometry(10, 3.5),
+                new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 })
             );
-            board.position.set(0, 3.5, -7.78);
+            board.position.set(0, 4, -7.9);
             scene.add(board);
 
-            const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.5 });
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0xc7e8ff, transparent: true, opacity: 0.55 });
-            [1.2, 5.2, 9.2].forEach((zPos) => {
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.7, 3.2), windowFrameMat);
-                frame.position.set(-11.9, 3.2, zPos);
-                const glass = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 2.4), glassMat);
-                glass.position.set(-11.78, 3.2, zPos);
-                glass.rotation.y = Math.PI / 2;
-                scene.add(frame, glass);
-            });
+            const portraitCanvas = document.createElement('canvas');
+            portraitCanvas.width = 256;
+            portraitCanvas.height = 320;
+            const portraitCtx = portraitCanvas.getContext('2d');
+            portraitCtx.fillStyle = '#a61b1b';
+            portraitCtx.fillRect(0, 0, 256, 320);
+            portraitCtx.fillStyle = '#facc15';
+            portraitCtx.font = 'bold 36px sans-serif';
+            portraitCtx.textAlign = 'center';
+            portraitCtx.fillText('Hồ Chí Minh', 128, 180);
+            portraitCtx.beginPath();
+            portraitCtx.arc(128, 90, 44, 0, 2 * Math.PI);
+            portraitCtx.lineWidth = 4;
+            portraitCtx.strokeStyle = '#facc15';
+            portraitCtx.stroke();
+
+            const portrait = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.0, 2.5),
+                new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(portraitCanvas) })
+            );
+            portrait.position.set(0, 6.5, -7.8);
+            scene.add(portrait);
+
+            const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.5 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0xadd8e6, transparent: true, opacity: 0.33 });
+            const createWindowColumn = (xPos, rot) => {
+                [0.2, 4.4, 8.6].forEach((zPos) => {
+                    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 0.2), windowFrameMat);
+                    frame.position.set(xPos, 4, zPos);
+                    frame.rotation.y = rot;
+                    scene.add(frame);
+
+                    const vBar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.3, 0.1), windowFrameMat);
+                    vBar.position.set(xPos, 4, zPos);
+                    vBar.rotation.y = rot;
+                    scene.add(vBar);
+
+                    const hBar = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.05, 0.1), windowFrameMat);
+                    hBar.position.set(xPos, 4, zPos);
+                    hBar.rotation.y = rot;
+                    scene.add(hBar);
+
+                    [
+                        [-0.58, 0.58],
+                        [0.58, 0.58],
+                        [-0.58, -0.58],
+                        [0.58, -0.58]
+                    ].forEach(([dx, dy]) => {
+                        const pane = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), glassMat);
+                        pane.position.set(xPos + (rot > 0 ? 0.05 : -0.05), 4 + dy, zPos + dx);
+                        pane.rotation.y = rot;
+                        scene.add(pane);
+                    });
+                });
+            };
+            createWindowColumn(-11.9, Math.PI / 2);
+            createWindowColumn(11.9, -Math.PI / 2);
 
             const door = new THREE.Mesh(
-                new THREE.PlaneGeometry(2.3, 4.8),
-                new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
+                new THREE.BoxGeometry(2.5, 5.5, 0.2),
+                new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.58 })
             );
-            door.position.set(10.2, 2.4, -7.86);
+            door.position.set(8.5, 2.75, -7.9);
             scene.add(door);
+
+            const doorKnob = new THREE.Mesh(
+                new THREE.SphereGeometry(0.1, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0xffaa00 })
+            );
+            doorKnob.position.set(8.67, 2.75, -7.78);
+            scene.add(doorKnob);
+
+            const fanGroup = new THREE.Group();
+            const fanMotor = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.32, 0.32, 0.34, 16),
+                new THREE.MeshStandardMaterial({ color: 0x525252 })
+            );
+            fanMotor.position.y = 0.16;
+            fanGroup.add(fanMotor);
+            for(let i=0; i<3; i++) {
+                const blade = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.9, 0.05, 0.26),
+                    new THREE.MeshStandardMaterial({ color: 0xd4d4d4 })
+                );
+                blade.position.set(0.8, 0, 0);
+                blade.rotation.y = (i * 2 * Math.PI) / 3;
+                fanGroup.add(blade);
+            }
+            fanGroup.position.set(0, 7.5, 2);
+            scene.add(fanGroup);
         }
 
-        function createDeskModel(x, z, isTeacher) {
+        function createStudentDeskHoaPhatModel(x, z) {
             const deskGroup = new THREE.Group();
-            const deskW = isTeacher ? 2.5 : 1.25;
-            const deskD = isTeacher ? 1.05 : 0.72;
-            const deskH = 0.74;
+            const deskWidth = 1.2;
+            const deskDepth = 0.5;
+            const deskHeight = 0.75;
+            const seatWidth = 0.4;
+            const seatDepth = 0.4;
+            const seatHeight = 0.45;
+            const legSpace = 0.3;
 
-            const woodMat = new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.62 });
-            const ironMat = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.48, metalness: 0.2 });
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0xcd853f, roughness: 0.6 });
+            const seatWoodMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.65 });
+            const ironMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.45, metalness: 0.2 });
+            const rackMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.45 });
 
-            const top = new THREE.Mesh(new THREE.BoxGeometry(deskW, 0.07, deskD), woodMat);
-            top.position.y = deskH;
+            const top = new THREE.Mesh(new THREE.BoxGeometry(deskWidth, 0.03, deskDepth), woodMat);
+            top.position.y = deskHeight;
             top.castShadow = true;
+            top.receiveShadow = true;
             deskGroup.add(top);
 
-            const legGeo = new THREE.CylinderGeometry(0.03, 0.03, deskH);
-            const legOffsets = [
-                [-deskW / 2 + 0.12, deskD / 2 - 0.12],
-                [deskW / 2 - 0.12, deskD / 2 - 0.12],
-                [-deskW / 2 + 0.12, -deskD / 2 + 0.12],
-                [deskW / 2 - 0.12, -deskD / 2 + 0.12]
-            ];
-            legOffsets.forEach(([lx, lz]) => {
+            const legGeo = new THREE.BoxGeometry(0.05, deskHeight, 0.05);
+            [
+                [-deskWidth/2 + 0.1, deskHeight/2, -deskDepth/2 + 0.1],
+                [deskWidth/2 - 0.1, deskHeight/2, -deskDepth/2 + 0.1],
+                [-deskWidth/2 + 0.1, deskHeight/2, deskDepth/2 - 0.1],
+                [deskWidth/2 - 0.1, deskHeight/2, deskDepth/2 - 0.1]
+            ].forEach(([lx, ly, lz]) => {
                 const leg = new THREE.Mesh(legGeo, ironMat);
-                leg.position.set(lx, deskH / 2, lz);
+                leg.position.set(lx, ly, lz);
+                leg.castShadow = true;
+                leg.receiveShadow = true;
+                deskGroup.add(leg);
+            });
+
+            const crossBarMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.4, metalness: 0.2 });
+            const barFront = new THREE.Mesh(new THREE.BoxGeometry(deskWidth - 0.2, 0.05, 0.05), crossBarMat);
+            barFront.position.set(0, 0.3, -deskDepth/2 + 0.05);
+            const barBack = new THREE.Mesh(new THREE.BoxGeometry(deskWidth - 0.2, 0.05, 0.05), crossBarMat);
+            barBack.position.set(0, 0.3, deskDepth/2 - 0.05);
+            const barLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, deskDepth - 0.2), crossBarMat);
+            barLeft.position.set(-deskWidth/2 + 0.05, 0.3, 0);
+            const barRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, deskDepth - 0.2), crossBarMat);
+            barRight.position.set(deskWidth/2 - 0.05, 0.3, 0);
+            deskGroup.add(barFront, barBack, barLeft, barRight);
+
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(seatWidth, 0.05, seatDepth), seatWoodMat);
+            seat.position.set(0, seatHeight, deskDepth/2 + legSpace + seatDepth/2);
+            const seatBack = new THREE.Mesh(new THREE.BoxGeometry(seatWidth, 0.4, 0.05), seatWoodMat);
+            seatBack.position.set(0, seatHeight + 0.2, deskDepth/2 + legSpace + seatDepth + 0.02);
+            deskGroup.add(seat, seatBack);
+
+            const seatLegGeo = new THREE.BoxGeometry(0.05, seatHeight, 0.05);
+            [
+                [-seatWidth/2 + 0.05, seatHeight/2, deskDepth/2 + legSpace + seatDepth/2 - 0.15],
+                [seatWidth/2 - 0.05, seatHeight/2, deskDepth/2 + legSpace + seatDepth/2 - 0.15],
+                [-seatWidth/2 + 0.05, seatHeight/2, deskDepth/2 + legSpace + seatDepth/2 + 0.15],
+                [seatWidth/2 - 0.05, seatHeight/2, deskDepth/2 + legSpace + seatDepth/2 + 0.15]
+            ].forEach(([sx, sy, sz]) => {
+                const leg = new THREE.Mesh(seatLegGeo, ironMat);
+                leg.position.set(sx, sy, sz);
                 leg.castShadow = true;
                 deskGroup.add(leg);
             });
 
-            if(!isTeacher) {
-                const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.06, 0.42), woodMat);
-                chairSeat.position.set(0, 0.45, deskD / 2 + 0.38);
-                const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.45, 0.06), woodMat);
-                chairBack.position.set(0, 0.7, deskD / 2 + 0.58);
-                deskGroup.add(chairSeat, chairBack);
-            }
+            const rack = new THREE.Mesh(new THREE.BoxGeometry(deskWidth - 0.3, 0.02, deskDepth - 0.2), rackMat);
+            rack.position.set(0, 0.25, 0);
+            deskGroup.add(rack);
+
+            deskGroup.position.set(x, 0, z);
+            return deskGroup;
+        }
+
+        function createTeacherDeskModel(x, z) {
+            const deskGroup = new THREE.Group();
+            const deskWidth = 2.5;
+            const deskDepth = 1.2;
+            const deskHeight = 0.75;
+
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0xcd853f, roughness: 0.58 });
+            const ironMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.4, metalness: 0.2 });
+
+            const top = new THREE.Mesh(new THREE.BoxGeometry(deskWidth, 0.05, deskDepth), woodMat);
+            top.position.y = deskHeight;
+            top.castShadow = true;
+            top.receiveShadow = true;
+            deskGroup.add(top);
+
+            const legGeo = new THREE.CylinderGeometry(0.04, 0.04, deskHeight, 16);
+            [
+                [-deskWidth/2 + 0.15, deskDepth/2 - 0.15],
+                [deskWidth/2 - 0.15, deskDepth/2 - 0.15],
+                [-deskWidth/2 + 0.15, -deskDepth/2 + 0.15],
+                [deskWidth/2 - 0.15, -deskDepth/2 + 0.15]
+            ].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(legGeo, ironMat);
+                leg.position.set(lx, deskHeight / 2, lz);
+                leg.castShadow = true;
+                deskGroup.add(leg);
+            });
+
+            const book = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.3), new THREE.MeshStandardMaterial({ color: 0x2ecc71 }));
+            book.position.set(0.3, deskHeight + 0.05, -0.2);
+            deskGroup.add(book);
+
+            const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x9b59b6 }));
+            vase.position.set(-0.5, deskHeight + 0.15, 0.2);
+            deskGroup.add(vase);
+
+            const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+            chairSeat.position.set(0, 0.45, -0.7);
+            const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 0.1), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+            chairBack.position.set(0, 0.8, -1.1);
+            deskGroup.add(chairSeat, chairBack);
+
+            const chairLegGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.45, 12);
+            [
+                [-0.35, -0.35], [0.35, -0.35], [-0.35, -1.05], [0.35, -1.05]
+            ].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(chairLegGeo, ironMat);
+                leg.position.set(lx, 0.2, lz);
+                deskGroup.add(leg);
+            });
 
             deskGroup.position.set(x, 0, z);
             return deskGroup;
@@ -1354,31 +1519,41 @@
 
         function createAvatarModel(x, z, name, isTeacher = false) {
             const avatar = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.24, 0.26, 0.86),
+            const pants = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.25, 0.25, 0.5, 16),
+                new THREE.MeshStandardMaterial({ color: isTeacher ? 0x000000 : 0x1e3a8a })
+            );
+            pants.position.y = 0.25;
+
+            const shirt = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.24, 0.24, 0.5, 16),
                 new THREE.MeshStandardMaterial({ color: 0xffffff })
             );
-            body.position.y = 0.86;
-            body.castShadow = true;
+            shirt.position.y = 0.75;
 
             const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.22, 18, 18),
-                new THREE.MeshStandardMaterial({ color: 0xf9d2b4 })
+                new THREE.SphereGeometry(0.2, 18, 18),
+                new THREE.MeshStandardMaterial({ color: 0xffe0bd })
             );
-            head.position.y = 1.48;
-            head.castShadow = true;
+            head.position.y = 1.3;
 
             const hair = new THREE.Mesh(
-                new THREE.SphereGeometry(0.23, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2),
+                new THREE.SphereGeometry(0.21, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
                 new THREE.MeshStandardMaterial({ color: 0x111111 })
             );
-            hair.position.y = 1.53;
+            hair.position.y = 1.3;
+
+            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMat);
+            eyeL.position.set(-0.07, 1.35, 0.15);
+            const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMat);
+            eyeR.position.set(0.07, 1.35, 0.15);
 
             const tag = makeNameTagSprite(name);
-            tag.position.y = 1.96;
+            tag.position.y = 1.9;
 
-            avatar.add(body, head, hair, tag);
-            avatar.position.set(x, 0, z + (isTeacher ? -0.7 : 0.34));
+            avatar.add(pants, shirt, head, hair, eyeL, eyeR, tag);
+            avatar.position.set(x, 0, z + (isTeacher ? -0.7 : 0.9));
             if(isTeacher) avatar.rotation.y = Math.PI;
             return avatar;
         }
@@ -1403,12 +1578,21 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             renderer.setSize(wrap.clientWidth, wrap.clientHeight);
             renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             wrap.appendChild(renderer.domElement);
 
-            const ambient = new THREE.AmbientLight(0xffffff, 0.66);
-            const sun = new THREE.DirectionalLight(0xffffff, 0.58);
-            sun.position.set(-8, 14, 6);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.62);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+            sun.position.set(5, 10, 5);
             sun.castShadow = true;
+            sun.shadow.mapSize.width = 1024;
+            sun.shadow.mapSize.height = 1024;
+            sun.shadow.camera.near = 0.5;
+            sun.shadow.camera.far = 30;
+            sun.shadow.camera.left = -15;
+            sun.shadow.camera.right = 15;
+            sun.shadow.camera.top = 15;
+            sun.shadow.camera.bottom = -15;
             scene.add(ambient, sun);
 
             buildVietnamClassroomEnvironment(scene);
@@ -1416,16 +1600,18 @@
             const allEntries = [getTeacherEntryFor3D(), ...getSeatEntriesFor3D()];
             const tags = [];
             allEntries.forEach(person => {
-                const desk = createDeskModel(person.x, person.z, person.isTeacher);
+                const desk = person.isTeacher
+                    ? createTeacherDeskModel(person.x, person.z)
+                    : createStudentDeskHoaPhatModel(person.x, person.z);
                 scene.add(desk);
 
                 if(person.id === entry.id) {
-                    camera.position.set(person.x, 1.48, person.z + (person.isTeacher ? 1.22 : 0.58));
+                    camera.position.set(person.x, 1.4, person.z + (person.isTeacher ? 1.2 : 0.9));
                     seat3DState.baseYaw = person.isTeacher ? Math.PI : 0;
                 } else {
                     const avatar = createAvatarModel(person.x, person.z, person.name, person.isTeacher);
                     scene.add(avatar);
-                    const tag = avatar.children[3];
+                    const tag = avatar.children[6];
                     if(tag) tags.push(tag);
                 }
             });
@@ -1448,8 +1634,8 @@
                 const dy = y - seat3DState.lastY;
                 seat3DState.lastX = x;
                 seat3DState.lastY = y;
-                seat3DState.yaw -= dx * 0.0042;
-                seat3DState.pitch -= dy * 0.0037;
+                seat3DState.yaw -= dx * 0.0035;
+                seat3DState.pitch -= dy * 0.0032;
                 applySeat3DCameraLook();
             };
 
