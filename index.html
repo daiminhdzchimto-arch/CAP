@@ -46,9 +46,13 @@
         .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
         .row-container:hover .merge-handle { opacity: 1; }
         .merge-handle:hover { background-color: #3b82f6; color: white; transform: translateY(-50%) scale(1.1); }
-        .split-btn { position: absolute; top: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; transition: opacity 0.2s, color 0.2s; }
-        .desk-box:hover .split-btn { opacity: 1; }
+        .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        .split-btn { right: 0; }
+        .details-btn { left: 0; top: auto; bottom: 0; }
+        .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
+        .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
         .split-btn:hover { color: #ef4444; }
+        .details-btn:hover { color: #3b82f6; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -961,16 +965,28 @@
                         if(swapSource){
                             if(isSrc)cancelSwapMode();
                             else{e.preventDefault();executeSwap(side,ri,si)}
-                        } else {
-                            selectStudent(side, ri, si);
                         }
                     };
                     ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
                     ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
                     cell.appendChild(ta);
+
+                    let hasActions = false;
+                    if(seat.name.trim()){
+                        const detailsBtn=document.createElement('button');
+                        detailsBtn.type='button';
+                        detailsBtn.className='details-btn';
+                        detailsBtn.title='Xem chi tiết học sinh';
+                        detailsBtn.setAttribute('aria-label','Xem chi tiết học sinh');
+                        detailsBtn.innerHTML='<i class="fas fa-circle-info"></i>';
+                        detailsBtn.onclick=e=>{e.preventDefault();e.stopPropagation();selectStudent(side,ri,si)};
+                        cell.appendChild(detailsBtn);
+                        hasActions = true;
+                    }
                     
                     if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
-                    if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s)}
+                    if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s);hasActions = true}
+                    if(hasActions) cell.classList.add('has-actions');
                     div.appendChild(cell);
                 });
                 c.appendChild(div);
