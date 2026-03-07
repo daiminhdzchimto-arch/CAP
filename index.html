@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -50,10 +51,15 @@
         .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .split-btn { right: 0; }
         .details-btn { left: 0; top: auto; bottom: 0; }
+        .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
+        .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
         .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
         .split-btn:hover { color: #ef4444; }
         .details-btn:hover { color: #3b82f6; }
+        .view-3d-btn:hover { color: #0284c7; }
+        .teacher-vr-btn { position: absolute; right: -8px; top: -8px; width: 26px; height: 26px; border-radius: 9999px; background: #0284c7; color: #fff; border: 2px solid #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(2,132,199,0.35); transition: transform 0.2s, background-color 0.2s; }
+        .teacher-vr-btn:hover { background: #0369a1; transform: scale(1.08); }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -244,6 +250,9 @@
                         <div class="w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative">
                             <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-2 bg-amber-200 border border-amber-300 rounded-sm"></div>
                             <div class="text-[8px] font-bold uppercase tracking-wide text-amber-700">Bàn Giáo Viên</div>
+                            <button type="button" class="teacher-vr-btn" title="Xem 3D từ vị trí giáo viên" onclick="openTeacher3DView()" aria-label="Xem 3D từ vị trí giáo viên">
+                                <i class="fas fa-vr-cardboard"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -653,6 +662,19 @@
         </div>
     </div>
 
+    <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/95">
+        <div id="seat-3d-canvas" class="absolute inset-0"></div>
+        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 px-4 py-3 text-sm shadow-lg max-w-sm">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Góc nhìn thứ nhất</p>
+            <p id="seat-3d-current-name" class="font-bold text-gray-800 mt-1">Đang xem từ: --</p>
+            <p class="text-[11px] text-gray-600 mt-1">Giữ chuột (hoặc kéo tay) để xoay 360°. Cuộn chuột để thay đổi tầm nhìn.</p>
+        </div>
+        <div class="absolute top-4 right-4 flex items-center gap-2">
+            <button type="button" onclick="resetSeat3DLook()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Đặt lại góc nhìn</button>
+            <button type="button" onclick="closeSeat3DView()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">Thoát 3D</button>
+        </div>
+    </div>
+
     <script>
         // =================================================================
         // CONSTANTS & STATE
@@ -676,6 +698,21 @@
         let dayOffMode = false, excludedMembers = [], dayOffs = [], morningOff = false, afternoonOff = false;
         let currentSchedule = null, dutyDebtData = {};
         let selectedStudentSeat = null, isEditMode = false;
+        let seat3DState = {
+            active: false,
+            renderer: null,
+            scene: null,
+            camera: null,
+            animationId: null,
+            yaw: 0,
+            pitch: 0,
+            fov: 75,
+            isDragging: false,
+            lastX: 0,
+            lastY: 0,
+            removeListeners: [],
+            baseYaw: 0
+        };
 
         let config = {
             settings: {
@@ -1002,6 +1039,16 @@
                     requestAnimationFrame(() => fitDeskInputText(ta));
 
                     let hasActions = false;
+                    const view3DBtn=document.createElement('button');
+                    view3DBtn.type='button';
+                    view3DBtn.className='view-3d-btn';
+                    view3DBtn.title='Xem vị trí 3D góc nhìn thứ nhất';
+                    view3DBtn.setAttribute('aria-label','Xem vị trí 3D góc nhìn thứ nhất');
+                    view3DBtn.innerHTML='<i class="fas fa-vr-cardboard"></i>';
+                    view3DBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openSeat3DView(side,ri,si)};
+                    cell.appendChild(view3DBtn);
+                    hasActions = true;
+
                     if(seat.name.trim()){
                         const detailsBtn=document.createElement('button');
                         detailsBtn.type='button';
@@ -1011,7 +1058,6 @@
                         detailsBtn.innerHTML='<i class="fas fa-circle-info"></i>';
                         detailsBtn.onclick=e=>{e.preventDefault();e.stopPropagation();selectStudent(side,ri,si)};
                         cell.appendChild(detailsBtn);
-                        hasActions = true;
                     }
                     
                     if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
@@ -1055,6 +1101,428 @@
 
             const targetHeight = Math.min(Math.max(input.scrollHeight, 48), maxHeight);
             input.style.height = `${targetHeight}px`;
+        }
+
+        function getSeatEntriesFor3D() {
+            const CELL_X = 1.3;
+            const ROW_Z = 1.7;
+            const SIDE_GAP = 3.2;
+            const entries = [];
+
+            const convertSide = (sideData, side) => {
+                sideData.forEach((row, rowIndex) => {
+                    let cursor = 0;
+                    row.forEach((seat, seatIndex) => {
+                        const width = Number(seat.width || 1);
+                        const centerUnit = cursor + (width / 2);
+                        const localX = (centerUnit - 2) * CELL_X;
+                        const worldX = side === 'left' ? localX - SIDE_GAP : localX + SIDE_GAP;
+                        const worldZ = rowIndex * ROW_Z;
+                        entries.push({
+                            side,
+                            rowIndex,
+                            seatIndex,
+                            id: seat.id,
+                            name: (seat.name || '').trim() || 'Chỗ trống',
+                            x: worldX,
+                            z: worldZ,
+                            isTeacher: false
+                        });
+                        cursor += width;
+                    });
+                });
+            };
+
+            convertSide(leftSideData, 'left');
+            convertSide(rightSideData, 'right');
+            return entries;
+        }
+
+        function getTeacherEntryFor3D() {
+            return {
+                side: 'teacher',
+                rowIndex: -1,
+                seatIndex: -1,
+                id: 'teacher-desk',
+                name: 'Giáo viên',
+                x: 6.1,
+                z: -3.1,
+                isTeacher: true
+            };
+        }
+
+        function makeRoundedRect(ctx, x, y, width, height, radius) {
+            if(typeof ctx.roundRect === 'function') {
+                ctx.beginPath();
+                ctx.roundRect(x, y, width, height, radius);
+                ctx.fill();
+                return;
+            }
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function makeNameTagSprite(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0.58)';
+            makeRoundedRect(ctx, 8, 8, 496, 112, 24);
+            ctx.font = 'bold 42px sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(2.4, 0.6, 1);
+            return sprite;
+        }
+
+        function applySeat3DCameraLook() {
+            if(!seat3DState.camera) return;
+            const pitch = Math.max(-Math.PI / 2 + 0.08, Math.min(Math.PI / 2 - 0.08, seat3DState.pitch));
+            seat3DState.pitch = pitch;
+            const dir = new THREE.Vector3(
+                Math.sin(seat3DState.yaw) * Math.cos(pitch),
+                Math.sin(pitch),
+                -Math.cos(seat3DState.yaw) * Math.cos(pitch)
+            );
+            const target = seat3DState.camera.position.clone().add(dir);
+            seat3DState.camera.lookAt(target);
+        }
+
+        function resetSeat3DLook() {
+            seat3DState.yaw = seat3DState.baseYaw || 0;
+            seat3DState.pitch = -0.03;
+            seat3DState.fov = 75;
+            if(seat3DState.camera) {
+                seat3DState.camera.fov = seat3DState.fov;
+                seat3DState.camera.updateProjectionMatrix();
+            }
+            applySeat3DCameraLook();
+        }
+
+        function closeSeat3DView() {
+            const viewer = document.getElementById('seat-3d-viewer');
+            viewer.classList.add('hidden');
+            seat3DState.active = false;
+            seat3DState.isDragging = false;
+
+            if(seat3DState.animationId) cancelAnimationFrame(seat3DState.animationId);
+            seat3DState.animationId = null;
+
+            seat3DState.removeListeners.forEach(fn => fn());
+            seat3DState.removeListeners = [];
+
+            if(seat3DState.renderer) {
+                const wrap = document.getElementById('seat-3d-canvas');
+                if(seat3DState.renderer.domElement.parentNode === wrap) {
+                    wrap.removeChild(seat3DState.renderer.domElement);
+                }
+                seat3DState.renderer.dispose();
+            }
+
+            seat3DState.renderer = null;
+            seat3DState.scene = null;
+            seat3DState.camera = null;
+            seat3DState.baseYaw = 0;
+        }
+
+        function buildVietnamClassroomEnvironment(scene) {
+            const roomWidth = 24;
+            const roomDepth = 28;
+            const wallHeight = 6.5;
+
+            scene.background = new THREE.Color(0x9ec9ff);
+            scene.fog = new THREE.Fog(0x9ec9ff, 22, 48);
+
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(roomWidth, roomDepth),
+                new THREE.MeshStandardMaterial({ color: 0xe7ddbf, roughness: 0.88 })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(0, 0, 6);
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf9efc5, roughness: 1 });
+            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, wallHeight), wallMat);
+            backWall.position.set(0, wallHeight / 2, 20);
+            backWall.rotation.y = Math.PI;
+
+            const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, wallHeight), wallMat);
+            frontWall.position.set(0, wallHeight / 2, -8);
+
+            const sideWallGeo = new THREE.PlaneGeometry(roomDepth, wallHeight);
+            const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
+            leftWall.position.set(-roomWidth / 2, wallHeight / 2, 6);
+            leftWall.rotation.y = Math.PI / 2;
+
+            const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
+            rightWall.position.set(roomWidth / 2, wallHeight / 2, 6);
+            rightWall.rotation.y = -Math.PI / 2;
+
+            scene.add(backWall, frontWall, leftWall, rightWall);
+
+            const boardFrame = new THREE.Mesh(
+                new THREE.BoxGeometry(11.8, 3.9, 0.18),
+                new THREE.MeshStandardMaterial({ color: 0x5b3a1c })
+            );
+            boardFrame.position.set(0, 3.5, -7.9);
+            scene.add(boardFrame);
+
+            const board = new THREE.Mesh(
+                new THREE.PlaneGeometry(11.2, 3.3),
+                new THREE.MeshStandardMaterial({ color: 0x0f6b3a, roughness: 0.96 })
+            );
+            board.position.set(0, 3.5, -7.78);
+            scene.add(board);
+
+            const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.5 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0xc7e8ff, transparent: true, opacity: 0.55 });
+            [1.2, 5.2, 9.2].forEach((zPos) => {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.7, 3.2), windowFrameMat);
+                frame.position.set(-11.9, 3.2, zPos);
+                const glass = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 2.4), glassMat);
+                glass.position.set(-11.78, 3.2, zPos);
+                glass.rotation.y = Math.PI / 2;
+                scene.add(frame, glass);
+            });
+
+            const door = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.3, 4.8),
+                new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
+            );
+            door.position.set(10.2, 2.4, -7.86);
+            scene.add(door);
+        }
+
+        function createDeskModel(x, z, isTeacher) {
+            const deskGroup = new THREE.Group();
+            const deskW = isTeacher ? 2.5 : 1.25;
+            const deskD = isTeacher ? 1.05 : 0.72;
+            const deskH = 0.74;
+
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.62 });
+            const ironMat = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.48, metalness: 0.2 });
+
+            const top = new THREE.Mesh(new THREE.BoxGeometry(deskW, 0.07, deskD), woodMat);
+            top.position.y = deskH;
+            top.castShadow = true;
+            deskGroup.add(top);
+
+            const legGeo = new THREE.CylinderGeometry(0.03, 0.03, deskH);
+            const legOffsets = [
+                [-deskW / 2 + 0.12, deskD / 2 - 0.12],
+                [deskW / 2 - 0.12, deskD / 2 - 0.12],
+                [-deskW / 2 + 0.12, -deskD / 2 + 0.12],
+                [deskW / 2 - 0.12, -deskD / 2 + 0.12]
+            ];
+            legOffsets.forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(legGeo, ironMat);
+                leg.position.set(lx, deskH / 2, lz);
+                leg.castShadow = true;
+                deskGroup.add(leg);
+            });
+
+            if(!isTeacher) {
+                const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.06, 0.42), woodMat);
+                chairSeat.position.set(0, 0.45, deskD / 2 + 0.38);
+                const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.45, 0.06), woodMat);
+                chairBack.position.set(0, 0.7, deskD / 2 + 0.58);
+                deskGroup.add(chairSeat, chairBack);
+            }
+
+            deskGroup.position.set(x, 0, z);
+            return deskGroup;
+        }
+
+        function createAvatarModel(x, z, name, isTeacher = false) {
+            const avatar = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.24, 0.26, 0.86),
+                new THREE.MeshStandardMaterial({ color: 0xffffff })
+            );
+            body.position.y = 0.86;
+            body.castShadow = true;
+
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.22, 18, 18),
+                new THREE.MeshStandardMaterial({ color: 0xf9d2b4 })
+            );
+            head.position.y = 1.48;
+            head.castShadow = true;
+
+            const hair = new THREE.Mesh(
+                new THREE.SphereGeometry(0.23, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2),
+                new THREE.MeshStandardMaterial({ color: 0x111111 })
+            );
+            hair.position.y = 1.53;
+
+            const tag = makeNameTagSprite(name);
+            tag.position.y = 1.96;
+
+            avatar.add(body, head, hair, tag);
+            avatar.position.set(x, 0, z + (isTeacher ? -0.7 : 0.34));
+            if(isTeacher) avatar.rotation.y = Math.PI;
+            return avatar;
+        }
+
+        function renderSeat3DSceneFor(entry) {
+            if(!window.THREE) {
+                showToast('Không thể tải engine 3D. Vui lòng thử lại.');
+                return;
+            }
+
+            closeSeat3DView();
+
+            const viewer = document.getElementById('seat-3d-viewer');
+            const wrap = document.getElementById('seat-3d-canvas');
+            const currentLabel = document.getElementById('seat-3d-current-name');
+            currentLabel.textContent = `Đang xem từ: ${entry.name}`;
+            viewer.classList.remove('hidden');
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, wrap.clientWidth / wrap.clientHeight, 0.1, 250);
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+            renderer.shadowMap.enabled = true;
+            wrap.appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.66);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.58);
+            sun.position.set(-8, 14, 6);
+            sun.castShadow = true;
+            scene.add(ambient, sun);
+
+            buildVietnamClassroomEnvironment(scene);
+
+            const allEntries = [getTeacherEntryFor3D(), ...getSeatEntriesFor3D()];
+            const tags = [];
+            allEntries.forEach(person => {
+                const desk = createDeskModel(person.x, person.z, person.isTeacher);
+                scene.add(desk);
+
+                if(person.id === entry.id) {
+                    camera.position.set(person.x, 1.48, person.z + (person.isTeacher ? 1.22 : 0.58));
+                    seat3DState.baseYaw = person.isTeacher ? Math.PI : 0;
+                } else {
+                    const avatar = createAvatarModel(person.x, person.z, person.name, person.isTeacher);
+                    scene.add(avatar);
+                    const tag = avatar.children[3];
+                    if(tag) tags.push(tag);
+                }
+            });
+
+            seat3DState.active = true;
+            seat3DState.renderer = renderer;
+            seat3DState.scene = scene;
+            seat3DState.camera = camera;
+            resetSeat3DLook();
+
+            const canvas = renderer.domElement;
+            const onDown = (x, y) => {
+                seat3DState.isDragging = true;
+                seat3DState.lastX = x;
+                seat3DState.lastY = y;
+            };
+            const onMove = (x, y) => {
+                if(!seat3DState.isDragging) return;
+                const dx = x - seat3DState.lastX;
+                const dy = y - seat3DState.lastY;
+                seat3DState.lastX = x;
+                seat3DState.lastY = y;
+                seat3DState.yaw -= dx * 0.0042;
+                seat3DState.pitch -= dy * 0.0037;
+                applySeat3DCameraLook();
+            };
+
+            const onMouseDown = e => onDown(e.clientX, e.clientY);
+            const onMouseMove = e => onMove(e.clientX, e.clientY);
+            const stopDrag = () => { seat3DState.isDragging = false; };
+            const onTouchStart = e => {
+                if(!e.touches[0]) return;
+                onDown(e.touches[0].clientX, e.touches[0].clientY);
+            };
+            const onTouchMove = e => {
+                if(!e.touches[0]) return;
+                onMove(e.touches[0].clientX, e.touches[0].clientY);
+            };
+            const onWheel = e => {
+                e.preventDefault();
+                seat3DState.fov = Math.min(100, Math.max(45, seat3DState.fov + e.deltaY * 0.02));
+                camera.fov = seat3DState.fov;
+                camera.updateProjectionMatrix();
+            };
+
+            canvas.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', stopDrag);
+            canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchmove', onTouchMove, { passive: true });
+            window.addEventListener('touchend', stopDrag);
+            canvas.addEventListener('wheel', onWheel, { passive: false });
+
+            const resize = () => {
+                if(!seat3DState.renderer || !seat3DState.camera) return;
+                const w = wrap.clientWidth;
+                const h = wrap.clientHeight;
+                seat3DState.renderer.setSize(w, h);
+                seat3DState.camera.aspect = w / h;
+                seat3DState.camera.updateProjectionMatrix();
+            };
+            window.addEventListener('resize', resize);
+
+            seat3DState.removeListeners = [
+                () => canvas.removeEventListener('mousedown', onMouseDown),
+                () => window.removeEventListener('mousemove', onMouseMove),
+                () => window.removeEventListener('mouseup', stopDrag),
+                () => canvas.removeEventListener('touchstart', onTouchStart),
+                () => window.removeEventListener('touchmove', onTouchMove),
+                () => window.removeEventListener('touchend', stopDrag),
+                () => canvas.removeEventListener('wheel', onWheel),
+                () => window.removeEventListener('resize', resize)
+            ];
+
+            const animate = () => {
+                if(!seat3DState.active) return;
+                tags.forEach(tag => tag.lookAt(camera.position));
+                renderer.render(scene, camera);
+                seat3DState.animationId = requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        function openSeat3DView(side, rowIndex, seatIndex) {
+            const sourceSeat = (side === 'left' ? leftSideData : rightSideData)[rowIndex][seatIndex];
+            const sourceEntry = getSeatEntriesFor3D().find(e => e.id === sourceSeat.id) || {
+                id: sourceSeat.id,
+                name: (sourceSeat?.name || '').trim() || 'Chỗ trống',
+                x: 0,
+                z: 0,
+                isTeacher: false
+            };
+            renderSeat3DSceneFor(sourceEntry);
+        }
+
+        function openTeacher3DView() {
+            renderSeat3DSceneFor(getTeacherEntryFor3D());
         }
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
@@ -1390,6 +1858,7 @@
         // COMPETITION & DUTY (PRESERVED)
         // =================================================================
         function switchTab(t) { 
+            if(seat3DState.active) closeSeat3DView();
             document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
             document.getElementById('tab-'+t).classList.add('active'); 
             document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
@@ -1943,6 +2412,9 @@
         };
 
         document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape' && seat3DState.active) closeSeat3DView();
+        });
     </script>
 </body>
 </html>
