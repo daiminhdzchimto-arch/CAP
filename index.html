@@ -705,7 +705,8 @@
             isDragging: false,
             lastX: 0,
             lastY: 0,
-            removeListeners: []
+            removeListeners: [],
+            disposeResources: []
         };
 
         let config = {
@@ -983,6 +984,21 @@
 
         function renderSide(cid, data, side) {
             const c = document.getElementById(cid); c.innerHTML='';
+            const createDeskActionButton = ({ className, title, icon, onClick }) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = className;
+                btn.title = title;
+                btn.setAttribute('aria-label', title);
+                btn.innerHTML = icon;
+                btn.onclick = e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClick();
+                };
+                return btn;
+            };
+
             data.forEach((row, ri) => {
                 const div = document.createElement('div'); div.className='flex w-full gap-2 relative row-container';
                 row.forEach((seat, si) => {
@@ -1034,22 +1050,20 @@
 
                     let hasActions = false;
                     if(seat.name.trim()){
-                        const view3DBtn=document.createElement('button');
-                        view3DBtn.type='button';
-                        view3DBtn.className='view-3d-btn';
-                        view3DBtn.title='Xem vị trí 3D góc nhìn thứ nhất';
-                        view3DBtn.setAttribute('aria-label','Xem vị trí 3D góc nhìn thứ nhất');
-                        view3DBtn.innerHTML='<i class="fas fa-vr-cardboard"></i>';
-                        view3DBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openSeat3DView(side,ri,si)};
+                        const view3DBtn = createDeskActionButton({
+                            className: 'view-3d-btn',
+                            title: 'Xem vị trí 3D góc nhìn thứ nhất',
+                            icon: '<i class="fas fa-vr-cardboard"></i>',
+                            onClick: () => openSeat3DView(side,ri,si)
+                        });
                         cell.appendChild(view3DBtn);
 
-                        const detailsBtn=document.createElement('button');
-                        detailsBtn.type='button';
-                        detailsBtn.className='details-btn';
-                        detailsBtn.title='Xem chi tiết học sinh';
-                        detailsBtn.setAttribute('aria-label','Xem chi tiết học sinh');
-                        detailsBtn.innerHTML='<i class="fas fa-circle-info"></i>';
-                        detailsBtn.onclick=e=>{e.preventDefault();e.stopPropagation();selectStudent(side,ri,si)};
+                        const detailsBtn = createDeskActionButton({
+                            className: 'details-btn',
+                            title: 'Xem chi tiết học sinh',
+                            icon: '<i class="fas fa-circle-info"></i>',
+                            onClick: () => selectStudent(side,ri,si)
+                        });
                         cell.appendChild(detailsBtn);
                         hasActions = true;
                     }
@@ -1160,7 +1174,11 @@
             const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
             const sprite = new THREE.Sprite(material);
             sprite.scale.set(1.9, 0.75, 1);
-            return sprite;
+            const dispose = () => {
+                texture.dispose();
+                material.dispose();
+            };
+            return { sprite, dispose };
         }
 
         function applySeat3DCameraLook() {
@@ -1198,6 +1216,8 @@
 
             seat3DState.removeListeners.forEach(fn => fn());
             seat3DState.removeListeners = [];
+            seat3DState.disposeResources.forEach(fn => fn());
+            seat3DState.disposeResources = [];
 
             if(seat3DState.renderer) {
                 const wrap = document.getElementById('seat-3d-canvas');
@@ -1286,13 +1306,25 @@
                 body.position.set(entry.x, 1.05, entry.z - 0.1);
                 const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), headMat);
                 head.position.set(entry.x, 1.72, entry.z - 0.1);
-                const nameTag = makeNameTagSprite(entry.name);
+                const { sprite: nameTag, dispose: disposeTag } = makeNameTagSprite(entry.name);
                 nameTag.position.set(entry.x, 2.3, entry.z - 0.1);
+                seat3DState.disposeResources.push(disposeTag);
 
                 scene.add(body);
                 scene.add(head);
                 tagGroup.add(nameTag);
             });
+
+            seat3DState.disposeResources.push(
+                () => deskGeo.dispose(),
+                () => deskMat.dispose(),
+                () => bodyMat.dispose(),
+                () => headMat.dispose(),
+                () => floor.geometry.dispose(),
+                () => floor.material.dispose(),
+                () => board.geometry.dispose(),
+                () => board.material.dispose()
+            );
 
             scene.add(tagGroup);
 
