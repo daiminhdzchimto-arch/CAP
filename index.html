@@ -1530,46 +1530,17 @@
                 input.blur();
                 input.scrollLeft = 0;
                 input.scrollTop = 0;
-                fitDeskInputText(input);
             });
-            
-            html2canvas(area, {
-                scale: 3,
-                useCORS: true,
-                backgroundColor: "#ffffff",
-                onclone: (doc) => {
-                    const clonedArea = doc.getElementById(id);
-                    if (!clonedArea) return;
 
-                    clonedArea.querySelectorAll('.desk-box').forEach(box => {
-                        box.style.transition = 'none';
-                        box.style.transform = 'none';
-                        box.style.boxShadow = '2px 2px 0px rgba(0,0,0,0.1)';
-                    });
-
-                    clonedArea.querySelectorAll('.merge-handle, .split-btn, .details-btn').forEach(el => {
-                        el.style.display = 'none';
-                    });
-
-                    clonedArea.querySelectorAll('.desk-input').forEach(input => {
-                        input.scrollTop = 0;
-                        input.scrollLeft = 0;
-                        input.style.overflow = 'hidden';
-                        input.style.wordBreak = 'break-word';
-                        input.style.overflowWrap = 'anywhere';
-                        input.style.hyphens = 'auto';
-                        input.style.whiteSpace = 'pre-wrap';
-                    });
-                }
-            }).then(c => {
+            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
                 const l = document.createElement('a');
                 const randomID = generateComplexID(124);
-                l.download=`${pre}_${randomID}.png`; 
+                l.download=`${pre}_${randomID}.png`;
                 l.href=c.toDataURL("image/png"); l.click();
             }).finally(() => {
                 fixedSeats.forEach(s => s.classList.remove('is-fixed-hidden'));
                 conflictSeats.forEach(s => s.classList.remove('is-conflict-hidden'));
-            }); 
+            });
         }
 
         function saveData() {
