@@ -41,7 +41,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* SEATING */
-        .desk-input { background: transparent; border: none; width: 100%; height: 100%; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; scrollbar-width: none; -ms-overflow-style: none; }
+        .desk-input { background: transparent; border: none; width: 100%; min-height: 48px; height: auto; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; hyphens: auto; scrollbar-width: none; -ms-overflow-style: none; }
         .desk-input::-webkit-scrollbar { display: none; }
         .desk-input:focus { background-color: rgba(255, 255, 255, 0.5); cursor: text; }
         .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
@@ -58,7 +58,7 @@
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
         .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
-        .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; }
+        .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; display: flex; align-items: center; justify-content: center; min-height: 48px; }
         .is-fixed-hidden .fixed-badge { display: none !important; }
         .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
         .is-conflict-hidden.desk-box.has-conflict { border-color: #374151 !important; }
@@ -937,7 +937,7 @@
                     const isFixed = fixedMembers.includes(seat.id);
                     const hasConflict = seat.hasConflict;
                     
-                    cell.className = `${w} desk-box h-16 rounded-xl relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''} ${hasConflict?'has-conflict':''}`;
+                    cell.className = `${w} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''} ${hasConflict?'has-conflict':''}`;
                     
                     if(isFixed) {
                         const badge = document.createElement('div');
@@ -952,7 +952,7 @@
                         cell.appendChild(dot);
                     }
 
-                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
+                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name; ta.rows = 1; ta.wrap = 'soft';
                     ta.oninput=e=>{ updateName(side,ri,si,e.target.value); fitDeskInputText(e.target); };
                     
                     ta.oncontextmenu = e => {
@@ -1017,14 +1017,20 @@
 
             input.style.fontSize = `${baseFontPx}px`;
             input.style.lineHeight = '1.2';
+            input.style.height = 'auto';
             input.scrollLeft = 0;
             input.scrollTop = 0;
 
-            const maxHeight = input.clientHeight - 2;
+            const parent = input.closest('.desk-box');
+            const maxHeight = parent ? Math.max(parent.clientHeight - 6, 48) : 48;
+
             while (input.scrollHeight > maxHeight && currentFontPx > minFontPx) {
                 currentFontPx -= 1;
                 input.style.fontSize = `${currentFontPx}px`;
             }
+
+            const targetHeight = Math.min(Math.max(input.scrollHeight, 48), maxHeight);
+            input.style.height = `${targetHeight}px`;
         }
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
@@ -1527,7 +1533,35 @@
                 fitDeskInputText(input);
             });
             
-            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(c => {
+            html2canvas(area, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                onclone: (doc) => {
+                    const clonedArea = doc.getElementById(id);
+                    if (!clonedArea) return;
+
+                    clonedArea.querySelectorAll('.desk-box').forEach(box => {
+                        box.style.transition = 'none';
+                        box.style.transform = 'none';
+                        box.style.boxShadow = '2px 2px 0px rgba(0,0,0,0.1)';
+                    });
+
+                    clonedArea.querySelectorAll('.merge-handle, .split-btn, .details-btn').forEach(el => {
+                        el.style.display = 'none';
+                    });
+
+                    clonedArea.querySelectorAll('.desk-input').forEach(input => {
+                        input.scrollTop = 0;
+                        input.scrollLeft = 0;
+                        input.style.overflow = 'hidden';
+                        input.style.wordBreak = 'break-word';
+                        input.style.overflowWrap = 'anywhere';
+                        input.style.hyphens = 'auto';
+                        input.style.whiteSpace = 'pre-wrap';
+                    });
+                }
+            }).then(c => {
                 const l = document.createElement('a');
                 const randomID = generateComplexID(124);
                 l.download=`${pre}_${randomID}.png`; 
