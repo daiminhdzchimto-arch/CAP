@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -50,10 +51,13 @@
         .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .split-btn { right: 0; }
         .details-btn { left: 0; top: auto; bottom: 0; }
+        .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
+        .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
         .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
         .split-btn:hover { color: #ef4444; }
         .details-btn:hover { color: #3b82f6; }
+        .view-3d-btn:hover { color: #0284c7; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -653,6 +657,19 @@
         </div>
     </div>
 
+    <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/95">
+        <div id="seat-3d-canvas" class="absolute inset-0"></div>
+        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 px-4 py-3 text-sm shadow-lg max-w-sm">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Góc nhìn thứ nhất</p>
+            <p id="seat-3d-current-name" class="font-bold text-gray-800 mt-1">Đang xem từ: --</p>
+            <p class="text-[11px] text-gray-600 mt-1">Giữ chuột (hoặc kéo tay) để xoay 360°. Cuộn chuột để thay đổi tầm nhìn.</p>
+        </div>
+        <div class="absolute top-4 right-4 flex items-center gap-2">
+            <button type="button" onclick="resetSeat3DLook()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Đặt lại góc nhìn</button>
+            <button type="button" onclick="closeSeat3DView()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">Thoát 3D</button>
+        </div>
+    </div>
+
     <script>
         // =================================================================
         // CONSTANTS & STATE
@@ -676,6 +693,20 @@
         let dayOffMode = false, excludedMembers = [], dayOffs = [], morningOff = false, afternoonOff = false;
         let currentSchedule = null, dutyDebtData = {};
         let selectedStudentSeat = null, isEditMode = false;
+        let seat3DState = {
+            active: false,
+            renderer: null,
+            scene: null,
+            camera: null,
+            animationId: null,
+            yaw: 0,
+            pitch: 0,
+            fov: 75,
+            isDragging: false,
+            lastX: 0,
+            lastY: 0,
+            removeListeners: []
+        };
 
         let config = {
             settings: {
@@ -1003,6 +1034,15 @@
 
                     let hasActions = false;
                     if(seat.name.trim()){
+                        const view3DBtn=document.createElement('button');
+                        view3DBtn.type='button';
+                        view3DBtn.className='view-3d-btn';
+                        view3DBtn.title='Xem vị trí 3D góc nhìn thứ nhất';
+                        view3DBtn.setAttribute('aria-label','Xem vị trí 3D góc nhìn thứ nhất');
+                        view3DBtn.innerHTML='<i class="fas fa-vr-cardboard"></i>';
+                        view3DBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openSeat3DView(side,ri,si)};
+                        cell.appendChild(view3DBtn);
+
                         const detailsBtn=document.createElement('button');
                         detailsBtn.type='button';
                         detailsBtn.className='details-btn';
@@ -1055,6 +1095,288 @@
 
             const targetHeight = Math.min(Math.max(input.scrollHeight, 48), maxHeight);
             input.style.height = `${targetHeight}px`;
+        }
+
+        function getSeatEntriesFor3D() {
+            const CELL_X = 1.3;
+            const ROW_Z = 1.7;
+            const SIDE_GAP = 3.2;
+            const entries = [];
+
+            const convertSide = (sideData, side) => {
+                sideData.forEach((row, rowIndex) => {
+                    let cursor = 0;
+                    row.forEach((seat, seatIndex) => {
+                        const width = Number(seat.width || 1);
+                        const centerUnit = cursor + (width / 2);
+                        const localX = (centerUnit - 2) * CELL_X;
+                        const worldX = side === 'left' ? localX - SIDE_GAP : localX + SIDE_GAP;
+                        const worldZ = rowIndex * ROW_Z;
+
+                        entries.push({
+                            side,
+                            rowIndex,
+                            seatIndex,
+                            name: (seat.name || '').trim(),
+                            x: worldX,
+                            z: worldZ
+                        });
+
+                        cursor += width;
+                    });
+                });
+            };
+
+            convertSide(leftSideData, 'left');
+            convertSide(rightSideData, 'right');
+            return entries;
+        }
+
+        function makeNameTagSprite(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 96;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.strokeStyle = 'rgba(59,130,246,0.8)';
+            ctx.lineWidth = 6;
+            if(typeof ctx.roundRect === 'function') {
+                ctx.beginPath();
+                ctx.roundRect(8, 8, 240, 80, 18);
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                ctx.fillRect(8, 8, 240, 80);
+                ctx.strokeRect(8, 8, 240, 80);
+            }
+            ctx.fillStyle = '#1f2937';
+            ctx.font = 'bold 26px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 128, 50);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(1.9, 0.75, 1);
+            return sprite;
+        }
+
+        function applySeat3DCameraLook() {
+            if(!seat3DState.camera) return;
+            const pitch = Math.max(-Math.PI/2 + 0.08, Math.min(Math.PI/2 - 0.08, seat3DState.pitch));
+            seat3DState.pitch = pitch;
+            const dir = new THREE.Vector3(
+                Math.sin(seat3DState.yaw) * Math.cos(pitch),
+                Math.sin(pitch),
+                -Math.cos(seat3DState.yaw) * Math.cos(pitch)
+            );
+            const target = seat3DState.camera.position.clone().add(dir);
+            seat3DState.camera.lookAt(target);
+        }
+
+        function resetSeat3DLook() {
+            seat3DState.yaw = 0;
+            seat3DState.pitch = -0.05;
+            seat3DState.fov = 75;
+            if(seat3DState.camera) {
+                seat3DState.camera.fov = seat3DState.fov;
+                seat3DState.camera.updateProjectionMatrix();
+            }
+            applySeat3DCameraLook();
+        }
+
+        function closeSeat3DView() {
+            const viewer = document.getElementById('seat-3d-viewer');
+            viewer.classList.add('hidden');
+            seat3DState.active = false;
+            seat3DState.isDragging = false;
+
+            if(seat3DState.animationId) cancelAnimationFrame(seat3DState.animationId);
+            seat3DState.animationId = null;
+
+            seat3DState.removeListeners.forEach(fn => fn());
+            seat3DState.removeListeners = [];
+
+            if(seat3DState.renderer) {
+                const wrap = document.getElementById('seat-3d-canvas');
+                if(seat3DState.renderer.domElement.parentNode === wrap) {
+                    wrap.removeChild(seat3DState.renderer.domElement);
+                }
+                seat3DState.renderer.dispose();
+            }
+
+            seat3DState.renderer = null;
+            seat3DState.scene = null;
+            seat3DState.camera = null;
+        }
+
+        function openSeat3DView(side, rowIndex, seatIndex) {
+            if(!window.THREE) {
+                showToast('Không thể tải engine 3D. Vui lòng thử lại.');
+                return;
+            }
+
+            const sourceSeat = (side === 'left' ? leftSideData : rightSideData)[rowIndex][seatIndex];
+            const sourceName = (sourceSeat?.name || '').trim();
+            if(!sourceName) {
+                showToast('Ghế này chưa có tên thành viên để xem 3D.');
+                return;
+            }
+
+            closeSeat3DView();
+
+            const viewer = document.getElementById('seat-3d-viewer');
+            const wrap = document.getElementById('seat-3d-canvas');
+            const currentLabel = document.getElementById('seat-3d-current-name');
+            currentLabel.textContent = `Đang xem từ: ${sourceName}`;
+            viewer.classList.remove('hidden');
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+            const camera = new THREE.PerspectiveCamera(75, wrap.clientWidth / wrap.clientHeight, 0.1, 200);
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+            wrap.appendChild(renderer.domElement);
+
+            const hemi = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 1.1);
+            const dir = new THREE.DirectionalLight(0xffffff, 0.7);
+            dir.position.set(10, 16, 4);
+            scene.add(hemi, dir);
+
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(45, 35),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9, metalness: 0.05 })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.z = 4.4;
+            scene.add(floor);
+
+            const board = new THREE.Mesh(
+                new THREE.BoxGeometry(10, 2.1, 0.12),
+                new THREE.MeshStandardMaterial({ color: 0x111827 })
+            );
+            board.position.set(0, 2.5, -2.2);
+            scene.add(board);
+
+            const entries = getSeatEntriesFor3D();
+            const target = entries.find(e => e.side === side && e.rowIndex === rowIndex && e.seatIndex === seatIndex);
+            if(!target) {
+                showToast('Không xác định được vị trí ghế cho chế độ 3D.');
+                closeSeat3DView();
+                return;
+            }
+
+            const deskGeo = new THREE.BoxGeometry(1.2, 0.7, 0.9);
+            const deskMat = new THREE.MeshStandardMaterial({ color: 0xbfdbfe });
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
+            const tagGroup = new THREE.Group();
+
+            entries.forEach(entry => {
+                const desk = new THREE.Mesh(deskGeo, deskMat);
+                desk.position.set(entry.x, 0.35, entry.z);
+                scene.add(desk);
+
+                if(!entry.name || (entry.side === side && entry.rowIndex === rowIndex && entry.seatIndex === seatIndex)) return;
+
+                const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.8, 4, 8), bodyMat);
+                body.position.set(entry.x, 1.05, entry.z - 0.1);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), headMat);
+                head.position.set(entry.x, 1.72, entry.z - 0.1);
+                const nameTag = makeNameTagSprite(entry.name);
+                nameTag.position.set(entry.x, 2.3, entry.z - 0.1);
+
+                scene.add(body);
+                scene.add(head);
+                tagGroup.add(nameTag);
+            });
+
+            scene.add(tagGroup);
+
+            camera.position.set(target.x, 1.55, target.z + 0.2);
+
+            seat3DState.active = true;
+            seat3DState.renderer = renderer;
+            seat3DState.scene = scene;
+            seat3DState.camera = camera;
+            resetSeat3DLook();
+
+            const canvas = renderer.domElement;
+            const onDown = (x, y) => {
+                seat3DState.isDragging = true;
+                seat3DState.lastX = x;
+                seat3DState.lastY = y;
+            };
+            const onMove = (x, y) => {
+                if(!seat3DState.isDragging) return;
+                const dx = x - seat3DState.lastX;
+                const dy = y - seat3DState.lastY;
+                seat3DState.lastX = x;
+                seat3DState.lastY = y;
+                seat3DState.yaw -= dx * 0.0045;
+                seat3DState.pitch -= dy * 0.0038;
+                applySeat3DCameraLook();
+            };
+
+            const onMouseDown = e => onDown(e.clientX, e.clientY);
+            const onMouseMove = e => onMove(e.clientX, e.clientY);
+            const stopDrag = () => { seat3DState.isDragging = false; };
+            const onTouchStart = e => {
+                if(!e.touches[0]) return;
+                const t = e.touches[0];
+                onDown(t.clientX, t.clientY);
+            };
+            const onTouchMove = e => {
+                if(!e.touches[0]) return;
+                const t = e.touches[0];
+                onMove(t.clientX, t.clientY);
+            };
+            const onWheel = e => {
+                e.preventDefault();
+                seat3DState.fov = Math.min(100, Math.max(45, seat3DState.fov + e.deltaY * 0.02));
+                camera.fov = seat3DState.fov;
+                camera.updateProjectionMatrix();
+            };
+
+            canvas.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', stopDrag);
+            canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchmove', onTouchMove, { passive: true });
+            window.addEventListener('touchend', stopDrag);
+            canvas.addEventListener('wheel', onWheel, { passive: false });
+
+            const resize = () => {
+                if(!seat3DState.renderer || !seat3DState.camera) return;
+                const w = wrap.clientWidth;
+                const h = wrap.clientHeight;
+                seat3DState.renderer.setSize(w, h);
+                seat3DState.camera.aspect = w / h;
+                seat3DState.camera.updateProjectionMatrix();
+            };
+            window.addEventListener('resize', resize);
+
+            seat3DState.removeListeners = [
+                () => canvas.removeEventListener('mousedown', onMouseDown),
+                () => window.removeEventListener('mousemove', onMouseMove),
+                () => window.removeEventListener('mouseup', stopDrag),
+                () => canvas.removeEventListener('touchstart', onTouchStart),
+                () => window.removeEventListener('touchmove', onTouchMove),
+                () => window.removeEventListener('touchend', stopDrag),
+                () => canvas.removeEventListener('wheel', onWheel),
+                () => window.removeEventListener('resize', resize)
+            ];
+
+            const animate = () => {
+                if(!seat3DState.active) return;
+                tagGroup.children.forEach(tag => tag.lookAt(camera.position));
+                renderer.render(scene, camera);
+                seat3DState.animationId = requestAnimationFrame(animate);
+            };
+            animate();
         }
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
@@ -1390,6 +1712,7 @@
         // COMPETITION & DUTY (PRESERVED)
         // =================================================================
         function switchTab(t) { 
+            if(seat3DState.active) closeSeat3DView();
             document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
             document.getElementById('tab-'+t).classList.add('active'); 
             document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
@@ -1943,6 +2266,9 @@
         };
 
         document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape' && seat3DState.active) closeSeat3DView();
+        });
     </script>
 </body>
 </html>
