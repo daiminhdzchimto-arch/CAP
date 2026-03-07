@@ -179,8 +179,8 @@
                 <div class="flex items-center gap-3">
                     <button onclick="openShareModal()" class="p-2 text-gray-500 hover:text-purple-600 transition-colors" title="Chia sẻ"><i class="fas fa-share-nodes"></i></button>
                     <button onclick="openSettingsModal()" class="p-2 text-gray-500 hover:text-blue-600 transition-colors" title="Cài đặt"><i class="fas fa-cog"></i></button>
-                    <button onclick="saveData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2">
-                        <i class="fas fa-save"></i> <span class="hidden sm:inline">Lưu</span>
+                    <button onclick="saveData()" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-md flex items-center justify-center" title="Lưu">
+                        <i class="fas fa-save"></i>
                     </button>
                 </div>
             </div>
@@ -204,16 +204,16 @@
                     <button onclick="rotateClass('down')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition" title="Xoay xuống"><i class="fas fa-arrow-down"></i></button>
                     <button onclick="flipSeatingVertically()" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Lật/Xoay Dọc"><i class="fas fa-exchange-alt"></i></button>
                     <div class="h-6 w-px bg-gray-200 mx-1"></div>
-                    <button onclick="openShuffleModal()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
-                        <i class="fas fa-random"></i> Sắp xếp
+                    <button onclick="openShuffleModal()" class="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Sắp xếp">
+                        <i class="fas fa-random"></i>
                     </button>
-                    <button onclick="clearAllFixedMembers()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2" title="Xoá toàn bộ trạng thái ghim bàn ghế">
-                        <i class="fas fa-unlock"></i> Bỏ ghim tất cả
+                    <button onclick="clearAllFixedMembers()" class="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Xoá toàn bộ trạng thái ghim bàn ghế">
+                        <i class="fas fa-unlock"></i>
                     </button>
                     <button onclick="resetLayout()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
                     <div class="h-6 w-px bg-gray-200 mx-1"></div>
-                    <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
-                        <i class="fas fa-camera"></i> Chụp ảnh
+                    <button onclick="downloadImage('classroom-area', 'So_do_lop')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center" title="Chụp ảnh">
+                        <i class="fas fa-camera"></i>
                     </button>
                 </div>
             </div>
@@ -1058,9 +1058,6 @@
                 showToast('Hiện không có bàn ghế nào đang được ghim.');
                 return;
             }
-
-            const confirmed = confirm('Bạn có chắc muốn xoá toàn bộ trạng thái ghim hiện có trên sơ đồ không?');
-            if (!confirmed) return;
 
             fixedMembers = [];
             renderAll();
