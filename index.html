@@ -116,10 +116,12 @@
             linear-gradient(rgba(71, 85, 105, 0.2) 1px, transparent 1px) 0 0/70px 70px,
             radial-gradient(circle at center, rgba(14, 165, 233, 0.15), transparent 65%);
         }
-        .pov-avatar { position: absolute; width: 120px; height: 170px; transform-style: preserve-3d; pointer-events: none; }
-        .pov-avatar-body { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: 60px; height: 96px; border-radius: 24px; background: linear-gradient(180deg, #38bdf8, #0369a1); box-shadow: 0 0 20px rgba(14, 165, 233, 0.35); }
-        .pov-avatar-head { position: absolute; left: 50%; bottom: 108px; transform: translateX(-50%); width: 42px; height: 42px; border-radius: 999px; background: #f8fafc; border: 2px solid #e2e8f0; }
-        .pov-avatar-name { position: absolute; left: 50%; bottom: 158px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(148, 163, 184, 0.6); border-radius: 999px; padding: 4px 10px; }
+        .pov-avatar { position: absolute; width: 120px; height: 180px; transform-style: preserve-3d; pointer-events: none; --avatar-height: 146px; }
+        .pov-avatar-core { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); width: 64px; height: var(--avatar-height); transform-style: preserve-3d; }
+        .pov-avatar-body { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 48px; height: 100px; border-radius: 999px; background: linear-gradient(180deg, #38bdf8, #0369a1); box-shadow: 0 0 20px rgba(14, 165, 233, 0.35); }
+        .pov-avatar-head { position: absolute; left: 50%; bottom: 88px; transform: translateX(-50%); width: 42px; height: 42px; border-radius: 999px; background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e2e8f0 78%); border: 2px solid rgba(226, 232, 240, 0.85); }
+        .pov-avatar-name { position: absolute; left: 50%; bottom: 164px; transform: translateX(-50%); transform-style: preserve-3d; white-space: nowrap; font-size: 12px; font-weight: 700; background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(148, 163, 184, 0.6); border-radius: 999px; padding: 4px 10px; }
+        .pov-avatar-name.hidden { opacity: 0; }
         .pov-self-indicator { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); background: rgba(14, 165, 233, 0.2); border: 1px solid rgba(56, 189, 248, 0.6); border-radius: 999px; font-size: 11px; padding: 4px 10px; }
         .mini-row { cursor: pointer; padding: 4px; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; }
         .mini-row:hover { background-color: #f3f4f6; border-color: #d1d5db; }
@@ -712,7 +714,11 @@
         let currentSchedule = null, dutyDebtData = {};
         let selectedStudentSeat = null, isEditMode = false;
         let povClickState = { key: null, count: 0, ts: 0 };
-        let povViewState = { target: null, yaw: 0, pitch: -8, distance: 580, drag: false, px: 0, py: 0 };
+        let povViewState = { target: null, yaw: 0, pitch: -8, distance: 580, drag: false, px: 0, py: 0, sceneKey: null, sceneDirty: true, avatars: [] };
+        const POV_NAME_TAG_DISTANCE = 620;
+        const POV_AVATAR_CULL_X = 720;
+        const POV_AVATAR_CULL_Z = 760;
+        const POV_NAME_BILLBOARD_BASE = 'translateX(-50%)';
 
         let config = {
             settings: {
@@ -985,6 +991,10 @@
             renderSide('right-rows-container', rightSideData, 'right'); 
             updateStatusUI(); 
             checkAllConflicts();
+            if (povViewState.target) {
+                povViewState.sceneDirty = true;
+                renderSeatPovScene();
+            }
         }
 
         function renderSide(cid, data, side) {
@@ -1156,10 +1166,12 @@
                         const seatWidth = Math.max(1, Number(seat.width) || 1);
                         const centerX = cursor + ((seatWidth * xStep) / 2);
                         cursor += seatWidth * xStep;
+                        const name = (seat.name || '').trim();
                         points.push({
                             type: 'student',
                             id: seat.id,
-                            name: (seat.name || '').trim() || 'Trống',
+                            name: name || 'Trống',
+                            hasName: !!name,
                             side,
                             ri,
                             si,
@@ -1172,7 +1184,7 @@
 
             pushPoints(leftSideData, 'left');
             pushPoints(rightSideData, 'right');
-            points.push({ type: 'teacher', id: 'teacher', name: 'Giáo viên', x: 0, z: -(ROW_COUNT * zStep * 0.65) });
+            points.push({ type: 'teacher', id: 'teacher', name: 'Giáo viên', hasName: true, x: 0, z: -(ROW_COUNT * zStep * 0.65) });
             return points;
         }
 
@@ -1191,6 +1203,8 @@
             povViewState.yaw = 0;
             povViewState.pitch = -8;
             povViewState.distance = 580;
+            povViewState.sceneKey = picked.id;
+            povViewState.sceneDirty = true;
             document.getElementById('pov-subtitle').innerText = `Bạn đang đứng tại vị trí: ${picked.name}. Kéo để xoay, cuộn để đổi góc nhìn.`;
             renderSeatPovScene();
             document.getElementById('pov-modal').classList.add('open');
@@ -1199,27 +1213,62 @@
         function closeSeatPovModal() {
             document.getElementById('pov-modal').classList.remove('open');
             povViewState.target = null;
+            povViewState.avatars = [];
+        }
+
+        function buildSeatPovAvatars(cam, target, points) {
+            cam.innerHTML = '<div class="pov-ground"></div>';
+            const fragment = document.createDocumentFragment();
+            const avatars = [];
+
+            points.forEach(point => {
+                if (point.id === target.id || point.type !== 'student' || !point.hasName) return;
+                const relX = point.x - target.x;
+                const relZ = point.z - target.z;
+                if (Math.abs(relX) > POV_AVATAR_CULL_X || Math.abs(relZ) > POV_AVATAR_CULL_Z) return;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'pov-avatar';
+                avatar.innerHTML = '<div class="pov-avatar-core"><div class="pov-avatar-body"></div><div class="pov-avatar-head"></div></div><div class="pov-avatar-name"></div>';
+                avatar.querySelector('.pov-avatar-name').textContent = point.name;
+                fragment.appendChild(avatar);
+                avatars.push({ node: avatar, coreNode: avatar.querySelector('.pov-avatar-core'), nameNode: avatar.querySelector('.pov-avatar-name'), relX, relZ });
+            });
+
+            cam.appendChild(fragment);
+            povViewState.avatars = avatars;
+            povViewState.sceneDirty = false;
         }
 
         function renderSeatPovScene() {
             const cam = document.getElementById('pov-camera');
+            const viewport = document.getElementById('pov-viewport');
             const target = povViewState.target;
-            if (!cam || !target) return;
+            if (!cam || !target || !viewport) return;
 
             const points = collectSeatPointsForPov();
-            cam.innerHTML = '<div class="pov-ground"></div>';
+            if (povViewState.sceneDirty || povViewState.sceneKey !== target.id || !povViewState.avatars.length) {
+                povViewState.sceneKey = target.id;
+                buildSeatPovAvatars(cam, target, points);
+            }
 
-            points.forEach(point => {
-                if (point.id === target.id) return;
-                const relX = point.x - target.x;
-                const relZ = point.z - target.z;
-                if (Math.abs(relX) > 720 || Math.abs(relZ) > 760) return;
+            const viewportHalfWidth = viewport.clientWidth / 2;
+            const viewportHalfHeight = viewport.clientHeight / 2;
+            const perspectiveScale = Math.max(0.86, Math.min(1.2, povViewState.distance / 580));
 
-                const avatar = document.createElement('div');
-                avatar.className = 'pov-avatar';
-                avatar.style.transform = `translate3d(calc(50% + ${relX}px), calc(56% + ${relZ * 0.62}px), 0)`;
-                avatar.innerHTML = `<div class="pov-avatar-name">${point.name}</div><div class="pov-avatar-head"></div><div class="pov-avatar-body"></div>`;
-                cam.appendChild(avatar);
+            povViewState.avatars.forEach(({ node, coreNode, nameNode, relX, relZ }) => {
+                const projectedX = relX * (1 - Math.min(0.24, Math.abs(relZ) / 2200));
+                const projectedY = relZ * 0.62;
+                const radialDistance = Math.hypot(relX, relZ);
+                const avatarScale = Math.max(0.76, Math.min(1.12, (1 - radialDistance / 3000) * perspectiveScale));
+
+                node.style.transform = `translate3d(calc(50% + ${projectedX}px), calc(56% + ${projectedY}px), 0) scale(${avatarScale})`;
+                coreNode.style.transform = `${POV_NAME_BILLBOARD_BASE}`;
+                nameNode.style.transform = `${POV_NAME_BILLBOARD_BASE} rotateY(${-povViewState.yaw}deg) rotateX(${-povViewState.pitch}deg)`;
+
+                const inViewport = Math.abs(projectedX) <= viewportHalfWidth * 0.95 && Math.abs(projectedY) <= viewportHalfHeight * 0.92;
+                if (radialDistance > POV_NAME_TAG_DISTANCE || !inViewport) nameNode.classList.add('hidden');
+                else nameNode.classList.remove('hidden');
             });
 
             const rot = `rotateX(${povViewState.pitch}deg) rotateY(${povViewState.yaw}deg)`;
