@@ -47,13 +47,16 @@
         .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
         .row-container:hover .merge-handle { opacity: 1; }
         .merge-handle:hover { background-color: #3b82f6; color: white; transform: translateY(-50%) scale(1.1); }
-        .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        .split-btn, .details-btn, .seat-pov-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .split-btn { right: 0; }
         .details-btn { left: 0; top: auto; bottom: 0; }
-        .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
+        .seat-pov-btn { right: 0; top: auto; bottom: 0; }
+        .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:hover .seat-pov-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn, .desk-box:focus-within .seat-pov-btn { opacity: 1; pointer-events: auto; }
         .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
         .split-btn:hover { color: #ef4444; }
         .details-btn:hover { color: #3b82f6; }
+        .seat-pov-btn:hover { color: #0ea5e9; }
+        .seat-pov-btn:disabled { color: #d1d5db; cursor: not-allowed; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -664,7 +667,7 @@
             </div>
             <div id="pov-viewport">
                 <div id="pov-camera" class="pov-camera"></div>
-                <div class="pov-self-indicator">Giữ chuột/kéo để xoay 360° • Cuộn để đổi góc nhìn</div>
+                <div id="pov-self-indicator" class="pov-self-indicator">Đang xem từ: Chưa chọn • Giữ chuột/kéo để xoay 360° • Cuộn để đổi góc nhìn</div>
             </div>
         </div>
     </div>
@@ -1041,7 +1044,8 @@
                     requestAnimationFrame(() => fitDeskInputText(ta));
 
                     let hasActions = false;
-                    if(seat.name.trim()){
+                    const seatName = seat.name.trim();
+                    if(seatName){
                         const detailsBtn=document.createElement('button');
                         detailsBtn.type='button';
                         detailsBtn.className='details-btn';
@@ -1052,6 +1056,25 @@
                         cell.appendChild(detailsBtn);
                         hasActions = true;
                     }
+
+                    const povBtn=document.createElement('button');
+                    povBtn.type='button';
+                    povBtn.className='seat-pov-btn';
+                    povBtn.title='Xem 3D từ vị trí này';
+                    povBtn.setAttribute('aria-label','Xem 3D từ vị trí này');
+                    povBtn.innerHTML='<i class="fas fa-vr-cardboard"></i>';
+                    if(!seatName) {
+                        povBtn.disabled = true;
+                        povBtn.title = 'Ghế trống, không thể mở góc nhìn 3D';
+                        povBtn.setAttribute('aria-label', 'Ghế trống, không thể mở góc nhìn 3D');
+                    }
+                    povBtn.onclick=e=>{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        open3DViewFromSeat(side,ri,si);
+                    };
+                    cell.appendChild(povBtn);
+                    hasActions = true;
                     
                     if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
                     if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s);hasActions = true}
@@ -1176,6 +1199,55 @@
             return points;
         }
 
+        function updatePovHud(name) {
+            const normalizedName = (name || '').trim() || 'Chưa chọn';
+            const subtitle = document.getElementById('pov-subtitle');
+            const indicator = document.getElementById('pov-self-indicator');
+            if (subtitle) subtitle.innerText = `Bạn đang đứng tại vị trí: ${normalizedName}. Kéo để xoay, cuộn để đổi góc nhìn.`;
+            if (indicator) indicator.innerText = `Đang xem từ: ${normalizedName} • Giữ chuột/kéo để xoay 360° • Cuộn để đổi góc nhìn`;
+        }
+
+        function open3DViewFromSeat(side, rowIndex, seatIndex) {
+            const sideData = side === 'left' ? leftSideData : rightSideData;
+            const row = sideData?.[rowIndex];
+            const seat = row?.[seatIndex];
+            const seatName = (seat?.name || '').trim();
+            if (!seat || !seatName) {
+                showToast('Ghế đang trống tên. Vui lòng nhập tên trước khi mở góc nhìn 3D.');
+                return;
+            }
+
+            const allPoints = collectSeatPointsForPov();
+            const picked = allPoints.find(p => p.side === side && p.ri === rowIndex && p.si === seatIndex);
+            if (!picked) {
+                showToast('Không tìm thấy vị trí để mở góc nhìn 3D.');
+                return;
+            }
+
+            const eyeHeight = 56;
+            const eyeYOffset = side === 'left' ? -10 : 10;
+            const lookDirection = side === 'left' ? 32 : -32;
+            povViewState.target = {
+                ...picked,
+                name: seatName,
+                world: {
+                    x: picked.x,
+                    y: 0,
+                    z: picked.z,
+                    eyeX: picked.x,
+                    eyeY: eyeHeight,
+                    eyeZ: picked.z + eyeYOffset,
+                    lookYaw: lookDirection
+                }
+            };
+            povViewState.yaw = lookDirection;
+            povViewState.pitch = -6;
+            povViewState.distance = 520;
+            updatePovHud(seatName);
+            renderSeatPovScene();
+            document.getElementById('pov-modal').classList.add('open');
+        }
+
         function openSeatPovModal(target) {
             const allPoints = collectSeatPointsForPov();
             const picked = target.type === 'teacher'
@@ -1187,11 +1259,16 @@
                 return;
             }
 
+            if (target.type === 'student') {
+                open3DViewFromSeat(target.side, target.ri, target.si);
+                return;
+            }
+
             povViewState.target = picked;
             povViewState.yaw = 0;
             povViewState.pitch = -8;
             povViewState.distance = 580;
-            document.getElementById('pov-subtitle').innerText = `Bạn đang đứng tại vị trí: ${picked.name}. Kéo để xoay, cuộn để đổi góc nhìn.`;
+            updatePovHud(picked.name);
             renderSeatPovScene();
             document.getElementById('pov-modal').classList.add('open');
         }
@@ -1199,6 +1276,7 @@
         function closeSeatPovModal() {
             document.getElementById('pov-modal').classList.remove('open');
             povViewState.target = null;
+            updatePovHud('Chưa chọn');
         }
 
         function renderSeatPovScene() {
