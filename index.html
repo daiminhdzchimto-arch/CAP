@@ -84,24 +84,33 @@
             border-radius: 8px;
             background: #ffffff;
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
-            transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
             z-index: 0;
             pointer-events: none;
         }
         .tab-btn {
             position: relative;
             z-index: 1;
-            transition: color 0.25s ease, transform 0.2s ease;
+            transition: color 0.25s ease;
+            transform: none !important;
+            box-shadow: none !important;
+            filter: none !important;
+        }
+        .tab-switcher .tab-btn:hover,
+        .tab-switcher .tab-btn:active {
+            transform: none !important;
+            box-shadow: none !important;
+            filter: none !important;
         }
         .tab-btn.active {
             color: #2563eb;
         }
         .tab-content { display: none; opacity: 0; }
         .tab-content.active { display: block; opacity: 1; }
-        .tab-content.tab-enter-right { animation: tabSlideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
-        .tab-content.tab-enter-left { animation: tabSlideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
-        @keyframes tabSlideInRight { from { opacity: 0; transform: translateX(20px) scale(0.985); } to { opacity: 1; transform: translateX(0) scale(1); } }
-        @keyframes tabSlideInLeft { from { opacity: 0; transform: translateX(-20px) scale(0.985); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        .tab-content.tab-enter-right { animation: tabSlideInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        .tab-content.tab-enter-left { animation: tabSlideInLeft 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes tabSlideInRight { from { opacity: 0; transform: translateX(44px) scale(0.985); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes tabSlideInLeft { from { opacity: 0; transform: translateX(-44px) scale(0.985); } to { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulseHighlight { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59,130,246,.35); } 60% { transform: scale(1.02); box-shadow: 0 0 0 12px rgba(59,130,246,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59,130,246,0); } }
         @keyframes wobbleSwap { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px) rotate(-2deg); } 75% { transform: translateX(4px) rotate(2deg); } }
@@ -288,7 +297,7 @@
                 <div id="top-tab-switcher" class="tab-switcher hidden md:flex items-center bg-gray-100 p-1 rounded-lg">
                     <span id="top-tab-indicator" class="tab-indicator" aria-hidden="true"></span>
                     <button id="btn-tab-seating" onclick="switchTab('seating')" class="tab-btn active px-3 py-2 rounded-md text-sm font-semibold text-blue-600 transition-all whitespace-nowrap">Sơ đồ lớp</button>
-                    <button id="btn-tab-competition" onclick="switchTab('competition')" class="tab-btn px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap">Thi đua & Trực nhật</button>
+                    <button id="btn-tab-competition" onclick="switchTab('competition')" class="tab-btn px-3 py-2 rounded-md text-sm font-semibold text-gray-500 transition-all whitespace-nowrap">Thi đua & Trực nhật</button>
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="openShareModal()" class="icon-edge-btn p-2 text-gray-500 hover:text-purple-600 transition-colors" title="Chia sẻ"><i class="fas fa-share-nodes"></i></button>
@@ -2433,11 +2442,11 @@
 
             document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>{
                 b.classList.remove('active', 'text-blue-600');
-                b.classList.add('text-gray-500', 'hover:text-gray-700');
+                b.classList.add('text-gray-500');
             });
             const activeBtn = document.getElementById('btn-tab-'+t);
             activeBtn.classList.add('active', 'text-blue-600');
-            activeBtn.classList.remove('text-gray-500', 'hover:text-gray-700');
+            activeBtn.classList.remove('text-gray-500');
 
             currentTopTab = t;
             moveTopTabIndicator(t);
