@@ -1151,9 +1151,10 @@
         }
 
         function getSeatEntriesFor3D() {
-            const CELL_X = 1.3;
-            const ROW_Z = 1.7;
-            const SIDE_GAP = 3.2;
+            const CELL_X = 1.05;
+            const ROW_Z = 1.2;
+            const SIDE_GAP = 2.35;
+            const ROW_START_Z = -2.1;
             const entries = [];
 
             const convertSide = (sideData, side) => {
@@ -1164,7 +1165,7 @@
                         const centerUnit = cursor + (width / 2);
                         const localX = (centerUnit - 2) * CELL_X;
                         const worldX = side === 'left' ? localX - SIDE_GAP : localX + SIDE_GAP;
-                        const worldZ = rowIndex * ROW_Z;
+                        const worldZ = ROW_START_Z + rowIndex * ROW_Z;
 
                         entries.push({
                             side,
