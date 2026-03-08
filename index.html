@@ -37,6 +37,22 @@
         }
 
         body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
+        button,
+        label.cursor-pointer {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            will-change: transform;
+        }
+        button:hover,
+        label.cursor-pointer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            filter: brightness(1.03);
+        }
+        button:active,
+        label.cursor-pointer:active {
+            transform: translateY(0) scale(0.97);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        }
         .tab-content { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .tab-content.active { display: block; opacity: 1; animation: fadeIn 0.4s forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
