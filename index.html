@@ -374,7 +374,7 @@
             </div>
 
             <div id="mini-map-container">
-                <div class="weather-overlay" id="weather-info-overlay"></div>
+                <div class="weather-overlay" id="weather-inline-overlay"></div>
                 <svg id="thread-overlay"></svg>
                 <div id="mini-map-grid" class="grid grid-cols-4 gap-1.5 relative z-10"></div>
             </div>
@@ -500,6 +500,19 @@
                             </div>
                             <label class="jelly-switch">
                                 <input type="checkbox" id="teacher-view-toggle" onchange="updateSettings()">
+                                <span class="jelly-slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600"><i class="fas fa-eye"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">Hiển thị Overlay góc dưới</div>
+                                    <div class="text-[10px] text-gray-500">Bật/tắt bảng thông tin thời tiết ở góc màn hình</div>
+                                </div>
+                            </div>
+                            <label class="jelly-switch">
+                                <input type="checkbox" id="bottom-overlay-toggle" checked onchange="updateSettings()">
                                 <span class="jelly-slider"></span>
                             </label>
                         </div>
@@ -722,7 +735,8 @@
                 intensity: 1.0,
                 powerSave: false,
                 showFPS: false,
-                teacherView: false
+                teacherView: false,
+                showBottomOverlay: true
             }
         };
 
@@ -2048,14 +2062,22 @@
             area.classList.toggle('teacher-view', !!config.settings.teacherView);
         }
 
+        function applyBottomOverlayVisibility() {
+            const overlay = document.getElementById('weather-info-overlay');
+            if (!overlay) return;
+            overlay.classList.toggle('hidden', !config.settings.showBottomOverlay);
+        }
+
         function updateSettings() {
             config.settings.windEnabled = document.getElementById('wind-enabled-toggle').checked;
             config.settings.intensity = parseFloat(document.getElementById('wind-intensity-range').value);
             config.settings.powerSave = document.getElementById('power-save-toggle').checked;
             config.settings.teacherView = document.getElementById('teacher-view-toggle').checked;
+            config.settings.showBottomOverlay = document.getElementById('bottom-overlay-toggle').checked;
             
             document.getElementById('wind-intensity-val').innerText = config.settings.intensity.toFixed(1) + 'x';
             applyClassroomViewMode();
+            applyBottomOverlayVisibility();
             
             if(config.settings.windEnabled && !particleEngine.active) particleEngine.init();
             localStorage.setItem('classApp_config', JSON.stringify(config));
@@ -2607,10 +2629,13 @@
                 document.getElementById('wind-intensity-range').value = config.settings.intensity;
                 document.getElementById('power-save-toggle').checked = config.settings.powerSave;
                 document.getElementById('teacher-view-toggle').checked = !!config.settings.teacherView;
+                document.getElementById('bottom-overlay-toggle').checked = config.settings.showBottomOverlay !== false;
                 document.getElementById('wind-intensity-val').innerText = config.settings.intensity.toFixed(1) + 'x';
             }
             document.getElementById('teacher-view-toggle').checked = !!config.settings.teacherView;
+            document.getElementById('bottom-overlay-toggle').checked = config.settings.showBottomOverlay !== false;
             applyClassroomViewMode();
+            applyBottomOverlayVisibility();
             renderAll();
             if(config.settings.windEnabled) particleEngine.init();
             WeatherAdapter.init();
