@@ -1214,7 +1214,7 @@
 
         function closeSeat3DView() {
             const viewer = document.getElementById('seat-3d-viewer');
-            viewer.classList.add('hidden');
+            if(viewer) viewer.classList.add('hidden');
             seat3DState.active = false;
             seat3DState.isDragging = false;
 
@@ -1232,6 +1232,7 @@
                     wrap.removeChild(seat3DState.renderer.domElement);
                 }
                 seat3DState.renderer.dispose();
+                if(typeof seat3DState.renderer.forceContextLoss === 'function') seat3DState.renderer.forceContextLoss();
             }
 
             seat3DState.renderer = null;
@@ -1329,6 +1330,10 @@
             const viewer = document.getElementById('seat-3d-viewer');
             const wrap = document.getElementById('seat-3d-canvas');
             const currentLabel = document.getElementById('seat-3d-current-name');
+            if(!viewer || !wrap || !currentLabel) {
+                showToast('Thiếu thành phần giao diện 3D. Vui lòng tải lại trang.');
+                return;
+            }
             currentLabel.textContent = `Đang xem từ: ${sourceName}`;
             viewer.classList.remove('hidden');
 
@@ -1482,6 +1487,7 @@
             canvas.addEventListener('touchstart', onTouchStart, { passive: false });
             window.addEventListener('touchmove', onTouchMove, { passive: false });
             window.addEventListener('touchend', stopDrag);
+            window.addEventListener('touchcancel', stopDrag);
             canvas.addEventListener('wheel', onWheel, { passive: false });
 
             const resize = () => {
@@ -1501,6 +1507,7 @@
                 () => canvas.removeEventListener('touchstart', onTouchStart),
                 () => window.removeEventListener('touchmove', onTouchMove),
                 () => window.removeEventListener('touchend', stopDrag),
+                () => window.removeEventListener('touchcancel', stopDrag),
                 () => canvas.removeEventListener('wheel', onWheel),
                 () => window.removeEventListener('resize', resize)
             ];
