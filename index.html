@@ -781,6 +781,22 @@
             setTimeout(() => el.classList.remove(className), duration);
         }
 
+        function getDeskCell(side, r, c) {
+            return document.querySelector(`.desk-box[data-side="${side}"][data-r="${r}"][data-c="${c}"]`);
+        }
+
+        function animateDeskCellById(seatId, className = 'animate-pulse-highlight', duration = 420) {
+            if (!seatId) return;
+            const cell = document.querySelector(`.desk-box[data-seat-id="${seatId}"]`);
+            if (cell) animateActionFeedback(cell, className, duration);
+        }
+
+        function animateAllDeskCells(className = 'animate-pulse-highlight', duration = 420, filterFn = null) {
+            document.querySelectorAll('.desk-box').forEach(cell => {
+                if (!filterFn || filterFn(cell)) animateActionFeedback(cell, className, duration);
+            });
+        }
+
         function animateButtonTapFromEvent(event) {
             const btn = event?.currentTarget || event?.target?.closest('button');
             if (!btn) return;
@@ -1100,6 +1116,7 @@
                     cell.dataset.side = side;
                     cell.dataset.r = ri;
                     cell.dataset.c = si;
+                    cell.dataset.seatId = seat.id;
                     
                     if(isFixed) {
                         const badge = document.createElement('div');
@@ -1823,12 +1840,12 @@
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); const seat = document.querySelector(`.desk-box[data-side="${s}"][data-r="${r}"][data-c="${c}"]`) || document.querySelector('.swap-selected'); animateActionFeedback(seat || '#classroom-area','animate-pulse-highlight',420); }
         function cancelSwapMode(){ swapSource=null; renderAll(); }
-        function executeSwap(ts,tr,tc){ const src={...swapSource}; const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); animateActionFeedback('#classroom-area','animate-wobble-swap',420); const srcSeat = document.querySelector(`.desk-box[data-side="${src.side}"][data-r="${src.r}"][data-c="${src.c}"]`); const dstSeat = document.querySelector(`.desk-box[data-side="${ts}"][data-r="${tr}"][data-c="${tc}"]`); if(srcSeat) animateActionFeedback(srcSeat,'animate-pulse-highlight',340); if(dstSeat) animateActionFeedback(dstSeat,'animate-pulse-highlight',340); showToast('Đã hoán đổi vị trí 2 thành viên'); }
+        function executeSwap(ts,tr,tc){ const src={...swapSource}; const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); const srcSeat = getDeskCell(src.side, src.r, src.c); const dstSeat = getDeskCell(ts, tr, tc); if(srcSeat) animateActionFeedback(srcSeat,'animate-wobble-swap',420); if(dstSeat) animateActionFeedback(dstSeat,'animate-wobble-swap',420); if(srcSeat) animateActionFeedback(srcSeat,'animate-pulse-highlight',340); if(dstSeat) animateActionFeedback(dstSeat,'animate-pulse-highlight',340); showToast('Đã hoán đổi vị trí 2 thành viên'); }
         function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
         
-        function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); animateActionFeedback('#classroom-area','animate-pulse-merge',520); }
-        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); animateActionFeedback('#classroom-area','animate-pulse-merge',520); }
-        function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); animateActionFeedback('#classroom-area', d==='down'?'animate-board-down':'animate-board-up', 500); }
+        function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); const mergedCell = getDeskCell(s, r, c); if(mergedCell) animateActionFeedback(mergedCell,'animate-pulse-merge',520); }
+        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); const splitCells = [getDeskCell(s, r, c), getDeskCell(s, r, c + 1)].filter(Boolean); splitCells.forEach(cell => animateActionFeedback(cell,'animate-pulse-merge',520)); }
+        function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); animateAllDeskCells(d==='down'?'animate-board-down':'animate-board-up', 500); }
         function resetLayout(){ leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; genderMap={}; dayOffs=[]; excludedMembers=[]; morningOff=false; afternoonOff=false; document.querySelectorAll('input[type="file"]').forEach(input => input.value = ''); localStorage.removeItem('classApp_v2.5'); renderAll(); animateActionFeedback('#classroom-area','animate-ripple-reset',700); showToast("Đã làm mới toàn bộ dữ liệu!"); }
 
         function toggleFixed(id) {
@@ -1838,7 +1855,7 @@
             renderAll();
             const pin = document.querySelector('.fixed-badge');
             if(pin) animateActionFeedback(pin,'animate-stamp',420);
-            animateActionFeedback('#classroom-area','animate-pulse-highlight',420);
+            animateDeskCellById(id,'animate-pulse-highlight',420);
         }
 
         function clearAllFixedMembers() {
@@ -1851,7 +1868,7 @@
             setTimeout(() => {
                 fixedMembers = [];
                 renderAll();
-                animateActionFeedback('#classroom-area','animate-pulse-highlight',500);
+                animateAllDeskCells('animate-pulse-highlight',500, cell => cell.classList.contains('is-fixed'));
                 showToast('Đã bỏ ghim toàn bộ bàn ghế trên sơ đồ!');
             }, 250);
         }
@@ -2058,7 +2075,6 @@
             document.querySelectorAll('.desk-box').forEach(el => {
                 if(!el.classList.contains('is-fixed')) animateActionFeedback(el,'animate-shake',520);
             });
-            animateActionFeedback('#classroom-area','animate-wobble-swap',420);
             let seatsToShuffle = [];
             const collect = (data, side) => {
                 data.forEach((row, ri) => {
@@ -2119,7 +2135,6 @@
         }
 
         function flipSeatingVertically() {
-            animateActionFeedback('#classroom-area','animate-board-flip',600);
             // Swap left and right sides
             [leftSideData, rightSideData] = [rightSideData, leftSideData];
             
@@ -2135,6 +2150,7 @@
             reverseRowColumns(rightSideData);
             
             renderAll();
+            animateAllDeskCells('animate-board-flip', 600);
             showToast("Đã hoán đổi dãy cửa lớp và dãy bàn giáo viên!");
         }
 
