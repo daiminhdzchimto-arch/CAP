@@ -343,8 +343,8 @@
                             <tfoot>
                                 <tr>
                                     <td colspan="6" class="footer-cell">
-                                        <div class="spider-web-line">Lau lớp:</div>
-                                        <div class="spider-web-line">Quét mạng nhện trong lớp:</div>
+                                        <div class="spider-web-line">Lau lớp: <span class="footer-editable" contenteditable="true"></span></div>
+                                        <div class="spider-web-line">Quét mạng nhện trong lớp: <span class="footer-editable" contenteditable="true"></span></div>
                                     </td>
                                     <td colspan="2" class="footer-center-cell">Tiết 5, thứ 6<br>hàng tuần</td>
                                     <td></td>
@@ -2194,7 +2194,7 @@
                     <td><div class="editable-cell" contenteditable="true"></div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>
-                    ${index === 0 ? '<td rowspan="6"><div class="editable-cell h-full" contenteditable="true"></div></td>' : ''}
+                    ${index % 2 === 0 ? '<td rowspan="2"><div class="editable-cell h-full" contenteditable="true"></div></td>' : ''}
                     <td><div class="editable-cell" contenteditable="true"></div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>`;
