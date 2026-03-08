@@ -1358,56 +1358,73 @@
             const deskGroup = new THREE.Group();
             const { deskTopMat, deskFrameMat, chairWoodMat, chairFrameMat } = materials;
 
-            const top = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 0.55), deskTopMat);
-            top.position.y = 0.76;
-            top.castShadow = true;
-            deskGroup.add(top);
+            const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.62), deskTopMat);
+            deskTop.position.y = 0.78;
+            deskTop.castShadow = true;
+            deskGroup.add(deskTop);
 
-            const frameGeo = new THREE.BoxGeometry(0.05, 0.75, 0.05);
-            [[-0.52, 0.37, -0.23], [0.52, 0.37, -0.23], [-0.52, 0.37, 0.23], [0.52, 0.37, 0.23]].forEach(([x, y, z]) => {
-                const leg = new THREE.Mesh(frameGeo, deskFrameMat);
+            const deskFrontPanel = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.36, 0.045), deskTopMat);
+            deskFrontPanel.position.set(0, 0.58, -0.27);
+            deskFrontPanel.castShadow = true;
+            deskGroup.add(deskFrontPanel);
+
+            const legGeo = new THREE.BoxGeometry(0.055, 0.75, 0.055);
+            [[-0.86, 0.37, -0.18], [0.86, 0.37, -0.18], [-0.86, 0.37, 0.18], [0.86, 0.37, 0.18]].forEach(([x, y, z]) => {
+                const leg = new THREE.Mesh(legGeo, deskFrameMat);
                 leg.position.set(x, y, z);
                 leg.castShadow = true;
                 deskGroup.add(leg);
             });
 
-            const rack = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.02, 0.34), deskFrameMat);
-            rack.position.set(0, 0.32, 0.02);
-            deskGroup.add(rack);
+            const baseRailGeo = new THREE.BoxGeometry(1.82, 0.045, 0.055);
+            [[0, 0.04, -0.2], [0, 0.04, 0.2]].forEach(([x, y, z]) => {
+                const rail = new THREE.Mesh(baseRailGeo, deskFrameMat);
+                rail.position.set(x, y, z);
+                deskGroup.add(rail);
+            });
 
-            [[-0.34, 0.46], [0.34, 0.46]].forEach(([x, z]) => {
-                const seat = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.05, 0.4), chairWoodMat);
-                seat.position.set(x, 0.45, z);
-                seat.castShadow = true;
-                deskGroup.add(seat);
+            const sideRailGeo = new THREE.BoxGeometry(0.055, 0.045, 0.4);
+            [[-0.86, 0.04, 0], [0.86, 0.04, 0]].forEach(([x, y, z]) => {
+                const rail = new THREE.Mesh(sideRailGeo, deskFrameMat);
+                rail.position.set(x, y, z);
+                deskGroup.add(rail);
+            });
 
-                const back = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.38, 0.05), chairWoodMat);
-                back.position.set(x, 0.67, z + 0.2);
-                back.castShadow = true;
-                deskGroup.add(back);
+            const bagShelf = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.02, 0.24), deskFrameMat);
+            bagShelf.position.set(0, 0.45, 0.05);
+            deskGroup.add(bagShelf);
 
-                const chairLegGeo = new THREE.BoxGeometry(0.04, 0.42, 0.04);
-                [[x - 0.17, 0.22, z + 0.14], [x + 0.17, 0.22, z + 0.14], [x - 0.17, 0.22, z - 0.14], [x + 0.17, 0.22, z - 0.14]].forEach(([lx, ly, lz]) => {
-                    const leg = new THREE.Mesh(chairLegGeo, chairFrameMat);
-                    leg.position.set(lx, ly, lz);
-                    deskGroup.add(leg);
-                });
+            const benchSeat = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.05, 0.3), chairWoodMat);
+            benchSeat.position.set(0, 0.46, 0.62);
+            benchSeat.castShadow = true;
+            deskGroup.add(benchSeat);
+
+            const benchBack = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.22, 0.05), chairWoodMat);
+            benchBack.position.set(0, 0.7, 0.8);
+            benchBack.castShadow = true;
+            deskGroup.add(benchBack);
+
+            const benchLegGeo = new THREE.BoxGeometry(0.045, 0.45, 0.045);
+            [[-0.78, 0.23, 0.52], [0.78, 0.23, 0.52], [-0.78, 0.23, 0.72], [0.78, 0.23, 0.72]].forEach(([x, y, z]) => {
+                const leg = new THREE.Mesh(benchLegGeo, chairFrameMat);
+                leg.position.set(x, y, z);
+                deskGroup.add(leg);
             });
 
             const books = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.2), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.6 }));
-            books.position.set(-0.28, 0.83, -0.08);
+            books.position.set(-0.48, 0.85, -0.08);
             deskGroup.add(books);
 
             const pencilCase = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.08), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }));
-            pencilCase.position.set(0.24, 0.82, -0.06);
+            pencilCase.position.set(0.26, 0.84, -0.06);
             deskGroup.add(pencilCase);
 
             const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 16), new THREE.MeshStandardMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.82 }));
-            bottle.position.set(0.08, 0.9, -0.08);
+            bottle.position.set(0.66, 0.92, -0.08);
             deskGroup.add(bottle);
 
             const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.22, 0.1), new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.95 }));
-            jacket.position.set(-0.34, 0.66, 0.72);
+            jacket.position.set(-0.72, 0.63, 0.75);
             deskGroup.add(jacket);
 
             return deskGroup;
@@ -1734,12 +1751,12 @@
                 desk.position.set(entry.x, 0, entry.z);
                 scene.add(desk);
 
-                const seatOffsets = [-0.34, 0.34];
+                const seatOffsets = [-0.6, -0.2, 0.2, 0.6];
                 const validNames = (entry.occupantNames || []).filter(name => name && !(entry.side === side && entry.rowIndex === rowIndex && name === sourceName));
-                validNames.slice(0, 2).forEach((studentName, idx) => {
+                validNames.slice(0, 4).forEach((studentName, idx) => {
                     const offsetX = seatOffsets[idx] || 0;
                     const sitterX = entry.x + offsetX;
-                    const sitterZ = entry.z + 0.46;
+                    const sitterZ = entry.z + 0.64;
 
                     const pants = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.48), pantsMat);
                     pants.position.set(sitterX, 0.25, sitterZ);
