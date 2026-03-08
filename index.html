@@ -1223,7 +1223,7 @@
 
             seat3DState.removeListeners.forEach(fn => fn());
             seat3DState.removeListeners = [];
-            seat3DState.disposeResources.forEach(fn => fn());
+            seat3DState.disposeResources.forEach(fn => { try { fn(); } catch(_) {} });
             seat3DState.disposeResources = [];
 
             if(seat3DState.renderer) {
@@ -1457,11 +1457,13 @@
             const stopDrag = () => { seat3DState.isDragging = false; };
             const onTouchStart = e => {
                 if(!e.touches[0]) return;
+                e.preventDefault();
                 const t = e.touches[0];
                 onDown(t.clientX, t.clientY);
             };
             const onTouchMove = e => {
                 if(!e.touches[0]) return;
+                e.preventDefault();
                 const t = e.touches[0];
                 onMove(t.clientX, t.clientY);
             };
@@ -1477,8 +1479,8 @@
             canvas.addEventListener('mousedown', onMouseDown);
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseup', stopDrag);
-            canvas.addEventListener('touchstart', onTouchStart, { passive: true });
-            window.addEventListener('touchmove', onTouchMove, { passive: true });
+            canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
             window.addEventListener('touchend', stopDrag);
             canvas.addEventListener('wheel', onWheel, { passive: false });
 
