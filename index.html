@@ -47,6 +47,13 @@
         @keyframes boardFlipY { from { transform: rotateX(0deg); } 50% { transform: rotateX(90deg); opacity: .6; } to { transform: rotateX(0deg); } }
         @keyframes buttonTap { 0% { transform: scale(1); } 35% { transform: scale(.92); } 100% { transform: scale(1); } }
         @keyframes flashSuccess { 0% { filter: brightness(1); } 50% { filter: brightness(1.15); } 100% { filter: brightness(1); } }
+        @keyframes stamp { 0% { transform: scale(2.5) rotate(-12deg); opacity: 0; } 60% { transform: scale(0.9) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-5px) rotate(-2deg); } 40% { transform: translateX(5px) rotate(2deg); } 60% { transform: translateX(-5px) rotate(-2deg); } 80% { transform: translateX(5px) rotate(2deg); } }
+        @keyframes pulseMerge { 0% { transform: scale(1); background-color: rgba(219,234,254,0.4); } 50% { transform: scale(1.03); background-color: rgba(147,197,253,0.65); } 100% { transform: scale(1); background-color: transparent; } }
+        @keyframes rippleReset { 0% { clip-path: circle(0% at 50% 50%); opacity: 0.75; } 100% { clip-path: circle(160% at 50% 50%); opacity: 1; } }
+        @keyframes cameraFlash { 0% { opacity: 0; } 15% { opacity: 0.95; } 100% { opacity: 0; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fallOut { to { transform: translateY(40px) rotate(35deg); opacity: 0; } }
 
         .animate-pulse-highlight { animation: pulseHighlight .45s ease; }
         .animate-wobble-swap { animation: wobbleSwap .4s ease; }
@@ -55,6 +62,13 @@
         .animate-board-flip { animation: boardFlipY .55s ease; transform-origin: center; }
         .animate-button-tap { animation: buttonTap .2s ease; }
         .animate-flash-success { animation: flashSuccess .35s ease; }
+        .animate-stamp { animation: stamp .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .animate-shake { animation: shake .5s ease-in-out; }
+        .animate-pulse-merge { animation: pulseMerge .5s ease-out; }
+        .animate-ripple-reset { animation: rippleReset .65s ease-out; }
+        .animate-camera-flash { animation: cameraFlash .6s ease-out; }
+        .animate-fade-up { animation: fadeInUp .35s ease-out; }
+        .animate-fall-out { animation: fallOut .4s ease-in forwards; }
 
         /* SEATING */
         .desk-input { background: transparent; border: none; width: 100%; min-height: 48px; height: auto; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; hyphens: auto; scrollbar-width: none; -ms-overflow-style: none; }
@@ -183,6 +197,7 @@
     </style>
 </head>
 <body>
+    <div id="camera-flash" class="fixed inset-0 pointer-events-none opacity-0" style="background: white; z-index: 200;"></div>
     <canvas id="particle-canvas"></canvas>
     <div id="perf-monitor">FPS: 60</div>
 
@@ -1082,6 +1097,9 @@
                     const hasConflict = seat.hasConflict;
                     
                     cell.className = `${w} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''} ${hasConflict?'has-conflict':''}`;
+                    cell.dataset.side = side;
+                    cell.dataset.r = ri;
+                    cell.dataset.c = si;
                     
                     if(isFixed) {
                         const badge = document.createElement('div');
@@ -1803,21 +1821,23 @@
             animate();
         }
 
-        function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); }
+        function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); const seat = document.querySelector(`.desk-box[data-side="${s}"][data-r="${r}"][data-c="${c}"]`) || document.querySelector('.swap-selected'); animateActionFeedback(seat || '#classroom-area','animate-pulse-highlight',420); }
         function cancelSwapMode(){ swapSource=null; renderAll(); }
-        function executeSwap(ts,tr,tc){ const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); animateActionFeedback('#classroom-area','animate-wobble-swap',420); }
+        function executeSwap(ts,tr,tc){ const src={...swapSource}; const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); animateActionFeedback('#classroom-area','animate-wobble-swap',420); const srcSeat = document.querySelector(`.desk-box[data-side="${src.side}"][data-r="${src.r}"][data-c="${src.c}"]`); const dstSeat = document.querySelector(`.desk-box[data-side="${ts}"][data-r="${tr}"][data-c="${tc}"]`); if(srcSeat) animateActionFeedback(srcSeat,'animate-pulse-highlight',340); if(dstSeat) animateActionFeedback(dstSeat,'animate-pulse-highlight',340); showToast('Đã hoán đổi vị trí 2 thành viên'); }
         function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
         
-        function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); animateActionFeedback('#classroom-area'); }
-        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); animateActionFeedback('#classroom-area'); }
+        function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); animateActionFeedback('#classroom-area','animate-pulse-merge',520); }
+        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); animateActionFeedback('#classroom-area','animate-pulse-merge',520); }
         function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); animateActionFeedback('#classroom-area', d==='down'?'animate-board-down':'animate-board-up', 500); }
-        function resetLayout(){ leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; genderMap={}; dayOffs=[]; excludedMembers=[]; morningOff=false; afternoonOff=false; document.querySelectorAll('input[type="file"]').forEach(input => input.value = ''); localStorage.removeItem('classApp_v2.5'); renderAll(); animateActionFeedback('#classroom-area','animate-pulse-highlight',560); showToast("Đã làm mới toàn bộ dữ liệu!"); }
+        function resetLayout(){ leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; genderMap={}; dayOffs=[]; excludedMembers=[]; morningOff=false; afternoonOff=false; document.querySelectorAll('input[type="file"]').forEach(input => input.value = ''); localStorage.removeItem('classApp_v2.5'); renderAll(); animateActionFeedback('#classroom-area','animate-ripple-reset',700); showToast("Đã làm mới toàn bộ dữ liệu!"); }
 
         function toggleFixed(id) {
             const idx = fixedMembers.indexOf(id);
             if(idx > -1) fixedMembers.splice(idx, 1);
             else fixedMembers.push(id);
             renderAll();
+            const pin = document.querySelector('.fixed-badge');
+            if(pin) animateActionFeedback(pin,'animate-stamp',420);
             animateActionFeedback('#classroom-area','animate-pulse-highlight',420);
         }
 
@@ -1827,10 +1847,13 @@
                 return;
             }
 
-            fixedMembers = [];
-            renderAll();
-            animateActionFeedback('#classroom-area','animate-pulse-highlight',500);
-            showToast('Đã bỏ ghim toàn bộ bàn ghế trên sơ đồ!');
+            document.querySelectorAll('.fixed-badge').forEach(el => animateActionFeedback(el,'animate-fall-out',420));
+            setTimeout(() => {
+                fixedMembers = [];
+                renderAll();
+                animateActionFeedback('#classroom-area','animate-pulse-highlight',500);
+                showToast('Đã bỏ ghim toàn bộ bàn ghế trên sơ đồ!');
+            }, 250);
         }
 
         // =================================================================
@@ -1875,6 +1898,7 @@
         function openSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.add('open');
+            animateActionFeedback('#sidebar','animate-fade-up',360);
             renderSidebarContent();
         }
 
@@ -2031,6 +2055,9 @@
         function closeShuffleModal() { document.getElementById('shuffle-modal').classList.remove('open'); }
 
         function shuffleSeating(type) {
+            document.querySelectorAll('.desk-box').forEach(el => {
+                if(!el.classList.contains('is-fixed')) animateActionFeedback(el,'animate-shake',520);
+            });
             animateActionFeedback('#classroom-area','animate-wobble-swap',420);
             let seatsToShuffle = [];
             const collect = (data, side) => {
@@ -2151,8 +2178,10 @@
         function switchTab(t) { 
             animateActionFeedback('#tab-'+t,'animate-pulse-highlight',450);
             if(seat3DState.active) closeSeat3DView();
-            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
-            document.getElementById('tab-'+t).classList.add('active'); 
+            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active','animate-fade-up')); 
+            const targetTab = document.getElementById('tab-'+t);
+            targetTab.classList.add('active');
+            animateActionFeedback(targetTab,'animate-fade-up',360); 
             document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
             document.getElementById('btn-tab-'+t).className="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap"; 
         }
@@ -2324,6 +2353,8 @@
 
         function downloadImage(id, pre) {
             animateActionFeedback('#'+id,'animate-flash-success',380);
+            const flash = document.getElementById('camera-flash');
+            if(flash) animateActionFeedback(flash,'animate-camera-flash',620);
             const area = document.getElementById(id);
             const fixedSeats = area.querySelectorAll('.is-fixed');
             const conflictSeats = area.querySelectorAll('.has-conflict');
@@ -2406,6 +2437,7 @@
 
         function exportToFile() {
             animateActionFeedback('#share-modal .modal-content','animate-flash-success',430);
+            animateActionFeedback('#share-modal .modal-content','animate-fade-up',360);
             const data = {
                 seating: { left: leftSideData, right: rightSideData },
                 fixedMembers,
@@ -2428,6 +2460,7 @@
 
         function importFromFile(input) {
             animateActionFeedback('#share-modal .modal-content','animate-pulse-highlight',430);
+            animateActionFeedback('#share-modal .modal-content','animate-fade-up',360);
             const file = input.files[0];
             if(!file) return;
             const reader = new FileReader();
