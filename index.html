@@ -1356,6 +1356,49 @@
             };
         }
 
+        function createImagePlane(imagePath, width, height, options = {}) {
+            const texture = new THREE.TextureLoader().load(imagePath);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+
+            const frameDepth = options.frameDepth || 0.08;
+            const group = new THREE.Group();
+
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(width + 0.18, height + 0.18, frameDepth),
+                new THREE.MeshStandardMaterial({ color: options.frameColor || 0xcaa25a, roughness: 0.48, metalness: 0.22 })
+            );
+            group.add(frame);
+
+            const border = new THREE.Mesh(
+                new THREE.BoxGeometry(width + 0.08, height + 0.08, frameDepth + 0.01),
+                new THREE.MeshStandardMaterial({ color: options.borderColor || 0xf8e6b0, roughness: 0.58, metalness: 0.08 })
+            );
+            border.position.z = 0.005;
+            group.add(border);
+
+            const photo = new THREE.Mesh(
+                new THREE.PlaneGeometry(width, height),
+                new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide })
+            );
+            photo.position.z = frameDepth * 0.57;
+            group.add(photo);
+
+            return {
+                mesh: group,
+                dispose: () => {
+                    frame.geometry.dispose();
+                    border.geometry.dispose();
+                    photo.geometry.dispose();
+                    frame.material.dispose();
+                    border.material.dispose();
+                    photo.material.dispose();
+                    texture.dispose();
+                }
+            };
+        }
+
         function createStudentDeskHoaPhat3D(materials) {
             const deskGroup = new THREE.Group();
             const { deskTopMat, deskFrameMat, chairWoodMat, chairFrameMat } = materials;
@@ -1542,7 +1585,7 @@
             slogan.mesh.position.set(0, 3.45, -4.25);
             room.add(slogan.mesh);
 
-            const uncleHo = createTextPlane('Ảnh Bác Hồ', 1.2, 1.3, { fontSize: 72, color: '#0f172a', bg: 'rgba(220,252,231,0.95)', border: '#15803d' });
+            const uncleHo = createImagePlane('assets/images/bac-ho-portrait.svg', 1.18, 1.45, { frameColor: 0xc2973a, borderColor: 0xfff1be });
             uncleHo.mesh.position.set(-3.35, 3.05, -4.22);
             room.add(uncleHo.mesh);
 
@@ -1551,34 +1594,52 @@
             room.add(speaker);
 
             for(let i = 0; i < 4; i++) {
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.45, 0.07), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.45 }));
-                frame.position.set(-4.5, 1.85, -2.8 + i * 2.2);
+                const zPos = -2.8 + i * 2.2;
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 1.28), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.45 }));
+                frame.position.set(-6.34, 1.86, zPos);
                 room.add(frame);
 
-                const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 1.1), new THREE.MeshStandardMaterial({ color: 0xbfdbfe, transparent: true, opacity: 0.22, side: THREE.DoubleSide }));
-                glass.position.set(-4.46, 1.8, -2.8 + i * 2.2);
+                const barMaterial = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.35, metalness: 0.72 });
+                for(let b = -2; b <= 2; b++) {
+                    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 1.08, 8), barMaterial);
+                    bar.position.set(-6.38, 1.86, zPos + b * 0.2);
+                    bar.rotation.x = Math.PI / 2;
+                    room.add(bar);
+                }
+
+                const crossBar = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.86, 8), barMaterial);
+                crossBar.position.set(-6.38, 1.86, zPos);
+                room.add(crossBar);
+
+                const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 1.08), new THREE.MeshStandardMaterial({ color: 0xbfdbfe, transparent: true, opacity: 0.2, side: THREE.DoubleSide }));
+                glass.position.set(-6.29, 1.82, zPos);
                 glass.rotation.y = Math.PI / 2;
                 room.add(glass);
 
-                const vent = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.2, 0.02), new THREE.MeshStandardMaterial({ color: 0xcbd5e1 }));
-                vent.position.set(-4.46, 2.53, -2.8 + i * 2.2);
-                room.add(vent);
+                const leftPanel = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.08, 0.52), new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.52 }));
+                leftPanel.position.set(-6.58, 1.82, zPos - 0.31);
+                leftPanel.rotation.y = Math.PI * 0.3;
+                room.add(leftPanel);
 
-                const outsideLight = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), new THREE.MeshBasicMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false }));
-                outsideLight.position.set(-6.65, 1.85, -2.8 + i * 2.2);
-                outsideLight.rotation.y = Math.PI / 2;
-                room.add(outsideLight);
+                const rightPanel = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.08, 0.52), new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.52 }));
+                rightPanel.position.set(-6.58, 1.82, zPos + 0.31);
+                rightPanel.rotation.y = -Math.PI * 0.3;
+                room.add(rightPanel);
+
+                const vent = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.2, 1.08), new THREE.MeshStandardMaterial({ color: 0xcbd5e1 }));
+                vent.position.set(-6.3, 2.53, zPos);
+                room.add(vent);
             }
 
-            const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.5, 0.12), new THREE.MeshStandardMaterial({ color: 0x7c3f19, roughness: 0.78 }));
-            doorFrame.position.set(2.75, 1.25, 7.14);
+            const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.5, 1.72), new THREE.MeshStandardMaterial({ color: 0x7c3f19, roughness: 0.78 }));
+            doorFrame.position.set(-6.34, 1.25, 4.75);
             room.add(doorFrame);
-            const doorGap = new THREE.Mesh(new THREE.BoxGeometry(1.42, 2.26, 0.08), new THREE.MeshStandardMaterial({ color: 0x0b132b, transparent: true, opacity: 0 }));
-            doorGap.position.set(2.75, 1.13, 7.13);
+            const doorGap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.26, 1.42), new THREE.MeshStandardMaterial({ color: 0x0b132b, transparent: true, opacity: 0 }));
+            doorGap.position.set(-6.3, 1.13, 4.75);
             room.add(doorGap);
-            const door = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.24, 0.07), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.78 }));
-            door.position.set(3.35, 1.13, 6.62);
-            door.rotation.y = -Math.PI * 0.42;
+            const door = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.24, 1.3), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.78 }));
+            door.position.set(-6.58, 1.13, 5.32);
+            door.rotation.y = Math.PI * 0.43;
             door.castShadow = true;
             room.add(door);
 
