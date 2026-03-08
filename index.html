@@ -1212,6 +1212,14 @@
             applySeat3DCameraLook();
         }
 
+        function runSeat3DCallbacks(callbacks) {
+            callbacks.forEach(fn => {
+                try {
+                    fn();
+                } catch(_) {}
+            });
+        }
+
         function closeSeat3DView() {
             const viewer = document.getElementById('seat-3d-viewer');
             if(viewer) viewer.classList.add('hidden');
@@ -1221,9 +1229,9 @@
             if(seat3DState.animationId) cancelAnimationFrame(seat3DState.animationId);
             seat3DState.animationId = null;
 
-            seat3DState.removeListeners.forEach(fn => fn());
+            runSeat3DCallbacks(seat3DState.removeListeners);
             seat3DState.removeListeners = [];
-            seat3DState.disposeResources.forEach(fn => { try { fn(); } catch(_) {} });
+            runSeat3DCallbacks(seat3DState.disposeResources);
             seat3DState.disposeResources = [];
 
             if(seat3DState.renderer) {
