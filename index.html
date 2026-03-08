@@ -1155,33 +1155,44 @@
         }
 
         function makeNameTagSprite(text) {
+            const displayName = (text || '').trim().slice(0, 20);
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 96;
+            const fontSize = 44;
+            const paddingX = 26;
+            const shadowOffset = 4;
+            const baseHeight = 72;
+            const measureCanvas = document.createElement('canvas');
+            const measureCtx = measureCanvas.getContext('2d');
+            measureCtx.font = `700 ${fontSize}px 'Noto Sans Vietnamese', 'Inter', sans-serif`;
+            const textWidth = Math.ceil(measureCtx.measureText(displayName).width);
+            const canvasWidth = Math.max(180, textWidth + paddingX * 2 + shadowOffset);
+            const canvasHeight = baseHeight + shadowOffset;
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'rgba(255,255,255,0.95)';
-            ctx.strokeStyle = 'rgba(59,130,246,0.8)';
-            ctx.lineWidth = 6;
-            if(typeof ctx.roundRect === 'function') {
-                ctx.beginPath();
-                ctx.roundRect(8, 8, 240, 80, 18);
-                ctx.fill();
-                ctx.stroke();
-            } else {
-                ctx.fillRect(8, 8, 240, 80);
-                ctx.strokeRect(8, 8, 240, 80);
-            }
-            ctx.fillStyle = '#1f2937';
-            ctx.font = 'bold 26px sans-serif';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `700 ${fontSize}px 'Noto Sans Vietnamese', 'Inter', sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(text, 128, 50);
+
+            const centerX = canvas.width / 2;
+            const centerY = (canvas.height - shadowOffset) / 2;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillText(displayName, centerX + shadowOffset, centerY + shadowOffset);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(displayName, centerX, centerY);
 
             const texture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.NearestFilter;
             const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
             const sprite = new THREE.Sprite(material);
-            sprite.scale.set(1.9, 0.75, 1);
+            const aspect = canvas.width / canvas.height;
+            const height = 0.42;
+            sprite.scale.set(height * aspect, height, 1);
             const dispose = () => {
                 texture.dispose();
                 material.dispose();
