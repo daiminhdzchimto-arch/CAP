@@ -1236,32 +1236,33 @@
         }
 
         function getSeatEntriesFor3D() {
-            const CELL_X = 1.05;
-            const ROW_Z = 1.2;
-            const SIDE_GAP = 2.35;
-            const ROW_START_Z = -2.1;
+            const ROW_Z = 1.28;
+            const SIDE_OFFSET_X = 1.95;
+            const ROW_START_Z = -2.55;
             const entries = [];
+
+            const splitNames = (name = '') => name
+                .split(/[,&]/)
+                .map(part => part.trim())
+                .filter(Boolean);
 
             const convertSide = (sideData, side) => {
                 sideData.forEach((row, rowIndex) => {
-                    let cursor = 0;
-                    row.forEach((seat, seatIndex) => {
-                        const width = Number(seat.width || 1);
-                        const centerUnit = cursor + (width / 2);
-                        const localX = (centerUnit - 2) * CELL_X;
-                        const worldX = side === 'left' ? localX - SIDE_GAP : localX + SIDE_GAP;
-                        const worldZ = ROW_START_Z + rowIndex * ROW_Z;
+                    const worldX = side === 'left' ? -SIDE_OFFSET_X : SIDE_OFFSET_X;
+                    const worldZ = ROW_START_Z + rowIndex * ROW_Z;
+                    const occupantNames = row.flatMap(seat => splitNames(seat.name || ''));
 
+                    row.forEach((seat, seatIndex) => {
                         entries.push({
                             side,
                             rowIndex,
                             seatIndex,
                             name: (seat.name || '').trim(),
                             x: worldX,
-                            z: worldZ
+                            z: worldZ,
+                            deskKey: `${side}-${rowIndex}`,
+                            occupantNames
                         });
-
-                        cursor += width;
                     });
                 });
             };
@@ -1453,6 +1454,11 @@
             floor.receiveShadow = true;
             room.add(floor);
 
+            const aisle = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.03, 8.7), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.62 }));
+            aisle.position.set(0, 0.02, 1.05);
+            aisle.receiveShadow = true;
+            room.add(aisle);
+
             const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(9.2, 10.2), ceilingMat);
             ceiling.rotation.x = Math.PI / 2;
             ceiling.position.set(0, 3.85, 0.7);
@@ -1550,7 +1556,7 @@
 
             for(let i = 0; i < 3; i++) {
                 const fanHub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.16, 12), new THREE.MeshStandardMaterial({ color: 0x94a3b8 }));
-                fanHub.position.set(-2 + i * 2, 3.52, 0.8);
+                fanHub.position.set(-2.25 + i * 2.25, 3.52, 1.1);
                 room.add(fanHub);
 
                 const fanGroup = new THREE.Group();
@@ -1722,31 +1728,38 @@
             teacherDesk.position.set(0, 0, -4.3);
             scene.add(teacherDesk);
 
-            entries.forEach(entry => {
+            const deskEntries = Array.from(new Map(entries.map(entry => [`${entry.deskKey}`, entry])).values());
+            deskEntries.forEach(entry => {
                 const desk = createStudentDeskHoaPhat3D(deskMaterials);
                 desk.position.set(entry.x, 0, entry.z);
                 scene.add(desk);
 
-                if(!entry.name || (entry.side === side && entry.rowIndex === rowIndex && entry.seatIndex === seatIndex)) return;
+                const seatOffsets = [-0.34, 0.34];
+                const validNames = (entry.occupantNames || []).filter(name => name && !(entry.side === side && entry.rowIndex === rowIndex && name === sourceName));
+                validNames.slice(0, 2).forEach((studentName, idx) => {
+                    const offsetX = seatOffsets[idx] || 0;
+                    const sitterX = entry.x + offsetX;
+                    const sitterZ = entry.z + 0.46;
 
-                const pants = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.5), pantsMat);
-                pants.position.set(entry.x, 0.25, entry.z + 0.9);
-                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.5), bodyMat);
-                body.position.set(entry.x, 0.75, entry.z + 0.9);
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), headMat);
-                head.position.set(entry.x, 1.28, entry.z + 0.9);
-                const hair = new THREE.Mesh(new THREE.SphereGeometry(0.205, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
-                hair.position.set(entry.x, 1.33, entry.z + 0.9);
+                    const pants = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.48), pantsMat);
+                    pants.position.set(sitterX, 0.25, sitterZ);
+                    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.21, 0.5), bodyMat);
+                    body.position.set(sitterX, 0.74, sitterZ);
+                    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 18), headMat);
+                    head.position.set(sitterX, 1.2, sitterZ);
+                    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.185, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
+                    hair.position.set(sitterX, 1.24, sitterZ);
 
-                const { sprite: nameTag, dispose: disposeTag } = makeNameTagSprite(entry.name);
-                nameTag.position.set(entry.x, 1.9, entry.z + 0.85);
-                seat3DState.disposeResources.push(disposeTag);
+                    const { sprite: nameTag, dispose: disposeTag } = makeNameTagSprite(studentName);
+                    nameTag.position.set(sitterX, 1.72, sitterZ + 0.02);
+                    seat3DState.disposeResources.push(disposeTag);
 
-                scene.add(pants);
-                scene.add(body);
-                scene.add(head);
-                scene.add(hair);
-                tagGroup.add(nameTag);
+                    scene.add(pants);
+                    scene.add(body);
+                    scene.add(head);
+                    scene.add(hair);
+                    tagGroup.add(nameTag);
+                });
             });
 
             seat3DState.disposeResources.push(
