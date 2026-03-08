@@ -238,15 +238,15 @@
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <a href="/" onclick="return goHomeFromBrandClick(event)" class="flex items-center gap-2 group" title="Về trang chủ">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 transition-transform group-hover:scale-105">
                         <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-gray-900 leading-tight">CAP <span class="text-blue-600">Classroom</span></h1>
+                        <h1 class="text-lg font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">CAP <span class="text-blue-600">Classroom</span></h1>
                         <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Management System</p>
                     </div>
-                </div>
+                </a>
                 <div class="hidden md:flex items-center bg-gray-100 p-1 rounded-lg">
                     <button id="btn-tab-seating" onclick="switchTab('seating')" class="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm">Sơ đồ lớp</button>
                     <button id="btn-tab-competition" onclick="switchTab('competition')" class="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all">Thi đua & Trực nhật</button>
@@ -2364,6 +2364,23 @@
         function clearAllData() {
             localStorage.clear();
             location.reload();
+        }
+
+        function goHomeFromBrandClick(event) {
+            if(event) {
+                event.preventDefault();
+            }
+
+            const isHomepagePath = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
+
+            if(!isHomepagePath) {
+                window.location.href = '/';
+                return false;
+            }
+
+            switchTab('seating');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
         }
 
         // =================================================================
