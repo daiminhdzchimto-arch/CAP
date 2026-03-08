@@ -2716,8 +2716,6 @@
         }
 
         function importFromFile(input) {
-            animateActionFeedback('#share-modal .modal-content','animate-pulse-highlight',430);
-            animateActionFeedback('#share-modal .modal-content','animate-fade-up',360);
             const file = input.files[0];
             if(!file) return;
             const reader = new FileReader();
