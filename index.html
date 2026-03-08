@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="screen-orientation" content="landscape">
     <title>Quản Lý Lớp Học - Công Cụ Miễn Phí</title>
     <meta name="google-site-verification" content="zi9dHOYqNCxlJKElHtG-YzYq3X9R8rHAJDi-4DMTQfU" />
     <meta name="description" content="Quản lý lớp học hiệu quả với sắp xếp chỗ ngồi, bảng thi đua, phân công trực nhật. Công cụ miễn phí dành cho giáo viên.">
@@ -275,12 +276,45 @@
         #seat-3d-canvas:active { cursor: grabbing; }
 
         @keyframes pulse-ring { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); } }
+
+
+
+        /* MOBILE LANDSCAPE ENFORCE */
+        #orientation-guard {
+            position: fixed;
+            inset: 0;
+            z-index: 250;
+            background: rgba(17, 24, 39, 0.96);
+            color: #f9fafb;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        #orientation-guard.show { display: flex; }
+        .orientation-guard-card {
+            width: min(92vw, 380px);
+            border-radius: 16px;
+            padding: 18px;
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        }
     </style>
 </head>
 <body>
     <div id="camera-flash" class="fixed inset-0 pointer-events-none opacity-0" style="background: white; z-index: 200;"></div>
     <canvas id="particle-canvas"></canvas>
     <div id="perf-monitor">FPS: 60</div>
+
+    <div id="orientation-guard" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="orientation-guard-card">
+            <p class="text-lg font-bold">Vui lòng xoay ngang màn hình</p>
+            <p class="text-sm text-gray-200 mt-2">Trang này được tối ưu khi hiển thị theo chiều ngang trên điện thoại.</p>
+            <button id="orientation-lock-btn" type="button" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold">Khóa xoay ngang</button>
+        </div>
+    </div>
 
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -800,6 +834,7 @@
             <button type="button" onclick="closeSeat3DView()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">Thoát 3D</button>
         </div>
     </div>
+
 
     <script>
         // =================================================================
@@ -2978,6 +3013,51 @@
             } catch(e) { showToast("Mã không hợp lệ!"); }
         }
 
+        function isLikelyMobileDevice() {
+            return /Android|iPhone|iPad|iPod|Windows Phone|Mobile/i.test(navigator.userAgent)
+                || (navigator.maxTouchPoints > 1 && Math.min(window.innerWidth, window.innerHeight) <= 1024);
+        }
+
+        function isPortraitViewport() {
+            return window.innerHeight > window.innerWidth;
+        }
+
+        function toggleOrientationGuard(shouldShow) {
+            const guard = document.getElementById('orientation-guard');
+            if (!guard) return;
+            guard.classList.toggle('show', shouldShow);
+        }
+
+        async function forceLandscapeOrientation() {
+            if (!isLikelyMobileDevice() || !screen.orientation || typeof screen.orientation.lock !== 'function') return false;
+            try {
+                if (document.fullscreenElement == null && document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+                await screen.orientation.lock('landscape');
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function enforceLandscapeForMobile() {
+            if (!isLikelyMobileDevice()) {
+                toggleOrientationGuard(false);
+                return;
+            }
+
+            const portrait = isPortraitViewport();
+            if (!portrait) {
+                toggleOrientationGuard(false);
+                return;
+            }
+
+            const locked = await forceLandscapeOrientation();
+            toggleOrientationGuard(!locked && isPortraitViewport());
+        }
+
+
         // INITIALIZATION
         window.onload = () => {
             loadData();
@@ -3010,6 +3090,11 @@
             lucide.createIcons();
             requestAnimationFrame(() => moveTopTabIndicator(currentTopTab));
             window.addEventListener('resize', () => moveTopTabIndicator(currentTopTab));
+            enforceLandscapeForMobile();
+            const orientationLockBtn = document.getElementById('orientation-lock-btn');
+            if (orientationLockBtn) orientationLockBtn.addEventListener('click', enforceLandscapeForMobile);
+            window.addEventListener('resize', enforceLandscapeForMobile);
+            window.addEventListener('orientationchange', enforceLandscapeForMobile);
         };
 
         document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
