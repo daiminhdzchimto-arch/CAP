@@ -247,9 +247,10 @@
                         <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Management System</p>
                     </div>
                 </a>
-                <div class="hidden md:flex items-center bg-gray-100 p-1 rounded-lg">
-                    <button id="btn-tab-seating" onclick="switchTab('seating')" class="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm">Sơ đồ lớp</button>
-                    <button id="btn-tab-competition" onclick="switchTab('competition')" class="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all">Thi đua & Trực nhật</button>
+                <div id="top-tab-switcher" class="tab-switcher hidden md:flex items-center bg-gray-100 p-1 rounded-lg">
+                    <span id="top-tab-indicator" class="tab-indicator" aria-hidden="true"></span>
+                    <button id="btn-tab-seating" onclick="switchTab('seating')" class="tab-btn active px-3 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap bg-white text-blue-600 shadow-sm">Sơ đồ lớp</button>
+                    <button id="btn-tab-competition" onclick="switchTab('competition')" class="tab-btn px-3 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap text-gray-500 hover:text-gray-700">Thi đua & Trực nhật</button>
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="openShareModal()" class="icon-edge-btn p-2 text-gray-500 hover:text-purple-600 transition-colors" title="Chia sẻ"><i class="fas fa-share-nodes"></i></button>
@@ -2393,8 +2394,10 @@
             const targetTab = document.getElementById('tab-'+t);
             targetTab.classList.add('active');
             animateActionFeedback(targetTab,'animate-fade-up',360); 
-            document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className="px-3 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap"); 
-            document.getElementById('btn-tab-'+t).className="px-3 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm whitespace-nowrap"; 
+            const inactiveClass = "tab-btn px-3 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap text-gray-500 hover:text-gray-700";
+            const activeClass = "tab-btn active px-3 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap bg-white text-blue-600 shadow-sm";
+            document.querySelectorAll('[id^="btn-tab-"]').forEach(b=>b.className=inactiveClass); 
+            document.getElementById('btn-tab-'+t).className=activeClass; 
         }
 
         function generateTable() { 
