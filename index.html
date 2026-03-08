@@ -1658,6 +1658,7 @@
             };
             addWall(ROOM_WIDTH, 3.85, 0, 1.92, -5.6, 0, rearWallMat);
             addWall(7.3, 3.85, -2.75, 1.92, 7.2, Math.PI);
+            addWall(2.0, 3.85, 1.9, 1.92, 7.2, Math.PI);
             addWall(3.5, 3.85, 4.65, 1.92, 7.2, Math.PI);
             addWall(3.8, 3.85, -6.4, 1.92, -4.1, Math.PI / 2);
             addWall(3.8, 3.85, -6.4, 1.92, 5.7, Math.PI / 2);
@@ -1779,14 +1780,6 @@
             door.rotation.y = Math.PI * 0.43;
             door.castShadow = true;
             room.add(door);
-
-            const outsideGround = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 4.8), new THREE.MeshStandardMaterial({ color: 0xdbeafe, roughness: 0.88 }));
-            outsideGround.rotation.x = -Math.PI / 2;
-            outsideGround.position.set(2.75, 0.02, 9.25);
-            room.add(outsideGround);
-            const outsideTree = new THREE.Mesh(new THREE.ConeGeometry(0.65, 1.8, 18), new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.82 }));
-            outsideTree.position.set(1.65, 1.1, 9.35);
-            room.add(outsideTree);
 
             const bulletin = createTextPlane('GÓC HỌC TẬP', 2.4, 1.2, { fontSize: 102, color: '#1d4ed8', bg: 'rgba(254,243,199,0.95)', border: '#92400e' });
             bulletin.mesh.position.set(0.5, 2.2, 5.72);
