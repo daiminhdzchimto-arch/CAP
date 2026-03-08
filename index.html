@@ -34,6 +34,9 @@
             --fixed: #8b5cf6;
             --text-main: #1f2937;
             --border: #e5e7eb;
+            --desk-font-base: 16;
+            --desk-font-min: 11;
+            --desk-input-min-height: 48;
         }
 
         body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
@@ -292,6 +295,28 @@
         }
         #orientation-lock-overlay.show {
             display: flex;
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            :root {
+                --desk-font-base: 13;
+                --desk-font-min: 9;
+                --desk-input-min-height: 38;
+            }
+
+            #seating-layout-row {
+                gap: 0.75rem !important;
+            }
+
+            .desk-box {
+                min-height: 42px;
+            }
+
+            .desk-input {
+                min-height: var(--desk-input-min-height);
+                padding: 5px 4px;
+                line-height: 1.12;
+            }
         }
     </style>
 </head>
@@ -1312,8 +1337,10 @@
         function fitDeskInputText(input) {
             if (!input) return;
 
-            const baseFontPx = 16;
-            const minFontPx = 11;
+            const cssVar = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+            const baseFontPx = cssVar('--desk-font-base') || 16;
+            const minFontPx = cssVar('--desk-font-min') || 11;
+            const minHeightPx = cssVar('--desk-input-min-height') || 48;
             let currentFontPx = baseFontPx;
 
             input.style.fontSize = `${baseFontPx}px`;
@@ -1323,14 +1350,14 @@
             input.scrollTop = 0;
 
             const parent = input.closest('.desk-box');
-            const maxHeight = parent ? Math.max(parent.clientHeight - 6, 48) : 48;
+            const maxHeight = parent ? Math.max(parent.clientHeight - 6, minHeightPx) : minHeightPx;
 
             while (input.scrollHeight > maxHeight && currentFontPx > minFontPx) {
                 currentFontPx -= 1;
                 input.style.fontSize = `${currentFontPx}px`;
             }
 
-            const targetHeight = Math.min(Math.max(input.scrollHeight, 48), maxHeight);
+            const targetHeight = Math.min(Math.max(input.scrollHeight, minHeightPx), maxHeight);
             input.style.height = `${targetHeight}px`;
         }
 
