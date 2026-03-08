@@ -158,6 +158,9 @@
         /* TOAST */
         #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 999; left: 50%; bottom: 30px; font-size: 1rem; opacity: 0; transition: opacity 0.5s, bottom 0.5s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #seat-3d-crosshair { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border-radius: 9999px; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 6px rgba(255,255,255,0.12); pointer-events: none; }
+        #seat-3d-canvas { cursor: grab; }
+        #seat-3d-canvas:active { cursor: grabbing; }
 
         @keyframes pulse-ring { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); } }
     </style>
@@ -248,6 +251,9 @@
                         <div class="w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative">
                             <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-2 bg-amber-200 border border-amber-300 rounded-sm"></div>
                             <div class="text-[8px] font-bold uppercase tracking-wide text-amber-700">Bàn Giáo Viên</div>
+                            <button id="teacher-3d-btn" type="button" onclick="openTeacherSeat3DView()" class="absolute -right-2 -top-2 w-6 h-6 rounded-full bg-sky-500 hover:bg-sky-600 text-white shadow flex items-center justify-center" title="Xem 3D từ bàn giáo viên">
+                                <i class="fas fa-vr-cardboard text-[11px]"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -657,12 +663,14 @@
         </div>
     </div>
 
-    <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/95">
+    <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-black">
         <div id="seat-3d-canvas" class="absolute inset-0"></div>
+        <div id="seat-3d-crosshair"></div>
         <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 px-4 py-3 text-sm shadow-lg max-w-sm">
             <p class="text-xs text-gray-500 uppercase tracking-wide">Góc nhìn thứ nhất</p>
             <p id="seat-3d-current-name" class="font-bold text-gray-800 mt-1">Đang xem từ: --</p>
             <p class="text-[11px] text-gray-600 mt-1">Giữ chuột (hoặc kéo tay) để xoay 360°. Cuộn chuột để thay đổi tầm nhìn.</p>
+            <p class="text-[11px] text-gray-500 mt-1">Dấu chấm ở giữa giúp canh tâm khi quan sát bảng.</p>
         </div>
         <div class="absolute top-4 right-4 flex items-center gap-2">
             <button type="button" onclick="resetSeat3DLook()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Đặt lại góc nhìn</button>
@@ -1181,6 +1189,172 @@
             return { sprite, dispose };
         }
 
+
+        function createStudentDeskHoaPhat3D(materials) {
+            const deskGroup = new THREE.Group();
+            const { woodMat, metalMat, rackMat } = materials;
+            const deskWidth = 1.15;
+            const deskDepth = 0.5;
+            const deskHeight = 0.75;
+
+            const top = new THREE.Mesh(new THREE.BoxGeometry(deskWidth, 0.04, deskDepth), woodMat);
+            top.position.y = deskHeight;
+            deskGroup.add(top);
+
+            const legGeo = new THREE.BoxGeometry(0.05, deskHeight, 0.05);
+            [[-0.5, 0.375, -0.2], [0.5, 0.375, -0.2], [-0.5, 0.375, 0.2], [0.5, 0.375, 0.2]].forEach(([x, y, z]) => {
+                const leg = new THREE.Mesh(legGeo, metalMat);
+                leg.position.set(x, y, z);
+                deskGroup.add(leg);
+            });
+
+            const rack = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.02, 0.3), rackMat);
+            rack.position.set(0, 0.28, 0);
+            deskGroup.add(rack);
+
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.38), woodMat);
+            seat.position.set(0, 0.45, 0.62);
+            deskGroup.add(seat);
+
+            const back = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.38, 0.05), woodMat);
+            back.position.set(0, 0.66, 0.82);
+            deskGroup.add(back);
+
+            return deskGroup;
+        }
+
+        function createTeacherDesk3D(materials) {
+            const group = new THREE.Group();
+            const { woodMat, metalMat } = materials;
+            const top = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.06, 1.1), woodMat);
+            top.position.y = 0.75;
+            group.add(top);
+
+            const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.75);
+            [[-1.05, 0.375, -0.45], [1.05, 0.375, -0.45], [-1.05, 0.375, 0.45], [1.05, 0.375, 0.45]].forEach(([x,y,z]) => {
+                const leg = new THREE.Mesh(legGeo, metalMat);
+                leg.position.set(x,y,z);
+                group.add(leg);
+            });
+
+            const book = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.3), new THREE.MeshStandardMaterial({ color: 0x22c55e }));
+            book.position.set(0.35, 0.86, -0.2);
+            group.add(book);
+            return group;
+        }
+
+        function buildSeat3DClassroom(scene) {
+            const room = new THREE.Group();
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8f4e3, roughness: 1 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0xccb28b, roughness: 0.8 });
+            const boardMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.7 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0xb7e3ff, transparent: true, opacity: 0.35 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x4b5563, metalness: 0.35, roughness: 0.5 });
+
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(24, 28), floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.z = 4;
+            floor.receiveShadow = true;
+            room.add(floor);
+
+            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(24, 28), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 }));
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.set(0, 8, 4);
+            room.add(ceiling);
+
+            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 8), wallMat);
+            backWall.position.set(0, 4, 16);
+            backWall.rotation.y = Math.PI;
+            room.add(backWall);
+
+            const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 8), wallMat);
+            frontWall.position.set(0, 4, -8);
+            room.add(frontWall);
+
+            const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(28, 8), wallMat);
+            leftWall.position.set(-12, 4, 4);
+            leftWall.rotation.y = Math.PI / 2;
+            room.add(leftWall);
+
+            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(28, 8), wallMat);
+            rightWall.position.set(12, 4, 4);
+            rightWall.rotation.y = -Math.PI / 2;
+            room.add(rightWall);
+
+            const board = new THREE.Mesh(new THREE.BoxGeometry(11, 3.2, 0.12), boardMat);
+            board.position.set(0, 3.8, -7.7);
+            room.add(board);
+
+            const boardFrame = new THREE.Mesh(new THREE.BoxGeometry(11.25, 3.45, 0.1), woodMat);
+            boardFrame.position.set(0, 3.8, -7.83);
+            room.add(boardFrame);
+
+            const door = new THREE.Mesh(new THREE.BoxGeometry(2.4, 5.5, 0.15), woodMat);
+            door.position.set(9.5, 2.75, -7.9);
+            room.add(door);
+
+            const knob = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
+            knob.position.set(10.35, 2.7, -7.8);
+            room.add(knob);
+
+            const addWindowSet = (x, rotY) => {
+                for (let i = 0; i < 3; i++) {
+                    const y = 2.2 + (i * 1.9);
+                    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.6, 0.12), woodMat);
+                    frame.position.set(x, y, 3.2);
+                    frame.rotation.y = rotY;
+                    room.add(frame);
+
+                    const glass = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.3), glassMat);
+                    glass.position.set(x + (x < 0 ? 0.02 : -0.02), y, 3.2);
+                    glass.rotation.y = rotY;
+                    room.add(glass);
+
+                    const barH = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.04, 0.06), woodMat);
+                    barH.position.set(x, y, 3.2);
+                    barH.rotation.y = rotY;
+                    room.add(barH);
+
+                    const barV = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.3, 0.06), woodMat);
+                    barV.position.set(x, y, 3.2);
+                    barV.rotation.y = rotY;
+                    room.add(barV);
+                }
+            };
+            addWindowSet(-11.95, Math.PI / 2);
+            addWindowSet(11.95, -Math.PI / 2);
+
+            const fan = new THREE.Group();
+            const fanHub = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.22, 12), metalMat);
+            fanHub.rotation.x = Math.PI / 2;
+            fan.add(fanHub);
+            for (let i = 0; i < 3; i++) {
+                const blade = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.05, 0.2), new THREE.MeshStandardMaterial({ color: 0xe5e7eb }));
+                blade.position.x = 0.68;
+                blade.rotation.y = (i * Math.PI * 2) / 3;
+                fan.add(blade);
+            }
+            fan.position.set(0, 7.5, 4);
+            room.add(fan);
+
+            scene.add(room);
+
+            return [
+                () => {
+                    scene.remove(room);
+                    room.traverse((obj) => {
+                        if (obj.isMesh) {
+                            if (obj.geometry) obj.geometry.dispose();
+                            if (Array.isArray(obj.material)) obj.material.forEach(mat => mat.dispose && mat.dispose());
+                            else if (obj.material) obj.material.dispose();
+                        }
+                    });
+                }
+            ];
+        }
+
         function applySeat3DCameraLook() {
             if(!seat3DState.camera) return;
             const pitch = Math.max(-Math.PI/2 + 0.08, Math.min(Math.PI/2 - 0.08, seat3DState.pitch));
@@ -1232,13 +1406,18 @@
             seat3DState.camera = null;
         }
 
+        function openTeacherSeat3DView() {
+            openSeat3DView('teacher', -1, -1);
+        }
+
         function openSeat3DView(side, rowIndex, seatIndex) {
             if(!window.THREE) {
                 showToast('Không thể tải engine 3D. Vui lòng thử lại.');
                 return;
             }
 
-            const sourceSeat = (side === 'left' ? leftSideData : rightSideData)[rowIndex][seatIndex];
+            const isTeacherView = side === 'teacher';
+            const sourceSeat = isTeacherView ? { name: 'Giáo viên' } : (side === 'left' ? leftSideData : rightSideData)[rowIndex][seatIndex];
             const sourceName = (sourceSeat?.name || '').trim();
             if(!sourceName) {
                 showToast('Ghế này chưa có tên thành viên để xem 3D.');
@@ -1254,87 +1433,102 @@
             viewer.classList.remove('hidden');
 
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0f172a);
-            const camera = new THREE.PerspectiveCamera(75, wrap.clientWidth / wrap.clientHeight, 0.1, 200);
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.Fog(0x87ceeb, 18, 45);
+            const camera = new THREE.PerspectiveCamera(75, wrap.clientWidth / wrap.clientHeight, 0.1, 220);
             const renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             wrap.appendChild(renderer.domElement);
 
-            const hemi = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 1.1);
-            const dir = new THREE.DirectionalLight(0xffffff, 0.7);
-            dir.position.set(10, 16, 4);
-            scene.add(hemi, dir);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+            const dir = new THREE.DirectionalLight(0xffffff, 0.85);
+            dir.position.set(8, 14, 6);
+            dir.castShadow = true;
+            dir.shadow.mapSize.width = 1024;
+            dir.shadow.mapSize.height = 1024;
+            scene.add(ambient, dir);
 
-            const floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(45, 35),
-                new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9, metalness: 0.05 })
-            );
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.z = 4.4;
-            scene.add(floor);
-
-            const board = new THREE.Mesh(
-                new THREE.BoxGeometry(10, 2.1, 0.12),
-                new THREE.MeshStandardMaterial({ color: 0x111827 })
-            );
-            board.position.set(0, 2.5, -2.2);
-            scene.add(board);
+            buildSeat3DClassroom(scene).forEach(disposer => seat3DState.disposeResources.push(disposer));
 
             const entries = getSeatEntriesFor3D();
-            const target = entries.find(e => e.side === side && e.rowIndex === rowIndex && e.seatIndex === seatIndex);
+            const target = isTeacherView
+                ? { side: 'teacher', rowIndex: -1, seatIndex: -1, x: 0, z: -4.9 }
+                : entries.find(e => e.side === side && e.rowIndex === rowIndex && e.seatIndex === seatIndex);
             if(!target) {
                 showToast('Không xác định được vị trí ghế cho chế độ 3D.');
                 closeSeat3DView();
                 return;
             }
 
-            const deskGeo = new THREE.BoxGeometry(1.2, 0.7, 0.9);
-            const deskMat = new THREE.MeshStandardMaterial({ color: 0xbfdbfe });
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
+            const deskMaterials = {
+                woodMat: new THREE.MeshStandardMaterial({ color: 0xcd853f, roughness: 0.65 }),
+                metalMat: new THREE.MeshStandardMaterial({ color: 0x2f2f2f, metalness: 0.35, roughness: 0.55 }),
+                rackMat: new THREE.MeshStandardMaterial({ color: 0x8f8f8f, metalness: 0.15, roughness: 0.7 })
+            };
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a });
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd });
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
             const tagGroup = new THREE.Group();
 
+            const teacherDesk = createTeacherDesk3D(deskMaterials);
+            teacherDesk.position.set(0, 0, -4.3);
+            scene.add(teacherDesk);
+
             entries.forEach(entry => {
-                const desk = new THREE.Mesh(deskGeo, deskMat);
-                desk.position.set(entry.x, 0.35, entry.z);
+                const desk = createStudentDeskHoaPhat3D(deskMaterials);
+                desk.position.set(entry.x, 0, entry.z);
                 scene.add(desk);
 
-                if(!entry.name || (entry.side === side && entry.rowIndex === rowIndex && entry.seatIndex === seatIndex)) return;
+                const isCurrentSeat = !isTeacherView && entry.side === side && entry.rowIndex === rowIndex && entry.seatIndex === seatIndex;
+                if(!entry.name || isCurrentSeat) return;
 
-                const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.8, 4, 8), bodyMat);
-                body.position.set(entry.x, 1.05, entry.z - 0.1);
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), headMat);
-                head.position.set(entry.x, 1.72, entry.z - 0.1);
+                const pants = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.5), pantsMat);
+                pants.position.set(entry.x, 0.25, entry.z + 0.9);
+                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.5), bodyMat);
+                body.position.set(entry.x, 0.75, entry.z + 0.9);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), headMat);
+                head.position.set(entry.x, 1.28, entry.z + 0.9);
+                const hair = new THREE.Mesh(new THREE.SphereGeometry(0.205, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
+                hair.position.set(entry.x, 1.33, entry.z + 0.9);
+
                 const { sprite: nameTag, dispose: disposeTag } = makeNameTagSprite(entry.name);
-                nameTag.position.set(entry.x, 2.3, entry.z - 0.1);
+                nameTag.position.set(entry.x, 1.9, entry.z + 0.85);
                 seat3DState.disposeResources.push(disposeTag);
 
+                scene.add(pants);
                 scene.add(body);
                 scene.add(head);
+                scene.add(hair);
                 tagGroup.add(nameTag);
             });
 
             seat3DState.disposeResources.push(
-                () => deskGeo.dispose(),
-                () => deskMat.dispose(),
+                () => deskMaterials.woodMat.dispose(),
+                () => deskMaterials.metalMat.dispose(),
+                () => deskMaterials.rackMat.dispose(),
                 () => bodyMat.dispose(),
+                () => pantsMat.dispose(),
                 () => headMat.dispose(),
-                () => floor.geometry.dispose(),
-                () => floor.material.dispose(),
-                () => board.geometry.dispose(),
-                () => board.material.dispose()
+                () => hairMat.dispose()
             );
 
             scene.add(tagGroup);
 
-            camera.position.set(target.x, 1.55, target.z + 0.2);
+            camera.position.set(target.x, 1.45, isTeacherView ? target.z : target.z + 0.95);
 
             seat3DState.active = true;
             seat3DState.renderer = renderer;
             seat3DState.scene = scene;
             seat3DState.camera = camera;
             resetSeat3DLook();
+            if(isTeacherView) {
+                seat3DState.yaw = Math.PI;
+                applySeat3DCameraLook();
+            }
 
             const canvas = renderer.domElement;
             const onDown = (x, y) => {
