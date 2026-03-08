@@ -275,9 +275,27 @@
         #seat-3d-canvas:active { cursor: grabbing; }
 
         @keyframes pulse-ring { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); } }
+
+
+        /* MOBILE AUTO LANDSCAPE */
+        #app-shell { min-height: 100vh; }
+        body.mobile-landscape-forced { margin: 0; overflow: hidden; background: #111827; }
+        body.mobile-landscape-forced #app-shell {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vh;
+            height: 100vw;
+            transform-origin: top left;
+            transform: rotate(90deg) translateY(-100%);
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: #f3f4f6;
+        }
     </style>
 </head>
 <body>
+    <div id="app-shell">
     <div id="camera-flash" class="fixed inset-0 pointer-events-none opacity-0" style="background: white; z-index: 200;"></div>
     <canvas id="particle-canvas"></canvas>
     <div id="perf-monitor">FPS: 60</div>
@@ -799,6 +817,8 @@
             <button type="button" onclick="resetSeat3DLook()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Đặt lại góc nhìn</button>
             <button type="button" onclick="closeSeat3DView()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">Thoát 3D</button>
         </div>
+    </div>
+
     </div>
 
     <script>
@@ -2978,6 +2998,25 @@
             } catch(e) { showToast("Mã không hợp lệ!"); }
         }
 
+        function isLikelyMobileDevice() {
+            return /Android|iPhone|iPad|iPod|Windows Phone|Mobile/i.test(navigator.userAgent)
+                || (navigator.maxTouchPoints > 1 && Math.min(window.innerWidth, window.innerHeight) <= 1024);
+        }
+
+        async function tryLockLandscapeMode() {
+            if (!isLikelyMobileDevice() || !screen.orientation || typeof screen.orientation.lock !== 'function') return;
+            try {
+                await screen.orientation.lock('landscape');
+            } catch (_) {
+                // Some browsers only allow lock in fullscreen or via user gesture.
+            }
+        }
+
+        function applyMobileLandscapeMode() {
+            const shouldForceLandscape = isLikelyMobileDevice() && window.innerHeight > window.innerWidth;
+            document.body.classList.toggle('mobile-landscape-forced', shouldForceLandscape);
+        }
+
         // INITIALIZATION
         window.onload = () => {
             loadData();
@@ -3010,6 +3049,10 @@
             lucide.createIcons();
             requestAnimationFrame(() => moveTopTabIndicator(currentTopTab));
             window.addEventListener('resize', () => moveTopTabIndicator(currentTopTab));
+            applyMobileLandscapeMode();
+            tryLockLandscapeMode();
+            window.addEventListener('resize', applyMobileLandscapeMode);
+            window.addEventListener('orientationchange', applyMobileLandscapeMode);
         };
 
         document.addEventListener('click', (e)=>{ if(swapSource && !e.target.closest('.desk-input')) cancelSwapMode(); });
