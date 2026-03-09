@@ -165,13 +165,16 @@
         .split-btn { right: 0; }
         .details-btn { left: 0; top: auto; bottom: 0; }
         .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
         .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
+        .desk-box:hover .swap-seat-btn, .desk-box:focus-within .swap-seat-btn, .desk-box.swap-selected .swap-seat-btn { opacity: 1; pointer-events: auto; }
         .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
         .desk-box { transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease; transform-origin: center; }
         .split-btn:hover { color: #ef4444; }
         .details-btn:hover { color: #3b82f6; }
         .view-3d-btn:hover { color: #0284c7; }
+        .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
         #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
         .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
         .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -377,6 +380,7 @@
                     </div>
                     <div class="h-8 w-px bg-gray-200 mx-2"></div>
                     <div id="status-msg" class="hidden"></div>
+                    <div class="text-[10px] text-gray-500 font-semibold bg-gray-100 rounded-full px-2 py-1">✍️ Nhập tên trong ô • 🔁 Bấm nút đổi chỗ để hoán đổi</div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="rotateClass('up')" class="icon-edge-btn p-2 text-gray-600 transition" title="Xoay lên"><i class="fas fa-arrow-up"></i></button>
@@ -885,7 +889,7 @@
         };
         
         let leftSideData = [], rightSideData = [];
-        let swapSource = null, longPressTimer = null, dutySelection = {}, genderMap = {};
+        let swapSource = null, dutySelection = {}, genderMap = {};
         let officerList = [], fixedMembers = [], conflictGraph = {};
         let dayOffMode = false, excludedMembers = [], dayOffs = [], morningOff = false, afternoonOff = false;
         let currentSchedule = null, dutyDebtData = {};
@@ -1280,6 +1284,7 @@
                     }
 
                     const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name; ta.rows = 1; ta.wrap = 'soft';
+                    ta.title = 'Nhập tên học sinh';
                     ta.oninput=e=>{ updateName(side,ri,si,e.target.value); fitDeskInputText(e.target); };
                     
                     ta.oncontextmenu = e => {
@@ -1287,8 +1292,6 @@
                         toggleFixed(seat.id);
                     };
 
-                    const start=e=>{if(swapSource&&!isSrc)return; longPressTimer=setTimeout(()=>{e.preventDefault();activateSwapMode(side,ri,si)},500)};
-                    const cancel=()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}};
                     const click=e=>{
                         if(swapSource){
                             if(isSrc)cancelSwapMode();
@@ -1298,10 +1301,17 @@
                     const inputClick=e=>{
                         e.stopPropagation();
                     };
-                    ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
-                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',inputClick);
+                    ta.addEventListener('click',inputClick);
                     cell.addEventListener('click', click);
                     cell.appendChild(ta);
+
+                    const swapBtn = createDeskActionButton({
+                        className: 'swap-seat-btn',
+                        title: 'Hoán đổi vị trí (không phải nhập tên)',
+                        icon: '<i class="fas fa-exchange-alt"></i>',
+                        onClick: () => handleSwapButtonClick(side, ri, si)
+                    });
+                    cell.appendChild(swapBtn);
                     requestAnimationFrame(() => fitDeskInputText(ta));
 
                     let hasActions = false;
@@ -1326,6 +1336,7 @@
                     
                     if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
                     if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s);hasActions = true}
+                    hasActions = true;
                     if(hasActions) cell.classList.add('has-actions');
                     div.appendChild(cell);
                 });
@@ -2184,6 +2195,17 @@
         }
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); const seat = document.querySelector(`.desk-box[data-side="${s}"][data-r="${r}"][data-c="${c}"]`) || document.querySelector('.swap-selected'); animateActionFeedback(seat || '#classroom-area','animate-pulse-highlight',420); }
+        function handleSwapButtonClick(side,r,c){
+            if(swapSource){
+                if(swapSource.side===side && swapSource.r===r && swapSource.c===c){
+                    cancelSwapMode();
+                } else {
+                    executeSwap(side,r,c);
+                }
+                return;
+            }
+            activateSwapMode(side,r,c);
+        }
         function cancelSwapMode(){ swapSource=null; renderAll(); }
         function executeSwap(ts,tr,tc){ const src={...swapSource}; const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); const srcSeat = getDeskCell(src.side, src.r, src.c); const dstSeat = getDeskCell(ts, tr, tc); if(srcSeat) animateActionFeedback(srcSeat,'animate-wobble-swap',420); if(dstSeat) animateActionFeedback(dstSeat,'animate-wobble-swap',420); if(srcSeat) animateActionFeedback(srcSeat,'animate-pulse-highlight',340); if(dstSeat) animateActionFeedback(dstSeat,'animate-pulse-highlight',340); showToast('Đã hoán đổi vị trí 2 thành viên'); }
         function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
