@@ -279,6 +279,10 @@
         #seat-3d-crosshair { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border-radius: 9999px; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 6px rgba(255,255,255,0.12); pointer-events: none; }
         #seat-3d-canvas { cursor: grab; }
         #seat-3d-canvas:active { cursor: grabbing; }
+        .seat-3d-guide-panel { transition: transform 0.35s ease, opacity 0.35s ease; }
+        #seat-3d-viewer.guide-collapsed .seat-3d-guide-panel { transform: translateX(calc(-100% - 20px)); opacity: 0.12; pointer-events: none; }
+        #seat-3d-guide-toggle { position: absolute; top: 20px; left: 10px; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+        #seat-3d-viewer.guide-collapsed #seat-3d-guide-toggle { opacity: 1; pointer-events: auto; }
 
         @keyframes pulse-ring { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); } }
 
@@ -851,7 +855,8 @@
     <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-black">
         <div id="seat-3d-canvas" class="absolute inset-0"></div>
         <div id="seat-3d-crosshair"></div>
-        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 px-4 py-3 text-sm shadow-lg max-w-sm">
+        <button id="seat-3d-guide-toggle" type="button" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Mở hướng dẫn</button>
+        <div id="seat-3d-guide-panel" class="seat-3d-guide-panel absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 px-4 py-3 text-sm shadow-lg max-w-sm">
             <p class="text-xs text-gray-500 uppercase tracking-wide">Góc nhìn thứ nhất</p>
             <p id="seat-3d-current-name" class="font-bold text-gray-800 mt-1">Đang xem từ: --</p>
             <p class="text-[11px] text-gray-600 mt-1">Giữ chuột (hoặc kéo tay) để xoay 360°. Cuộn chuột để thay đổi tầm nhìn.</p>
@@ -899,6 +904,7 @@
             scene: null,
             camera: null,
             animationId: null,
+            hintTimer: null,
             yaw: 0,
             pitch: 0,
             fov: 75,
@@ -1967,11 +1973,33 @@
             applySeat3DCameraLook();
         }
 
+        function setSeat3DGuideVisible(visible) {
+            const viewer = document.getElementById('seat-3d-viewer');
+            if(!viewer) return;
+            viewer.classList.toggle('guide-collapsed', !visible);
+        }
+
+        function scheduleSeat3DGuideAutoHide(delay = 2600) {
+            if(seat3DState.hintTimer) clearTimeout(seat3DState.hintTimer);
+            seat3DState.hintTimer = setTimeout(() => {
+                if(seat3DState.active) setSeat3DGuideVisible(false);
+            }, delay);
+        }
+
+        function revealSeat3DGuide() {
+            if(!seat3DState.active) return;
+            setSeat3DGuideVisible(true);
+            scheduleSeat3DGuideAutoHide();
+        }
+
         function closeSeat3DView() {
             const viewer = document.getElementById('seat-3d-viewer');
             viewer.classList.add('hidden');
             seat3DState.active = false;
             seat3DState.isDragging = false;
+            if(seat3DState.hintTimer) clearTimeout(seat3DState.hintTimer);
+            seat3DState.hintTimer = null;
+            setSeat3DGuideVisible(true);
 
             if(seat3DState.animationId) cancelAnimationFrame(seat3DState.animationId);
             seat3DState.animationId = null;
@@ -2014,8 +2042,26 @@
             const viewer = document.getElementById('seat-3d-viewer');
             const wrap = document.getElementById('seat-3d-canvas');
             const currentLabel = document.getElementById('seat-3d-current-name');
+            const guideToggle = document.getElementById('seat-3d-guide-toggle');
             currentLabel.textContent = `Đang xem từ: ${sourceName}`;
             viewer.classList.remove('hidden');
+            setSeat3DGuideVisible(true);
+            scheduleSeat3DGuideAutoHide(2800);
+
+            const revealEvents = ['pointerdown', 'wheel', 'touchstart', 'keydown'];
+            revealEvents.forEach(eventName => {
+                viewer.addEventListener(eventName, revealSeat3DGuide, { passive: true });
+                seat3DState.removeListeners.push(() => viewer.removeEventListener(eventName, revealSeat3DGuide));
+            });
+            if(guideToggle) {
+                const onToggleGuide = () => {
+                    const isCollapsed = viewer.classList.contains('guide-collapsed');
+                    setSeat3DGuideVisible(isCollapsed);
+                    if(isCollapsed) scheduleSeat3DGuideAutoHide();
+                };
+                guideToggle.addEventListener('click', onToggleGuide);
+                seat3DState.removeListeners.push(() => guideToggle.removeEventListener('click', onToggleGuide));
+            }
 
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0xcbd5e1);
