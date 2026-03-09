@@ -869,6 +869,11 @@
         const ROW_COUNT = 6;
         const DUTY_DEBT_KEY = 'classApp_duty_debt';
         const VN_CHARS = "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
+        const MALE_GIVEN_NAMES = new Set(['An','Anh','Ân','Bảo','Bách','Bình','Châu','Chiến','Công','Cường','Danh','Đạt','Đăng','Đăng Khoa','Đức','Dũng','Duy','Giang','Hải','Hào','Hiếu','Hoàng','Hùng','Huy','Hưng','Khải','Khang','Khánh','Khiêm','Khoa','Kiên','Kiệt','Kim','Long','Luân','Mạnh','Minh','Nam','Nguyên','Nghĩa','Nhân','Nhật','Phong','Phúc','Phương','Phước','Phi','Phú','Quân','Quang','Quốc','Sơn','Tài','Tân','Thành','Thắng','Thiên','Thiện','Tiến','Toàn','Trí','Triết','Trung','Trường','Tuấn','Tùng','Việt','Vinh','Vũ','Xuân']);
+        const FEMALE_GIVEN_NAMES = new Set(['Ái','An','Anh','Băng','Bích','Chi','Châu','Diễm','Dung','Giang','Hà','Hân','Hiền','Hoa','Hoài','Hồng','Hương','Khánh','Lan','Linh','Loan','Mai','Mẫn','My','Nga','Ngân','Nghi','Nghiên','Ngọc','Nhã','Như','Nhi','Oanh','Phương','Phượng','Quỳnh','San','Thảo','Thi','Thiên','Thu','Thùy','Thủy','Tiên','Trang','Trâm','Trân','Trinh','Tuyền','Uyên','Vi','Viên','Yến']);
+        const MALE_MIDDLE_NAMES = new Set(['Bá','Bảo','Công','Cảnh','Chí','Đắc','Đăng','Đình','Đức','Duy','Gia','Hoàng','Hồng','Hữu','Khắc','Lê','Mạnh','Minh','Ngọc','Nhật','Phú','Quang','Quốc','Sỹ','Sĩ','Tấn','Thanh','Thiên','Thế','Trọng','Tuấn','Văn','Viết','Xuân']);
+        const FEMALE_MIDDLE_NAMES = new Set(['Ái','An','Bảo','Bích','Cẩm','Diễm','Gia','Hoài','Kim','Lan','Mai','Mỹ','Ngọc','Như','Nhã','Phương','Quỳnh','Thanh','Thảo','Thi','Thị','Thu','Thùy','Tường','Tuyết','Xuân','Yến']);
+        const UNISEX_HINTS = new Set(['An','Anh','Bình','Châu','Gia','Giang','Hà','Khánh','Linh','Minh','Ngọc','Như','Phong','Phương','Thanh','Thiên','Trang','Xuân']);
         
         // --- WEATHER & SPECIES CONSTANTS ---
         const SPECIES_DATABASE = {
@@ -2650,9 +2655,11 @@
                 const d=document.createElement('div');
                 d.className=`gender-item`;
                 const m=isMaleName(n);
+                const detected = detectGenderFromVietnameseName(n);
                 const l=document.createElement('span');
                 l.className=`gender-label ${m?'is-male':'is-female'}`;
                 l.innerHTML=m?'<i class="fas fa-mars"></i> Nam':'<i class="fas fa-venus"></i> Nữ';
+                l.title = `Nguồn: ${detected.based_on} | Độ tin cậy: ${Math.round((detected.confidence || 0) * 100)}%`;
                 l.onclick=()=>{genderMap[n]=!m;renderGenderList();};
                 d.innerHTML=`<span class="text-xs font-bold text-gray-600">${n}</span>`;
                 d.appendChild(l);
@@ -2660,14 +2667,62 @@
             }); 
         }
 
+        function normalizeNameToken(token) {
+            return (token || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .trim();
+        }
+
+        function hasToken(nameSet, token) {
+            if (!token) return false;
+            const tokenNorm = normalizeNameToken(token);
+            for (const item of nameSet) {
+                if (normalizeNameToken(item) === tokenNorm) return true;
+            }
+            return false;
+        }
+
+        function hasUnisexHint(token) {
+            return hasToken(UNISEX_HINTS, token);
+        }
+
+        function detectGenderFromVietnameseName(fullName) {
+            const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return { gender: 'unknown', confidence: 0, based_on: 'none' };
+
+            const givenName = parts[parts.length - 1];
+            const middleTokens = parts.slice(1, Math.max(parts.length - 1, 1));
+            const middleName = middleTokens[middleTokens.length - 1] || '';
+
+            const maleGiven = hasToken(MALE_GIVEN_NAMES, givenName);
+            const femaleGiven = hasToken(FEMALE_GIVEN_NAMES, givenName);
+            if (maleGiven && !femaleGiven) return { gender: 'male', confidence: 0.95, based_on: 'ten_chinh' };
+            if (femaleGiven && !maleGiven) return { gender: 'female', confidence: 0.95, based_on: 'ten_chinh' };
+            if (maleGiven && femaleGiven) {
+                if (middleTokens.some(t => hasToken(MALE_MIDDLE_NAMES, t))) return { gender: 'male', confidence: 0.9, based_on: 'ten_dem+ten_chinh' };
+                if (middleTokens.some(t => hasToken(FEMALE_MIDDLE_NAMES, t))) return { gender: 'female', confidence: 0.9, based_on: 'ten_dem+ten_chinh' };
+                return { gender: 'unknown', confidence: 0.5, based_on: 'ten_chinh_unisex' };
+            }
+
+            if (middleName) {
+                if (hasToken(MALE_MIDDLE_NAMES, middleName) && !hasUnisexHint(middleName)) return { gender: 'male', confidence: 0.85, based_on: 'ten_dem' };
+                if (hasToken(FEMALE_MIDDLE_NAMES, middleName) && !hasUnisexHint(middleName)) return { gender: 'female', confidence: 0.85, based_on: 'ten_dem' };
+                if (middleTokens.some(t => hasToken(MALE_MIDDLE_NAMES, t))) return { gender: 'male', confidence: 0.75, based_on: 'cum_ten_dem' };
+                if (middleTokens.some(t => hasToken(FEMALE_MIDDLE_NAMES, t))) return { gender: 'female', confidence: 0.75, based_on: 'cum_ten_dem' };
+            }
+
+            return { gender: 'unknown', confidence: 0, based_on: 'khong_xac_dinh' };
+        }
+
         function isMaleName(n) { 
             if(genderMap.hasOwnProperty(n)) return genderMap[n]; 
-            const p=n.trim().split(/\s+/); 
-            if(p.length<2) return true; 
-            const f=p[p.length-1]; 
-            const m=p.slice(1,p.length-1); 
-            for(let x of m){ if(x==='Thị') return false; if(x==='Văn') return true; } 
-            return true; 
+            const detected = detectGenderFromVietnameseName(n);
+            if (detected.gender === 'male') return true;
+            if (detected.gender === 'female') return false;
+            return true;
         }
 
         function saveDutySettings() {
