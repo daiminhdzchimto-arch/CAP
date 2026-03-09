@@ -1688,14 +1688,16 @@
             tileTexture.repeat.set(3.6, 3.6);
             tileTexture.colorSpace = THREE.SRGBColorSpace;
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf2efe3, roughness: 0.83, metalness: 0.04 });
-            const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe8e4da, roughness: 0.78, metalness: 0.05 });
-            const floorMat = new THREE.MeshStandardMaterial({ map: tileTexture, roughness: 0.3, metalness: 0.12 });
-            const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, metalness: 0.06 });
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf2efe3, roughness: 0.83, metalness: 0.04, side: THREE.DoubleSide });
+            const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe8e4da, roughness: 0.78, metalness: 0.05, side: THREE.DoubleSide });
+            const floorMat = new THREE.MeshStandardMaterial({ map: tileTexture, roughness: 0.3, metalness: 0.12, side: THREE.DoubleSide });
+            const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, metalness: 0.06, side: THREE.DoubleSide });
 
             const ROOM_WIDTH = 12.8;
             const ROOM_DEPTH = 12.8;
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH), floorMat);
+            const ROOM_HEIGHT = 3.85;
+            const EDGE_OVERLAP = 0.12;
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.position.set(0, 0, 0.7);
             floor.receiveShadow = true;
@@ -1706,9 +1708,9 @@
             aisle.receiveShadow = true;
             room.add(aisle);
 
-            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH), ceilingMat);
+            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), ceilingMat);
             ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(0, 3.85, 0.7);
+            ceiling.position.set(0, ROOM_HEIGHT, 0.7);
             room.add(ceiling);
 
             const addWall = (w, h, x, y, z, ry = 0, mat = wallMat) => {
@@ -1718,13 +1720,14 @@
                 room.add(wall);
                 return wall;
             };
-            addWall(ROOM_WIDTH, 3.85, 0, 1.92, -5.6, 0, rearWallMat);
-            addWall(7.3, 3.85, -2.75, 1.92, 7.2, Math.PI);
-            addWall(2.0, 3.85, 1.9, 1.92, 7.2, Math.PI);
-            addWall(3.5, 3.85, 4.65, 1.92, 7.2, Math.PI);
-            addWall(3.8, 3.85, -6.4, 1.92, -4.1, Math.PI / 2);
-            addWall(3.8, 3.85, -6.4, 1.92, 5.7, Math.PI / 2);
-            addWall(ROOM_DEPTH, 3.85, 6.4, 1.92, 0.8, -Math.PI / 2);
+            const wallCenterY = ROOM_HEIGHT / 2;
+            addWall(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 0, wallCenterY, -5.6 - EDGE_OVERLAP / 2, 0, rearWallMat);
+            addWall(7.3 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -2.75, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
+            addWall(2.0 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 1.9, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
+            addWall(3.5 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 4.65, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
+            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, -4.1, Math.PI / 2);
+            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, 5.7, Math.PI / 2);
+            addWall(ROOM_DEPTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 6.4 + EDGE_OVERLAP / 2, wallCenterY, 0.8, -Math.PI / 2);
 
             const corridorFloor = new THREE.Mesh(new THREE.PlaneGeometry(4.6, ROOM_DEPTH + 2.2), new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.45, metalness: 0.08 }));
             corridorFloor.rotation.x = -Math.PI / 2;
