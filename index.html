@@ -1488,13 +1488,30 @@
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.minFilter = THREE.LinearFilter;
-            const material = new THREE.MeshStandardMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
-            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+            const plateThickness = options.thickness ?? 0.03;
+            const plateColor = options.plateColor || 0xf8fafc;
+
+            const plateMaterial = new THREE.MeshStandardMaterial({
+                color: plateColor,
+                roughness: options.plateRoughness ?? 0.62,
+                metalness: options.plateMetalness ?? 0.04
+            });
+            const plate = new THREE.Mesh(new THREE.BoxGeometry(width, height, plateThickness), plateMaterial);
+
+            const textMaterial = new THREE.MeshStandardMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+            const textLayer = new THREE.Mesh(new THREE.PlaneGeometry(width, height), textMaterial);
+            textLayer.position.z = plateThickness / 2 + 0.001;
+
+            const mesh = new THREE.Group();
+            mesh.add(plate);
+            mesh.add(textLayer);
             return {
                 mesh,
                 dispose: () => {
-                    mesh.geometry.dispose();
-                    material.dispose();
+                    plate.geometry.dispose();
+                    textLayer.geometry.dispose();
+                    plateMaterial.dispose();
+                    textMaterial.dispose();
                     texture.dispose();
                 }
             };
@@ -1826,13 +1843,13 @@
             door.castShadow = true;
             room.add(door);
 
-            const bulletin = createTextPlane('GÓC HỌC TẬP', 2.4, 1.2, { fontSize: 102, color: '#1d4ed8', bg: 'rgba(254,243,199,0.95)', border: '#92400e' });
-            bulletin.mesh.position.set(0.5, 2.2, 5.72);
+            const bulletin = createTextPlane('GÓC HỌC TẬP', 2.4, 1.2, { fontSize: 102, color: '#1d4ed8', bg: 'rgba(254,243,199,0.95)', border: '#92400e', thickness: 0.04, plateColor: 0xfef3c7 });
+            bulletin.mesh.position.set(0.5, 2.2, 7.17);
             bulletin.mesh.rotation.y = Math.PI;
             room.add(bulletin.mesh);
 
-            const rules = createTextPlane('NỘI QUY LỚP', 1.5, 0.7, { fontSize: 82, color: '#334155', bg: 'rgba(255,255,255,0.95)', border: '#64748b' });
-            rules.mesh.position.set(3.4, 2.75, 5.72);
+            const rules = createTextPlane('NỘI QUY LỚP', 1.5, 0.7, { fontSize: 82, color: '#334155', bg: 'rgba(255,255,255,0.95)', border: '#64748b', thickness: 0.03, plateColor: 0xf8fafc });
+            rules.mesh.position.set(3.4, 2.75, 7.18);
             rules.mesh.rotation.y = Math.PI;
             room.add(rules.mesh);
 
