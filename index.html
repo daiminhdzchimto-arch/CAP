@@ -1733,11 +1733,34 @@
             corridorRail.position.set(-9.05, 1.02, 0.8);
             room.add(corridorRail);
 
-            for(let i = 0; i < 4; i++) {
-                const beam = new THREE.Mesh(new THREE.BoxGeometry(ROOM_WIDTH + 0.2, 0.22, 0.38), new THREE.MeshStandardMaterial({ color: 0xdbe2ea, roughness: 0.58, metalness: 0.08 }));
-                beam.position.set(0, 3.58, -4.3 + i * 3);
+            const beamMat = new THREE.MeshStandardMaterial({ color: 0xd7dce3, roughness: 0.66, metalness: 0.06 });
+            const edgeBeamMat = new THREE.MeshStandardMaterial({ color: 0xcfd5dd, roughness: 0.73, metalness: 0.03 });
+            for(let i = 0; i < 3; i++) {
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(ROOM_WIDTH - 0.45, 0.24, 0.42), beamMat);
+                beam.position.set(0, 3.56, -3.2 + i * 3.15);
                 room.add(beam);
             }
+            const perimeterBeamLeft = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, ROOM_DEPTH - 0.35), edgeBeamMat);
+            perimeterBeamLeft.position.set(-6.05, 3.52, 0.7);
+            room.add(perimeterBeamLeft);
+            const perimeterBeamRight = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.27, ROOM_DEPTH - 0.35), edgeBeamMat);
+            perimeterBeamRight.position.set(6.06, 3.54, 0.7);
+            room.add(perimeterBeamRight);
+            const perimeterBeamFront = new THREE.Mesh(new THREE.BoxGeometry(ROOM_WIDTH - 0.3, 0.26, 0.52), edgeBeamMat);
+            perimeterBeamFront.position.set(0, 3.53, -5.25);
+            room.add(perimeterBeamFront);
+
+            const wallColumnMat = new THREE.MeshStandardMaterial({ color: 0xdbdee4, roughness: 0.69, metalness: 0.04 });
+            [-3.9, -1.3, 1.3, 3.9].forEach((zPos) => {
+                const wallColumn = new THREE.Mesh(new THREE.BoxGeometry(0.34, 3.65, 0.34), wallColumnMat);
+                wallColumn.position.set(-6.16, 1.82, zPos);
+                room.add(wallColumn);
+            });
+            [-2.65, 2.55].forEach((xPos) => {
+                const frontColumn = new THREE.Mesh(new THREE.BoxGeometry(0.36, 3.62, 0.34), wallColumnMat);
+                frontColumn.position.set(xPos, 1.81, -5.18);
+                room.add(frontColumn);
+            });
 
             const platform = new THREE.Mesh(new THREE.BoxGeometry(11.2, 0.25, 1.35), new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.85 }));
             platform.position.set(0, 0.12, -3.7);
