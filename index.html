@@ -1778,9 +1778,16 @@
             const ROOM_DEPTH = 12.8;
             const ROOM_HEIGHT = 3.85;
             const EDGE_OVERLAP = 0.12;
+            const ROOM_CENTER_Z = 0.7;
+            const HALF_ROOM_WIDTH = ROOM_WIDTH / 2;
+            const HALF_ROOM_DEPTH = ROOM_DEPTH / 2;
+            const BACK_WALL_Z = ROOM_CENTER_Z - HALF_ROOM_DEPTH;
+            const FRONT_WALL_Z = ROOM_CENTER_Z + HALF_ROOM_DEPTH;
+            const LEFT_WALL_X = -HALF_ROOM_WIDTH;
+            const RIGHT_WALL_X = HALF_ROOM_WIDTH;
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), floorMat);
             floor.rotation.x = -Math.PI / 2;
-            floor.position.set(0, 0, 0.7);
+            floor.position.set(0, 0, ROOM_CENTER_Z);
             floor.receiveShadow = true;
             room.add(floor);
 
@@ -1789,7 +1796,7 @@
                 new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0, metalness: 0.9, transparent: true, opacity: 0.12 })
             );
             reflect.rotation.x = -Math.PI / 2;
-            reflect.position.set(0, 0.015, 0.7);
+            reflect.position.set(0, 0.015, ROOM_CENTER_Z);
             room.add(reflect);
 
             scene.add(new THREE.AmbientLight(0xe0f0ff, 0.45));
@@ -1834,7 +1841,7 @@
 
             const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), ceilingMat);
             ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(0, ROOM_HEIGHT, 0.7);
+            ceiling.position.set(0, ROOM_HEIGHT, ROOM_CENTER_Z);
             room.add(ceiling);
 
             const addWall = (w, h, x, y, z, ry = 0, mat = wallMat) => {
@@ -1845,15 +1852,27 @@
                 return wall;
             };
             const wallCenterY = ROOM_HEIGHT / 2;
-            addWall(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 0, wallCenterY, -5.6 - EDGE_OVERLAP / 2, 0, rearWallMat);
-            addWall(7.3 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -2.75, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(2.0 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 1.9, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(3.5 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 4.65, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, -4.1, Math.PI / 2);
-            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, 5.7, Math.PI / 2);
-            addWall(ROOM_DEPTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 6.4 + EDGE_OVERLAP / 2, wallCenterY, 0.8, -Math.PI / 2);
+            const wallZOffset = EDGE_OVERLAP / 2;
+            const frontOpeningWidth = 2.0;
+            const frontLeftWidth = 7.3;
+            const frontRightWidth = ROOM_WIDTH - frontLeftWidth - frontOpeningWidth;
+            const frontLeftCenterX = -HALF_ROOM_WIDTH + frontLeftWidth / 2;
+            const frontOpeningCenterX = frontLeftCenterX + (frontLeftWidth + frontOpeningWidth) / 2;
+            const frontRightCenterX = frontOpeningCenterX + (frontOpeningWidth + frontRightWidth) / 2;
 
-            // keep existing scene details omitted here for brevity in generated patch
+            const leftWindowGapDepth = 5.2;
+            const leftWallSolidDepth = (ROOM_DEPTH - leftWindowGapDepth) / 2;
+            const leftRearWallCenterZ = BACK_WALL_Z + leftWallSolidDepth / 2;
+            const leftFrontWallCenterZ = FRONT_WALL_Z - leftWallSolidDepth / 2;
+
+            addWall(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 0, wallCenterY, BACK_WALL_Z - wallZOffset, 0, rearWallMat);
+            addWall(frontLeftWidth + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, frontLeftCenterX, wallCenterY, FRONT_WALL_Z + wallZOffset, Math.PI);
+            addWall(frontOpeningWidth + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, frontOpeningCenterX, wallCenterY, FRONT_WALL_Z + wallZOffset, Math.PI);
+            addWall(frontRightWidth + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, frontRightCenterX, wallCenterY, FRONT_WALL_Z + wallZOffset, Math.PI);
+            addWall(leftWallSolidDepth + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, LEFT_WALL_X - wallZOffset, wallCenterY, leftRearWallCenterZ, Math.PI / 2);
+            addWall(leftWallSolidDepth + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, LEFT_WALL_X - wallZOffset, wallCenterY, leftFrontWallCenterZ, Math.PI / 2);
+            addWall(ROOM_DEPTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, RIGHT_WALL_X + wallZOffset, wallCenterY, ROOM_CENTER_Z, -Math.PI / 2);
+
             const glassMat = new THREE.MeshPhysicalMaterial({
                 color: 0xa5d6ff,
                 metalness: 0.1,
@@ -1865,13 +1884,19 @@
                 opacity: 0.35
             });
 
-            for(let i = 0; i < 4; i++) {
-                const zPos = -2.8 + i * 2.2;
-                const windowFrame = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.16, 1.18), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.52, metalness: 0.26 }));
-                windowFrame.position.set(-6.34, 1.85, zPos);
+            const windowCount = 4;
+            const windowFrameDepth = 1.18;
+            const leftWindowStartZ = leftRearWallCenterZ + leftWallSolidDepth / 2;
+            const leftWindowEndZ = leftFrontWallCenterZ - leftWallSolidDepth / 2;
+            const leftWindowSpan = leftWindowEndZ - leftWindowStartZ;
+            for(let i = 0; i < windowCount; i++) {
+                const ratio = (i + 0.5) / windowCount;
+                const zPos = leftWindowStartZ + leftWindowSpan * ratio;
+                const windowFrame = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.16, windowFrameDepth), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.52, metalness: 0.26 }));
+                windowFrame.position.set(LEFT_WALL_X + 0.06, 1.85, zPos);
                 room.add(windowFrame);
                 const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 1.08), glassMat);
-                glass.position.set(-6.29, 1.82, zPos);
+                glass.position.set(LEFT_WALL_X + 0.11, 1.82, zPos);
                 glass.rotation.y = Math.PI / 2;
                 room.add(glass);
             }
