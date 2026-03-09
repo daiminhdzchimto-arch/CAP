@@ -1645,26 +1645,64 @@
         function createTeacherDesk3D(materials) {
             const group = new THREE.Group();
             const { teacherTopMat, deskFrameMat } = materials;
-            const top = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.06, 1), teacherTopMat);
+
+            // Mặt bàn lớn hơn: dài 1.8m, rộng 0.9m, dày 0.04m
+            const top = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.04, 0.9), teacherTopMat);
             top.position.y = 0.76;
             top.castShadow = true;
+            top.receiveShadow = true;
             group.add(top);
 
-            const legGeo = new THREE.BoxGeometry(0.06, 0.75, 0.06);
-            [[-1, 0.37, -0.42], [1, 0.37, -0.42], [-1, 0.37, 0.42], [1, 0.37, 0.42]].forEach(([x,y,z]) => {
+            // Khung bàn và chân
+            const legGeo = new THREE.BoxGeometry(0.05, 0.74, 0.05);
+            const legPositions = [
+                [-0.85, 0.37, -0.4], [0.85, 0.37, -0.4],
+                [-0.85, 0.37, 0.4], [0.85, 0.37, 0.4]
+            ];
+            legPositions.forEach(([x, y, z]) => {
                 const leg = new THREE.Mesh(legGeo, deskFrameMat);
-                leg.position.set(x,y,z);
+                leg.position.set(x, y, z);
                 leg.castShadow = true;
+                leg.receiveShadow = true;
                 group.add(leg);
             });
 
-            const laptop = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.03, 0.28), new THREE.MeshStandardMaterial({ color: 0x111827 }));
-            laptop.position.set(-0.35, 0.82, -0.1);
-            const diary = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.06, 0.26), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
-            diary.position.set(0.35, 0.82, 0.05);
-            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
-            cup.position.set(0.05, 0.84, -0.22);
-            group.add(laptop, diary, cup);
+            // Ngăn kéo (phía trước)
+            const drawerGeo = new THREE.BoxGeometry(1.4, 0.2, 0.1);
+            const drawer = new THREE.Mesh(drawerGeo, new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.7 }));
+            drawer.position.set(0, 0.5, -0.35);
+            drawer.castShadow = true;
+            drawer.receiveShadow = true;
+            group.add(drawer);
+
+            // Vật dụng trên bàn
+            const laptopMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
+            const laptopBase = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.28), laptopMat);
+            laptopBase.position.set(-0.3, 0.8, -0.15);
+            laptopBase.castShadow = true;
+            laptopBase.receiveShadow = true;
+            group.add(laptopBase);
+
+            const laptopScreen = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.25, 0.02), laptopMat);
+            laptopScreen.position.set(-0.3, 0.93, -0.25);
+            laptopScreen.castShadow = true;
+            laptopScreen.receiveShadow = true;
+            group.add(laptopScreen);
+
+            const cupMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
+            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.12, 12), cupMat);
+            cup.position.set(0.35, 0.82, 0.15);
+            cup.castShadow = true;
+            cup.receiveShadow = true;
+            group.add(cup);
+
+            const stackPaperMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const paper = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.22), stackPaperMat);
+            paper.position.set(0.1, 0.8, 0.25);
+            paper.castShadow = true;
+            paper.receiveShadow = true;
+            group.add(paper);
+
             return group;
         }
 
