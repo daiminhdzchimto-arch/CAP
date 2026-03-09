@@ -1676,25 +1676,22 @@
             wrinkleNormal.wrapT = THREE.RepeatWrapping;
             wrinkleNormal.repeat.set(2.2, 2.2);
 
-            const poseSeed = Math.random();
-
             const legMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85, metalness: 0.05, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.35, 0.35) });
-            const legGeo = new THREE.CylinderGeometry(0.055, 0.058, 0.48, 12);
+            const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.45, 16);
             const leftLeg = new THREE.Mesh(legGeo, legMat);
-            leftLeg.position.set(-0.085, 0.28, 0.02);
-            leftLeg.rotation.x = 0.16 + poseSeed * 0.08;
+            leftLeg.position.set(-0.08, 0.255, -0.04);
+            leftLeg.rotation.x = 0.22;
             leftLeg.castShadow = true;
             const rightLeg = leftLeg.clone();
-            rightLeg.position.x = 0.085;
-            rightLeg.rotation.x = 0.1 + poseSeed * 0.05;
+            rightLeg.position.x = 0.08;
             group.add(leftLeg, rightLeg);
 
             const shoePalette = [0x111111, 0x1f2937, 0x374151, 0x0f172a];
             const shoeMat = new THREE.MeshStandardMaterial({ color: shoePalette[Math.floor(Math.random() * shoePalette.length)], roughness: 0.6, metalness: 0.12 });
             const shoeGeo = new THREE.CapsuleGeometry(0.055, 0.11, 4, 8);
             const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            leftShoe.scale.set(1, 0.6, 1.65);
-            leftShoe.position.set(-0.085, 0.08, 0.055);
+            leftShoe.scale.set(1, 0.55, 1.55);
+            leftShoe.position.set(-0.08, 0.05, 0.08);
             leftShoe.castShadow = true;
             const rightShoe = leftShoe.clone();
             rightShoe.position.x = 0.085;
@@ -1707,53 +1704,44 @@
                 normalMap: wrinkleNormal,
                 normalScale: new THREE.Vector2(0.8, 0.8)
             });
-            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.125, 0.38, 20), torsoMat);
-            torso.position.y = 0.58;
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), torsoMat);
+            torso.position.set(0, 0.72, 0.04);
             torso.castShadow = true;
             group.add(torso);
 
             const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.08, 16), new THREE.MeshStandardMaterial({color: 0xffe0bd, roughness: 0.9, metalness: 0.02}));
-            neck.position.y = 0.77;
+            neck.position.set(0, 0.94, 0.02);
             neck.castShadow = true;
             group.add(neck);
 
             const headMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.65, metalness: 0.02 });
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.175, 28, 28), headMat);
-            head.position.y = 0.92;
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 28, 28), headMat);
+            head.position.set(0, 1.06, 0.02);
             head.castShadow = true;
             group.add(head);
 
             const hairStyleVariant = Math.random() > 0.5;
             const hairMat = new THREE.MeshStandardMaterial({ color: isMale ? 0x1a1a1a : 0x3d2a1f, roughness: 0.95, metalness: 0.01 });
             const hairGeo = hairStyleVariant
-                ? new THREE.SphereGeometry(0.185, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.68)
+                ? new THREE.SphereGeometry(0.127, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.68)
                 : new THREE.CapsuleGeometry(0.12, 0.15, 8, 12);
             const hair = new THREE.Mesh(hairGeo, hairMat);
-            hair.position.y = hairStyleVariant ? 0.97 : 0.965;
+            hair.position.set(0, hairStyleVariant ? 1.1 : 1.085, 0.02);
             hair.castShadow = true;
-            if(!hairStyleVariant) hair.scale.set(1.25, 1.05, 1.1);
+            if(!hairStyleVariant) hair.scale.set(0.95, 0.72, 0.82);
             group.add(hair);
 
-            const armMat = torsoMat;
-            const armGeo = new THREE.CapsuleGeometry(0.034, 0.22, 6, 10);
+            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.72, metalness: 0.02, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.7, 0.7) });
+            const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16);
             const leftArm = new THREE.Mesh(armGeo, armMat);
-            leftArm.position.set(-0.17, 0.68, 0.03);
-            leftArm.rotation.set(0.38, 0, -1.08);
+            leftArm.position.set(-0.19, 0.72, -0.04);
+            leftArm.rotation.set(0.08, 0, 1.02);
             leftArm.castShadow = true;
             const rightArm = leftArm.clone();
-            rightArm.position.x = 0.17;
-            rightArm.rotation.set(0.33, 0, 1.02);
+            rightArm.position.x = 0.19;
+            rightArm.rotation.set(0.08, 0, -1.02);
             group.add(leftArm, rightArm);
 
-            const backpack = new THREE.Mesh(
-                new THREE.BoxGeometry(0.22, 0.28, 0.12),
-                new THREE.MeshStandardMaterial({color: 0x1e2937, roughness: 0.7, metalness: 0.08})
-            );
-            backpack.position.set(0, 0.75, -0.16);
-            backpack.castShadow = true;
-            group.add(backpack);
-
-            group.rotation.y = (Math.random() - 0.5) * 0.1;
             group.userData = { type: 'student', dispose: () => wrinkleNormal.dispose() };
             return group;
         }
@@ -2095,14 +2083,30 @@
                 const validNames = (entry.occupantNames || []).filter(name => name && !(entry.side === side && entry.rowIndex === rowIndex && name === sourceName));
                 validNames.slice(0, 4).forEach((studentName, idx) => {
                     const isMale = isMaleName(studentName);
-                    const shirtColor = [0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6][idx % 4];
-                    const pantsColor = isMale ? 0x1e2937 : 0x334155;
+                    const harmoniousOutfits = [
+                        { shirt: 0x3b82f6, pants: 0x1e293b },
+                        { shirt: 0x10b981, pants: 0x334155 },
+                        { shirt: 0xf59e0b, pants: 0x374151 },
+                        { shirt: 0x8b5cf6, pants: 0x1f2937 },
+                        { shirt: 0x14b8a6, pants: 0x334155 },
+                        { shirt: 0xef4444, pants: 0x374151 }
+                    ];
+                    const outfit = harmoniousOutfits[Math.floor(Math.random() * harmoniousOutfits.length)];
+                    const shirtColor = outfit.shirt;
+                    const pantsColor = outfit.pants;
 
                     const student = createRealisticStudentModel(shirtColor, pantsColor, isMale);
                     const offsetX = [-0.65, -0.22, 0.22, 0.65][idx];
-                    student.position.set(entry.x + offsetX, 0.02, entry.z + 0.68);
-                    student.rotation.y += (Math.random() - 0.5) * 0.25;
+                    student.position.set(entry.x + offsetX, 0.015, entry.z + 0.56);
                     scene.add(student);
+
+                    const backpack = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.2, 0.26, 0.11),
+                        new THREE.MeshStandardMaterial({ color: isMale ? 0x1f2937 : 0x334155, roughness: 0.72, metalness: 0.08 })
+                    );
+                    backpack.position.set(entry.x + offsetX, 0.59, entry.z + 0.88);
+                    backpack.castShadow = true;
+                    scene.add(backpack);
                     if(student.userData.dispose) seat3DState.disposeResources.push(student.userData.dispose);
 
                     const { sprite: nameTag, dispose: disposeTag } = makeNameTagSprite(studentName);
