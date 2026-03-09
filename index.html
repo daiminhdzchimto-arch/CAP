@@ -1948,7 +1948,7 @@
 
         function resetSeat3DLook() {
             seat3DState.yaw = 0;
-            seat3DState.pitch = -0.05;
+            seat3DState.pitch = 0;
             seat3DState.fov = 75;
             if(seat3DState.camera) {
                 seat3DState.camera.fov = seat3DState.fov;
@@ -2121,7 +2121,7 @@
             );
 
             scene.add(tagGroup);
-            camera.position.set(target.x, 1.58, target.z + 0.58);
+            camera.position.set(target.x, 1.25, target.z + 0.42);
 
             seat3DState.active = true;
             seat3DState.renderer = renderer;
@@ -2198,7 +2198,7 @@
             const animate = () => {
                 if(!seat3DState.active) return;
                 bobTime += 0.016;
-                seat3DState.camera.position.y = 1.58 + Math.sin(bobTime * 1.8) * 0.008;
+                seat3DState.camera.position.y = 1.25 + Math.sin(bobTime * 1.8) * 0.008;
                 const t = performance.now() * 0.001;
                 seat3DState.fanBlades.forEach((fan, idx) => {
                     fan.rotation.y += 0.14 + idx * 0.01;
