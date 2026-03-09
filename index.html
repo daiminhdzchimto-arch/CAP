@@ -1792,14 +1792,14 @@
             reflect.position.set(0, 0.015, 0.7);
             room.add(reflect);
 
-            scene.add(new THREE.AmbientLight(0xe0f0ff, 0.45));
-            const hemi = new THREE.HemisphereLight(0xd0e4ff, 0x334155, 0.55);
+            scene.add(new THREE.AmbientLight(0xf9f1e6, 0.5));
+            const hemi = new THREE.HemisphereLight(0xfef3d6, 0x3f3f46, 0.6);
             scene.add(hemi);
-            const sun = new THREE.DirectionalLight(0xfff3d0, 1.35);
+            const sun = new THREE.DirectionalLight(0xffedc4, 1.45);
             sun.position.set(-9, 12, 6);
             sun.castShadow = true;
-            sun.shadow.mapSize.width = 2048;
-            sun.shadow.mapSize.height = 2048;
+            sun.shadow.mapSize.width = 4096;
+            sun.shadow.mapSize.height = 4096;
             sun.shadow.camera.near = 1;
             sun.shadow.camera.far = 50;
             sun.shadow.camera.left = -14;
@@ -1808,16 +1808,32 @@
             sun.shadow.camera.bottom = -14;
             sun.shadow.bias = -0.0008;
             scene.add(sun);
-            const fillA = new THREE.DirectionalLight(0xe6f3ff, 0.35);
+            const fillA = new THREE.DirectionalLight(0xf8efe1, 0.42);
             fillA.position.set(8, 5.4, -4);
-            const fillB = new THREE.DirectionalLight(0xffedd5, 0.3);
+            const fillB = new THREE.DirectionalLight(0xfff4e6, 0.34);
             fillB.position.set(-4, 4, -8);
             scene.add(fillA, fillB);
-            for(let i = 0; i < 4; i++) {
-                const light = new THREE.PointLight(0xfff5e6, 1.8, 14);
-                light.position.set(-4 + i * 2.7, 3.65, -1.2);
-                scene.add(light);
-            }
+
+            const fluorescentRows = [
+                { z: -1.2, color: 0xfff3dc },
+                { z: 2.35, color: 0xf7f8ff }
+            ];
+            fluorescentRows.forEach(({ z, color }) => {
+                for(let i = 0; i < 5; i++) {
+                    const pointLight = new THREE.PointLight(color, 1.5, 12.5);
+                    pointLight.position.set(-5 + i * 2.45, 3.62, z);
+                    scene.add(pointLight);
+                }
+            });
+
+            const spotlightPositions = [-4.9, -2.4, 0, 2.4, 4.9];
+            spotlightPositions.forEach(x => {
+                const spot = new THREE.SpotLight(0xfff7ea, 0.75, 18, Math.PI / 5.4, 0.35, 1.2);
+                spot.position.set(x, 3.7, 0.75);
+                spot.target.position.set(x, 0.25, 0.75);
+                scene.add(spot);
+                scene.add(spot.target);
+            });
 
             const godRay = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.1, 2.2, 18, 8),
