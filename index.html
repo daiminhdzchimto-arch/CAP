@@ -1766,12 +1766,17 @@
             const floorTex = new THREE.CanvasTexture(generateFloorTileCanvas());
             floorTex.wrapS = THREE.RepeatWrapping;
             floorTex.wrapT = THREE.RepeatWrapping;
-            floorTex.repeat.set(3.6, 3.6);
+            floorTex.repeat.set(4.4, 4.4);
             floorTex.colorSpace = THREE.SRGBColorSpace;
+            const wallBumpTex = new THREE.CanvasTexture(generateWallBumpCanvas());
+            wallBumpTex.wrapS = THREE.RepeatWrapping;
+            wallBumpTex.wrapT = THREE.RepeatWrapping;
+            wallBumpTex.repeat.set(8, 3);
+            const glassEnvMap = generateSimpleEnvironmentCube();
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf2efe3, roughness: 0.83, metalness: 0.04, side: THREE.DoubleSide });
-            const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe8e4da, roughness: 0.78, metalness: 0.05, side: THREE.DoubleSide });
-            const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.35, metalness: 0.08, side: THREE.DoubleSide });
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1eee2, roughness: 0.86, metalness: 0.03, bumpMap: wallBumpTex, bumpScale: 0.03, side: THREE.DoubleSide });
+            const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe9e4d7, roughness: 0.82, metalness: 0.04, bumpMap: wallBumpTex, bumpScale: 0.028, side: THREE.DoubleSide });
+            const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.26, metalness: 0.1, side: THREE.DoubleSide });
             const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, metalness: 0.06, side: THREE.DoubleSide });
 
             const ROOM_WIDTH = 12.8;
@@ -1855,14 +1860,18 @@
 
             // keep existing scene details omitted here for brevity in generated patch
             const glassMat = new THREE.MeshPhysicalMaterial({
-                color: 0xa5d6ff,
-                metalness: 0.1,
-                roughness: 0,
-                transmission: 0.85,
+                color: 0xcfe8ff,
+                metalness: 0.02,
+                roughness: 0.04,
+                transmission: 0.92,
                 thickness: 0.1,
-                envMapIntensity: 1.2,
+                envMap: glassEnvMap,
+                envMapIntensity: 1.45,
                 transparent: true,
-                opacity: 0.35
+                opacity: 0.45,
+                reflectivity: 0.9,
+                clearcoat: 1,
+                clearcoatRoughness: 0.08
             });
 
             for(let i = 0; i < 4; i++) {
@@ -1926,6 +1935,8 @@
                 fluorescentLights,
                 dispose: () => {
                     floorTex.dispose();
+                    wallBumpTex.dispose();
+                    glassEnvMap.dispose();
                     disposeNode(room);
                 }
             };
@@ -2073,13 +2084,20 @@
                 return;
             }
 
+            const woodTex = new THREE.CanvasTexture(generateWoodCanvas());
+            woodTex.wrapS = THREE.RepeatWrapping;
+            woodTex.wrapT = THREE.RepeatWrapping;
+            woodTex.repeat.set(1.8, 1.8);
+            woodTex.colorSpace = THREE.SRGBColorSpace;
+
             const deskMaterials = {
-                deskTopMat: new THREE.MeshStandardMaterial({ color: 0xc49a6c, roughness: 0.8 }),
-                teacherTopMat: new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.62 }),
+                deskTopMat: new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.72 }),
+                teacherTopMat: new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.58 }),
                 deskFrameMat: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.28, roughness: 0.58 }),
-                chairWoodMat: new THREE.MeshStandardMaterial({ color: 0xb9895a, roughness: 0.78 }),
+                chairWoodMat: new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.7 }),
                 chairFrameMat: new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.22, roughness: 0.62 })
             };
+            seat3DState.disposeResources.push(() => woodTex.dispose());
             const tagGroup = new THREE.Group();
 
             const teacherDesk = createTeacherDesk3D(deskMaterials);
@@ -2220,15 +2238,89 @@
             const c = document.createElement('canvas');
             c.width = c.height = 512;
             const ctx = c.getContext('2d');
-            ctx.fillStyle = '#d1b48c';
+            ctx.fillStyle = '#d7dbe0';
             ctx.fillRect(0, 0, 512, 512);
+            const tileSize = 64;
             for(let i = 0; i < 8; i++) {
                 for(let j = 0; j < 8; j++) {
-                    ctx.fillStyle = (i + j) % 2 === 0 ? '#c9a97f' : '#d8be92';
-                    ctx.fillRect(i * 64, j * 64, 64, 64);
+                    const jitter = Math.floor((Math.random() - 0.5) * 10);
+                    const base = (i + j) % 2 === 0 ? 210 : 226;
+                    const shade = Math.max(170, Math.min(245, base + jitter));
+                    ctx.fillStyle = `rgb(${shade},${shade + 4},${shade + 8})`;
+                    ctx.fillRect(i * tileSize + 2, j * tileSize + 2, tileSize - 4, tileSize - 4);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+                    ctx.strokeRect(i * tileSize + 6, j * tileSize + 6, tileSize - 12, tileSize - 12);
                 }
             }
+            ctx.strokeStyle = 'rgba(120,130,140,0.3)';
+            ctx.lineWidth = 2;
+            for(let p = 0; p <= 8; p++) {
+                ctx.beginPath();
+                ctx.moveTo(p * tileSize, 0);
+                ctx.lineTo(p * tileSize, 512);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, p * tileSize);
+                ctx.lineTo(512, p * tileSize);
+                ctx.stroke();
+            }
             return c;
+        }
+
+        function generateWoodCanvas() {
+            const c = document.createElement('canvas');
+            c.width = c.height = 512;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 512, 0);
+            grad.addColorStop(0, '#9b6a3d');
+            grad.addColorStop(0.5, '#b8844f');
+            grad.addColorStop(1, '#8b5d34');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 512);
+            for(let y = 0; y < 512; y += 3) {
+                const wave = Math.sin(y * 0.04) * 15 + Math.sin(y * 0.12) * 5;
+                ctx.strokeStyle = `rgba(70,40,20,${0.12 + Math.random() * 0.16})`;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.bezierCurveTo(140 + wave, y + 2, 340 - wave, y - 2, 512, y + Math.sin(y * 0.05));
+                ctx.stroke();
+            }
+            return c;
+        }
+
+        function generateWallBumpCanvas() {
+            const c = document.createElement('canvas');
+            c.width = c.height = 256;
+            const ctx = c.getContext('2d');
+            const img = ctx.createImageData(256, 256);
+            for(let i = 0; i < img.data.length; i += 4) {
+                const n = 132 + Math.floor((Math.random() - 0.5) * 22);
+                img.data[i] = n;
+                img.data[i + 1] = n;
+                img.data[i + 2] = n;
+                img.data[i + 3] = 255;
+            }
+            ctx.putImageData(img, 0, 0);
+            return c;
+        }
+
+        function generateSimpleEnvironmentCube() {
+            const size = 64;
+            const faces = Array.from({ length: 6 }, (_, idx) => {
+                const c = document.createElement('canvas');
+                c.width = c.height = size;
+                const ctx = c.getContext('2d');
+                const g = ctx.createLinearGradient(0, 0, 0, size);
+                g.addColorStop(0, idx % 2 === 0 ? '#f4fbff' : '#d7ecff');
+                g.addColorStop(1, '#8ab7de');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, size, size);
+                return c;
+            });
+            const env = new THREE.CubeTexture(faces);
+            env.colorSpace = THREE.SRGBColorSpace;
+            env.needsUpdate = true;
+            return env;
         }
 
         function generateFabricNormalCanvas() {
