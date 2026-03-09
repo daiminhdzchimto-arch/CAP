@@ -913,6 +913,7 @@
             lastY: 0,
             fanBlades: [],
             fluorescentLights: [],
+            outsideTreeCanopies: [],
             removeListeners: [],
             disposeResources: []
         };
@@ -1762,6 +1763,7 @@
             const room = new THREE.Group();
             const fanBlades = [];
             const fluorescentLights = [];
+            const outsideTreeCanopies = [];
 
             const floorTex = new THREE.CanvasTexture(generateFloorTileCanvas());
             floorTex.wrapS = THREE.RepeatWrapping;
@@ -1874,6 +1876,33 @@
                 glass.position.set(-6.29, 1.82, zPos);
                 glass.rotation.y = Math.PI / 2;
                 room.add(glass);
+
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.08, 0.11, 1.05, 10),
+                    new THREE.MeshStandardMaterial({ color: 0x7c4a22, roughness: 0.92, metalness: 0.02 })
+                );
+                trunk.position.set(-7.55, 1.18, zPos + (Math.random() - 0.5) * 0.25);
+                room.add(trunk);
+
+                const canopy = new THREE.Group();
+                const leafMat = new THREE.MeshStandardMaterial({ color: 0x2f9e44, roughness: 0.9, metalness: 0.01 });
+                for(let c = 0; c < 3; c++) {
+                    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.34 - c * 0.04, 14, 14), leafMat);
+                    crown.position.set(
+                        -7.58 - c * 0.05,
+                        1.72 + c * 0.2,
+                        zPos + (Math.random() - 0.5) * 0.32
+                    );
+                    crown.castShadow = true;
+                    canopy.add(crown);
+                }
+                canopy.userData = {
+                    baseRotationX: (Math.random() - 0.5) * 0.03,
+                    baseRotationZ: (Math.random() - 0.5) * 0.05,
+                    phase: Math.random() * Math.PI * 2
+                };
+                room.add(canopy);
+                outsideTreeCanopies.push(canopy);
             }
 
             for(let i = 0; i < 3; i++) {
@@ -1924,6 +1953,7 @@
             return {
                 fanBlades,
                 fluorescentLights,
+                outsideTreeCanopies,
                 dispose: () => {
                     floorTex.dispose();
                     disposeNode(room);
@@ -1994,6 +2024,7 @@
             seat3DState.disposeResources = [];
             seat3DState.fanBlades = [];
             seat3DState.fluorescentLights = [];
+            seat3DState.outsideTreeCanopies = [];
 
             if(seat3DState.renderer) {
                 const wrap = document.getElementById('seat-3d-canvas');
@@ -2063,6 +2094,7 @@
             const roomSetup = buildSeat3DClassroom(scene);
             seat3DState.fanBlades = roomSetup.fanBlades;
             seat3DState.fluorescentLights = roomSetup.fluorescentLights;
+            seat3DState.outsideTreeCanopies = roomSetup.outsideTreeCanopies;
             seat3DState.disposeResources.push(roomSetup.dispose);
 
             const entries = getSeatEntriesFor3D();
@@ -2201,11 +2233,21 @@
                 seat3DState.camera.position.y = 1.58 + Math.sin(bobTime * 1.8) * 0.008;
                 const t = performance.now() * 0.001;
                 seat3DState.fanBlades.forEach((fan, idx) => {
-                    fan.rotation.y += 0.14 + idx * 0.01;
+                    fan.rotation.y += 0.5 + idx * 0.01;
                 });
                 seat3DState.fluorescentLights.forEach((lightMesh, idx) => {
-                    const flicker = idx === 2 ? 0.27 + Math.sin(t * 8) * 0.07 : 0.45;
+                    const phaseOffset = idx * 1.37;
+                    const slowWave = Math.sin(t * 0.8 + phaseOffset) * 0.06;
+                    const randomPulse = Math.sin(t * (1.2 + idx * 0.18) + phaseOffset * 3.1) * 0.03;
+                    const jitter = (Math.random() - 0.5) * 0.03;
+                    const flicker = Math.max(0.2, 0.42 + slowWave + randomPulse + jitter);
                     lightMesh.material.emissiveIntensity = flicker;
+                });
+                seat3DState.outsideTreeCanopies.forEach((canopy, idx) => {
+                    const sway = 0.05 + Math.sin(t * 0.7 + idx * 0.46) * 0.015;
+                    const gust = Math.sin(t * 1.4 + canopy.userData.phase) * 0.012;
+                    canopy.rotation.x = canopy.userData.baseRotationX + gust * 0.4;
+                    canopy.rotation.z = canopy.userData.baseRotationZ + sway + gust;
                 });
                 tagGroup.children.forEach(tag => tag.lookAt(camera.position));
                 renderer.render(scene, camera);
