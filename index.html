@@ -1808,10 +1808,105 @@
             const ROOM_WIDTH = 12.8;
             const ROOM_DEPTH = 12.8;
             const ROOM_HEIGHT = 3.85;
+            const ROOM_CENTER_Z = 0.8;
             const EDGE_OVERLAP = 0.12;
+
+            const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+            const normalizeIntervals = (intervals, min, max) => {
+                const sorted = intervals
+                    .map(([start, end]) => [clamp(Math.min(start, end), min, max), clamp(Math.max(start, end), min, max)])
+                    .filter(([start, end]) => end - start > 0.02)
+                    .sort((a, b) => a[0] - b[0]);
+                if (!sorted.length) return [];
+                const merged = [sorted[0]];
+                for (let i = 1; i < sorted.length; i++) {
+                    const current = sorted[i];
+                    const last = merged[merged.length - 1];
+                    if (current[0] <= last[1] + 0.02) {
+                        last[1] = Math.max(last[1], current[1]);
+                    } else {
+                        merged.push(current);
+                    }
+                }
+                return merged;
+            };
+            const buildSegmentsFromOpenings = (openings, min, max) => {
+                const normalizedOpenings = normalizeIntervals(openings, min, max);
+                const segments = [];
+                let cursor = min;
+                normalizedOpenings.forEach(([start, end]) => {
+                    if (start > cursor + 0.02) segments.push([cursor, start]);
+                    cursor = Math.max(cursor, end);
+                });
+                if (cursor < max - 0.02) segments.push([cursor, max]);
+                return segments;
+            };
+            const createRoomLayoutProtocol = ({ width, depth, height, centerZ }) => {
+                const halfW = width / 2;
+                const halfD = depth / 2;
+                const bounds = {
+                    left: -halfW,
+                    right: halfW,
+                    back: centerZ - halfD,
+                    front: centerZ + halfD,
+                    height
+                };
+
+                const doorWidth = Math.max(1, width * 0.086);
+                const doorCenterX = bounds.right - width * 0.27;
+                const doorGap = [doorCenterX - doorWidth / 2 - 0.06, doorCenterX + doorWidth / 2 + 0.06];
+
+                const windowCount = 4;
+                const windowSpacing = depth * 0.17;
+                const windowStartZ = bounds.back + depth * 0.22;
+                const windowWidth = depth * 0.09;
+                const windowOpenings = Array.from({ length: windowCount }, (_, index) => {
+                    const zCenter = windowStartZ + index * windowSpacing;
+                    return [zCenter - windowWidth / 2, zCenter + windowWidth / 2];
+                });
+
+                return {
+                    bounds,
+                    door: { width: 1.1, height: 2.2, centerX: doorCenterX },
+                    windows: { count: windowCount, centers: windowOpenings.map(([start, end]) => (start + end) / 2) },
+                    openings: {
+                        front: [doorGap],
+                        left: windowOpenings
+                    }
+                };
+            };
+            const validateAndResolveRoomLayout = (layout) => {
+                const { bounds } = layout;
+                const resolved = {
+                    ...layout,
+                    openings: {
+                        front: normalizeIntervals(layout.openings.front, bounds.left, bounds.right),
+                        left: normalizeIntervals(layout.openings.left, bounds.back, bounds.front)
+                    }
+                };
+                const frontDoor = resolved.openings.front[0];
+                if (frontDoor) {
+                    resolved.door.centerX = clamp(resolved.door.centerX, frontDoor[0] + 0.15, frontDoor[1] - 0.15);
+                }
+                resolved.wallSegments = {
+                    back: [[bounds.left, bounds.right]],
+                    right: [[bounds.back, bounds.front]],
+                    front: buildSegmentsFromOpenings(resolved.openings.front, bounds.left, bounds.right),
+                    left: buildSegmentsFromOpenings(resolved.openings.left, bounds.back, bounds.front)
+                };
+                return resolved;
+            };
+
+            const roomLayout = validateAndResolveRoomLayout(createRoomLayoutProtocol({
+                width: ROOM_WIDTH,
+                depth: ROOM_DEPTH,
+                height: ROOM_HEIGHT,
+                centerZ: ROOM_CENTER_Z
+            }));
+            const { bounds } = roomLayout;
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), floorMat);
             floor.rotation.x = -Math.PI / 2;
-            floor.position.set(0, 0, 0.7);
+            floor.position.set(0, 0, ROOM_CENTER_Z);
             floor.receiveShadow = true;
             room.add(floor);
 
@@ -1820,7 +1915,7 @@
                 new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0, metalness: 0.9, transparent: true, opacity: 0.12 })
             );
             reflect.rotation.x = -Math.PI / 2;
-            reflect.position.set(0, 0.015, 0.7);
+            reflect.position.set(0, 0.015, ROOM_CENTER_Z);
             room.add(reflect);
 
             scene.add(new THREE.AmbientLight(0xf9f1e6, 0.5));
@@ -1881,7 +1976,7 @@
 
             const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), ceilingMat);
             ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(0, ROOM_HEIGHT, 0.7);
+            ceiling.position.set(0, ROOM_HEIGHT, ROOM_CENTER_Z);
             room.add(ceiling);
 
             const ceilingTrim = new THREE.Mesh(
@@ -1889,7 +1984,7 @@
                 new THREE.MeshStandardMaterial({ color: 0xdbe4ee, roughness: 0.74, metalness: 0.06, side: THREE.DoubleSide })
             );
             ceilingTrim.rotation.x = Math.PI / 2;
-            ceilingTrim.position.set(0, ROOM_HEIGHT - 0.01, 0.7);
+            ceilingTrim.position.set(0, ROOM_HEIGHT - 0.01, ROOM_CENTER_Z);
             room.add(ceilingTrim);
 
             const panelMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.9, metalness: 0.03 });
@@ -1913,13 +2008,22 @@
                 return wall;
             };
             const wallCenterY = ROOM_HEIGHT / 2;
-            addWall(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 0, wallCenterY, -5.6 - EDGE_OVERLAP / 2, 0, rearWallMat);
-            addWall(7.3 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -2.75, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(2.0 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 1.9, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(3.5 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 4.65, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, -4.1, Math.PI / 2);
-            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, 5.7, Math.PI / 2);
-            addWall(ROOM_DEPTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 6.4 + EDGE_OVERLAP / 2, wallCenterY, 0.8, -Math.PI / 2);
+            roomLayout.wallSegments.back.forEach(([startX, endX]) => {
+                const width = endX - startX;
+                addWall(width + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, (startX + endX) / 2, wallCenterY, bounds.back - EDGE_OVERLAP / 2, 0, rearWallMat);
+            });
+            roomLayout.wallSegments.front.forEach(([startX, endX]) => {
+                const width = endX - startX;
+                addWall(width + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, (startX + endX) / 2, wallCenterY, bounds.front + EDGE_OVERLAP / 2, Math.PI);
+            });
+            roomLayout.wallSegments.left.forEach(([startZ, endZ]) => {
+                const width = endZ - startZ;
+                addWall(width + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, bounds.left - EDGE_OVERLAP / 2, wallCenterY, (startZ + endZ) / 2, Math.PI / 2);
+            });
+            roomLayout.wallSegments.right.forEach(([startZ, endZ]) => {
+                const width = endZ - startZ;
+                addWall(width + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, bounds.right + EDGE_OVERLAP / 2, wallCenterY, (startZ + endZ) / 2, -Math.PI / 2);
+            });
 
             const boardFrameMat = new THREE.MeshStandardMaterial({ color: 0x7c4a21, roughness: 0.82, metalness: 0.12 });
             const boardMat = new THREE.MeshStandardMaterial({ color: 0x0f3b28, roughness: 0.95, metalness: 0.04 });
@@ -1947,16 +2051,16 @@
             }
 
             const doorMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8, metalness: 0.08 });
-            const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.2, 0.06), doorMat);
-            doorLeaf.position.set(2.95, 1.1, 7.14);
+            const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(roomLayout.door.width, roomLayout.door.height, 0.06), doorMat);
+            doorLeaf.position.set(roomLayout.door.centerX, roomLayout.door.height / 2, bounds.front - 0.06);
             room.add(doorLeaf);
             const doorHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.14, 12), new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.35, metalness: 0.85 }));
             doorHandle.rotation.x = Math.PI / 2;
-            doorHandle.position.set(3.34, 1.1, 7.09);
+            doorHandle.position.set(roomLayout.door.centerX + roomLayout.door.width * 0.36, roomLayout.door.height / 2, bounds.front - 0.11);
             room.add(doorHandle);
             for(let h = 0; h < 3; h++) {
                 const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.16, 0.05), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5, metalness: 0.75 }));
-                hinge.position.set(2.41, 1.9 - h * 0.72, 7.12);
+                hinge.position.set(roomLayout.door.centerX - roomLayout.door.width / 2 + 0.01, 1.9 - h * 0.72, bounds.front - 0.08);
                 room.add(hinge);
             }
 
@@ -1976,26 +2080,25 @@
                 clearcoatRoughness: 0.08
             });
 
-            for(let i = 0; i < 4; i++) {
-                const zPos = -2.8 + i * 2.2;
+            roomLayout.windows.centers.forEach((zPos) => {
                 const windowFrame = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.16, 1.18), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.75 }));
-                windowFrame.position.set(-6.34, 1.85, zPos);
+                windowFrame.position.set(bounds.left + 0.06, 1.85, zPos);
                 room.add(windowFrame);
                 const sash = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.1, 0.54), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.45, metalness: 0.72 }));
-                sash.position.set(-6.315, 1.85, zPos - 0.26);
+                sash.position.set(bounds.left + 0.085, 1.85, zPos - 0.26);
                 room.add(sash);
                 const sash2 = sash.clone();
                 sash2.position.z = zPos + 0.26;
                 room.add(sash2);
                 const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 1.08), glassMat);
-                glass.position.set(-6.29, 1.82, zPos);
+                glass.position.set(bounds.left + 0.11, 1.82, zPos);
                 glass.rotation.y = Math.PI / 2;
                 room.add(glass);
                 const windowHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, metalness: 0.95 }));
                 windowHandle.rotation.z = Math.PI / 2;
-                windowHandle.position.set(-6.27, 1.8, zPos + 0.26);
+                windowHandle.position.set(bounds.left + 0.13, 1.8, zPos + 0.26);
                 room.add(windowHandle);
-            }
+            });
 
             const corridorRailMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.45, metalness: 0.78 });
             const corridorRail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 10.6), corridorRailMat);
