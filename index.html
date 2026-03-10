@@ -1996,7 +1996,8 @@
 
         function closeSeat3DView() {
             const viewer = document.getElementById('seat-3d-viewer');
-            viewer.classList.add('hidden');
+            const wrap = document.getElementById('seat-3d-canvas');
+            if(viewer) viewer.classList.add('hidden');
             seat3DState.active = false;
             seat3DState.isDragging = false;
             if(seat3DState.hintTimer) clearTimeout(seat3DState.hintTimer);
@@ -2006,9 +2007,9 @@
             if(seat3DState.animationId) cancelAnimationFrame(seat3DState.animationId);
             seat3DState.animationId = null;
 
-            seat3DState.removeListeners.forEach(fn => fn());
+            seat3DState.removeListeners.forEach(fn => typeof fn === 'function' && fn());
             seat3DState.removeListeners = [];
-            seat3DState.disposeResources.forEach(fn => fn());
+            seat3DState.disposeResources.forEach(fn => typeof fn === 'function' && fn());
             seat3DState.disposeResources = [];
             seat3DState.fanBlades = [];
             seat3DState.fluorescentLights = [];
@@ -2016,11 +2017,14 @@
             seat3DState.windowLeafSways = [];
 
             if(seat3DState.renderer) {
-                const wrap = document.getElementById('seat-3d-canvas');
-                if(seat3DState.renderer.domElement.parentNode === wrap) {
-                    wrap.removeChild(seat3DState.renderer.domElement);
+                const canvas = seat3DState.renderer.domElement;
+                if(wrap && canvas?.parentNode === wrap) {
+                    wrap.removeChild(canvas);
                 }
                 seat3DState.renderer.dispose();
+            }
+            if(wrap) {
+                while(wrap.firstChild) wrap.removeChild(wrap.firstChild);
             }
 
             seat3DState.renderer = null;
