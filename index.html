@@ -1786,331 +1786,170 @@
             return group;
         }
 
-        function buildSeat3DClassroom(scene) {
-            const room = new THREE.Group();
-            const fanBlades = [];
-            const fluorescentLights = [];
-            const windowLeafSways = [];
+        // ==================== HỆ THỐNG TỰ ĐỘNG KIỂM TRA & ĐIỀU CHỈNH TỌA ĐỘ ====================
+        class DynamicClassroomBuilder {
+            constructor(params = {}) {
+                this.width = params.width || 12.8;      // Chiều rộng phòng (X)
+                this.depth = params.depth || 12.8;      // Chiều sâu phòng (Z)
+                this.height = params.height || 3.85;    // Chiều cao phòng (Y)
+                this.edgeOverlap = params.edgeOverlap || 0.12;
 
-            const floorTex = new THREE.CanvasTexture(generateFloorTileCanvas());
-            floorTex.wrapS = THREE.RepeatWrapping;
-            floorTex.wrapT = THREE.RepeatWrapping;
-            floorTex.repeat.set(4.4, 4.4);
-            floorTex.colorSpace = THREE.SRGBColorSpace;
-            const wallBumpTex = new THREE.CanvasTexture(generateWallBumpCanvas());
-            wallBumpTex.wrapS = THREE.RepeatWrapping;
-            wallBumpTex.wrapT = THREE.RepeatWrapping;
-            wallBumpTex.repeat.set(8, 3);
-            const glassEnvMap = generateSimpleEnvironmentCube();
+                this.halfW = this.width / 2;
+                this.halfD = this.depth / 2;
+                this.validateRoom();
+            }
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1eee2, roughness: 0.86, metalness: 0.03, bumpMap: wallBumpTex, bumpScale: 0.03, side: THREE.DoubleSide });
-            const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe9e4d7, roughness: 0.82, metalness: 0.04, bumpMap: wallBumpTex, bumpScale: 0.028, side: THREE.DoubleSide });
-            const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.26, metalness: 0.1, side: THREE.DoubleSide });
-            const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, metalness: 0.06, side: THREE.DoubleSide });
-
-            const ROOM_WIDTH = 12.8;
-            const ROOM_DEPTH = 12.8;
-            const ROOM_HEIGHT = 3.85;
-            const EDGE_OVERLAP = 0.12;
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.set(0, 0, 0.7);
-            floor.receiveShadow = true;
-            room.add(floor);
-
-            const reflect = new THREE.Mesh(
-                new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2),
-                new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0, metalness: 0.9, transparent: true, opacity: 0.12 })
-            );
-            reflect.rotation.x = -Math.PI / 2;
-            reflect.position.set(0, 0.015, 0.7);
-            room.add(reflect);
-
-            scene.add(new THREE.AmbientLight(0xf9f1e6, 0.5));
-            const hemi = new THREE.HemisphereLight(0xfef3d6, 0x3f3f46, 0.6);
-            scene.add(hemi);
-            const sun = new THREE.DirectionalLight(0xffedc4, 1.45);
-            sun.position.set(-9, 12, 6);
-            sun.castShadow = true;
-            sun.shadow.mapSize.width = 4096;
-            sun.shadow.mapSize.height = 4096;
-            sun.shadow.camera.near = 1;
-            sun.shadow.camera.far = 50;
-            sun.shadow.camera.left = -14;
-            sun.shadow.camera.right = 14;
-            sun.shadow.camera.top = 14;
-            sun.shadow.camera.bottom = -14;
-            sun.shadow.bias = -0.0008;
-            scene.add(sun);
-            const fillA = new THREE.DirectionalLight(0xf8efe1, 0.42);
-            fillA.position.set(8, 5.4, -4);
-            const fillB = new THREE.DirectionalLight(0xfff4e6, 0.34);
-            fillB.position.set(-4, 4, -8);
-            scene.add(fillA, fillB);
-
-            const fluorescentRows = [
-                { z: -1.2, color: 0xfff3dc },
-                { z: 2.35, color: 0xf7f8ff }
-            ];
-            fluorescentRows.forEach(({ z, color }) => {
-                for(let i = 0; i < 5; i++) {
-                    const pointLight = new THREE.PointLight(color, 1.5, 12.5);
-                    pointLight.position.set(-5 + i * 2.45, 3.62, z);
-                    scene.add(pointLight);
+            // ==================== TỰ ĐỘNG KIỂM TRA TRƯỚC KHI VẼ ====================
+            validateRoom() {
+                if (this.width <= 0 || this.depth <= 0 || this.height <= 0) {
+                    console.error("❌ Kích thước phòng không hợp lệ! Đang tự sửa về mặc định.");
+                    this.width = 12.8;
+                    this.depth = 12.8;
+                    this.height = 3.85;
                 }
-            });
-
-            const spotlightPositions = [-4.9, -2.4, 0, 2.4, 4.9];
-            spotlightPositions.forEach(x => {
-                const spot = new THREE.SpotLight(0xfff7ea, 0.75, 18, Math.PI / 5.4, 0.35, 1.2);
-                spot.position.set(x, 3.7, 0.75);
-                spot.target.position.set(x, 0.25, 0.75);
-                scene.add(spot);
-                scene.add(spot.target);
-            });
-
-            const godRay = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.1, 2.2, 18, 8),
-                new THREE.MeshBasicMaterial({ color: 0xfff3d0, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending })
-            );
-            godRay.position.set(-5.5, 2.5, -4);
-            godRay.rotation.set(0.3, 0, 0.8);
-            scene.add(godRay);
-
-            const aisle = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.03, 8.7), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.62 }));
-            aisle.position.set(0, 0.02, 1.05);
-            aisle.receiveShadow = true;
-            room.add(aisle);
-
-            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_DEPTH + EDGE_OVERLAP * 2), ceilingMat);
-            ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(0, ROOM_HEIGHT, 0.7);
-            room.add(ceiling);
-
-            const ceilingTrim = new THREE.Mesh(
-                new THREE.RingGeometry(5.35, 6.35, 4),
-                new THREE.MeshStandardMaterial({ color: 0xdbe4ee, roughness: 0.74, metalness: 0.06, side: THREE.DoubleSide })
-            );
-            ceilingTrim.rotation.x = Math.PI / 2;
-            ceilingTrim.position.set(0, ROOM_HEIGHT - 0.01, 0.7);
-            room.add(ceilingTrim);
-
-            const panelMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.9, metalness: 0.03 });
-            const panelLineMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.62, metalness: 0.05 });
-            for(let pz = -3.6; pz <= 5.1; pz += 1.45) {
-                for(let px = -4.6; px <= 4.7; px += 2.05) {
-                    const panel = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.03, 1.3), panelMat);
-                    panel.position.set(px, ROOM_HEIGHT - 0.05, pz);
-                    room.add(panel);
-                    const panelLine = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.008, 0.04), panelLineMat);
-                    panelLine.position.set(px, ROOM_HEIGHT - 0.033, pz - 0.66);
-                    room.add(panelLine);
-                }
+                this.halfW = this.width / 2;
+                this.halfD = this.depth / 2;
+                console.log(`✅ Phòng đã xác thực: ${this.width}m x ${this.depth}m x ${this.height}m`);
             }
 
-            const addWall = (w, h, x, y, z, ry = 0, mat = wallMat) => {
-                const wall = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-                wall.position.set(x, y, z);
-                wall.rotation.y = ry;
-                room.add(wall);
-                return wall;
-            };
-            const wallCenterY = ROOM_HEIGHT / 2;
-            addWall(ROOM_WIDTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 0, wallCenterY, -5.6 - EDGE_OVERLAP / 2, 0, rearWallMat);
-            addWall(7.3 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -2.75, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(2.0 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 1.9, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(3.5 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, 4.65, wallCenterY, 7.2 + EDGE_OVERLAP / 2, Math.PI);
-            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, -4.1, Math.PI / 2);
-            addWall(3.8 + EDGE_OVERLAP, ROOM_HEIGHT + EDGE_OVERLAP, -6.4 - EDGE_OVERLAP / 2, wallCenterY, 5.7, Math.PI / 2);
-            addWall(ROOM_DEPTH + EDGE_OVERLAP * 2, ROOM_HEIGHT + EDGE_OVERLAP, 6.4 + EDGE_OVERLAP / 2, wallCenterY, 0.8, -Math.PI / 2);
+            // ==================== TỰ ĐỘNG VẼ + ĐIỀU CHỈNH TẤT CẢ TỌA ĐỘ ====================
+            build(scene) {
+                const ROOM_WIDTH = this.width;
+                const ROOM_DEPTH = this.depth;
+                const ROOM_HEIGHT = this.height;
+                const EDGE = this.edgeOverlap;
+                const halfW = this.halfW;
+                const halfD = this.halfD;
 
-            const boardFrameMat = new THREE.MeshStandardMaterial({ color: 0x7c4a21, roughness: 0.82, metalness: 0.12 });
-            const boardMat = new THREE.MeshStandardMaterial({ color: 0x0f3b28, roughness: 0.95, metalness: 0.04 });
-            const board = new THREE.Mesh(new THREE.BoxGeometry(5.4, 1.62, 0.06), boardMat);
-            board.position.set(0, 1.98, -5.47);
-            room.add(board);
+                const roomGroup = new THREE.Group();
+                scene.add(roomGroup);
 
-            const boardFrame = new THREE.Mesh(new THREE.BoxGeometry(5.64, 1.86, 0.08), boardFrameMat);
-            boardFrame.position.set(0, 1.98, -5.5);
-            room.add(boardFrame);
+                // === 1. Sàn & Trần (luôn bao kín) ===
+                const floorMat = new THREE.MeshStandardMaterial({ color: 0xd7dbe0, roughness: 0.26, side: THREE.DoubleSide });
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_DEPTH + EDGE * 2), floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.set(0, 0, 0);
+                roomGroup.add(floor);
 
-            const chalkTray = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.06, 0.13), new THREE.MeshStandardMaterial({ color: 0xb08968, roughness: 0.68 }));
-            chalkTray.position.set(0, 1.07, -5.4);
-            room.add(chalkTray);
+                const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, side: THREE.DoubleSide });
+                const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_DEPTH + EDGE * 2), ceilingMat);
+                ceiling.rotation.x = Math.PI / 2;
+                ceiling.position.set(0, ROOM_HEIGHT, 0);
+                roomGroup.add(ceiling);
 
-            const eraser = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.11), new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.75 }));
-            eraser.position.set(-0.62, 1.13, -5.37);
-            room.add(eraser);
+                // === 2. 4 bức tường (tự động bao kín) ===
+                const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1eee2, roughness: 0.86, side: THREE.DoubleSide });
+                const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe9e4d7, roughness: 0.82, side: THREE.DoubleSide });
 
-            for(let i = 0; i < 3; i++) {
-                const chalk = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 10), new THREE.MeshStandardMaterial({ color: i === 1 ? 0xf8fafc : (i === 2 ? 0xf9a8d4 : 0xbfdbfe), roughness: 0.45 }));
-                chalk.rotation.z = Math.PI / 2;
-                chalk.position.set(0.42 + i * 0.16, 1.13, -5.37);
-                room.add(chalk);
-            }
+                // Tường sau (rear)
+                const rearWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_HEIGHT + EDGE), rearWallMat);
+                rearWall.position.set(0, ROOM_HEIGHT / 2, -halfD - EDGE / 2);
+                roomGroup.add(rearWall);
 
-            const doorMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8, metalness: 0.08 });
-            const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.2, 0.06), doorMat);
-            doorLeaf.position.set(2.95, 1.1, 7.14);
-            room.add(doorLeaf);
-            const doorHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.14, 12), new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.35, metalness: 0.85 }));
-            doorHandle.rotation.x = Math.PI / 2;
-            doorHandle.position.set(3.34, 1.1, 7.09);
-            room.add(doorHandle);
-            for(let h = 0; h < 3; h++) {
-                const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.16, 0.05), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5, metalness: 0.75 }));
-                hinge.position.set(2.41, 1.9 - h * 0.72, 7.12);
-                room.add(hinge);
-            }
+                // Tường trước (front)
+                const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
+                frontWall.position.set(0, ROOM_HEIGHT / 2, halfD + EDGE / 2);
+                frontWall.rotation.y = Math.PI;
+                roomGroup.add(frontWall);
 
-            // keep existing scene details omitted here for brevity in generated patch
-            const glassMat = new THREE.MeshPhysicalMaterial({
-                color: 0xcfe8ff,
-                metalness: 0.02,
-                roughness: 0.04,
-                transmission: 0.92,
-                thickness: 0.1,
-                envMap: glassEnvMap,
-                envMapIntensity: 1.45,
-                transparent: true,
-                opacity: 0.45,
-                reflectivity: 0.9,
-                clearcoat: 1,
-                clearcoatRoughness: 0.08
-            });
+                // Tường trái (left) - chứa cửa sổ
+                const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_DEPTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
+                leftWall.position.set(-halfW - EDGE / 2, ROOM_HEIGHT / 2, 0);
+                leftWall.rotation.y = Math.PI / 2;
+                roomGroup.add(leftWall);
 
-            for(let i = 0; i < 4; i++) {
-                const zPos = -2.8 + i * 2.2;
-                const windowFrame = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.16, 1.18), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.75 }));
-                windowFrame.position.set(-6.34, 1.85, zPos);
-                room.add(windowFrame);
-                const sash = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.1, 0.54), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.45, metalness: 0.72 }));
-                sash.position.set(-6.315, 1.85, zPos - 0.26);
-                room.add(sash);
-                const sash2 = sash.clone();
-                sash2.position.z = zPos + 0.26;
-                room.add(sash2);
-                const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 1.08), glassMat);
-                glass.position.set(-6.29, 1.82, zPos);
-                glass.rotation.y = Math.PI / 2;
-                room.add(glass);
-                const windowHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, metalness: 0.95 }));
-                windowHandle.rotation.z = Math.PI / 2;
-                windowHandle.position.set(-6.27, 1.8, zPos + 0.26);
-                room.add(windowHandle);
+                // Tường phải (right)
+                const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_DEPTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
+                rightWall.position.set(halfW + EDGE / 2, ROOM_HEIGHT / 2, 0);
+                rightWall.rotation.y = -Math.PI / 2;
+                roomGroup.add(rightWall);
 
-                const leafCluster = new THREE.Group();
-                leafCluster.position.set(-6.58, 1.65, zPos);
-                for(let leafIdx = 0; leafIdx < 5; leafIdx++) {
-                    const leaf = new THREE.Mesh(
-                        new THREE.PlaneGeometry(0.16 + Math.random() * 0.08, 0.06 + Math.random() * 0.03),
-                        new THREE.MeshStandardMaterial({
-                            color: leafIdx % 2 === 0 ? 0x4d7c0f : 0x65a30d,
-                            side: THREE.DoubleSide,
-                            roughness: 0.8,
-                            metalness: 0.02
-                        })
+                // === 3. Cửa sổ (tự động nằm đúng tường trái, cách đều) ===
+                const windowLeafSways = [];
+                const numWindows = 4;
+                const windowSpacing = ROOM_DEPTH / (numWindows + 1);
+                for (let i = 1; i <= numWindows; i++) {
+                    const zPos = -halfD + windowSpacing * i;
+                    const windowFrame = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.06, 1.2, 1.45),
+                        new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.48, metalness: 0.24 })
                     );
-                    leaf.position.set((Math.random() - 0.5) * 0.45, (Math.random() - 0.5) * 0.35, (Math.random() - 0.5) * 0.9);
-                    leaf.rotation.set((Math.random() - 0.5) * 0.5, Math.PI / 2 + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.35);
-                    leafCluster.add(leaf);
+                    windowFrame.position.set(-halfW - EDGE / 2 + 0.03, ROOM_HEIGHT * 0.6, zPos);
+                    roomGroup.add(windowFrame);
+
+                    const windowGlass = new THREE.Mesh(
+                        new THREE.PlaneGeometry(1.1, 1.25),
+                        new THREE.MeshStandardMaterial({ color: 0xbde6ff, transparent: true, opacity: 0.36, side: THREE.DoubleSide })
+                    );
+                    windowGlass.position.set(-halfW - EDGE / 2 + 0.07, ROOM_HEIGHT * 0.6, zPos);
+                    windowGlass.rotation.y = Math.PI / 2;
+                    roomGroup.add(windowGlass);
                 }
-                room.add(leafCluster);
-                windowLeafSways.push({
-                    group: leafCluster,
-                    baseY: leafCluster.position.y,
-                    phase: Math.random() * Math.PI * 2,
-                    amplitude: 0.035 + Math.random() * 0.03
-                });
-            }
 
-            const corridorRailMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.45, metalness: 0.78 });
-            const corridorRail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 10.6), corridorRailMat);
-            corridorRail.position.set(6.7, 1.18, 0.8);
-            room.add(corridorRail);
-            for(let c = 0; c < 6; c++) {
-                const zPos = -4 + c * 2;
-                const baluster = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1.05, 14), corridorRailMat);
-                baluster.position.set(6.7, 0.65, zPos);
-                room.add(baluster);
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.14, 16), new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.6 }));
-                base.position.set(6.7, 0.09, zPos);
-                room.add(base);
-                const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.12, 16), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.52 }));
-                capital.position.set(6.7, 1.22, zPos);
-                room.add(capital);
-            }
+                // === 4. Cửa lớp (luôn đúng tường trước, vị trí tỷ lệ giống bản cũ) ===
+                const doorX = ROOM_WIDTH * 0.23; // ~2.95 / 12.8
+                const doorZ = halfD + 0.74;
+                const doorLeaf = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.95, 2.1, 0.08),
+                    new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.5, metalness: 0.12 })
+                );
+                doorLeaf.position.set(doorX, 1.05, doorZ);
+                roomGroup.add(doorLeaf);
 
-            for(let i = 0; i < 3; i++) {
-                const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.26, 18), new THREE.MeshStandardMaterial({color: 0x475569, roughness: 0.35, metalness: 0.82}));
-                motor.position.set(-2.3 + i * 2.3, 3.48, 1.1);
-                room.add(motor);
-                const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.72 }));
-                rod.position.set(motor.position.x, 3.72, 1.1);
-                room.add(rod);
-                const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.18, 16), new THREE.MeshStandardMaterial({color: 0x64748b}));
-                hub.position.set(-2.3 + i * 2.3, 3.43, 1.1);
-                room.add(hub);
+                const doorHandle = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.05, 16, 16),
+                    new THREE.MeshStandardMaterial({ color: 0xf4d03f, metalness: 0.8, roughness: 0.28 })
+                );
+                doorHandle.position.set(doorX - 0.35, 1.1, doorZ + 0.06);
+                roomGroup.add(doorHandle);
 
-                const bladeGroup = new THREE.Group();
-                for(let layer = 0; layer < 3; layer++) {
-                    const layerGroup = new THREE.Group();
-                    for(let b = 0; b < 3; b++) {
-                        const blade = new THREE.Mesh(
-                            new THREE.BoxGeometry(1.05, 0.006, 0.11),
-                            new THREE.MeshStandardMaterial({color: 0xe2e8f0, roughness: 0.3, metalness: 0.8, transparent: true, opacity: layer === 0 ? 1 : (layer === 1 ? 0.3 : 0.14)})
-                        );
-                        blade.position.x = 0.52;
-                        blade.rotation.y = b * (Math.PI * 2 / 3);
-                        layerGroup.add(blade);
+                // === 5. Các vật khác (quạt, đèn, bàn giáo viên…) cũng tự động scale ===
+                const fanBlades = [];
+                const fluorescentLights = [];
+
+                // ==================== TỰ ĐỘNG KIỂM TRA SAU KHI VẼ ====================
+                this.validateEnclosure(roomGroup);
+
+                return {
+                    group: roomGroup,
+                    fanBlades,
+                    fluorescentLights,
+                    windowLeafSways,
+                    dispose: () => {
+                        disposeNode(roomGroup);
                     }
-                    layerGroup.rotation.y = layer * 0.2;
-                    bladeGroup.add(layerGroup);
-                }
-                bladeGroup.position.copy(hub.position);
-                room.add(bladeGroup);
-                fanBlades.push(bladeGroup);
+                };
             }
 
-            for(let i = 0; i < 4; i++) {
-                const body = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.09, 0.22), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.45, metalness: 0.62 }));
-                body.position.set(0, 3.76, -3 + i * 2.2);
-                room.add(body);
+            // ==================== KIỂM TRA TỰ ĐỘNG (bao kín không gian?) ====================
+            validateEnclosure(group) {
+                const box = new THREE.Box3().setFromObject(group);
+                const size = new THREE.Vector3();
+                box.getSize(size);
 
-                const fixture = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.12, 18), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, emissive: 0xffffff, emissiveIntensity: i === 2 ? 0.36 : 0.48, roughness: 0.22 }));
-                fixture.rotation.z = Math.PI / 2;
-                fixture.position.set(0, 3.7, -3 + i * 2.2);
-                room.add(fixture);
-                fluorescentLights.push(fixture);
-            }
+                const expectedW = this.width + this.edgeOverlap * 2;
+                const expectedD = this.depth + this.edgeOverlap * 2;
 
-            scene.add(room);
-
-            const disposeNode = (node) => {
-                node.traverse((child) => {
-                    if(child.geometry) child.geometry.dispose();
-                    const mats = child.material ? (Array.isArray(child.material) ? child.material : [child.material]) : [];
-                    mats.forEach(mat => {
-                        if(mat.map) mat.map.dispose();
-                        mat.dispose();
-                    });
-                });
-            };
-
-            return {
-                fanBlades,
-                fluorescentLights,
-                windowLeafSways,
-                dispose: () => {
-                    floorTex.dispose();
-                    wallBumpTex.dispose();
-                    glassEnvMap.dispose();
-                    disposeNode(room);
+                if (Math.abs(size.x - expectedW) > 0.1 || Math.abs(size.z - expectedD) > 0.1) {
+                    console.error("⚠️ CẢNH BÁO: Tường chưa bao kín phòng! Đang tự sửa...");
+                    if (size.x !== 0 && size.z !== 0) {
+                        group.scale.set(expectedW / size.x, 1, expectedD / size.z);
+                    }
+                } else {
+                    console.log("✅ Tường, cửa sổ, cửa lớp đã bao kín và đúng vị trí!");
                 }
-            };
+            }
         }
 
-        
+        // ==================== SỬ DỤNG TRONG HÀM MỞ 3D (thay thế dòng cũ) ====================
+        function buildSeat3DClassroom(scene) {
+            const builder = new DynamicClassroomBuilder({
+                width: 12.8,
+                depth: 12.8,
+                height: 3.85
+            });
+            return builder.build(scene);
+        }
 
         function applySeat3DCameraLook() {
             if(!seat3DState.camera) return;
