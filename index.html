@@ -913,6 +913,8 @@
             lastY: 0,
             fanBlades: [],
             fluorescentLights: [],
+            lightBlinkState: [],
+            windowLeafSways: [],
             removeListeners: [],
             disposeResources: []
         };
@@ -1788,6 +1790,7 @@
             const room = new THREE.Group();
             const fanBlades = [];
             const fluorescentLights = [];
+            const windowLeafSways = [];
 
             const floorTex = new THREE.CanvasTexture(generateFloorTileCanvas());
             floorTex.wrapS = THREE.RepeatWrapping;
@@ -1995,6 +1998,30 @@
                 windowHandle.rotation.z = Math.PI / 2;
                 windowHandle.position.set(-6.27, 1.8, zPos + 0.26);
                 room.add(windowHandle);
+
+                const leafCluster = new THREE.Group();
+                leafCluster.position.set(-6.58, 1.65, zPos);
+                for(let leafIdx = 0; leafIdx < 5; leafIdx++) {
+                    const leaf = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.16 + Math.random() * 0.08, 0.06 + Math.random() * 0.03),
+                        new THREE.MeshStandardMaterial({
+                            color: leafIdx % 2 === 0 ? 0x4d7c0f : 0x65a30d,
+                            side: THREE.DoubleSide,
+                            roughness: 0.8,
+                            metalness: 0.02
+                        })
+                    );
+                    leaf.position.set((Math.random() - 0.5) * 0.45, (Math.random() - 0.5) * 0.35, (Math.random() - 0.5) * 0.9);
+                    leaf.rotation.set((Math.random() - 0.5) * 0.5, Math.PI / 2 + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.35);
+                    leafCluster.add(leaf);
+                }
+                room.add(leafCluster);
+                windowLeafSways.push({
+                    group: leafCluster,
+                    baseY: leafCluster.position.y,
+                    phase: Math.random() * Math.PI * 2,
+                    amplitude: 0.035 + Math.random() * 0.03
+                });
             }
 
             const corridorRailMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.45, metalness: 0.78 });
@@ -2022,7 +2049,7 @@
                 rod.position.set(motor.position.x, 3.72, 1.1);
                 room.add(rod);
                 const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.18, 16), new THREE.MeshStandardMaterial({color: 0x64748b}));
-                hub.position.set(-2.3 + i * 2.3, 3.32, 1.1);
+                hub.position.set(-2.3 + i * 2.3, 3.43, 1.1);
                 room.add(hub);
 
                 const bladeGroup = new THREE.Group();
@@ -2073,6 +2100,7 @@
             return {
                 fanBlades,
                 fluorescentLights,
+                windowLeafSways,
                 dispose: () => {
                     floorTex.dispose();
                     wallBumpTex.dispose();
@@ -2145,6 +2173,8 @@
             seat3DState.disposeResources = [];
             seat3DState.fanBlades = [];
             seat3DState.fluorescentLights = [];
+            seat3DState.lightBlinkState = [];
+            seat3DState.windowLeafSways = [];
 
             if(seat3DState.renderer) {
                 const wrap = document.getElementById('seat-3d-canvas');
@@ -2214,6 +2244,13 @@
             const roomSetup = buildSeat3DClassroom(scene);
             seat3DState.fanBlades = roomSetup.fanBlades;
             seat3DState.fluorescentLights = roomSetup.fluorescentLights;
+            seat3DState.windowLeafSways = roomSetup.windowLeafSways;
+            seat3DState.lightBlinkState = seat3DState.fluorescentLights.map(light => ({
+                light,
+                current: light.material.emissiveIntensity,
+                target: light.material.emissiveIntensity,
+                nextSwitchAt: performance.now() + 250 + Math.random() * 1150
+            }));
             seat3DState.disposeResources.push(roomSetup.dispose);
 
             const entries = getSeatEntriesFor3D();
@@ -2374,12 +2411,30 @@
                 bobTime += 0.016;
                 seat3DState.camera.position.y = 1.25 + Math.sin(bobTime * 1.8) * 0.008;
                 const t = performance.now() * 0.001;
-                seat3DState.fanBlades.forEach((fan, idx) => {
-                    fan.rotation.y += 0.14 + idx * 0.01;
+                seat3DState.fanBlades.forEach(fan => {
+                    fan.rotation.y += 0.5;
                 });
-                seat3DState.fluorescentLights.forEach((lightMesh, idx) => {
-                    const flicker = idx === 2 ? 0.27 + Math.sin(t * 8) * 0.07 : 0.45;
-                    lightMesh.material.emissiveIntensity = flicker;
+
+                seat3DState.lightBlinkState.forEach((blinkState, idx) => {
+                    if(!blinkState.light?.material) return;
+                    const now = performance.now();
+                    if(now >= blinkState.nextSwitchAt) {
+                        const base = 0.38 + idx * 0.025;
+                        const blinkDrop = Math.random() < 0.35 ? 0.12 + Math.random() * 0.18 : 0;
+                        blinkState.target = Math.max(0.12, base - blinkDrop);
+                        blinkState.nextSwitchAt = now + 250 + Math.random() * 1250;
+                    }
+                    blinkState.current += (blinkState.target - blinkState.current) * 0.14;
+                    blinkState.light.material.emissiveIntensity = blinkState.current;
+                });
+
+                const windSway = Math.min(0.15, 0.03 + config.settings.intensity * 0.025);
+                const windX = Math.abs(particleEngine?.windVector?.x || 0) * 0.002;
+                seat3DState.windowLeafSways.forEach(sway => {
+                    const osc = Math.sin(t * 1.25 + sway.phase) * sway.amplitude;
+                    sway.group.rotation.y = Math.PI / 2 + osc + windSway + windX;
+                    sway.group.rotation.z = Math.sin(t * 1.7 + sway.phase * 0.7) * (sway.amplitude * 0.85);
+                    sway.group.position.y = sway.baseY + Math.sin(t * 1.15 + sway.phase) * 0.015;
                 });
                 tagGroup.children.forEach(tag => tag.lookAt(camera.position));
                 renderer.render(scene, camera);
