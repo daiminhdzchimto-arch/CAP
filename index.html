@@ -1989,27 +1989,30 @@
                 const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1eee2, roughness: 0.86, side: THREE.DoubleSide });
                 const rearWallMat = new THREE.MeshStandardMaterial({ color: 0xe9e4d7, roughness: 0.82, side: THREE.DoubleSide });
 
+                const roomCenter = new THREE.Vector3(0, ROOM_HEIGHT / 2, 0);
+
                 // Tường sau (rear)
                 const rearWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_HEIGHT + EDGE), rearWallMat);
                 rearWall.position.set(0, ROOM_HEIGHT / 2, -halfD - EDGE / 2);
+                rearWall.lookAt(roomCenter);
                 roomGroup.add(rearWall);
 
                 // Tường trước (front)
                 const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
                 frontWall.position.set(0, ROOM_HEIGHT / 2, halfD + EDGE / 2);
-                frontWall.rotation.y = Math.PI;
+                frontWall.lookAt(roomCenter);
                 roomGroup.add(frontWall);
 
                 // Tường trái (left) - chứa cửa sổ
                 const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_DEPTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
                 leftWall.position.set(-halfW - EDGE / 2, ROOM_HEIGHT / 2, 0);
-                leftWall.rotation.y = Math.PI / 2;
+                leftWall.lookAt(roomCenter);
                 roomGroup.add(leftWall);
 
                 // Tường phải (right)
                 const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_DEPTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
                 rightWall.position.set(halfW + EDGE / 2, ROOM_HEIGHT / 2, 0);
-                rightWall.rotation.y = -Math.PI / 2;
+                rightWall.lookAt(roomCenter);
                 roomGroup.add(rightWall);
 
                 // === 3. Cửa sổ (tự động nằm đúng tường trái, cách đều) ===
