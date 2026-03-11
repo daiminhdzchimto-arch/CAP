@@ -3663,7 +3663,15 @@
             document.getElementById('share-modal').classList.add('open');
         }
         function closeShareModal() { document.getElementById('share-modal').classList.remove('open'); }
-        function copyShareCode() { document.getElementById('share-code-input').select(); document.execCommand('copy'); showToast("Đã sao chép mã!"); }
+        async function copyShareCode() {
+            const shareCodeInput = document.getElementById('share-code-input');
+            try {
+                await navigator.clipboard.writeText(shareCodeInput.value);
+                showToast("Đã sao chép mã!");
+            } catch (error) {
+                showToast("Không thể sao chép mã. Vui lòng thử lại.");
+            }
+        }
         function importFromCode() {
             const code = document.getElementById('import-code-input').value.trim();
             try {
