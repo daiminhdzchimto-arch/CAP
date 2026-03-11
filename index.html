@@ -1251,13 +1251,14 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = className;
+                btn.dataset.actionButton = 'true';
                 btn.title = title;
                 btn.setAttribute('aria-label', title);
                 btn.innerHTML = icon;
                 btn.onclick = e => {
                     e.preventDefault();
                     e.stopPropagation();
-                    onClick();
+                    onClick(e);
                 };
                 return btn;
             };
@@ -1300,6 +1301,7 @@
                     };
 
                     const click=e=>{
+                        if(e.target.closest('[data-action-button="true"]')) return;
                         if(swapSource){
                             if(isSrc)cancelSwapMode();
                             else{e.preventDefault();executeSwap(side,ri,si)}
@@ -1316,7 +1318,7 @@
                         className: 'swap-seat-btn',
                         title: 'Hoán đổi vị trí (không phải nhập tên)',
                         icon: '<i class="fas fa-exchange-alt"></i>',
-                        onClick: () => handleSwapButtonClick(side, ri, si)
+                        onClick: e => handleSwapButtonClick(e, side, ri, si)
                     });
                     cell.appendChild(swapBtn);
                     requestAnimationFrame(() => fitDeskInputText(ta));
@@ -2420,7 +2422,11 @@
         }
 
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); const seat = document.querySelector(`.desk-box[data-side="${s}"][data-r="${r}"][data-c="${c}"]`) || document.querySelector('.swap-selected'); animateActionFeedback(seat || '#classroom-area','animate-pulse-highlight',420); }
-        function handleSwapButtonClick(side,r,c){
+        function handleSwapButtonClick(event,side,r,c){
+            if(event){
+                event.preventDefault();
+                event.stopPropagation();
+            }
             if(swapSource){
                 if(swapSource.side===side && swapSource.r===r && swapSource.c===c){
                     cancelSwapMode();
