@@ -1,2 +1,7 @@
 #!/usr/bin/env sh
+
+if grep -q '^chore(release):' "$1"; then
+  exit 0
+fi
+
 npx commitlint --edit "$1"
