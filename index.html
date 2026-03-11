@@ -2540,6 +2540,18 @@
             if(isEditMode) renderConflictManagement();
         }
 
+        let drawThreadsFrameId = null;
+
+        function scheduleDrawThreads() {
+            if(drawThreadsFrameId !== null) cancelAnimationFrame(drawThreadsFrameId);
+            drawThreadsFrameId = requestAnimationFrame(() => {
+                drawThreadsFrameId = requestAnimationFrame(() => {
+                    drawThreadsFrameId = null;
+                    drawThreads();
+                });
+            });
+        }
+
         function renderMiniMap() {
             const grid = document.getElementById('mini-map-grid');
             grid.innerHTML = '';
@@ -2558,7 +2570,7 @@
                 grid.appendChild(div);
             });
             
-            setTimeout(drawThreads, 50);
+            scheduleDrawThreads();
         }
 
         function drawThreads() {
