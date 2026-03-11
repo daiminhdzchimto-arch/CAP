@@ -1,0 +1,101 @@
+name: Localization / i18n Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "locales/**"
+      - "i18next.config.*"
+      - "package.json"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: i18n-localization-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extract-and-sync:
+    name: Extract strings and open localization PR
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_SOURCE_LANG: en
+      TARGET_LANGS: vi
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure extraction script exists
+        run: |
+          if npm run | grep -q '^  i18n:extract'; then
+            echo "✅ Found npm script: i18n:extract"
+          else
+            echo "❌ Missing npm script: i18n:extract"
+            echo "Please add it (example: i18next-parser) before running this workflow."
+            exit 1
+          fi
+
+      - name: Extract source strings (i18next)
+        run: npm run i18n:extract
+
+      - name: Upload source strings to Crowdin (optional)
+        if: ${{ secrets.CROWDIN_PROJECT_ID != '' && secrets.CROWDIN_PERSONAL_TOKEN != '' }}
+        uses: crowdin/github-action@v2
+        with:
+          upload_sources: true
+          upload_translations: false
+          download_translations: false
+          create_pull_request: false
+          localization_branch_name: l10n_main
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Commit and create/update localization PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(i18n): update locale source strings"
+          title: "chore(i18n): update localization resources"
+          body: |
+            ## Localization / i18n Pipeline
+
+            This automated PR was created because source strings changed.
+
+            ### Pipeline summary
+            - Extract source keys from i18next (`npm run i18n:extract`).
+            - Update locale resources for **EN (source)** and **VI (target)**.
+            - Optionally sync source strings to Crowdin when related secrets are configured.
+
+            ### Audience
+            - Translators
+            - Product
+          branch: chore/i18n-auto-update
+          delete-branch: true
+          labels: |
+            i18n
+            localization
+            automated-pr
+          add-paths: |
+            locales/**
+            src/**/locales/**
