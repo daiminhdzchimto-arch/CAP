@@ -1,0 +1,89 @@
+name: CI Build & Lint (on PR / push)
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+
+concurrency:
+  group: ci-build-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-lint:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: ${{ hashFiles('package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Check Node project files
+        id: node_project
+        run: |
+          if [ -f package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "package.json found. Running CI build/lint steps."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No package.json found in repo root. Skipping npm build/lint workflow steps."
+          fi
+
+      - name: Install dependencies
+        if: ${{ steps.node_project.outputs.exists == 'true' }}
+        run: npm ci
+
+      - name: Prettier check (if script exists)
+        if: ${{ steps.node_project.outputs.exists == 'true' }}
+        run: |
+          if npm run | grep -qE '^  (format:check|prettier:check)'; then
+            if npm run | grep -q '^  format:check'; then
+              npm run format:check
+            else
+              npm run prettier:check
+            fi
+          else
+            echo "No Prettier check script found (format:check/prettier:check). Skipping."
+          fi
+
+      - name: ESLint / Stylelint
+        if: ${{ steps.node_project.outputs.exists == 'true' }}
+        run: npm run lint
+
+      - name: Build
+        if: ${{ steps.node_project.outputs.exists == 'true' }}
+        run: npm run build
+
+      - name: Auto-fix style issues (if scripts exist)
+        if: ${{ always() && steps.node_project.outputs.exists == 'true' }}
+        continue-on-error: true
+        run: |
+          if npm run | grep -q '^  lint:fix'; then
+            npm run lint:fix
+          fi
+
+          if npm run | grep -qE '^  (format:fix|prettier:fix)'; then
+            if npm run | grep -q '^  format:fix'; then
+              npm run format:fix
+            else
+              npm run prettier:fix
+            fi
+          fi
+
+          if npm run | grep -q '^  stylelint:fix'; then
+            npm run stylelint:fix
+          fi
