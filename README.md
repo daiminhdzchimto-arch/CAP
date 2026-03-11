@@ -19,6 +19,7 @@ Công cụ quản lý lớp học hiệu quả: Sắp xếp chỗ ngồi, bảng
 - [**Tham chiếu Phiên bản Cơ sở (Baseline)**](./BASELINE_REFERENCE.md): Mô tả chi tiết cấu trúc, tính năng và cơ chế của phiên bản gốc `11f86f5`.
 
 ## 🚀 Tính năng Chính
+
 - **Sơ đồ lớp học**: Tùy chỉnh chỗ ngồi, gộp/tách bàn, cố định vị trí học sinh.
 - **Xáo trộn thông minh**: Tự động đổi chỗ ngồi nhưng vẫn giữ nguyên các vị trí được đánh dấu cố định.
 - **Bảng thi đua**: Theo dõi thành tích và vi phạm của học sinh một cách trực quan.
@@ -26,6 +27,13 @@ Công cụ quản lý lớp học hiệu quả: Sắp xếp chỗ ngồi, bảng
 - **Xuất ảnh**: Chụp ảnh sơ đồ và lịch trực nhật để in ấn hoặc chia sẻ.
 
 ## 🛠️ Công nghệ Sử dụng
+
 - HTML5, Tailwind CSS, JavaScript (Vanilla).
 - Thư viện: html2canvas, Lucide Icons, Font Awesome.
 - Lưu trữ: LocalStorage (không cần server).
+
+## 🔒 Workflow: Pre-commit Hooks & Commit Lint
+
+- Sử dụng **Husky + lint-staged** để format file trước mỗi commit.
+- Sử dụng **commitlint** với chuẩn **Conventional Commits** để kiểm tra message commit.
+- Mục tiêu: giữ repo sạch và nhất quán trước khi push, hỗ trợ tự động hóa changelog.
