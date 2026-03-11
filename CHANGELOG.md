@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.2.0...v1.2.1) (2026-03-11)
+
+### Bug Fixes
+
+- **ci:** raise lhci third-party budget threshold ([ee8cbd5](https://github.com/daiminhdzchimto-arch/CAP/commit/ee8cbd525e06c231e6b19b7419bb57ad10e716ee))
+- **ci:** relax lighthouse script budget threshold ([754e25e](https://github.com/daiminhdzchimto-arch/CAP/commit/754e25e89bba2468fb88f44ab270869ef60307f8))
+- **ci:** remove mixed lhci budget/assert flags ([9c0fb8c](https://github.com/daiminhdzchimto-arch/CAP/commit/9c0fb8c2aad34e675e4d8a4df5de8af1afca1d56))
+
 # [1.2.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.1.0...v1.2.0) (2026-03-11)
 
 ### Features
