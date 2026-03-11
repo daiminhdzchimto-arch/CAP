@@ -898,6 +898,7 @@
         let dayOffMode = false, excludedMembers = [], dayOffs = [], morningOff = false, afternoonOff = false;
         let currentSchedule = null, dutyDebtData = {};
         let selectedStudentSeat = null, isEditMode = false;
+        let fabricNormalTexture = null;
         let seat3DState = {
             active: false,
             renderer: null,
@@ -1711,12 +1712,14 @@
         function createRealisticStudentModel(shirtColor, pantsColor, isMale) {
             const group = new THREE.Group();
 
-            const wrinkleNormal = new THREE.CanvasTexture(generateFabricNormalCanvas());
-            wrinkleNormal.wrapS = THREE.RepeatWrapping;
-            wrinkleNormal.wrapT = THREE.RepeatWrapping;
-            wrinkleNormal.repeat.set(2.2, 2.2);
+            if (!fabricNormalTexture) {
+                fabricNormalTexture = new THREE.CanvasTexture(generateFabricNormalCanvas());
+                fabricNormalTexture.wrapS = THREE.RepeatWrapping;
+                fabricNormalTexture.wrapT = THREE.RepeatWrapping;
+                fabricNormalTexture.repeat.set(2.2, 2.2);
+            }
 
-            const legMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85, metalness: 0.05, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.35, 0.35) });
+            const legMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85, metalness: 0.05, normalMap: fabricNormalTexture, normalScale: new THREE.Vector2(0.35, 0.35) });
             const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.45, 16);
             const leftLeg = new THREE.Mesh(legGeo, legMat);
             leftLeg.position.set(-0.08, 0.255, -0.04);
@@ -1741,7 +1744,7 @@
                 color: shirtColor,
                 roughness: 0.74,
                 metalness: 0.02,
-                normalMap: wrinkleNormal,
+                normalMap: fabricNormalTexture,
                 normalScale: new THREE.Vector2(0.8, 0.8)
             });
             const torso = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), torsoMat);
