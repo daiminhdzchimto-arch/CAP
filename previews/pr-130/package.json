@@ -1,0 +1,36 @@
+{
+  "name": "cap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CAP pre-commit and commit lint tooling",
+  "scripts": {
+    "prepare": "husky",
+    "precommit": "lint-staged",
+    "lint:staged": "lint-staged",
+    "lint": "prettier --check README.md package.json commitlint.config.cjs .github/workflows/*.yml",
+    "build": "echo \"Static site - no build step required\"",
+    "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",
+    "release": "semantic-release"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^19.8.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
+    "papaparse": "^5.5.3",
+    "prettier": "^3.5.3",
+    "semantic-release": "^24.2.3",
+    "xlsx": "^0.18.5"
+  },
+  "lint-staged": {
+    "*.{html,css,js,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
