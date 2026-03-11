@@ -3147,6 +3147,17 @@
             reader.onload = e => {
                 try {
                     const data = JSON.parse(e.target.result);
+                    const isValidRowWidth = (side = []) => Array.isArray(side) && side.every(row => {
+                        if(!Array.isArray(row)) return false;
+                        const totalWidth = row.reduce((sum, seat) => sum + (Number(seat?.width) || 0), 0);
+                        return totalWidth === 4;
+                    });
+
+                    if(!data?.seating || !isValidRowWidth(data.seating.left) || !isValidRowWidth(data.seating.right)) {
+                        showToast("File không hợp lệ: tổng width mỗi hàng phải bằng 4!");
+                        return;
+                    }
+
                     leftSideData = data.seating.left;
                         rightSideData = data.seating.right;
                         fixedMembers = data.fixedMembers || [];
