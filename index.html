@@ -2820,21 +2820,57 @@
             let bestLayout = [...names];
             let minConflicts = 999;
 
+            const countConflictsForLayout = (layoutNames) => {
+                const shuffledNameMap = new Map(
+                    seatsToShuffle.map((seat, i) => [`${seat.side}-${seat.ri}-${seat.si}`, layoutNames[i]])
+                );
+                const conflictedSeats = new Set();
+                const getSeatName = (side, ri, si) => {
+                    const key = `${side}-${ri}-${si}`;
+                    if(shuffledNameMap.has(key)) return shuffledNameMap.get(key) || '';
+                    const data = side === 'left' ? leftSideData : rightSideData;
+                    return data[ri][si].name || '';
+                };
+
+                const markConflict = (s1, s2) => {
+                    if(!s1.name || !s2.name) return;
+                    const n1 = s1.name.trim(), n2 = s2.name.trim();
+                    if(conflictGraph[n1] && conflictGraph[n1].has(n2)) {
+                        conflictedSeats.add(s1.key);
+                        conflictedSeats.add(s2.key);
+                    }
+                };
+
+                const processSide = (data, side) => {
+                    data.forEach((row, ri) => {
+                        row.forEach((seat, si) => {
+                            const current = { key: `${side}-${ri}-${si}`, name: getSeatName(side, ri, si) };
+                            if(si < row.length - 1) {
+                                markConflict(current, { key: `${side}-${ri}-${si+1}`, name: getSeatName(side, ri, si+1) });
+                            }
+                            if(ri < data.length - 1) {
+                                const nextRow = data[ri+1];
+                                nextRow.forEach((_, nextSi) => {
+                                    markConflict(current, { key: `${side}-${ri+1}-${nextSi}`, name: getSeatName(side, ri+1, nextSi) });
+                                });
+                            }
+                        });
+                    });
+                };
+
+                processSide(leftSideData, 'left');
+                processSide(rightSideData, 'right');
+                return conflictedSeats.size;
+            };
+
             for(let attempt=0; attempt<50; attempt++) {
                 // Shuffle
                 for (let i = names.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [names[i], names[j]] = [names[j], names[i]];
                 }
-                
-                // Temporary assign
-                seatsToShuffle.forEach((seat, i) => {
-                    if(seat.side === 'left') leftSideData[seat.ri][seat.si].name = names[i];
-                    else rightSideData[seat.ri][seat.si].name = names[i];
-                });
-                
-                checkAllConflicts();
-                const currentConflicts = [...leftSideData.flat(), ...rightSideData.flat()].filter(s => s.hasConflict).length;
+
+                const currentConflicts = countConflictsForLayout(names);
                 if(currentConflicts < minConflicts) {
                     minConflicts = currentConflicts;
                     bestLayout = [...names];
@@ -2848,6 +2884,7 @@
                 else rightSideData[seat.ri][seat.si].name = bestLayout[i];
             });
 
+            checkAllConflicts();
             renderAll();
             closeShuffleModal();
             showToast("Đã sắp xếp chỗ ngồi tối ưu!");
