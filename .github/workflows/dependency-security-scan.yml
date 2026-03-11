@@ -1,0 +1,84 @@
+name: Dependency & Security Scan
+
+on:
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+    paths:
+      - "package-lock.json"
+      - "yarn.lock"
+      - "package.json"
+      - ".github/workflows/dependency-security-scan.yml"
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: Dependency Review (PR)
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-2.0, GPL-3.0
+
+  vulnerability-scan:
+    name: Vulnerability Scan (Scheduled / PR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: ${{ hashFiles('package-lock.json') != '' || hashFiles('yarn.lock') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies (npm)
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        run: npm ci --ignore-scripts
+
+      - name: Audit dependencies (npm)
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        run: npm audit --audit-level=high
+
+      - name: Install dependencies (yarn)
+        if: ${{ hashFiles('package-lock.json') == '' && hashFiles('yarn.lock') != '' }}
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Audit dependencies (yarn)
+        if: ${{ hashFiles('package-lock.json') == '' && hashFiles('yarn.lock') != '' }}
+        run: yarn audit --level high
+
+      - name: Snyk scan (optional)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        with:
+          command: test
+          args: --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Skip scan (no lockfile)
+        if: ${{ hashFiles('package-lock.json') == '' && hashFiles('yarn.lock') == '' }}
+        run: |
+          echo "No package-lock.json or yarn.lock found."
+          echo "Dependency scan skipped."
