@@ -97,13 +97,41 @@ jobs:
             console.log(`Running Pa11y for ${url}`);
 
             try {
-              const output = execSync(`npx pa11y \"${url}\" --reporter json`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'] });
+              const output = execSync(`npx pa11y \"${url}\" --reporter json --chrome-launch-config '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'] });
               fs.writeFileSync(reportPath, output);
             } catch (error) {
               const output = error.stdout ? String(error.stdout) : '[]';
               fs.writeFileSync(reportPath, output);
             }
           }
+          NODE
+
+      - name: Install matching ChromeDriver
+        run: |
+          node <<'NODE'
+          const { execSync } = require('child_process');
+          const fs = require('fs');
+
+          const chromeVersion = execSync('google-chrome --version', { encoding: 'utf8' }).match(/(\d+)\./)[1];
+          const manifestUrl = 'https://googlechromelabs.github.io/chrome-for-testing/latest-versions-per-milestone-with-downloads.json';
+          const manifest = JSON.parse(execSync(`curl -sSL ${manifestUrl}`, { encoding: 'utf8' }));
+          const milestone = manifest.milestones[chromeVersion];
+
+          if (!milestone) {
+            throw new Error(`No ChromeDriver found for Chrome milestone ${chromeVersion}`);
+          }
+
+          const download = (milestone.downloads.chromedriver || []).find((item) => item.platform === 'linux64');
+
+          if (!download) {
+            throw new Error(`No linux64 ChromeDriver download for Chrome milestone ${chromeVersion}`);
+          }
+
+          execSync(`curl -sSL \"${download.url}\" -o /tmp/chromedriver-linux64.zip`, { stdio: 'inherit' });
+          execSync('rm -rf /tmp/chromedriver-linux64', { stdio: 'inherit' });
+          execSync('unzip -o /tmp/chromedriver-linux64.zip -d /tmp/chromedriver-linux64', { stdio: 'inherit' });
+          execSync('sudo install -m 0755 /tmp/chromedriver-linux64/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver', { stdio: 'inherit' });
+          execSync('chromedriver --version', { stdio: 'inherit' });
           NODE
 
       - name: Run axe-core (fail on critical violations)
