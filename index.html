@@ -428,6 +428,10 @@
                         <div class="w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative">
                             <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-2 bg-amber-200 border border-amber-300 rounded-sm"></div>
                             <div class="text-[8px] font-bold uppercase tracking-wide text-amber-700">Bàn Giáo Viên</div>
+                            <button type="button" onclick="openTeacherDesk3DView()" class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white/95 hover:bg-white text-amber-700 text-[10px] font-bold px-2 py-1 rounded-md border border-amber-300 shadow flex items-center gap-1" title="Xem vị trí bàn giáo viên trong không gian 3D">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Xem 3D</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -863,8 +867,10 @@
             <p class="text-[11px] text-gray-500 mt-1">Dấu chấm ở giữa giúp canh tâm khi quan sát bảng.</p>
         </div>
         <div class="absolute top-4 right-4 flex items-center gap-2">
-            <button type="button" onclick="switchSeat3DToStudentView()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Góc nhìn học sinh</button>
-            <button type="button" onclick="switchSeat3DToTeacherView()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Góc nhìn bàn GV</button>
+            <button id="seat-3d-view-switch-btn" type="button" onclick="toggleSeat3DViewMode()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow flex items-center gap-1.5">
+                <i id="seat-3d-view-switch-icon" class="fas fa-chalkboard-teacher"></i>
+                <span id="seat-3d-view-switch-text">Chuyển góc bàn GV</span>
+            </button>
             <button type="button" onclick="resetSeat3DLook()" class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow">Đặt lại góc nhìn</button>
             <button type="button" onclick="closeSeat3DView()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">Thoát 3D</button>
         </div>
@@ -2198,8 +2204,30 @@
 
             const currentLabel = document.getElementById('seat-3d-current-name');
             if(currentLabel && pose.label) currentLabel.textContent = `Đang xem từ: ${pose.label}`;
+            updateSeat3DViewSwitchButton();
             applySeat3DCameraLook();
             revealSeat3DGuide();
+        }
+
+        function updateSeat3DViewSwitchButton() {
+            const btn = document.getElementById('seat-3d-view-switch-btn');
+            const icon = document.getElementById('seat-3d-view-switch-icon');
+            const text = document.getElementById('seat-3d-view-switch-text');
+            if(!btn || !icon || !text) return;
+
+            const targetMode = seat3DState.currentViewMode === 'teacher' ? 'student' : 'teacher';
+            if(targetMode === 'teacher') {
+                icon.className = 'fas fa-chalkboard-teacher';
+                text.textContent = 'Chuyển góc bàn GV';
+            } else {
+                icon.className = 'fas fa-user-graduate';
+                text.textContent = 'Chuyển góc học sinh';
+            }
+        }
+
+        function toggleSeat3DViewMode() {
+            const nextMode = seat3DState.currentViewMode === 'teacher' ? 'student' : 'teacher';
+            switchSeat3DViewMode(nextMode);
         }
 
         function switchSeat3DToTeacherView() {
@@ -2271,7 +2299,36 @@
             seat3DState.camera = null;
         }
 
-        function openSeat3DView(side, rowIndex, seatIndex) {
+        function getDefaultSeatReferenceFor3D() {
+            const seatEntries = [
+                { side: 'left', rows: leftSideData },
+                { side: 'right', rows: rightSideData }
+            ];
+
+            for(const entry of seatEntries) {
+                for(let rowIndex = 0; rowIndex < entry.rows.length; rowIndex += 1) {
+                    const row = entry.rows[rowIndex] || [];
+                    for(let seatIndex = 0; seatIndex < row.length; seatIndex += 1) {
+                        if((row[seatIndex]?.name || '').trim()) {
+                            return { side: entry.side, rowIndex, seatIndex };
+                        }
+                    }
+                }
+            }
+
+            return leftSideData[0]?.[0] ? { side: 'left', rowIndex: 0, seatIndex: 0 } : null;
+        }
+
+        function openTeacherDesk3DView() {
+            const refSeat = getDefaultSeatReferenceFor3D();
+            if(!refSeat) {
+                showToast('Chưa có dữ liệu chỗ ngồi để mở không gian 3D.');
+                return;
+            }
+            openSeat3DView(refSeat.side, refSeat.rowIndex, refSeat.seatIndex, 'teacher');
+        }
+
+        function openSeat3DView(side, rowIndex, seatIndex, initialMode = 'student') {
             if(!window.THREE) {
                 showToast('Không thể tải engine 3D. Vui lòng thử lại.');
                 return;
@@ -2462,7 +2519,7 @@
             };
             seat3DState.studentViewPose = studentPose;
             seat3DState.teacherViewPose = teacherPose;
-            seat3DState.currentViewMode = 'student';
+            seat3DState.currentViewMode = initialMode === 'teacher' ? 'teacher' : 'student';
             camera.position.copy(studentPose.position);
             seat3DState.baseEyeHeight = studentPose.position.y;
 
@@ -2471,6 +2528,7 @@
             seat3DState.scene = scene;
             seat3DState.camera = camera;
             resetSeat3DLook();
+            updateSeat3DViewSwitchButton();
 
             const canvas = renderer.domElement;
             const onDown = (x, y) => {
