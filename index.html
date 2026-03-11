@@ -3519,6 +3519,21 @@
 
         // SHARE LOGIC
         const SHARE_CODE_PREFIX = 'CAPX2:';
+        const SHARE_CODE_FALLBACK_PREFIX = 'CAPX2B:';
+
+        function hasLZStringSupport() {
+            return typeof LZString !== 'undefined'
+                && typeof LZString.compressToBase64 === 'function'
+                && typeof LZString.decompressFromBase64 === 'function';
+        }
+
+        function encodeBase64Utf8(text) {
+            return btoa(unescape(encodeURIComponent(text)));
+        }
+
+        function decodeBase64Utf8(text) {
+            return decodeURIComponent(escape(atob(text)));
+        }
 
         function buildCompactConflictGraph() {
             return Object.fromEntries(Object.entries(conflictGraph).map(([k, v]) => [k, Array.from(v)]));
@@ -3558,7 +3573,10 @@
                 d: { dayOffs, excludedMembers, morningOff, afternoonOff }
             };
             const rawJson = JSON.stringify(payload);
-            return SHARE_CODE_PREFIX + LZString.compressToBase64(rawJson);
+            if (hasLZStringSupport()) {
+                return SHARE_CODE_PREFIX + LZString.compressToBase64(rawJson);
+            }
+            return SHARE_CODE_FALLBACK_PREFIX + encodeBase64Utf8(rawJson);
         }
 
         function decodeSeatToken(seatToken, restoredFixed) {
@@ -3643,8 +3661,14 @@
         // ==========================================
         function parseOptimizedShareCode(shortCode) {
             try {
-                const rawCode = shortCode.startsWith(SHARE_CODE_PREFIX) ? shortCode.slice(SHARE_CODE_PREFIX.length) : shortCode;
-                const decompressed = LZString.decompressFromBase64(rawCode);
+                const usesFallbackCodec = shortCode.startsWith(SHARE_CODE_FALLBACK_PREFIX);
+                const rawCode = usesFallbackCodec
+                    ? shortCode.slice(SHARE_CODE_FALLBACK_PREFIX.length)
+                    : (shortCode.startsWith(SHARE_CODE_PREFIX) ? shortCode.slice(SHARE_CODE_PREFIX.length) : shortCode);
+
+                const decompressed = usesFallbackCodec
+                    ? decodeBase64Utf8(rawCode)
+                    : (hasLZStringSupport() ? LZString.decompressFromBase64(rawCode) : null);
                 if (!decompressed) throw new Error('Mã không hợp lệ hoặc bị hỏng');
 
                 const payload = JSON.parse(decompressed);
@@ -3673,18 +3697,25 @@
         }
 
         function decodeLegacyShareCode(code) {
+            if (!hasLZStringSupport()) throw new Error('Không thể giải mã CAPX cũ khi thiếu thư viện nén.');
             return JSON.parse(LZString.decompressFromEncodedURIComponent(code));
         }
 
         function openShareModal() {
             const compactCode = generateOptimizedShareCode();
 
-            const legacyData = { seating: { left: leftSideData, right: rightSideData }, fixedMembers, conflictGraph: Object.fromEntries(Object.entries(conflictGraph).map(([k,v]) => [k, Array.from(v)])) };
-            const legacyCode = LZString.compressToEncodedURIComponent(JSON.stringify(legacyData));
+            let ratioText = 'Bộ biên dịch CAPX2 đang hoạt động.';
+            if (hasLZStringSupport()) {
+                const legacyData = { seating: { left: leftSideData, right: rightSideData }, fixedMembers, conflictGraph: Object.fromEntries(Object.entries(conflictGraph).map(([k,v]) => [k, Array.from(v)])) };
+                const legacyCode = LZString.compressToEncodedURIComponent(JSON.stringify(legacyData));
+                const ratio = legacyCode.length ? Math.max(0, Math.round((1 - compactCode.length / legacyCode.length) * 100)) : 0;
+                ratioText = `Bộ biên dịch CAPX2: ${compactCode.length} ký tự (ngắn hơn ~${ratio}% so với mã cũ).`;
+            } else {
+                ratioText = `Bộ biên dịch CAPX2 (chế độ dự phòng): ${compactCode.length} ký tự. CDN nén đang lỗi nên mã sẽ dài hơn bình thường.`;
+            }
 
             document.getElementById('share-code-input').value = compactCode;
-            const ratio = legacyCode.length ? Math.max(0, Math.round((1 - compactCode.length / legacyCode.length) * 100)) : 0;
-            document.getElementById('share-code-stats').innerText = `Bộ biên dịch CAPX2: ${compactCode.length} ký tự (ngắn hơn ~${ratio}% so với mã cũ).`;
+            document.getElementById('share-code-stats').innerText = ratioText;
             document.getElementById('share-modal').classList.add('open');
         }
         function closeShareModal() { document.getElementById('share-modal').classList.remove('open'); }
@@ -3700,7 +3731,7 @@
         function importFromCode() {
             const code = document.getElementById('import-code-input').value.trim();
             try {
-                if (code.startsWith(SHARE_CODE_PREFIX)) {
+                if (code.startsWith(SHARE_CODE_PREFIX) || code.startsWith(SHARE_CODE_FALLBACK_PREFIX)) {
                     if (!parseOptimizedShareCode(code)) throw new Error('Mã không hợp lệ!');
                 } else {
                     const parsedOptimized = parseOptimizedShareCode(code);
