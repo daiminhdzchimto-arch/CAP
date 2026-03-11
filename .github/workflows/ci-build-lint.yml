@@ -25,16 +25,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect Node.js project files
+        id: node_project
+        run: |
+          if [ -f package.json ]; then
+            echo "has_package_json=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_package_json=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -f package-lock.json ]; then
+            echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node.js
+        if: steps.node_project.outputs.has_package_json == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
       - name: Install dependencies
+        if: steps.node_project.outputs.has_package_json == 'true' && steps.node_project.outputs.has_lockfile == 'true'
         run: npm ci
 
+      - name: Skip npm install (missing lockfile)
+        if: steps.node_project.outputs.has_package_json == 'true' && steps.node_project.outputs.has_lockfile != 'true'
+        run: echo "package.json found but package-lock.json is missing. Skipping npm ci and npm-based checks."
+
+      - name: Skip npm checks (non-Node repository)
+        if: steps.node_project.outputs.has_package_json != 'true'
+        run: echo "No package.json found. Skipping npm-based lint/build workflow steps."
+
       - name: Prettier check (if script exists)
+        if: steps.node_project.outputs.has_package_json == 'true' && steps.node_project.outputs.has_lockfile == 'true'
         run: |
           if npm run | grep -qE '^  (format:check|prettier:check)'; then
             if npm run | grep -q '^  format:check'; then
@@ -47,13 +73,15 @@ jobs:
           fi
 
       - name: ESLint / Stylelint
+        if: steps.node_project.outputs.has_package_json == 'true' && steps.node_project.outputs.has_lockfile == 'true'
         run: npm run lint
 
       - name: Build
+        if: steps.node_project.outputs.has_package_json == 'true' && steps.node_project.outputs.has_lockfile == 'true'
         run: npm run build
 
       - name: Auto-fix style issues (if scripts exist)
-        if: always()
+        if: always() && steps.node_project.outputs.has_package_json == 'true' && steps.node_project.outputs.has_lockfile == 'true'
         continue-on-error: true
         run: |
           if npm run | grep -q '^  lint:fix'; then
