@@ -31,6 +31,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Setup Google Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Verify Chrome installation
+        run: google-chrome --version
+
       - name: Install dependencies
         run: npm ci
 
@@ -121,14 +127,24 @@ jobs:
           node <<'NODE'
           const { execSync } = require('child_process');
 
-          const fullVersionMatch = execSync('google-chrome --version', { encoding: 'utf8' }).match(/(\d+\.\d+\.\d+\.\d+)/);
+          const maxBuffer = 1024 * 1024 * 10;
+          const run = (command, options = {}) =>
+            execSync(command, {
+              encoding: 'utf8',
+              maxBuffer,
+              ...options
+            });
+
+          const chromeVersionRaw = run('google-chrome --version');
+          const fullVersionMatch = chromeVersionRaw.match(/(\d+\.\d+\.\d+\.\d+)/);
           if (!fullVersionMatch) {
-            throw new Error('Unable to detect installed Google Chrome version.');
+            console.error('Google Chrome version not detected—ensure Chrome is installed in the runner environment.');
+            process.exit(1);
           }
 
           const fullVersion = fullVersionMatch[1];
           const manifestUrl = 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json';
-          const manifest = JSON.parse(execSync(`curl -sSL ${manifestUrl}`, { encoding: 'utf8' }));
+          const manifest = JSON.parse(run(`curl -sSL ${manifestUrl}`));
           const entry = manifest.versions.find((item) => item.version === fullVersion);
 
           if (!entry) {
@@ -141,12 +157,12 @@ jobs:
             throw new Error(`No linux64 ChromeDriver download for Chrome version ${fullVersion}`);
           }
 
-          execSync(`curl -sSL \"${download.url}\" -o /tmp/chromedriver-linux64.zip`, { stdio: 'inherit' });
-          execSync('rm -rf /tmp/chromedriver-linux64', { stdio: 'inherit' });
-          execSync('unzip -o /tmp/chromedriver-linux64.zip -d /tmp/chromedriver-linux64', { stdio: 'inherit' });
-          execSync('sudo install -m 0755 /tmp/chromedriver-linux64/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver', { stdio: 'inherit' });
-          execSync('google-chrome --version', { stdio: 'inherit' });
-          execSync('chromedriver --version', { stdio: 'inherit' });
+          run(`curl -sSL "${download.url}" -o /tmp/chromedriver-linux64.zip`, { stdio: 'inherit' });
+          run('rm -rf /tmp/chromedriver-linux64', { stdio: 'inherit' });
+          run('unzip -o /tmp/chromedriver-linux64.zip -d /tmp/chromedriver-linux64', { stdio: 'inherit' });
+          run('sudo install -m 0755 /tmp/chromedriver-linux64/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver', { stdio: 'inherit' });
+          run('google-chrome --version', { stdio: 'inherit' });
+          run('chromedriver --version', { stdio: 'inherit' });
           NODE
 
       - name: Run axe-core (fail on critical violations)
@@ -160,13 +176,14 @@ jobs:
 
           const urls = JSON.parse(process.env.TARGET_URLS || '[]');
           let criticalCount = 0;
+          const chromePath = execSync('command -v google-chrome', { encoding: 'utf8' }).trim();
 
           for (const [index, url] of urls.entries()) {
             const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
             const reportPath = `reports/axe/${slug}.json`;
             console.log(`Running axe-core CLI for ${url}`);
 
-            execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout --chromedriver-path /usr/local/bin/chromedriver --chrome-path /opt/google/chrome/chrome --chrome-options="no-sandbox,disable-dev-shm-usage"`, {
+            execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout --chromedriver-path /usr/local/bin/chromedriver --chrome-path \"${chromePath}\" --chrome-options="no-sandbox,disable-dev-shm-usage"`, {
               stdio: ['pipe', 'inherit', 'inherit']
             });
 
