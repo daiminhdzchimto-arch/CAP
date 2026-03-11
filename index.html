@@ -1351,9 +1351,64 @@
             });
         }
 
+        function applyNameMapping(mapping = {}) {
+            const entries = Object.entries(mapping).filter(([oldName, newName]) => {
+                return oldName && oldName !== newName;
+            });
+            if (!entries.length) return;
+
+            const originalGenderMap = { ...genderMap };
+            const updatedGenderMap = { ...genderMap };
+            entries.forEach(([oldName]) => {
+                delete updatedGenderMap[oldName];
+            });
+            entries.forEach(([oldName, newName]) => {
+                if (!newName) return;
+                if (Object.prototype.hasOwnProperty.call(originalGenderMap, oldName)) {
+                    updatedGenderMap[newName] = originalGenderMap[oldName];
+                }
+            });
+            genderMap = updatedGenderMap;
+
+            const originalConflictGraph = conflictGraph;
+            const remappedConflictGraph = {};
+            const mapName = (name) => {
+                if (!name) return '';
+                return Object.prototype.hasOwnProperty.call(mapping, name) ? mapping[name] : name;
+            };
+            const ensureNode = (name) => {
+                if (!name) return;
+                if (!remappedConflictGraph[name]) remappedConflictGraph[name] = new Set();
+            };
+            const addEdge = (a, b) => {
+                if (!a || !b || a === b) return;
+                ensureNode(a);
+                ensureNode(b);
+                remappedConflictGraph[a].add(b);
+                remappedConflictGraph[b].add(a);
+            };
+
+            Object.entries(originalConflictGraph).forEach(([source, targets]) => {
+                const mappedSource = mapName(source);
+                if (!mappedSource) return;
+                ensureNode(mappedSource);
+                (targets || []).forEach(target => {
+                    const mappedTarget = mapName(target);
+                    addEdge(mappedSource, mappedTarget);
+                });
+            });
+
+            conflictGraph = remappedConflictGraph;
+        }
+
         function updateName(s,r,c,v){ 
             const data = (s==='left'?leftSideData:rightSideData);
-            data[r][c].name=v; 
+            const oldName = (data[r][c].name || '').trim();
+            data[r][c].name=v;
+            const newName = (v || '').trim();
+            if (oldName !== newName) {
+                applyNameMapping({ [oldName]: newName });
+            }
             checkAllConflicts();
             if(s==='left' && r===0 && c===0) { // Sync overlay if needed or just use global listener
                 // Handled by global input listeners
@@ -2432,7 +2487,7 @@
             activateSwapMode(side,r,c);
         }
         function cancelSwapMode(){ swapSource=null; renderAll(); }
-        function executeSwap(ts,tr,tc){ const src={...swapSource}; const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; swapSource=null; renderAll(); const srcSeat = getDeskCell(src.side, src.r, src.c); const dstSeat = getDeskCell(ts, tr, tc); if(srcSeat) animateActionFeedback(srcSeat,'animate-wobble-swap',420); if(dstSeat) animateActionFeedback(dstSeat,'animate-wobble-swap',420); if(srcSeat) animateActionFeedback(srcSeat,'animate-pulse-highlight',340); if(dstSeat) animateActionFeedback(dstSeat,'animate-pulse-highlight',340); showToast('Đã hoán đổi vị trí 2 thành viên'); }
+        function executeSwap(ts,tr,tc){ const src={...swapSource}; const sa=swapSource.side==='left'?leftSideData:rightSideData; const ta=ts==='left'?leftSideData:rightSideData; const srcOldName=(sa[swapSource.r][swapSource.c].name||'').trim(); const dstOldName=(ta[tr][tc].name||'').trim(); const tmp=sa[swapSource.r][swapSource.c].name; sa[swapSource.r][swapSource.c].name=ta[tr][tc].name; ta[tr][tc].name=tmp; applyNameMapping({ [srcOldName]: dstOldName, [dstOldName]: srcOldName }); swapSource=null; renderAll(); const srcSeat = getDeskCell(src.side, src.r, src.c); const dstSeat = getDeskCell(ts, tr, tc); if(srcSeat) animateActionFeedback(srcSeat,'animate-wobble-swap',420); if(dstSeat) animateActionFeedback(dstSeat,'animate-wobble-swap',420); if(srcSeat) animateActionFeedback(srcSeat,'animate-pulse-highlight',340); if(dstSeat) animateActionFeedback(dstSeat,'animate-pulse-highlight',340); showToast('Đã hoán đổi vị trí 2 thành viên'); }
         function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
         
         function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); const mergedCell = getDeskCell(s, r, c); if(mergedCell) animateActionFeedback(mergedCell,'animate-pulse-merge',520); }
@@ -2672,7 +2727,7 @@
                 data.forEach((row, ri) => {
                     row.forEach((seat, si) => {
                         if(!fixedMembers.includes(seat.id) && seat.name.trim() !== "") {
-                            seatsToShuffle.push({ name: seat.name, side, ri, si });
+                            seatsToShuffle.push({ name: seat.name, side, ri, si, originalName: (seat.name || '').trim() });
                         }
                     });
                 });
@@ -2720,6 +2775,16 @@
                 if(seat.side === 'left') leftSideData[seat.ri][seat.si].name = bestLayout[i];
                 else rightSideData[seat.ri][seat.si].name = bestLayout[i];
             });
+
+            const nameMapping = {};
+            seatsToShuffle.forEach((seat, i) => {
+                const oldName = seat.originalName;
+                const newName = (bestLayout[i] || '').trim();
+                if(oldName && oldName !== newName) {
+                    nameMapping[oldName] = newName;
+                }
+            });
+            applyNameMapping(nameMapping);
 
             renderAll();
             closeShuffleModal();
