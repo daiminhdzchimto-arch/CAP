@@ -1585,18 +1585,28 @@
         function createStudentDeskHoaPhat3D(materials) {
             const deskGroup = new THREE.Group();
             const { deskTopMat, deskFrameMat, chairWoodMat, chairFrameMat } = materials;
+            const disposableGeometries = new Set();
+            const disposableMaterials = new Set();
+            const trackGeometry = geometry => {
+                disposableGeometries.add(geometry);
+                return geometry;
+            };
+            const trackMaterial = material => {
+                disposableMaterials.add(material);
+                return material;
+            };
 
-            const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.62), deskTopMat);
+            const deskTop = new THREE.Mesh(trackGeometry(new THREE.BoxGeometry(1.9, 0.05, 0.62)), deskTopMat);
             deskTop.position.y = 0.78;
             deskTop.castShadow = true;
             deskGroup.add(deskTop);
 
-            const deskFrontPanel = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.36, 0.045), deskTopMat);
+            const deskFrontPanel = new THREE.Mesh(trackGeometry(new THREE.BoxGeometry(1.84, 0.36, 0.045)), deskTopMat);
             deskFrontPanel.position.set(0, 0.58, -0.27);
             deskFrontPanel.castShadow = true;
             deskGroup.add(deskFrontPanel);
 
-            const legGeo = new THREE.BoxGeometry(0.055, 0.75, 0.055);
+            const legGeo = trackGeometry(new THREE.BoxGeometry(0.055, 0.75, 0.055));
             [[-0.86, 0.37, -0.18], [0.86, 0.37, -0.18], [-0.86, 0.37, 0.18], [0.86, 0.37, 0.18]].forEach(([x, y, z]) => {
                 const leg = new THREE.Mesh(legGeo, deskFrameMat);
                 leg.position.set(x, y, z);
@@ -1604,56 +1614,73 @@
                 deskGroup.add(leg);
             });
 
-            const baseRailGeo = new THREE.BoxGeometry(1.82, 0.045, 0.055);
+            const baseRailGeo = trackGeometry(new THREE.BoxGeometry(1.82, 0.045, 0.055));
             [[0, 0.04, -0.2], [0, 0.04, 0.2]].forEach(([x, y, z]) => {
                 const rail = new THREE.Mesh(baseRailGeo, deskFrameMat);
                 rail.position.set(x, y, z);
                 deskGroup.add(rail);
             });
 
-            const sideRailGeo = new THREE.BoxGeometry(0.055, 0.045, 0.4);
+            const sideRailGeo = trackGeometry(new THREE.BoxGeometry(0.055, 0.045, 0.4));
             [[-0.86, 0.04, 0], [0.86, 0.04, 0]].forEach(([x, y, z]) => {
                 const rail = new THREE.Mesh(sideRailGeo, deskFrameMat);
                 rail.position.set(x, y, z);
                 deskGroup.add(rail);
             });
 
-            const bagShelf = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.02, 0.24), deskFrameMat);
+            const bagShelf = new THREE.Mesh(trackGeometry(new THREE.BoxGeometry(1.62, 0.02, 0.24)), deskFrameMat);
             bagShelf.position.set(0, 0.45, 0.05);
             deskGroup.add(bagShelf);
 
-            const benchSeat = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.05, 0.3), chairWoodMat);
+            const benchSeat = new THREE.Mesh(trackGeometry(new THREE.BoxGeometry(1.84, 0.05, 0.3)), chairWoodMat);
             benchSeat.position.set(0, 0.46, 0.62);
             benchSeat.castShadow = true;
             deskGroup.add(benchSeat);
 
-            const benchBack = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.22, 0.05), chairWoodMat);
+            const benchBack = new THREE.Mesh(trackGeometry(new THREE.BoxGeometry(1.84, 0.22, 0.05)), chairWoodMat);
             benchBack.position.set(0, 0.7, 0.8);
             benchBack.castShadow = true;
             deskGroup.add(benchBack);
 
-            const benchLegGeo = new THREE.BoxGeometry(0.045, 0.45, 0.045);
+            const benchLegGeo = trackGeometry(new THREE.BoxGeometry(0.045, 0.45, 0.045));
             [[-0.78, 0.23, 0.52], [0.78, 0.23, 0.52], [-0.78, 0.23, 0.72], [0.78, 0.23, 0.72]].forEach(([x, y, z]) => {
                 const leg = new THREE.Mesh(benchLegGeo, chairFrameMat);
                 leg.position.set(x, y, z);
                 deskGroup.add(leg);
             });
 
-            const books = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.2), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.6 }));
+            const books = new THREE.Mesh(
+                trackGeometry(new THREE.BoxGeometry(0.28, 0.08, 0.2)),
+                trackMaterial(new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.6 }))
+            );
             books.position.set(-0.48, 0.85, -0.08);
             deskGroup.add(books);
 
-            const pencilCase = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.08), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }));
+            const pencilCase = new THREE.Mesh(
+                trackGeometry(new THREE.BoxGeometry(0.2, 0.05, 0.08)),
+                trackMaterial(new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }))
+            );
             pencilCase.position.set(0.26, 0.84, -0.06);
             deskGroup.add(pencilCase);
 
-            const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 16), new THREE.MeshStandardMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.82 }));
+            const bottle = new THREE.Mesh(
+                trackGeometry(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 16)),
+                trackMaterial(new THREE.MeshStandardMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.82 }))
+            );
             bottle.position.set(0.66, 0.92, -0.08);
             deskGroup.add(bottle);
 
-            const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.22, 0.1), new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.95 }));
+            const jacket = new THREE.Mesh(
+                trackGeometry(new THREE.BoxGeometry(0.36, 0.22, 0.1)),
+                trackMaterial(new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.95 }))
+            );
             jacket.position.set(-0.72, 0.63, 0.75);
             deskGroup.add(jacket);
+
+            deskGroup.userData.dispose = () => {
+                disposableGeometries.forEach(geometry => geometry.dispose());
+                disposableMaterials.forEach(material => material.dispose());
+            };
 
             return deskGroup;
         }
@@ -1724,14 +1751,24 @@
 
         function createRealisticStudentModel(shirtColor, pantsColor, isMale) {
             const group = new THREE.Group();
+            const disposableGeometries = new Set();
+            const disposableMaterials = new Set();
+            const trackGeometry = geometry => {
+                disposableGeometries.add(geometry);
+                return geometry;
+            };
+            const trackMaterial = material => {
+                disposableMaterials.add(material);
+                return material;
+            };
 
             const wrinkleNormal = new THREE.CanvasTexture(generateFabricNormalCanvas());
             wrinkleNormal.wrapS = THREE.RepeatWrapping;
             wrinkleNormal.wrapT = THREE.RepeatWrapping;
             wrinkleNormal.repeat.set(2.2, 2.2);
 
-            const legMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85, metalness: 0.05, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.35, 0.35) });
-            const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.45, 16);
+            const legMat = trackMaterial(new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85, metalness: 0.05, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.35, 0.35) }));
+            const legGeo = trackGeometry(new THREE.CylinderGeometry(0.05, 0.05, 0.45, 16));
             const leftLeg = new THREE.Mesh(legGeo, legMat);
             leftLeg.position.set(-0.08, 0.255, -0.04);
             leftLeg.rotation.x = 0.22;
@@ -1741,8 +1778,8 @@
             group.add(leftLeg, rightLeg);
 
             const shoePalette = [0x111111, 0x1f2937, 0x374151, 0x0f172a];
-            const shoeMat = new THREE.MeshStandardMaterial({ color: shoePalette[Math.floor(Math.random() * shoePalette.length)], roughness: 0.6, metalness: 0.12 });
-            const shoeGeo = new THREE.CapsuleGeometry(0.055, 0.11, 4, 8);
+            const shoeMat = trackMaterial(new THREE.MeshStandardMaterial({ color: shoePalette[Math.floor(Math.random() * shoePalette.length)], roughness: 0.6, metalness: 0.12 }));
+            const shoeGeo = trackGeometry(new THREE.CapsuleGeometry(0.055, 0.11, 4, 8));
             const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
             leftShoe.scale.set(1, 0.55, 1.55);
             leftShoe.position.set(-0.08, 0.05, 0.08);
@@ -1751,42 +1788,47 @@
             rightShoe.position.x = 0.085;
             group.add(leftShoe, rightShoe);
 
-            const torsoMat = new THREE.MeshStandardMaterial({
+            const torsoMat = trackMaterial(new THREE.MeshStandardMaterial({
                 color: shirtColor,
                 roughness: 0.74,
                 metalness: 0.02,
                 normalMap: wrinkleNormal,
                 normalScale: new THREE.Vector2(0.8, 0.8)
-            });
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), torsoMat);
+            }));
+            const torso = new THREE.Mesh(trackGeometry(new THREE.BoxGeometry(0.3, 0.4, 0.2)), torsoMat);
             torso.position.set(0, 0.72, 0.04);
             torso.castShadow = true;
             group.add(torso);
 
-            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.08, 16), new THREE.MeshStandardMaterial({color: 0xffe0bd, roughness: 0.9, metalness: 0.02}));
+            const neck = new THREE.Mesh(
+                trackGeometry(new THREE.CylinderGeometry(0.065, 0.065, 0.08, 16)),
+                trackMaterial(new THREE.MeshStandardMaterial({color: 0xffe0bd, roughness: 0.9, metalness: 0.02}))
+            );
             neck.position.set(0, 0.94, 0.02);
             neck.castShadow = true;
             group.add(neck);
 
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.65, metalness: 0.02 });
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 28, 28), headMat);
+            const headMat = trackMaterial(new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.65, metalness: 0.02 }));
+            const head = new THREE.Mesh(trackGeometry(new THREE.SphereGeometry(0.12, 28, 28)), headMat);
             head.position.set(0, 1.06, 0.02);
             head.castShadow = true;
             group.add(head);
 
             const hairStyleVariant = Math.random() > 0.5;
-            const hairMat = new THREE.MeshStandardMaterial({ color: isMale ? 0x1a1a1a : 0x3d2a1f, roughness: 0.95, metalness: 0.01 });
-            const hairGeo = hairStyleVariant
-                ? new THREE.SphereGeometry(0.127, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.68)
-                : new THREE.CapsuleGeometry(0.12, 0.15, 8, 12);
+            const hairMat = trackMaterial(new THREE.MeshStandardMaterial({ color: isMale ? 0x1a1a1a : 0x3d2a1f, roughness: 0.95, metalness: 0.01 }));
+            const hairGeo = trackGeometry(
+                hairStyleVariant
+                    ? new THREE.SphereGeometry(0.127, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.68)
+                    : new THREE.CapsuleGeometry(0.12, 0.15, 8, 12)
+            );
             const hair = new THREE.Mesh(hairGeo, hairMat);
             hair.position.set(0, hairStyleVariant ? 1.1 : 1.085, 0.02);
             hair.castShadow = true;
             if(!hairStyleVariant) hair.scale.set(0.95, 0.72, 0.82);
             group.add(hair);
 
-            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.72, metalness: 0.02, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.7, 0.7) });
-            const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16);
+            const armMat = trackMaterial(new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.72, metalness: 0.02, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.7, 0.7) }));
+            const armGeo = trackGeometry(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16));
             const leftArm = new THREE.Mesh(armGeo, armMat);
             leftArm.position.set(-0.19, 0.72, -0.04);
             leftArm.rotation.set(0.08, 0, 1.02);
@@ -1796,7 +1838,14 @@
             rightArm.rotation.set(0.08, 0, -1.02);
             group.add(leftArm, rightArm);
 
-            group.userData = { type: 'student', dispose: () => wrinkleNormal.dispose() };
+            group.userData = {
+                type: 'student',
+                dispose: () => {
+                    disposableGeometries.forEach(geometry => geometry.dispose());
+                    disposableMaterials.forEach(material => material.dispose());
+                    wrinkleNormal.dispose();
+                }
+            };
             return group;
         }
 
@@ -2189,6 +2238,7 @@
                 const desk = createStudentDeskHoaPhat3D(deskMaterials);
                 desk.position.set(entry.x, 0, entry.z);
                 scene.add(desk);
+                if(desk.userData.dispose) seat3DState.disposeResources.push(desk.userData.dispose);
 
                 const validNames = (entry.occupantNames || []).filter(name => name && !(entry.side === side && entry.rowIndex === rowIndex && name === sourceName));
                 validNames.slice(0, 4).forEach((studentName, idx) => {
