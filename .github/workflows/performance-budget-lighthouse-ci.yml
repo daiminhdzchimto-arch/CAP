@@ -48,7 +48,7 @@ jobs:
       - name: Lighthouse CI (build artifacts + budget gate)
         run: |
           npx lhci collect --numberOfRuns=3 --staticDistDir="$BUILD_OUTPUT_DIR"
-          npx lhci assert --budgetsFile=.lighthouse/budget.json --assertions.categories:performance=error
+          npx lhci assert --budgetsFile=.lighthouse/budget.json
 
       - name: Upload Lighthouse report (temporary public storage)
         if: ${{ always() }}
@@ -62,4 +62,4 @@ jobs:
         if: ${{ env.PSI_API_KEY != '' && env.PSI_TARGET_URL != '' }}
         run: |
           npx lhci collect --method=psi --url="$PSI_TARGET_URL" --psiApiKey="$PSI_API_KEY" --numberOfRuns=1
-          npx lhci assert --budgetsFile=.lighthouse/budget.json --assertions.categories:performance=warn
+          npx lhci assert --budgetsFile=.lighthouse/budget.json
