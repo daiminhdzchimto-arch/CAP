@@ -1401,17 +1401,58 @@
             input.style.height = `${targetHeight}px`;
         }
 
+        function splitSeatNames(rawName = '') {
+            return String(rawName)
+                .split(/[,&]/)
+                .map(part => part.trim())
+                .filter(Boolean);
+        }
+
+        function getSeatEntityNames(seat) {
+            if (!seat || !seat.name) return [];
+            return splitSeatNames(seat.name);
+        }
+
+        function getAllStudentNames() {
+            const names = [...leftSideData.flat(), ...rightSideData.flat()]
+                .flatMap(seat => getSeatEntityNames(seat));
+            return [...new Set(names)];
+        }
+
+        function findSeatIndexByStudentName(allSeats, name) {
+            return allSeats.findIndex(seat => getSeatEntityNames(seat).includes(name));
+        }
+
+        function normalizeConflictGraphEntities(rawGraph = {}) {
+            const normalized = {};
+
+            const addEdge = (a, b) => {
+                if (!a || !b || a === b) return;
+                if (!normalized[a]) normalized[a] = new Set();
+                if (!normalized[b]) normalized[b] = new Set();
+                normalized[a].add(b);
+                normalized[b].add(a);
+            };
+
+            Object.entries(rawGraph || {}).forEach(([from, targets]) => {
+                const fromNames = splitSeatNames(from);
+                const targetNames = Array.isArray(targets)
+                    ? targets.flatMap(target => splitSeatNames(target))
+                    : Array.from(targets || []).flatMap(target => splitSeatNames(target));
+                fromNames.forEach(n1 => {
+                    targetNames.forEach(n2 => addEdge(n1, n2));
+                });
+            });
+
+            return normalized;
+        }
+
         function getSeatEntriesFor3D() {
             const ROW_Z = 1.45;
             const SIDE_CENTER_X = 2.9;
             const SEAT_SPACING_X = 1.15;
             const ROW_START_Z = -2.85;
             const entries = [];
-
-            const splitNames = (name = '') => name
-                .split(/[,&]/)
-                .map(part => part.trim())
-                .filter(Boolean);
 
             const convertSide = (sideData, side) => {
                 sideData.forEach((row, rowIndex) => {
@@ -1429,7 +1470,7 @@
                             x: worldX,
                             z: worldZ,
                             deskKey: `${side}-${rowIndex}-${seatIndex}`,
-                            occupantNames: splitNames(seat.name || '')
+                            occupantNames: getSeatEntityNames(seat)
                         });
                     });
                 });
@@ -2580,10 +2621,10 @@
             
             const checkPair = (s1, s2) => {
                 if(!s1.name || !s2.name) return;
-                const n1 = s1.name.trim(), n2 = s2.name.trim();
-                if(conflictGraph[n1] && conflictGraph[n1].has(n2)) {
-                    s1.hasConflict = true; s2.hasConflict = true;
-                }
+                const names1 = getSeatEntityNames(s1);
+                const names2 = getSeatEntityNames(s2);
+                const hasAnyConflict = names1.some(n1 => names2.some(n2 => conflictGraph[n1] && conflictGraph[n1].has(n2)));
+                if(hasAnyConflict) { s1.hasConflict = true; s2.hasConflict = true; }
             };
 
             const processSide = (data) => {
@@ -2606,7 +2647,8 @@
             const seat = (side === 'left' ? leftSideData : rightSideData)[r][c];
             if(!seat.name.trim()) return;
             
-            selectedStudentSeat = { side, r, c, id: seat.id, name: seat.name.trim() };
+            const seatNames = getSeatEntityNames(seat);
+            selectedStudentSeat = { side, r, c, id: seat.id, name: seat.name.trim(), memberName: seatNames[0] || seat.name.trim() };
             openSidebar();
         }
 
@@ -2625,10 +2667,16 @@
 
         function renderSidebarContent() {
             if(!selectedStudentSeat) return;
-            const name = selectedStudentSeat.name;
+            const seat = (selectedStudentSeat.side === 'left' ? leftSideData : rightSideData)[selectedStudentSeat.r][selectedStudentSeat.c];
+            const seatNames = getSeatEntityNames(seat);
+            const activeName = seatNames.includes(selectedStudentSeat.memberName)
+                ? selectedStudentSeat.memberName
+                : (seatNames[0] || selectedStudentSeat.name);
+            selectedStudentSeat.memberName = activeName;
+            const name = seatNames.length > 1 ? `${activeName} (${seatNames.length} bạn)` : activeName;
             
             document.getElementById('student-name-display').innerText = name;
-            document.getElementById('student-avatar').querySelector('span').innerText = name.charAt(0);
+            document.getElementById('student-avatar').querySelector('span').innerText = activeName.charAt(0);
             
             const badges = document.getElementById('student-badges');
             badges.innerHTML = '';
@@ -2649,14 +2697,14 @@
         function renderMiniMap() {
             const grid = document.getElementById('mini-map-grid');
             grid.innerHTML = '';
-            const currentName = selectedStudentSeat.name;
+            const currentName = selectedStudentSeat.memberName || selectedStudentSeat.name;
             const conflicts = Array.from(conflictGraph[currentName] || []);
             
             const allData = [...leftSideData.flat(), ...rightSideData.flat()];
             allData.forEach(seat => {
                 const div = document.createElement('div');
                 const isCurrent = seat.id === selectedStudentSeat.id;
-                const isConflict = seat.name && conflicts.includes(seat.name.trim());
+                const isConflict = getSeatEntityNames(seat).some(name => conflicts.includes(name));
                 const isFixed = fixedMembers.includes(seat.id);
                 
                 div.className = `mini-seat ${isCurrent?'active':''} ${isConflict?'conflict':''} ${isFixed?'fixed':''}`;
@@ -2674,7 +2722,7 @@
             svg.setAttribute('height', grid.offsetHeight);
             svg.innerHTML = '';
             
-            const currentName = selectedStudentSeat.name;
+            const currentName = selectedStudentSeat.memberName || selectedStudentSeat.name;
             const conflicts = Array.from(conflictGraph[currentName] || []);
             if(conflicts.length === 0) return;
             
@@ -2689,7 +2737,7 @@
             const y1 = sourceRect.top - gridRect.top + sourceRect.height/2;
             
             conflicts.forEach(cName => {
-                const targetIdx = allData.findIndex(s => s.name && s.name.trim() === cName);
+                const targetIdx = findSeatIndexByStudentName(allData, cName);
                 if(targetIdx === -1) return;
                 
                 const targetRect = seats[targetIdx].getBoundingClientRect();
@@ -2709,9 +2757,9 @@
         }
 
         function renderRelations() {
-            const currentName = selectedStudentSeat.name;
+            const currentName = selectedStudentSeat.memberName || selectedStudentSeat.name;
             const conflicts = Array.from(conflictGraph[currentName] || []);
-            const allNames = [...new Set([...leftSideData.flat(), ...rightSideData.flat()].map(s => s.name.trim()).filter(n => n && n !== currentName))];
+            const allNames = getAllStudentNames().filter(n => n !== currentName);
             
             const conflictList = document.getElementById('current-conflicts-list');
             conflictList.innerHTML = '';
@@ -2753,8 +2801,8 @@
         }
 
         function renderConflictManagement() {
-            const currentName = selectedStudentSeat.name;
-            const allNames = [...new Set([...leftSideData.flat(), ...rightSideData.flat()].map(s => s.name.trim()).filter(n => n && n !== currentName))].sort();
+            const currentName = selectedStudentSeat.memberName || selectedStudentSeat.name;
+            const allNames = getAllStudentNames().filter(n => n !== currentName).sort();
             const container = document.getElementById('conflict-list');
             container.innerHTML = '';
             
@@ -3111,7 +3159,7 @@
             [leftSideData, rightSideData].forEach((side, si) => {
                 side.forEach((row, ri) => {
                     const key = (si===0?'left':'right')+'-'+ri;
-                    if(dutySelection[key]) row.forEach(seat => { if(seat.name) s.push(seat.name.trim()); });
+                    if(dutySelection[key]) row.forEach(seat => { s.push(...getSeatEntityNames(seat)); });
                 });
             });
             s=[...new Set(s)]; 
@@ -3371,7 +3419,7 @@
                     leftSideData = data.seating.left;
                         rightSideData = data.seating.right;
                         fixedMembers = data.fixedMembers || [];
-                        conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+                        conflictGraph = normalizeConflictGraphEntities(data.conflictGraph || {});
                         if(data.titles) {
                             document.getElementById('classroom-title').value = data.titles.classroomTitle;
                             document.getElementById('school-year').value = data.titles.schoolYear;
@@ -3404,7 +3452,7 @@
             leftSideData = data.seating.left;
             rightSideData = data.seating.right;
             fixedMembers = data.fixedMembers || [];
-            conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+            conflictGraph = normalizeConflictGraphEntities(data.conflictGraph || {});
             if(data.titles) {
                 document.getElementById('classroom-title').value = data.titles.classroomTitle;
                 document.getElementById('school-year').value = data.titles.schoolYear;
