@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "E2E test suite for CAP",
   "scripts": {
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "lint": "node -e \"console.log('No lint rules configured for CAP E2E scaffolding.')\""
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2"
