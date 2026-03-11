@@ -34,6 +34,9 @@ jobs:
             npx lint-staged --diff "${{ github.event.before }}...${{ github.sha }}"
           fi
 
+      - name: Run lint script
+        run: npm run lint
+
       - name: Validate commit messages (Conventional Commits)
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
