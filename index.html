@@ -1787,6 +1787,26 @@
         }
 
         // ==================== HỆ THỐNG TỰ ĐỘNG KIỂM TRA & ĐIỀU CHỈNH TỌA ĐỘ ====================
+        function disposeNode(node) {
+            if(!node) return;
+
+            node.traverse(obj => {
+                if(obj.geometry?.dispose) obj.geometry.dispose();
+
+                const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                materials.filter(Boolean).forEach(material => {
+                    Object.values(material).forEach(value => {
+                        if(value && value.isTexture && typeof value.dispose === 'function') {
+                            value.dispose();
+                        }
+                    });
+                    if(typeof material.dispose === 'function') material.dispose();
+                });
+            });
+
+            if(node.parent) node.parent.remove(node);
+        }
+
         class DynamicClassroomBuilder {
             constructor(params = {}) {
                 this.width = params.width || 12.8;      // Chiều rộng phòng (X)
