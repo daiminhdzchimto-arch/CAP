@@ -31,12 +31,6 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Setup Google Chrome
-        uses: browser-actions/setup-chrome@v1
-
-      - name: Verify Chrome installation
-        run: google-chrome --version
-
       - name: Install dependencies
         run: npm ci
 
@@ -122,10 +116,11 @@ jobs:
           }
           NODE
 
-      - name: Install exact-match ChromeDriver
+      - name: Install compatible Chrome + ChromeDriver (Chrome for Testing)
         run: |
           node <<'NODE'
           const { execSync } = require('child_process');
+          const fs = require('fs');
 
           const maxBuffer = 1024 * 1024 * 10;
           const run = (command, options = {}) =>
@@ -135,39 +130,47 @@ jobs:
               ...options
             });
 
-          const chromeVersionRaw = run('google-chrome --version');
-          const fullVersionMatch = chromeVersionRaw.match(/(\d+\.\d+\.\d+\.\d+)/);
-          if (!fullVersionMatch) {
-            console.error('Google Chrome version not detected—ensure Chrome is installed in the runner environment.');
-            process.exit(1);
-          }
-
-          const fullVersion = fullVersionMatch[1];
-          const manifestUrl = 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json';
+          const manifestUrl = 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json';
           const manifest = JSON.parse(run(`curl -sSL ${manifestUrl}`));
-          const entry = manifest.versions.find((item) => item.version === fullVersion);
+          const stable = manifest.channels?.Stable;
 
-          if (!entry) {
-            throw new Error(`No exact ChromeDriver found for installed Chrome version ${fullVersion}`);
+          if (!stable) {
+            throw new Error('No Stable channel found in Chrome for Testing manifest.');
           }
 
-          const download = (entry.downloads.chromedriver || []).find((item) => item.platform === 'linux64');
+          const chromeDownload = (stable.downloads.chrome || []).find((item) => item.platform === 'linux64');
+          const chromedriverDownload = (stable.downloads.chromedriver || []).find((item) => item.platform === 'linux64');
 
-          if (!download) {
-            throw new Error(`No linux64 ChromeDriver download for Chrome version ${fullVersion}`);
+          if (!chromeDownload || !chromedriverDownload) {
+            throw new Error(`Missing linux64 downloads for Chrome/ChromeDriver in Stable channel version ${stable.version}.`);
           }
 
-          run(`curl -sSL "${download.url}" -o /tmp/chromedriver-linux64.zip`, { stdio: 'inherit' });
-          run('rm -rf /tmp/chromedriver-linux64', { stdio: 'inherit' });
+          run(`curl -sSL "${chromeDownload.url}" -o /tmp/chrome-linux64.zip`, { stdio: 'inherit' });
+          run(`curl -sSL "${chromedriverDownload.url}" -o /tmp/chromedriver-linux64.zip`, { stdio: 'inherit' });
+
+          run('rm -rf /tmp/chrome-linux64 /tmp/chromedriver-linux64 /opt/chrome-for-testing', { stdio: 'inherit' });
+          run('unzip -o /tmp/chrome-linux64.zip -d /tmp/chrome-linux64', { stdio: 'inherit' });
           run('unzip -o /tmp/chromedriver-linux64.zip -d /tmp/chromedriver-linux64', { stdio: 'inherit' });
+
+          run('sudo mkdir -p /opt/chrome-for-testing', { stdio: 'inherit' });
+          run('sudo cp -r /tmp/chrome-linux64/chrome-linux64 /opt/chrome-for-testing/', { stdio: 'inherit' });
           run('sudo install -m 0755 /tmp/chromedriver-linux64/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver', { stdio: 'inherit' });
-          run('google-chrome --version', { stdio: 'inherit' });
-          run('chromedriver --version', { stdio: 'inherit' });
+
+          const chromeBin = '/opt/chrome-for-testing/chrome-linux64/chrome';
+          run(`test -x ${chromeBin}`);
+
+          fs.appendFileSync(process.env.GITHUB_ENV, `CHROME_BIN=${chromeBin}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, 'CHROMEDRIVER_BIN=/usr/local/bin/chromedriver\n');
+
+          run(`${chromeBin} --version`, { stdio: 'inherit' });
+          run('/usr/local/bin/chromedriver --version', { stdio: 'inherit' });
           NODE
 
       - name: Run axe-core (fail on critical violations)
         env:
           TARGET_URLS: ${{ steps.urls.outputs.list }}
+          CHROME_BIN: ${{ env.CHROME_BIN }}
+          CHROMEDRIVER_BIN: ${{ env.CHROMEDRIVER_BIN }}
         run: |
           mkdir -p reports/axe
           node <<'NODE'
@@ -176,14 +179,15 @@ jobs:
 
           const urls = JSON.parse(process.env.TARGET_URLS || '[]');
           let criticalCount = 0;
-          const chromePath = execSync('command -v google-chrome', { encoding: 'utf8' }).trim();
+          const chromePath = process.env.CHROME_BIN;
+          const chromedriverPath = process.env.CHROMEDRIVER_BIN;
 
           for (const [index, url] of urls.entries()) {
             const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
             const reportPath = `reports/axe/${slug}.json`;
             console.log(`Running axe-core CLI for ${url}`);
 
-            execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout --chromedriver-path /usr/local/bin/chromedriver --chrome-path \"${chromePath}\" --chrome-options="no-sandbox,disable-dev-shm-usage"`, {
+            execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout --chromedriver-path \"${chromedriverPath}\" --chrome-path \"${chromePath}\" --chrome-options="no-sandbox,disable-dev-shm-usage"`, {
               stdio: ['pipe', 'inherit', 'inherit']
             });
 
