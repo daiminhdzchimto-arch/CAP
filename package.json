@@ -1,0 +1,12 @@
+{
+  "name": "cap-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "E2E test suite for CAP",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}
