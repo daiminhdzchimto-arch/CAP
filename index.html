@@ -1572,6 +1572,13 @@
             const deskGroup = new THREE.Group();
             const { deskTopMat, deskFrameMat, chairWoodMat, chairFrameMat } = materials;
 
+            const sharedAccessoryMaterials = createStudentDeskHoaPhat3D.sharedAccessoryMaterials || (createStudentDeskHoaPhat3D.sharedAccessoryMaterials = {
+                books: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.6 }),
+                pencilCase: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }),
+                bottle: new THREE.MeshStandardMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.82 }),
+                jacket: new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.95 })
+            });
+
             const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.62), deskTopMat);
             deskTop.position.y = 0.78;
             deskTop.castShadow = true;
@@ -1625,19 +1632,19 @@
                 deskGroup.add(leg);
             });
 
-            const books = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.2), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.6 }));
+            const books = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.2), sharedAccessoryMaterials.books);
             books.position.set(-0.48, 0.85, -0.08);
             deskGroup.add(books);
 
-            const pencilCase = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.08), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }));
+            const pencilCase = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.08), sharedAccessoryMaterials.pencilCase);
             pencilCase.position.set(0.26, 0.84, -0.06);
             deskGroup.add(pencilCase);
 
-            const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 16), new THREE.MeshStandardMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.82 }));
+            const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 16), sharedAccessoryMaterials.bottle);
             bottle.position.set(0.66, 0.92, -0.08);
             deskGroup.add(bottle);
 
-            const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.22, 0.1), new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.95 }));
+            const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.22, 0.1), sharedAccessoryMaterials.jacket);
             jacket.position.set(-0.72, 0.63, 0.75);
             deskGroup.add(jacket);
 
