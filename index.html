@@ -2608,11 +2608,37 @@
             const allNames = [...new Set([...leftSideData.flat(), ...rightSideData.flat()].map(s => s.name.trim()).filter(n => n && n !== currentName))];
             
             const conflictList = document.getElementById('current-conflicts-list');
-            conflictList.innerHTML = conflicts.length ? conflicts.map(c => `<span class="px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-lg border border-orange-100">${c}</span>`).join('') : '<span class="text-[10px] text-gray-400 italic">Không có xung đột</span>';
+            conflictList.innerHTML = '';
+            if (conflicts.length) {
+                conflicts.forEach(c => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-lg border border-orange-100';
+                    badge.textContent = c;
+                    conflictList.appendChild(badge);
+                });
+            } else {
+                const empty = document.createElement('span');
+                empty.className = 'text-[10px] text-gray-400 italic';
+                empty.textContent = 'Không có xung đột';
+                conflictList.appendChild(empty);
+            }
             
             const neutralList = document.getElementById('neutral-students-list');
             const neutrals = allNames.filter(n => !conflicts.includes(n));
-            neutralList.innerHTML = neutrals.length ? neutrals.map(n => `<span class="px-2 py-1 bg-gray-50 text-gray-500 text-[10px] font-bold rounded-lg border border-gray-100">${n}</span>`).join('') : '<span class="text-[10px] text-gray-400 italic">Trống</span>';
+            neutralList.innerHTML = '';
+            if (neutrals.length) {
+                neutrals.forEach(n => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-2 py-1 bg-gray-50 text-gray-500 text-[10px] font-bold rounded-lg border border-gray-100';
+                    badge.textContent = n;
+                    neutralList.appendChild(badge);
+                });
+            } else {
+                const empty = document.createElement('span');
+                empty.className = 'text-[10px] text-gray-400 italic';
+                empty.textContent = 'Trống';
+                neutralList.appendChild(empty);
+            }
         }
 
         function toggleEditMode() {
@@ -2630,13 +2656,26 @@
                 const isConflict = conflictGraph[currentName] && conflictGraph[currentName].has(other);
                 const div = document.createElement('div');
                 div.className = `flex items-center justify-between p-2 rounded-lg border ${isConflict?'border-orange-100 bg-orange-50':'border-gray-100 bg-white'}`;
-                div.innerHTML = `
-                    <span class="text-xs font-bold ${isConflict?'text-orange-600':'text-gray-600'}">${other}</span>
-                    <label class="jelly-switch">
-                        <input type="checkbox" ${isConflict?'checked':''} onchange="toggleConflict('${currentName}', '${other}')">
-                        <span class="jelly-slider"></span>
-                    </label>
-                `;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = `text-xs font-bold ${isConflict?'text-orange-600':'text-gray-600'}`;
+                nameSpan.textContent = other;
+
+                const label = document.createElement('label');
+                label.className = 'jelly-switch';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = Boolean(isConflict);
+                checkbox.addEventListener('change', () => toggleConflict(currentName, other));
+
+                const slider = document.createElement('span');
+                slider.className = 'jelly-slider';
+
+                label.appendChild(checkbox);
+                label.appendChild(slider);
+                div.appendChild(nameSpan);
+                div.appendChild(label);
                 container.appendChild(div);
             });
         }
@@ -2825,7 +2864,43 @@
                 return getLastName(a).localeCompare(getLastName(b), 'vi');
             }); 
             const tbody = document.getElementById('competition-tbody'); 
-            tbody.innerHTML = names.length ? names.map((n,i)=>`<tr><td class="text-center font-medium text-gray-500">${i+1}</td><td class="pl-4 font-semibold text-gray-700">${n}</td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td><td><div class="editable-cell" contenteditable="true" onblur="updatePoints(this)"></div></td></tr>`).join('') : '<tr><td colspan="4" class="text-center py-12 text-gray-400 italic">Chưa có dữ liệu.</td></tr>'; 
+            tbody.innerHTML = '';
+            if (!names.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-12 text-gray-400 italic">Chưa có dữ liệu.</td></tr>';
+                return;
+            }
+
+            names.forEach((n, i) => {
+                const tr = document.createElement('tr');
+
+                const indexTd = document.createElement('td');
+                indexTd.className = 'text-center font-medium text-gray-500';
+                indexTd.textContent = String(i + 1);
+
+                const nameTd = document.createElement('td');
+                nameTd.className = 'pl-4 font-semibold text-gray-700';
+                nameTd.textContent = n;
+
+                const point1Td = document.createElement('td');
+                const point1Input = document.createElement('div');
+                point1Input.className = 'editable-cell';
+                point1Input.contentEditable = 'true';
+                point1Input.addEventListener('blur', () => updatePoints(point1Input));
+                point1Td.appendChild(point1Input);
+
+                const point2Td = document.createElement('td');
+                const point2Input = document.createElement('div');
+                point2Input.className = 'editable-cell';
+                point2Input.contentEditable = 'true';
+                point2Input.addEventListener('blur', () => updatePoints(point2Input));
+                point2Td.appendChild(point2Input);
+
+                tr.appendChild(indexTd);
+                tr.appendChild(nameTd);
+                tr.appendChild(point1Td);
+                tr.appendChild(point2Td);
+                tbody.appendChild(tr);
+            });
         }
 
         function updatePoints(el) { 
@@ -2903,12 +2978,15 @@
                 d.className=`gender-item`;
                 const m=isMaleName(n);
                 const detected = detectGenderFromVietnameseName(n);
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'text-xs font-bold text-gray-600';
+                nameSpan.textContent = n;
                 const l=document.createElement('span');
                 l.className=`gender-label ${m?'is-male':'is-female'}`;
                 l.innerHTML=m?'<i class="fas fa-mars"></i> Nam':'<i class="fas fa-venus"></i> Nữ';
                 l.title = `Nguồn: ${detected.based_on} | Độ tin cậy: ${Math.round((detected.confidence || 0) * 100)}%`;
                 l.onclick=()=>{genderMap[n]=!m;renderGenderList();};
-                d.innerHTML=`<span class="text-xs font-bold text-gray-600">${n}</span>`;
+                d.appendChild(nameSpan);
                 d.appendChild(l);
                 c.appendChild(d);
             }); 
