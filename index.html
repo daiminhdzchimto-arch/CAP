@@ -1482,16 +1482,25 @@
             const SIDE_CENTER_X = 2.9;
             const SEAT_SPACING_X = 1.15;
             const ROW_START_Z = -2.85;
+            const MAX_ROW_UNITS = 4;
             const entries = [];
 
             const convertSide = (sideData, side) => {
                 sideData.forEach((row, rowIndex) => {
                     const sideSign = side === 'left' ? -1 : 1;
                     const worldZ = ROW_START_Z + rowIndex * ROW_Z;
-                    const centerOffset = (row.length - 1) / 2;
+                    const rowUnits = Math.max(
+                        MAX_ROW_UNITS,
+                        row.reduce((sum, seat) => sum + (Number.isFinite(seat?.width) ? seat.width : 1), 0)
+                    );
+                    let consumedUnits = 0;
 
                     row.forEach((seat, seatIndex) => {
-                        const worldX = sideSign * SIDE_CENTER_X + (seatIndex - centerOffset) * SEAT_SPACING_X;
+                        const seatUnits = Number.isFinite(seat?.width) && seat.width > 0 ? seat.width : 1;
+                        const seatCenterUnit = consumedUnits + seatUnits / 2;
+                        const unitOffsetFromCenter = seatCenterUnit - rowUnits / 2;
+                        const worldX = sideSign * SIDE_CENTER_X + unitOffsetFromCenter * SEAT_SPACING_X;
+                        consumedUnits += seatUnits;
                         entries.push({
                             side,
                             rowIndex,
@@ -1499,6 +1508,7 @@
                             name: (seat.name || '').trim(),
                             x: worldX,
                             z: worldZ,
+                            widthUnits: seatUnits,
                             deskKey: `${side}-${rowIndex}-${seatIndex}`,
                             occupantNames: getSeatEntityNames(seat)
                         });
@@ -2382,6 +2392,10 @@
             const deskEntries = Array.from(new Map(entries.map(entry => [`${entry.deskKey}`, entry])).values());
             deskEntries.forEach(entry => {
                 const desk = createStudentDeskHoaPhat3D(deskMaterials);
+                const deskScaleX = Math.max(1, entry.widthUnits || 1);
+                if(deskScaleX !== 1) {
+                    desk.scale.x = deskScaleX;
+                }
                 desk.position.set(entry.x, 0, entry.z);
                 scene.add(desk);
                 if(desk.userData.dispose) seat3DState.disposeResources.push(desk.userData.dispose);
@@ -2402,7 +2416,8 @@
                     const pantsColor = outfit.pants;
 
                     const student = createRealisticStudentModel(shirtColor, pantsColor, isMale);
-                    const offsetX = [-0.65, -0.22, 0.22, 0.65][idx];
+                    const baseOffsets = [-0.65, -0.22, 0.22, 0.65];
+                    const offsetX = baseOffsets[idx] * deskScaleX;
                     student.position.set(entry.x + offsetX, 0.015, entry.z + 0.56);
                     scene.add(student);
 
