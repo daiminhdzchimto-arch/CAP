@@ -1,3 +1,9 @@
+# [1.1.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.0.0...v1.1.0) (2026-03-11)
+
+### Features
+
+- **ci:** add localization i18n pipeline workflow ([5e5bde3](https://github.com/daiminhdzchimto-arch/CAP/commit/5e5bde38f9c30dc8b78133191b83105cf343689c))
+
 # 1.0.0 (2026-03-11)
 
 ### Bug Fixes
