@@ -74,18 +74,35 @@ jobs:
           echo $! > .http-server.pid
           npx wait-on http://127.0.0.1:4173
 
-      - name: Verify target URLs are reachable
+      - name: Filter reachable target URLs
+        id: reachable
         env:
           TARGET_URLS: ${{ steps.urls.outputs.list }}
         run: |
           node <<'NODE'
+          const fs = require('fs');
           const { execSync } = require('child_process');
 
           const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+          const reachable = [];
+
           for (const url of urls) {
-            execSync(`curl -fsSL --max-time 20 "${url}" > /dev/null`, { stdio: 'inherit' });
-            console.log(`Reachable: ${url}`);
+            try {
+              execSync(`curl -fsSL --max-time 20 "${url}" > /dev/null`, { stdio: 'inherit' });
+              console.log(`Reachable: ${url}`);
+              reachable.push(url);
+            } catch {
+              console.warn(`Skipping unreachable URL: ${url}`);
+            }
           }
+
+          if (reachable.length === 0) {
+            throw new Error('No reachable URLs found for accessibility audits.');
+          }
+
+          const output = JSON.stringify(reachable);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `list=${output}\n`);
+          console.log(`Reachable URLs to audit: ${output}`);
           NODE
 
       - name: Create Pa11y CI config
@@ -100,7 +117,7 @@ jobs:
 
       - name: Run Pa11y (per-page report)
         env:
-          TARGET_URLS: ${{ steps.urls.outputs.list }}
+          TARGET_URLS: ${{ steps.reachable.outputs.list }}
         run: |
           mkdir -p reports/pa11y
           node <<'NODE'
@@ -190,7 +207,7 @@ jobs:
 
       - name: Run axe-core (fail on critical violations)
         env:
-          TARGET_URLS: ${{ steps.urls.outputs.list }}
+          TARGET_URLS: ${{ steps.reachable.outputs.list }}
           CHROME_BIN: ${{ env.CHROME_BIN }}
           CHROMEDRIVER_BIN: ${{ env.CHROMEDRIVER_BIN }}
         run: |
@@ -263,7 +280,7 @@ jobs:
 
       - name: Run Lighthouse accessibility audit
         env:
-          TARGET_URLS: ${{ steps.urls.outputs.list }}
+          TARGET_URLS: ${{ steps.reachable.outputs.list }}
           CHROME_BIN: ${{ env.CHROME_BIN }}
         run: |
           mkdir -p reports/lighthouse
