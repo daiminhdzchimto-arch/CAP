@@ -1,0 +1,150 @@
+name: Unit Tests + Coverage
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests-coverage:
+    name: Unit Tests + Coverage
+    runs-on: ubuntu-latest
+    env:
+      COVERAGE_THRESHOLD: 80
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f package.json ]; then
+            npm install
+          else
+            echo "Không tìm thấy package.json. Vui lòng thêm dự án JS và test scripts trước khi chạy workflow này."
+            exit 1
+          fi
+
+      - name: Run unit tests with coverage
+        run: |
+          if npm run | grep -q "test:coverage"; then
+            npm run test:coverage
+          elif npm run | grep -q "test"; then
+            npm test -- --coverage --runInBand
+          else
+            echo "Không tìm thấy script test. Vui lòng thêm script test hoặc test:coverage vào package.json"
+            exit 1
+          fi
+
+      - name: Validate threshold + build coverage summary assets
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const candidates = [
+            'coverage/coverage-summary.json',
+            'coverage/summary.json'
+          ];
+
+          const summaryPath = candidates.find((path) => fs.existsSync(path));
+          if (!summaryPath) {
+            console.error('Không tìm thấy coverage summary (coverage/coverage-summary.json).');
+            process.exit(1);
+          }
+
+          const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+          const threshold = Number(process.env.COVERAGE_THRESHOLD || '80');
+          const metrics = summary.total || {};
+          const linesPct = Number(metrics.lines?.pct ?? 0);
+
+          const rows = [
+            ['Lines', metrics.lines?.pct],
+            ['Statements', metrics.statements?.pct],
+            ['Functions', metrics.functions?.pct],
+            ['Branches', metrics.branches?.pct]
+          ];
+
+          const tableRows = rows
+            .map(([name, value]) => `| ${name} | ${Number(value ?? 0).toFixed(2)}% |`)
+            .join('\n');
+
+          const markdown = [
+            '# Unit Tests Coverage Report',
+            '',
+            `- Threshold: **${threshold}% (Lines)**`,
+            `- Current Lines Coverage: **${linesPct.toFixed(2)}%**`,
+            '',
+            '| Metric | Coverage |',
+            '| --- | ---: |',
+            tableRows,
+            ''
+          ].join('\n');
+
+          const color = linesPct >= threshold ? '#4c1' : '#e05d44';
+          const label = 'coverage';
+          const message = `${linesPct.toFixed(1)}%`;
+          const svg = `<?xml version="1.0" encoding="UTF-8"?>
+          <svg xmlns="http://www.w3.org/2000/svg" width="130" height="20" role="img" aria-label="${label}: ${message}">
+            <linearGradient id="s" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <clipPath id="r"><rect width="130" height="20" rx="3" fill="#fff"/></clipPath>
+            <g clip-path="url(#r)">
+              <rect width="65" height="20" fill="#555"/>
+              <rect x="65" width="65" height="20" fill="${color}"/>
+              <rect width="130" height="20" fill="url(#s)"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+              <text x="33" y="15">${label}</text>
+              <text x="97" y="15">${message}</text>
+            </g>
+          </svg>`;
+
+          fs.writeFileSync('coverage-summary.md', markdown, 'utf8');
+          fs.writeFileSync('coverage-badge.svg', svg, 'utf8');
+
+          console.log(`Coverage (lines): ${linesPct}%`);
+          console.log(`Required threshold: ${threshold}%`);
+
+          if (Number.isNaN(linesPct)) {
+            console.error('Coverage value không hợp lệ.');
+            process.exit(1);
+          }
+
+          if (linesPct < threshold) {
+            console.error(`Coverage ${linesPct}% < ${threshold}% => FAIL`);
+            process.exit(1);
+          }
+
+          console.log('Coverage threshold check passed.');
+          NODE
+
+      - name: Publish coverage summary to job output
+        if: always()
+        run: |
+          if [ -f coverage-summary.md ]; then
+            cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload coverage report artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage
+            coverage-summary.md
+            coverage-badge.svg
