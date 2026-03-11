@@ -1,0 +1,90 @@
+name: Data Import/Export & Backup Cron
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_formats:
+        description: "Export formats (comma-separated: json,csv,xlsx)"
+        required: false
+        default: json,csv,xlsx
+      source_json:
+        description: Source fixture JSON path
+        required: false
+        default: data/localstorage-fixtures/classApp_v2.5.json
+      run_restore_smoke:
+        description: Run restore smoke test after export
+        type: boolean
+        required: false
+        default: true
+  schedule:
+    - cron: "0 1 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install export dependencies
+        run: npm install --no-save papaparse xlsx
+
+      - name: Resolve runtime inputs
+        id: vars
+        shell: bash
+        run: |
+          FORMATS="${{ github.event.inputs.export_formats }}"
+          SOURCE_JSON="${{ github.event.inputs.source_json }}"
+          if [ -z "$FORMATS" ]; then FORMATS="json,csv,xlsx"; fi
+          if [ -z "$SOURCE_JSON" ]; then SOURCE_JSON="data/localstorage-fixtures/classApp_v2.5.json"; fi
+
+          ARTIFACT_NAME="backup-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          BACKUP_DIR="backups/${ARTIFACT_NAME}"
+
+          echo "formats=$FORMATS" >> "$GITHUB_OUTPUT"
+          echo "source_json=$SOURCE_JSON" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+          echo "backup_dir=$BACKUP_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Export fixtures to JSON/CSV/XLSX
+        run: |
+          node scripts/data-portability.mjs export \
+            --source "${{ steps.vars.outputs.source_json }}" \
+            --formats "${{ steps.vars.outputs.formats }}" \
+            --outdir "${{ steps.vars.outputs.backup_dir }}"
+
+      - name: Archive backup as zip
+        shell: bash
+        run: |
+          mkdir -p dist
+          zip -r "dist/${{ steps.vars.outputs.artifact_name }}.zip" "${{ steps.vars.outputs.backup_dir }}"
+
+      - name: Restore smoke test
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_restore_smoke == 'true' }}
+        run: |
+          node scripts/data-portability.mjs restore \
+            --source "${{ steps.vars.outputs.backup_dir }}/fixtures.json" \
+            --target "${{ steps.vars.outputs.backup_dir }}/restored-fixtures.json"
+
+      - name: Upload backup artifact (downloadable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.vars.outputs.artifact_name }}
+          path: |
+            ${{ steps.vars.outputs.backup_dir }}
+            dist/${{ steps.vars.outputs.artifact_name }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to cloud storage (optional)
+        if: ${{ false }}
+        run: |
+          echo "Add AWS/GCP/Azure CLI upload command here when cloud backup is required."
