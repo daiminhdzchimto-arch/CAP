@@ -1245,6 +1245,8 @@
             checkAllConflicts();
         }
 
+        const deskInputFitQueue = new WeakMap();
+
         function renderSide(cid, data, side) {
             const c = document.getElementById(cid); c.innerHTML='';
             const createDeskActionButton = ({ className, title, icon, onClick }) => {
@@ -1319,7 +1321,6 @@
                         onClick: () => handleSwapButtonClick(side, ri, si)
                     });
                     cell.appendChild(swapBtn);
-                    requestAnimationFrame(() => fitDeskInputText(ta));
 
                     let hasActions = false;
                     if(seat.name.trim()){
@@ -1349,6 +1350,20 @@
                 });
                 c.appendChild(div);
             });
+
+            scheduleDeskInputsFit(c);
+        }
+
+        function scheduleDeskInputsFit(container) {
+            if (!container || deskInputFitQueue.has(container)) return;
+
+            const frameId = requestAnimationFrame(() => {
+                deskInputFitQueue.delete(container);
+                const fitConfig = getDeskInputFitConfig();
+                container.querySelectorAll('.desk-input').forEach(input => fitDeskInputText(input, fitConfig));
+            });
+
+            deskInputFitQueue.set(container, frameId);
         }
 
         function updateName(s,r,c,v){ 
@@ -1360,13 +1375,19 @@
             }
         }
 
-        function fitDeskInputText(input) {
+        function getDeskInputFitConfig() {
+            const cssVar = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+            return {
+                baseFontPx: cssVar('--desk-font-base') || 16,
+                minFontPx: cssVar('--desk-font-min') || 11,
+                minHeightPx: cssVar('--desk-input-min-height') || 48
+            };
+        }
+
+        function fitDeskInputText(input, fitConfig = getDeskInputFitConfig()) {
             if (!input) return;
 
-            const cssVar = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
-            const baseFontPx = cssVar('--desk-font-base') || 16;
-            const minFontPx = cssVar('--desk-font-min') || 11;
-            const minHeightPx = cssVar('--desk-input-min-height') || 48;
+            const { baseFontPx, minFontPx, minHeightPx } = fitConfig;
             let currentFontPx = baseFontPx;
 
             input.style.fontSize = `${baseFontPx}px`;
