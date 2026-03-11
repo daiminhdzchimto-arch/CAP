@@ -1,3 +1,9 @@
+# [1.2.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.1.0...v1.2.0) (2026-03-11)
+
+### Features
+
+- **ci:** add data import export backup cron workflow ([c624346](https://github.com/daiminhdzchimto-arch/CAP/commit/c62434665caa3e62966c86f37efdfd68f49aad51))
+
 # [1.1.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.0.0...v1.1.0) (2026-03-11)
 
 ### Features
