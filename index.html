@@ -1822,20 +1822,22 @@
                 const halfD = this.halfD;
 
                 const roomGroup = new THREE.Group();
+                const enclosureGroup = new THREE.Group();
                 scene.add(roomGroup);
+                roomGroup.add(enclosureGroup);
 
                 // === 1. Sàn & Trần (luôn bao kín) ===
                 const floorMat = new THREE.MeshStandardMaterial({ color: 0xd7dbe0, roughness: 0.26, side: THREE.DoubleSide });
                 const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_DEPTH + EDGE * 2), floorMat);
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(0, 0, 0);
-                roomGroup.add(floor);
+                enclosureGroup.add(floor);
 
                 const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, side: THREE.DoubleSide });
                 const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_DEPTH + EDGE * 2), ceilingMat);
                 ceiling.rotation.x = Math.PI / 2;
                 ceiling.position.set(0, ROOM_HEIGHT, 0);
-                roomGroup.add(ceiling);
+                enclosureGroup.add(ceiling);
 
                 // === 2. 4 bức tường (tự động bao kín) ===
                 const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1eee2, roughness: 0.86, side: THREE.DoubleSide });
@@ -1844,25 +1846,25 @@
                 // Tường sau (rear)
                 const rearWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_HEIGHT + EDGE), rearWallMat);
                 rearWall.position.set(0, ROOM_HEIGHT / 2, -halfD - EDGE / 2);
-                roomGroup.add(rearWall);
+                enclosureGroup.add(rearWall);
 
                 // Tường trước (front)
                 const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
                 frontWall.position.set(0, ROOM_HEIGHT / 2, halfD + EDGE / 2);
                 frontWall.rotation.y = Math.PI;
-                roomGroup.add(frontWall);
+                enclosureGroup.add(frontWall);
 
                 // Tường trái (left) - chứa cửa sổ
                 const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_DEPTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
                 leftWall.position.set(-halfW - EDGE / 2, ROOM_HEIGHT / 2, 0);
                 leftWall.rotation.y = Math.PI / 2;
-                roomGroup.add(leftWall);
+                enclosureGroup.add(leftWall);
 
                 // Tường phải (right)
                 const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_DEPTH + EDGE * 2, ROOM_HEIGHT + EDGE), wallMat);
                 rightWall.position.set(halfW + EDGE / 2, ROOM_HEIGHT / 2, 0);
                 rightWall.rotation.y = -Math.PI / 2;
-                roomGroup.add(rightWall);
+                enclosureGroup.add(rightWall);
 
                 // === 3. Cửa sổ (tự động nằm đúng tường trái, cách đều) ===
                 const windowLeafSways = [];
@@ -1908,7 +1910,7 @@
                 const fluorescentLights = [];
 
                 // ==================== TỰ ĐỘNG KIỂM TRA SAU KHI VẼ ====================
-                this.validateEnclosure(roomGroup);
+                this.validateEnclosure(enclosureGroup);
 
                 return {
                     group: roomGroup,
@@ -1922,8 +1924,8 @@
             }
 
             // ==================== KIỂM TRA TỰ ĐỘNG (bao kín không gian?) ====================
-            validateEnclosure(group) {
-                const box = new THREE.Box3().setFromObject(group);
+            validateEnclosure(enclosureGroup) {
+                const box = new THREE.Box3().setFromObject(enclosureGroup);
                 const size = new THREE.Vector3();
                 box.getSize(size);
 
@@ -1931,10 +1933,7 @@
                 const expectedD = this.depth + this.edgeOverlap * 2;
 
                 if (Math.abs(size.x - expectedW) > 0.1 || Math.abs(size.z - expectedD) > 0.1) {
-                    console.error("⚠️ CẢNH BÁO: Tường chưa bao kín phòng! Đang tự sửa...");
-                    if (size.x !== 0 && size.z !== 0) {
-                        group.scale.set(expectedW / size.x, 1, expectedD / size.z);
-                    }
+                    console.error("⚠️ CẢNH BÁO: Tường chưa bao kín phòng! Bỏ qua tự scale để tránh biến dạng nội thất.");
                 } else {
                     console.log("✅ Tường, cửa sổ, cửa lớp đã bao kín và đúng vị trí!");
                 }
