@@ -8,6 +8,7 @@
     "precommit": "lint-staged",
     "lint:staged": "lint-staged",
     "lint": "prettier --check README.md package.json commitlint.config.cjs .github/workflows/*.yml",
+    "build": "echo \"Static site - no build step required\"",
     "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose"
   },
   "devDependencies": {
