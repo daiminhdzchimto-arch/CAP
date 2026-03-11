@@ -1,0 +1,182 @@
+name: Accessibility Check (a11y)
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+  workflow_dispatch:
+
+concurrency:
+  group: accessibility-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  a11y-audit:
+    name: Axe + Pa11y + Lighthouse audits
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve pages to scan
+        id: urls
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const defaultUrls = [
+            'http://127.0.0.1:4173/',
+            'http://127.0.0.1:4173/index.html'
+          ];
+
+          const sitemapFiles = ['sitemap.xml', 'sitemap-index.xml'];
+          const urls = new Set(defaultUrls);
+
+          for (const file of sitemapFiles) {
+            if (!fs.existsSync(file)) continue;
+            const content = fs.readFileSync(file, 'utf8');
+            const matches = content.match(/<loc>(.*?)<\/loc>/g) || [];
+            for (const loc of matches) {
+              const value = loc.replace('<loc>', '').replace('</loc>', '').trim();
+              if (!value) continue;
+
+              if (value.startsWith('http://127.0.0.1:4173') || value.startsWith('https://') || value.startsWith('http://')) {
+                try {
+                  const url = new URL(value);
+                  const local = `http://127.0.0.1:4173${url.pathname}${url.search}`;
+                  urls.add(local);
+                } catch {
+                  // ignore malformed URL
+                }
+              }
+            }
+          }
+
+          const normalized = [...urls].map((u) => u.replace(/\/$/, '') || 'http://127.0.0.1:4173').sort();
+          const output = JSON.stringify(normalized);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `list=${output}\n`);
+          console.log(`Pages to audit: ${output}`);
+          NODE
+
+      - name: Start local static server
+        run: |
+          npx http-server . -p 4173 --silent &
+          echo $! > .http-server.pid
+          npx wait-on http://127.0.0.1:4173
+
+      - name: Run Pa11y (per-page report)
+        env:
+          TARGET_URLS: ${{ steps.urls.outputs.list }}
+        run: |
+          mkdir -p reports/pa11y
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+
+          for (const [index, url] of urls.entries()) {
+            const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
+            const reportPath = `reports/pa11y/${slug}.json`;
+            console.log(`Running Pa11y for ${url}`);
+
+            try {
+              const output = execSync(`npx pa11y \"${url}\" --reporter json`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'] });
+              fs.writeFileSync(reportPath, output);
+            } catch (error) {
+              const output = error.stdout ? String(error.stdout) : '[]';
+              fs.writeFileSync(reportPath, output);
+            }
+          }
+          NODE
+
+      - name: Run axe-core (fail on critical violations)
+        env:
+          TARGET_URLS: ${{ steps.urls.outputs.list }}
+        run: |
+          mkdir -p reports/axe
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+          let criticalCount = 0;
+
+          for (const [index, url] of urls.entries()) {
+            const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
+            const reportPath = `reports/axe/${slug}.json`;
+            console.log(`Running axe-core CLI for ${url}`);
+
+            execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout`, {
+              stdio: ['pipe', 'inherit', 'inherit']
+            });
+
+            const result = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            const critical = (result.violations || []).filter((v) => v.impact === 'critical');
+            criticalCount += critical.length;
+
+            if (critical.length > 0) {
+              console.error(`Critical violations in ${url}: ${critical.length}`);
+            }
+          }
+
+          if (criticalCount > 0) {
+            console.error(`Accessibility check failed: ${criticalCount} critical axe-core violation(s) found.`);
+            process.exit(1);
+          }
+
+          console.log('No critical axe-core violations found.');
+          NODE
+
+      - name: Run Lighthouse accessibility audit
+        env:
+          TARGET_URLS: ${{ steps.urls.outputs.list }}
+        run: |
+          mkdir -p reports/lighthouse
+          node <<'NODE'
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+
+          for (const [index, url] of urls.entries()) {
+            const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
+            const outputBase = `reports/lighthouse/${slug}`;
+            console.log(`Running Lighthouse for ${url}`);
+
+            execSync(
+              `npx --yes lighthouse \"${url}\" --only-categories=accessibility --output=json --output=html --output-path=\"${outputBase}\" --chrome-flags=\"--headless --no-sandbox\" --quiet`,
+              { stdio: ['pipe', 'inherit', 'inherit'] }
+            );
+          }
+          NODE
+
+      - name: Upload accessibility reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-reports
+          path: reports/
+          if-no-files-found: warn
+
+      - name: Stop static server
+        if: always()
+        run: |
+          if [ -f .http-server.pid ]; then
+            kill "$(cat .http-server.pid)" || true
+          fi
