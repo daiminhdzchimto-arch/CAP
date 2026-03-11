@@ -1017,12 +1017,16 @@
 
             createParticle(randomPos = false) {
                 const speedBase = (this.weather.speed || 2) * config.settings.intensity;
+                const driftX = Math.random() - 0.5;
+                const driftY = 1 + Math.random();
                 return {
                     x: randomPos ? Math.random() * this.canvas.width : (this.weather.deg > 180 ? this.canvas.width + 20 : -20),
                     y: Math.random() * this.canvas.height,
                     size: 5 + Math.random() * 10,
-                    vx: (Math.cos(this.weather.deg * Math.PI / 180) * speedBase) + (Math.random() - 0.5),
-                    vy: (Math.sin(this.weather.deg * Math.PI / 180) * speedBase) + 1 + Math.random(),
+                    driftX,
+                    driftY,
+                    vx: (Math.cos(this.weather.deg * Math.PI / 180) * speedBase) + driftX,
+                    vy: (Math.sin(this.weather.deg * Math.PI / 180) * speedBase) + driftY,
                     rotation: Math.random() * Math.PI * 2,
                     vRotation: (Math.random() - 0.5) * 0.1,
                     color: Math.random() > 0.5 ? this.species.color : this.species.secondary,
@@ -1093,7 +1097,15 @@
                     y: Math.sin(radians) * weatherData.speed
                 };
                 this.windGust = weatherData.gust;
-                this.particles = this.particles.map(() => this.createParticle(true));
+
+                const speedBase = (this.weather.speed || 2) * config.settings.intensity;
+                this.particles.forEach((particle) => {
+                    particle.driftX = typeof particle.driftX === 'number' ? particle.driftX : (Math.random() - 0.5);
+                    particle.driftY = typeof particle.driftY === 'number' ? particle.driftY : (1 + Math.random());
+                    particle.vx = (Math.cos(this.weather.deg * Math.PI / 180) * speedBase) + particle.driftX;
+                    particle.vy = (Math.sin(this.weather.deg * Math.PI / 180) * speedBase) + particle.driftY;
+                });
+
                 console.log(`[ParticleEngine] Đã nhận gió: Vector(${this.windVector.x.toFixed(2)}, ${this.windVector.y.toFixed(2)}), Giật: ${this.windGust}`);
             }
 
