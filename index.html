@@ -1512,6 +1512,47 @@
             return JSON.parse(LZString.decompressFromEncodedURIComponent(code));
         }
 
+        function parseCapx1ShareCode(shortCode) {
+            try {
+                const capx1Prefix = 'CAPX1:';
+                const rawCode = shortCode.startsWith(capx1Prefix) ? shortCode.slice(capx1Prefix.length) : shortCode;
+                const decoded = LZString.decompressFromEncodedURIComponent(rawCode);
+                if (!decoded) throw new Error('Mã CAPX1 không hợp lệ hoặc bị hỏng');
+
+                const payload = JSON.parse(decoded);
+                if (!payload || payload.v !== 1 || !Array.isArray(payload.ids)) throw new Error('Sai định dạng CAPX1');
+
+                const ids = payload.ids;
+                const decodeRows = (rows) => (rows || []).map(row => (row || []).map(cell => ({
+                    id: ids[cell[0]] || crypto.randomUUID(),
+                    name: cell[1] || '',
+                    width: cell.length > 2 ? Number(cell[2]) || 1 : 1,
+                    merged: cell.length > 3 ? !!cell[3] : false
+                })));
+
+                leftSideData = normalizeDecodedRows(decodeRows(payload.l));
+                rightSideData = normalizeDecodedRows(decodeRows(payload.r));
+                fixedMembers = (payload.f || []).map(index => ids[index]).filter(Boolean);
+
+                const restoredConflict = {};
+                (payload.c || []).forEach(([sourceIndex, targetIndex]) => {
+                    const source = ids[sourceIndex];
+                    const target = ids[targetIndex];
+                    if (!source || !target) return;
+                    if (!restoredConflict[source]) restoredConflict[source] = new Set();
+                    restoredConflict[source].add(target);
+                });
+                conflictGraph = restoredConflict;
+
+                saveData();
+                renderAll();
+                return true;
+            } catch (error) {
+                console.error('Lỗi Import CAPX1:', error);
+                return false;
+            }
+        }
+
         function openShareModal() {
             const compactCode = generateOptimizedShareCode();
 
@@ -1528,18 +1569,23 @@
         function importFromCode() {
             const code = document.getElementById('import-code-input').value.trim();
             try {
-                if (code.startsWith(SHARE_CODE_PREFIX)) {
+                if (code.startsWith('CAPX1:')) {
+                    if (!parseCapx1ShareCode(code)) throw new Error('Mã CAPX1 không hợp lệ!');
+                } else if (code.startsWith(SHARE_CODE_PREFIX)) {
                     if (!parseOptimizedShareCode(code)) throw new Error('Mã không hợp lệ!');
                 } else {
                     const parsedOptimized = parseOptimizedShareCode(code);
                     if (!parsedOptimized) {
-                        const data = decodeLegacyShareCode(code);
-                        leftSideData = normalizeDecodedRows(data.seating.left || []);
-                        rightSideData = normalizeDecodedRows(data.seating.right || []);
-                        fixedMembers = data.fixedMembers || [];
-                        conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
-                        saveData();
-                        renderAll();
+                        const parsedCapx1 = parseCapx1ShareCode(code);
+                        if (!parsedCapx1) {
+                            const data = decodeLegacyShareCode(code);
+                            leftSideData = normalizeDecodedRows(data.seating.left || []);
+                            rightSideData = normalizeDecodedRows(data.seating.right || []);
+                            fixedMembers = data.fixedMembers || [];
+                            conflictGraph = Object.fromEntries(Object.entries(data.conflictGraph || {}).map(([k,v]) => [k, new Set(v)]));
+                            saveData();
+                            renderAll();
+                        }
                     }
                 }
                 closeShareModal();
