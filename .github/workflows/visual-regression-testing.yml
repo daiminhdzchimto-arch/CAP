@@ -1,0 +1,108 @@
+name: Visual Regression Testing
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  visual-regression:
+    name: Visual snapshot diff (Percy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Install visual test tooling
+        run: npm install --no-save @playwright/test @percy/cli @percy/playwright
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start static server
+        run: |
+          python3 -m http.server 4173 --directory . &
+          echo $! > server.pid
+
+      - name: Wait for app
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'Application did not become ready in time.'
+          exit 1
+
+      - name: Run visual regression snapshots
+        run: |
+          npx percy exec -- node <<'NODE'
+          const { chromium } = require('playwright');
+          const percySnapshot = require('@percy/playwright');
+
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage({
+              viewport: { width: 1440, height: 900 },
+            });
+
+            await page.goto('http://127.0.0.1:4173/index.html', { waitUntil: 'networkidle' });
+
+            // Ensure deterministic rendering before snapshot
+            await page.addStyleTag({
+              content: `
+                *, *::before, *::after {
+                  transition: none !important;
+                  animation: none !important;
+                  caret-color: transparent !important;
+                }
+              `,
+            });
+
+            await percySnapshot(page, 'Home - Full page', { fullPage: true });
+
+            const keySections = [
+              { selector: '#classroom-area', name: 'Sơ đồ lớp - Classroom area' },
+              { selector: '#competition-board', name: 'Bảng thi đua' },
+              { selector: '#duty-board', name: 'Bảng trực nhật' },
+            ];
+
+            for (const section of keySections) {
+              const element = page.locator(section.selector).first();
+              if (await element.count()) {
+                await element.scrollIntoViewIfNeeded();
+                await percySnapshot(page, section.name, {
+                  scope: section.selector,
+                });
+              }
+            }
+
+            await browser.close();
+          })();
+          NODE
+
+      - name: Stop static server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill "$(cat server.pid)" || true
+            rm server.pid
+          fi
