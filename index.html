@@ -2419,6 +2419,24 @@
             return c;
         }
 
+
+        function generateSeatId() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return window.crypto.randomUUID();
+            }
+
+            if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+                const bytes = new Uint8Array(16);
+                window.crypto.getRandomValues(bytes);
+                bytes[6] = (bytes[6] & 0x0f) | 0x40;
+                bytes[8] = (bytes[8] & 0x3f) | 0x80;
+                const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0'));
+                return `${hex[0]}${hex[1]}${hex[2]}${hex[3]}-${hex[4]}${hex[5]}-${hex[6]}${hex[7]}-${hex[8]}${hex[9]}-${hex[10]}${hex[11]}${hex[12]}${hex[13]}${hex[14]}${hex[15]}`;
+            }
+
+            return `legacy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        }
+
         function activateSwapMode(s,r,c){ swapSource={side:s,r:r,c:c}; if(document.activeElement)document.activeElement.blur(); renderAll(); const seat = document.querySelector(`.desk-box[data-side="${s}"][data-r="${r}"][data-c="${c}"]`) || document.querySelector('.swap-selected'); animateActionFeedback(seat || '#classroom-area','animate-pulse-highlight',420); }
         function handleSwapButtonClick(side,r,c){
             if(swapSource){
@@ -2436,7 +2454,7 @@
         function updateStatusUI(){ document.getElementById('status-msg').className = swapSource?"px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-bold animate-pulse border border-yellow-300 block":"hidden"; document.getElementById('status-msg').innerText = "ĐANG ĐỔI CHỖ..."; }
         
         function toggleMerge(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; rw[c].width+=rw[c+1].width; if(rw[c+1].name) rw[c].name=rw[c].name?(rw[c].name+" & "+rw[c+1].name):rw[c+1].name; rw[c].merged=true; rw.splice(c+1,1); renderAll(); const mergedCell = getDeskCell(s, r, c); if(mergedCell) animateActionFeedback(mergedCell,'animate-pulse-merge',520); }
-        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:crypto.randomUUID(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); const splitCells = [getDeskCell(s, r, c), getDeskCell(s, r, c + 1)].filter(Boolean); splitCells.forEach(cell => animateActionFeedback(cell,'animate-pulse-merge',520)); }
+        function splitCell(s,r,c){ const rw=(s==='left'?leftSideData:rightSideData)[r]; if(rw[c].width<=1)return; const names=rw[c].name.split(' & ').map(n=>n.trim()); const currentName=names[0]||""; const remainingNames=names.slice(1).join(' & '); const remainingWidth=rw[c].width-1; rw[c].name=currentName; rw[c].width=1; rw[c].merged=false; rw.splice(c+1,0,{id:generateSeatId(),name:remainingNames,width:remainingWidth,merged:remainingWidth>1}); renderAll(); const splitCells = [getDeskCell(s, r, c), getDeskCell(s, r, c + 1)].filter(Boolean); splitCells.forEach(cell => animateActionFeedback(cell,'animate-pulse-merge',520)); }
         function rotateClass(d){ const logic=(a,dir)=>dir==='down'?[a.pop(),...a]:[...a.slice(1),a[0]]; leftSideData=logic([...leftSideData],d); rightSideData=logic([...rightSideData],d); renderAll(); animateAllDeskCells(d==='down'?'animate-board-down':'animate-board-up', 500); }
         function resetLayout(){ leftSideData=createDefaultArray(ROW_COUNT); rightSideData=createDefaultArray(ROW_COUNT); fixedMembers=[]; conflictGraph={}; genderMap={}; dayOffs=[]; excludedMembers=[]; morningOff=false; afternoonOff=false; document.querySelectorAll('input[type="file"]').forEach(input => input.value = ''); localStorage.removeItem('classApp_v2.5'); renderAll(); animateActionFeedback('#classroom-area','animate-ripple-reset',700); showToast("Đã làm mới toàn bộ dữ liệu!"); }
 
@@ -3198,7 +3216,7 @@
             }
         }
 
-        function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:crypto.randomUUID(),name:"",width:1,merged:false});arr.push(r);}return arr;}
+        function createDefaultArray(rows){let arr=[];for(let i=0;i<rows;i++){let r=[];for(let j=0;j<4;j++)r.push({id:generateSeatId(),name:"",width:1,merged:false});arr.push(r);}return arr;}
 
         // SHARE LOGIC
         const SHARE_CODE_PREFIX = 'CAPX2:';
@@ -3262,7 +3280,7 @@
             }
 
             const seat = {
-                id: crypto.randomUUID(),
+                id: generateSeatId(),
                 name,
                 width,
                 merged
@@ -3275,7 +3293,7 @@
             let totalWidth = row.reduce((sum, seat) => sum + (Number.isFinite(seat.width) ? seat.width : 1), 0);
 
             while (totalWidth < 4) {
-                row.push({ id: crypto.randomUUID(), name: '', width: 1, merged: false });
+                row.push({ id: generateSeatId(), name: '', width: 1, merged: false });
                 totalWidth += 1;
             }
 
