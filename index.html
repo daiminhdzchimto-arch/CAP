@@ -957,7 +957,11 @@
         }
 
         function animateButtonTapFromEvent(event) {
-            const btn = event?.currentTarget || event?.target?.closest('button');
+            const currentTarget = event?.currentTarget;
+            const target = event?.target;
+            const btn =
+                (currentTarget instanceof Element ? currentTarget : null) ||
+                (target instanceof Element ? target.closest('button') : null);
             if (!btn) return;
             btn.classList.remove('animate-button-tap');
             void btn.offsetWidth;
