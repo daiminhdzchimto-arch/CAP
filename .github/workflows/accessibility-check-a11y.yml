@@ -138,11 +138,25 @@ jobs:
             throw new Error('No Stable channel found in Chrome for Testing manifest.');
           }
 
-          const chromeDownload = (stable.downloads.chrome || []).find((item) => item.platform === 'linux64');
-          const chromedriverDownload = (stable.downloads.chromedriver || []).find((item) => item.platform === 'linux64');
+          const platforms = ['linux64', 'linux-arm64'];
+          const resolveDownload = (downloads, kind) => {
+            for (const platform of platforms) {
+              const match = (downloads || []).find((item) => item.platform === platform);
+              if (match) {
+                console.log(`Using ${kind} platform: ${platform}`);
+                return match;
+              }
+            }
+            return null;
+          };
+
+          const chromeDownload = resolveDownload(stable.downloads.chrome, 'chrome');
+          const chromedriverDownload = resolveDownload(stable.downloads.chromedriver, 'chromedriver');
 
           if (!chromeDownload || !chromedriverDownload) {
-            throw new Error(`Missing linux64 downloads for Chrome/ChromeDriver in Stable channel version ${stable.version}.`);
+            const availableChromePlatforms = (stable.downloads.chrome || []).map((item) => item.platform).join(', ') || 'none';
+            const availableDriverPlatforms = (stable.downloads.chromedriver || []).map((item) => item.platform).join(', ') || 'none';
+            throw new Error(`Missing compatible Chrome/ChromeDriver downloads for Stable ${stable.version}. Available chrome platforms: ${availableChromePlatforms}. Available chromedriver platforms: ${availableDriverPlatforms}.`);
           }
 
           run(`curl -sSL "${chromeDownload.url}" -o /tmp/chrome-linux64.zip`, { stdio: 'inherit' });
@@ -179,6 +193,7 @@ jobs:
 
           const urls = JSON.parse(process.env.TARGET_URLS || '[]');
           let criticalCount = 0;
+          let infraErrorCount = 0;
           const chromePath = process.env.CHROME_BIN;
           const chromedriverPath = process.env.CHROMEDRIVER_BIN;
 
@@ -187,9 +202,20 @@ jobs:
             const reportPath = `reports/axe/${slug}.json`;
             console.log(`Running axe-core CLI for ${url}`);
 
-            execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout --chromedriver-path \"${chromedriverPath}\" --chrome-path \"${chromePath}\" --chrome-options="no-sandbox,disable-dev-shm-usage"`, {
-              stdio: ['pipe', 'inherit', 'inherit']
-            });
+            try {
+              execSync(`npx --yes @axe-core/cli \"${url}\" --save \"${reportPath}\" --stdout --chromedriver-path \"${chromedriverPath}\" --chrome-path \"${chromePath}\" --chrome-options=\"no-sandbox,disable-dev-shm-usage\"`, {
+                stdio: ['pipe', 'inherit', 'inherit']
+              });
+            } catch (error) {
+              infraErrorCount += 1;
+              console.error(`axe-core command failed for ${url}: ${error.message}`);
+            }
+
+            if (!fs.existsSync(reportPath)) {
+              infraErrorCount += 1;
+              console.error(`Accessibility report not found at ${reportPath}`);
+              continue;
+            }
 
             const result = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
             const critical = (result.violations || []).filter((v) => v.impact === 'critical');
@@ -198,6 +224,11 @@ jobs:
             if (critical.length > 0) {
               console.error(`Critical violations in ${url}: ${critical.length}`);
             }
+          }
+
+          if (infraErrorCount > 0) {
+            console.error(`Accessibility check failed: ${infraErrorCount} infrastructure/report generation error(s) occurred.`);
+            process.exit(1);
           }
 
           if (criticalCount > 0) {
