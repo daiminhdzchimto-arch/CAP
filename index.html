@@ -1774,7 +1774,7 @@
             if(!hairStyleVariant) hair.scale.set(0.95, 0.72, 0.82);
             group.add(hair);
 
-            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.72, metalness: 0.02, normalMap: wrinkleNormal, normalScale: new THREE.Vector2(0.7, 0.7) });
+            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.72, metalness: 0.02, normalMap: fabricNormalTexture, normalScale: new THREE.Vector2(0.7, 0.7) });
             const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16);
             const leftArm = new THREE.Mesh(armGeo, armMat);
             leftArm.position.set(-0.19, 0.72, -0.04);
@@ -1785,7 +1785,7 @@
             rightArm.rotation.set(0.08, 0, -1.02);
             group.add(leftArm, rightArm);
 
-            group.userData = { type: 'student', dispose: () => wrinkleNormal.dispose() };
+            group.userData = { type: 'student' };
             return group;
         }
 
