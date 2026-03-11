@@ -39,10 +39,10 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          if npm run | grep -q "test:coverage"; then
+          if [ -f package.json ] && node -e "const s=require('./package.json').scripts||{}; process.exit(s['test:coverage'] ? 0 : 1)"; then
             npm run test:coverage
-          elif npm run | grep -q "test"; then
-            npm test -- --coverage --runInBand
+          elif [ -f package.json ] && node -e "const s=require('./package.json').scripts||{}; process.exit(Object.prototype.hasOwnProperty.call(s, 'test') ? 0 : 1)"; then
+            npm run test -- --coverage --runInBand
           else
             echo "Không tìm thấy script test. Vui lòng thêm script test hoặc test:coverage vào package.json"
             exit 1
