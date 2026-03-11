@@ -1243,111 +1243,209 @@
             renderSide('right-rows-container', rightSideData, 'right'); 
             updateStatusUI(); 
             checkAllConflicts();
+            syncConflictIndicators();
+        }
+
+        function getSeatWidthClass(width) {
+            if (width === 1) return 'w-1/4';
+            if (width === 2) return 'w-2/4';
+            if (width === 3) return 'w-3/4';
+            return 'w-full';
+        }
+
+        function getRenderStructureSignature(data) {
+            return data.map(row => row.map(seat => `${seat.id}:${seat.width}`).join('|')).join('||');
+        }
+
+        function createDeskActionButton({ className, title, icon, onClick }) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = className;
+            btn.title = title;
+            btn.setAttribute('aria-label', title);
+            btn.innerHTML = icon;
+            btn.onclick = e => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClick();
+            };
+            return btn;
+        }
+
+        function ensureSeatActionButton(cell, selector, config) {
+            let btn = cell.querySelector(selector);
+            if (!btn) {
+                btn = createDeskActionButton(config);
+                cell.appendChild(btn);
+            }
+            return btn;
+        }
+
+        function updateDeskCellDecorations(cell, seat, side, ri, si) {
+            const isSrc = swapSource && swapSource.side === side && swapSource.r === ri && swapSource.c === si;
+            const isFixed = fixedMembers.includes(seat.id);
+            const hasConflict = seat.hasConflict;
+
+            cell.className = `${getSeatWidthClass(seat.width)} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged ? 'merged' : ''} ${isSrc ? 'swap-selected' : ''} ${isFixed ? 'is-fixed' : ''} ${hasConflict ? 'has-conflict' : ''}`;
+
+            let fixedBadge = cell.querySelector('.fixed-badge');
+            if (isFixed) {
+                if (!fixedBadge) {
+                    fixedBadge = document.createElement('div');
+                    fixedBadge.className = 'fixed-badge';
+                    fixedBadge.innerHTML = '<i class="fas fa-lock"></i>';
+                    cell.appendChild(fixedBadge);
+                }
+            } else if (fixedBadge) {
+                fixedBadge.remove();
+            }
+
+            let conflictDot = cell.querySelector('.conflict-dot');
+            if (hasConflict) {
+                if (!conflictDot) {
+                    conflictDot = document.createElement('div');
+                    conflictDot.className = 'conflict-dot';
+                    cell.appendChild(conflictDot);
+                }
+            } else if (conflictDot) {
+                conflictDot.remove();
+            }
         }
 
         function renderSide(cid, data, side) {
-            const c = document.getElementById(cid); c.innerHTML='';
-            const createDeskActionButton = ({ className, title, icon, onClick }) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = className;
-                btn.title = title;
-                btn.setAttribute('aria-label', title);
-                btn.innerHTML = icon;
-                btn.onclick = e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onClick();
-                };
-                return btn;
-            };
+            const c = document.getElementById(cid);
+            const signature = getRenderStructureSignature(data);
+            const canPatch = c.dataset.structureSignature === signature && c.children.length === data.length;
+
+            if (!canPatch) {
+                c.innerHTML = '';
+                data.forEach((row, ri) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex w-full gap-2 relative row-container';
+
+                    row.forEach((seat, si) => {
+                        const cell = document.createElement('div');
+                        cell.dataset.side = side;
+                        cell.dataset.r = ri;
+                        cell.dataset.c = si;
+                        cell.dataset.seatId = seat.id;
+
+                        const ta = document.createElement('textarea');
+                        ta.className = 'desk-input';
+                        ta.value = seat.name;
+                        ta.rows = 1;
+                        ta.wrap = 'soft';
+                        ta.title = 'Nhập tên học sinh';
+                        ta.oninput = e => {
+                            updateName(side, ri, si, e.target.value);
+                            fitDeskInputText(e.target);
+                        };
+                        ta.oncontextmenu = e => {
+                            e.preventDefault();
+                            toggleFixed(seat.id);
+                        };
+
+                        const click = e => {
+                            if (swapSource) {
+                                const isSrc = swapSource.side === side && swapSource.r === ri && swapSource.c === si;
+                                if (isSrc) cancelSwapMode();
+                                else {
+                                    e.preventDefault();
+                                    executeSwap(side, ri, si);
+                                }
+                            }
+                        };
+                        ta.addEventListener('click', e => e.stopPropagation());
+                        cell.addEventListener('click', click);
+                        cell.appendChild(ta);
+
+                        cell.appendChild(createDeskActionButton({
+                            className: 'swap-seat-btn',
+                            title: 'Hoán đổi vị trí (không phải nhập tên)',
+                            icon: '<i class="fas fa-exchange-alt"></i>',
+                            onClick: () => handleSwapButtonClick(side, ri, si)
+                        }));
+
+                        if (seat.name.trim()) {
+                            cell.appendChild(createDeskActionButton({
+                                className: 'view-3d-btn',
+                                title: 'Xem vị trí 3D góc nhìn thứ nhất',
+                                icon: '<i class="fas fa-vr-cardboard"></i>',
+                                onClick: () => openSeat3DView(side, ri, si)
+                            }));
+                            cell.appendChild(createDeskActionButton({
+                                className: 'details-btn',
+                                title: 'Xem chi tiết học sinh',
+                                icon: '<i class="fas fa-circle-info"></i>',
+                                onClick: () => selectStudent(side, ri, si)
+                            }));
+                        }
+
+                        if (si < row.length - 1) {
+                            const h = document.createElement('div');
+                            h.className = 'merge-handle';
+                            h.innerHTML = '<i class="fas fa-link"></i>';
+                            h.onclick = () => toggleMerge(side, ri, si);
+                            cell.appendChild(h);
+                        }
+                        if (seat.width > 1) {
+                            const s = document.createElement('div');
+                            s.className = 'split-btn';
+                            s.innerHTML = '<i class="fas fa-unlink"></i>';
+                            s.onclick = e => {
+                                e.stopPropagation();
+                                splitCell(side, ri, si);
+                            };
+                            cell.appendChild(s);
+                        }
+
+                        cell.classList.add('has-actions');
+                        updateDeskCellDecorations(cell, seat, side, ri, si);
+                        div.appendChild(cell);
+                        requestAnimationFrame(() => fitDeskInputText(ta));
+                    });
+
+                    c.appendChild(div);
+                });
+                c.dataset.structureSignature = signature;
+                return;
+            }
 
             data.forEach((row, ri) => {
-                const div = document.createElement('div'); div.className='flex w-full gap-2 relative row-container';
+                const rowEl = c.children[ri];
                 row.forEach((seat, si) => {
-                    const cell = document.createElement('div');
-                    const w = seat.width===1?'w-1/4':(seat.width===2?'w-2/4':(seat.width===3?'w-3/4':'w-full'));
-                    const isSrc = swapSource && swapSource.side===side && swapSource.r===ri && swapSource.c===si;
-                    const isFixed = fixedMembers.includes(seat.id);
-                    const hasConflict = seat.hasConflict;
-                    
-                    cell.className = `${w} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''} ${isFixed?'is-fixed':''} ${hasConflict?'has-conflict':''}`;
+                    const cell = rowEl.children[si];
+                    if (!cell) return;
+
                     cell.dataset.side = side;
                     cell.dataset.r = ri;
                     cell.dataset.c = si;
                     cell.dataset.seatId = seat.id;
-                    
-                    if(isFixed) {
-                        const badge = document.createElement('div');
-                        badge.className = 'fixed-badge';
-                        badge.innerHTML = '<i class="fas fa-lock"></i>';
-                        cell.appendChild(badge);
+
+                    const ta = cell.querySelector('.desk-input');
+                    if (ta && ta.value !== seat.name) {
+                        ta.value = seat.name;
+                        fitDeskInputText(ta);
                     }
 
-                    if(hasConflict) {
-                        const dot = document.createElement('div');
-                        dot.className = 'conflict-dot';
-                        cell.appendChild(dot);
-                    }
-
-                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name; ta.rows = 1; ta.wrap = 'soft';
-                    ta.title = 'Nhập tên học sinh';
-                    ta.oninput=e=>{ updateName(side,ri,si,e.target.value); fitDeskInputText(e.target); };
-                    
-                    ta.oncontextmenu = e => {
-                        e.preventDefault();
-                        toggleFixed(seat.id);
-                    };
-
-                    const click=e=>{
-                        if(swapSource){
-                            if(isSrc)cancelSwapMode();
-                            else{e.preventDefault();executeSwap(side,ri,si)}
-                        }
-                    };
-                    const inputClick=e=>{
-                        e.stopPropagation();
-                    };
-                    ta.addEventListener('click',inputClick);
-                    cell.addEventListener('click', click);
-                    cell.appendChild(ta);
-
-                    const swapBtn = createDeskActionButton({
-                        className: 'swap-seat-btn',
-                        title: 'Hoán đổi vị trí (không phải nhập tên)',
-                        icon: '<i class="fas fa-exchange-alt"></i>',
-                        onClick: () => handleSwapButtonClick(side, ri, si)
+                    const hasName = !!seat.name.trim();
+                    const viewBtn = ensureSeatActionButton(cell, '.view-3d-btn', {
+                        className: 'view-3d-btn',
+                        title: 'Xem vị trí 3D góc nhìn thứ nhất',
+                        icon: '<i class="fas fa-vr-cardboard"></i>',
+                        onClick: () => openSeat3DView(side, ri, si)
                     });
-                    cell.appendChild(swapBtn);
-                    requestAnimationFrame(() => fitDeskInputText(ta));
+                    const detailsBtn = ensureSeatActionButton(cell, '.details-btn', {
+                        className: 'details-btn',
+                        title: 'Xem chi tiết học sinh',
+                        icon: '<i class="fas fa-circle-info"></i>',
+                        onClick: () => selectStudent(side, ri, si)
+                    });
+                    viewBtn.style.display = hasName ? '' : 'none';
+                    detailsBtn.style.display = hasName ? '' : 'none';
 
-                    let hasActions = false;
-                    if(seat.name.trim()){
-                        const view3DBtn = createDeskActionButton({
-                            className: 'view-3d-btn',
-                            title: 'Xem vị trí 3D góc nhìn thứ nhất',
-                            icon: '<i class="fas fa-vr-cardboard"></i>',
-                            onClick: () => openSeat3DView(side,ri,si)
-                        });
-                        cell.appendChild(view3DBtn);
-
-                        const detailsBtn = createDeskActionButton({
-                            className: 'details-btn',
-                            title: 'Xem chi tiết học sinh',
-                            icon: '<i class="fas fa-circle-info"></i>',
-                            onClick: () => selectStudent(side,ri,si)
-                        });
-                        cell.appendChild(detailsBtn);
-                        hasActions = true;
-                    }
-                    
-                    if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
-                    if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s);hasActions = true}
-                    hasActions = true;
-                    if(hasActions) cell.classList.add('has-actions');
-                    div.appendChild(cell);
+                    updateDeskCellDecorations(cell, seat, side, ri, si);
                 });
-                c.appendChild(div);
             });
         }
 
@@ -1355,6 +1453,7 @@
             const data = (s==='left'?leftSideData:rightSideData);
             data[r][c].name=v; 
             checkAllConflicts();
+            syncConflictIndicators();
             if(s==='left' && r===0 && c===0) { // Sync overlay if needed or just use global listener
                 // Handled by global input listeners
             }
@@ -2493,6 +2592,28 @@
             };
             processSide(leftSideData);
             processSide(rightSideData);
+        }
+
+        function syncConflictIndicators() {
+            document.querySelectorAll('.desk-box').forEach(cell => {
+                const side = cell.dataset.side;
+                const r = Number(cell.dataset.r);
+                const c = Number(cell.dataset.c);
+                const seatData = (side === 'left' ? leftSideData : rightSideData)?.[r]?.[c];
+                if (!seatData) return;
+
+                cell.classList.toggle('has-conflict', !!seatData.hasConflict);
+                let conflictDot = cell.querySelector('.conflict-dot');
+                if (seatData.hasConflict) {
+                    if (!conflictDot) {
+                        conflictDot = document.createElement('div');
+                        conflictDot.className = 'conflict-dot';
+                        cell.appendChild(conflictDot);
+                    }
+                } else if (conflictDot) {
+                    conflictDot.remove();
+                }
+            });
         }
 
         function selectStudent(side, r, c) {
