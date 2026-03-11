@@ -21,6 +21,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate Percy token
+        run: |
+          if [ -z "${PERCY_TOKEN}" ]; then
+            echo "::error::Missing required secret PERCY_TOKEN. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
