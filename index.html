@@ -1506,13 +1506,6 @@
           </button>
           <button
             type="button"
-            onclick="placeSeat3DDoorAtCrosshair()"
-            class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow"
-          >
-            Đặt cửa theo tâm ngắm
-          </button>
-          <button
-            type="button"
             onclick="resetSeat3DLook()"
             class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow"
           >
@@ -1817,8 +1810,6 @@
         currentViewMode: "student",
         studentViewPose: null,
         teacherViewPose: null,
-        wallMeshes: [],
-        doorGroup: null,
         removeListeners: [],
         disposeResources: [],
       };
@@ -3242,44 +3233,6 @@
         return doorGroup;
       }
 
-      function replaceSeat3DDoor(position, wallNormal) {
-        if (!seat3DState.scene) return;
-        if (seat3DState.doorGroup) {
-          seat3DState.scene.remove(seat3DState.doorGroup);
-          seat3DState.doorGroup.userData?.dispose?.();
-        }
-        const doorGroup = createSeat3DDoor(position, wallNormal);
-        seat3DState.scene.add(doorGroup);
-        seat3DState.doorGroup = doorGroup;
-      }
-
-      function placeSeat3DDoorAtCrosshair() {
-        if (!seat3DState.active || !seat3DState.camera) return;
-        if (!seat3DState.wallMeshes.length) {
-          showToast("Không tìm thấy tường để đặt cửa.");
-          return;
-        }
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), seat3DState.camera);
-        const hits = raycaster.intersectObjects(seat3DState.wallMeshes, false);
-        const wallHit = hits[0];
-        if (!wallHit) {
-          showToast(
-            "Tâm ngắm chưa chạm vào tường, hãy xoay camera rồi thử lại.",
-          );
-          return;
-        }
-        const faceNormal = wallHit.face?.normal
-          ?.clone()
-          .transformDirection(wallHit.object.matrixWorld);
-        const wallNormal =
-          faceNormal ||
-          wallHit.object.userData.wallNormal ||
-          new THREE.Vector3(0, 0, -1);
-        replaceSeat3DDoor(wallHit.point, wallNormal);
-        showToast("Đã đặt cửa ở bức tường đang ngắm.");
-      }
-
       class DynamicClassroomBuilder {
         constructor(params = {}) {
           this.width = params.width || 12.8; // Chiều rộng phòng (X)
@@ -3505,8 +3458,6 @@
             fanBlades,
             fluorescentLights,
             windowLeafSways,
-            wallMeshes: [rearWall, frontWall, leftWall, rightWall],
-            doorGroup,
             dispose: () => {
               disposeNode(roomGroup);
             },
@@ -3691,8 +3642,6 @@
         seat3DState.fluorescentLights = [];
         seat3DState.lightBlinkState = [];
         seat3DState.windowLeafSways = [];
-        seat3DState.wallMeshes = [];
-        seat3DState.doorGroup = null;
         seat3DState.baseEyeHeight = 1.25;
         seat3DState.currentViewMode = "student";
         seat3DState.studentViewPose = null;
@@ -3846,8 +3795,6 @@
         seat3DState.fanBlades = roomSetup.fanBlades;
         seat3DState.fluorescentLights = roomSetup.fluorescentLights;
         seat3DState.windowLeafSways = roomSetup.windowLeafSways;
-        seat3DState.wallMeshes = roomSetup.wallMeshes || [];
-        seat3DState.doorGroup = roomSetup.doorGroup || null;
         seat3DState.lightBlinkState = seat3DState.fluorescentLights.map(
           (light) => ({
             light,
