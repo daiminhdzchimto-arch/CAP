@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.2.2...v1.3.0) (2026-03-12)
+
+### Features
+
+- place 3D classroom door at crosshair wall ([2cc48e5](https://github.com/daiminhdzchimto-arch/CAP/commit/2cc48e5acd563bbfee28b1f4e0f5d7d91d742e0a))
+
 ## [1.2.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.2.1...v1.2.2) (2026-03-12)
 
 ### Bug Fixes
