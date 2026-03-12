@@ -1,3 +1,9 @@
+## [1.2.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.2.1...v1.2.2) (2026-03-12)
+
+### Bug Fixes
+
+- lower 3d student name tag height ([8d29ea9](https://github.com/daiminhdzchimto-arch/CAP/commit/8d29ea9ad3600d7d1e242aac86c9b539bb66285b))
+
 ## [1.2.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.2.0...v1.2.1) (2026-03-11)
 
 ### Bug Fixes
