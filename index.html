@@ -95,6 +95,76 @@
       .icon-edge-btn:active i {
           transform: scale(0.9);
       }
+      .btn-3d {
+          position: relative;
+          border: 0;
+          border-radius: 12px;
+          padding: 0.55rem;
+          min-width: 40px;
+          min-height: 40px;
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+          transform: translateY(-1px);
+      }
+      .btn-3d::before {
+          content: '';
+          position: absolute;
+          inset: 1px;
+          border-radius: 11px;
+          background: linear-gradient(to bottom, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+          pointer-events: none;
+      }
+      .btn-3d:hover {
+          transform: translateY(-3px);
+          filter: brightness(1.05);
+      }
+      .btn-3d:active {
+          transform: translateY(1px);
+          filter: brightness(0.96);
+      }
+      .btn-3d-blue {
+          background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+          box-shadow: 0 4px 0 #1d4ed8, 0 10px 16px rgba(37, 99, 235, 0.32);
+      }
+      .btn-3d-blue:hover {
+          box-shadow: 0 6px 0 #1d4ed8, 0 14px 22px rgba(37, 99, 235, 0.36);
+      }
+      .btn-3d-blue:active {
+          box-shadow: 0 2px 0 #1d4ed8, 0 5px 10px rgba(37, 99, 235, 0.26);
+      }
+      .btn-3d-orange {
+          background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+          box-shadow: 0 4px 0 #c2410c, 0 10px 16px rgba(249, 115, 22, 0.32);
+      }
+      .btn-3d-orange:hover {
+          box-shadow: 0 6px 0 #c2410c, 0 14px 22px rgba(249, 115, 22, 0.35);
+      }
+      .btn-3d-orange:active {
+          box-shadow: 0 2px 0 #c2410c, 0 5px 10px rgba(249, 115, 22, 0.28);
+      }
+      .btn-3d-purple {
+          background: linear-gradient(180deg, #a855f7 0%, #9333ea 100%);
+          box-shadow: 0 4px 0 #6b21a8, 0 10px 16px rgba(147, 51, 234, 0.32);
+      }
+      .btn-3d-purple:hover {
+          box-shadow: 0 6px 0 #6b21a8, 0 14px 22px rgba(147, 51, 234, 0.36);
+      }
+      .btn-3d-purple:active {
+          box-shadow: 0 2px 0 #6b21a8, 0 5px 10px rgba(147, 51, 234, 0.28);
+      }
+      .btn-3d-green {
+          background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+          box-shadow: 0 4px 0 #166534, 0 10px 16px rgba(22, 163, 74, 0.32);
+      }
+      .btn-3d-green:hover {
+          box-shadow: 0 6px 0 #166534, 0 14px 22px rgba(22, 163, 74, 0.34);
+      }
+      .btn-3d-green:active {
+          box-shadow: 0 2px 0 #166534, 0 5px 10px rgba(22, 163, 74, 0.28);
+      }
       .tab-switcher {
           position: relative;
           isolation: isolate;
@@ -450,7 +520,7 @@
               </button>
               <button
                 onclick="saveData()"
-                class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-md flex items-center justify-center"
+                class="btn-3d btn-3d-blue text-sm font-bold"
                 title="Lưu"
               >
                 <i class="fas fa-save"></i>
@@ -509,14 +579,14 @@
               <div class="h-6 w-px bg-gray-200 mx-1"></div>
               <button
                 onclick="openShuffleModal()"
-                class="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center"
+                class="btn-3d btn-3d-orange text-sm font-bold"
                 title="Sắp xếp"
               >
                 <i class="fas fa-random"></i>
               </button>
               <button
                 onclick="clearAllFixedMembers()"
-                class="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center"
+                class="btn-3d btn-3d-purple text-sm font-bold"
                 title="Xoá toàn bộ trạng thái ghim bàn ghế"
               >
                 <i class="fas fa-unlock"></i>
@@ -531,7 +601,7 @@
               <div class="h-6 w-px bg-gray-200 mx-1"></div>
               <button
                 onclick="downloadImage('classroom-area', 'So_do_lop')"
-                class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center"
+                class="btn-3d btn-3d-green text-sm font-bold"
                 title="Chụp ảnh"
               >
                 <i class="fas fa-camera"></i>
