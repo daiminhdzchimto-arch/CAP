@@ -186,6 +186,7 @@
       .split-btn { right: 0; }
       .details-btn { left: 0; top: auto; bottom: 0; }
       .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+      .teacher-view-3d-btn { opacity: 1; pointer-events: auto; }
       .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
       .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
       .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
@@ -195,6 +196,7 @@
       .split-btn:hover { color: #ef4444; }
       .details-btn:hover { color: #3b82f6; }
       .view-3d-btn:hover { color: #0284c7; }
+      .teacher-view-3d-btn:hover { color: #0284c7; }
       .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
       #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
@@ -593,11 +595,10 @@
                   <button
                     type="button"
                     onclick="openTeacherDesk3DView()"
-                    class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white/95 hover:bg-white text-amber-700 text-[10px] font-bold px-2 py-1 rounded-md border border-amber-300 shadow flex items-center gap-1"
+                    class="view-3d-btn teacher-view-3d-btn"
                     title="Xem vị trí bàn giáo viên trong không gian 3D"
                   >
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Xem 3D</span>
+                    <i class="fas fa-vr-cardboard"></i>
                   </button>
                 </div>
               </div>

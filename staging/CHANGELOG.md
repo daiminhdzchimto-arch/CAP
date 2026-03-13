@@ -1,3 +1,9 @@
+# [1.5.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.4.0...v1.5.0) (2026-03-13)
+
+### Features
+
+- update spectator vertical controls to space and shift+space ([334211e](https://github.com/daiminhdzchimto-arch/CAP/commit/334211e5967f526a48b72df8a20300e2bea47553))
+
 # [1.4.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.3.1...v1.4.0) (2026-03-13)
 
 ### Features
