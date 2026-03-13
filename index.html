@@ -1487,11 +1487,24 @@
             Giữ chuột (hoặc kéo tay) để xoay 360°. Cuộn chuột để thay đổi tầm
             nhìn.
           </p>
+          <p class="text-[11px] text-gray-600 mt-1">
+            Bật chế độ khán giả để bay tự do xuyên tường bằng WASD + Q/E (Shift
+            để tăng tốc), và chuột trái vào thực thể để xem góc nhìn của họ.
+          </p>
           <p class="text-[11px] text-gray-500 mt-1">
             Dấu chấm ở giữa giúp canh tâm khi quan sát bảng.
           </p>
         </div>
         <div class="absolute top-4 right-4 flex items-center gap-2">
+          <button
+            id="seat-3d-spectator-btn"
+            type="button"
+            onclick="toggleSeat3DSpectatorMode()"
+            class="bg-indigo-500/90 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-lg border border-indigo-300 shadow flex items-center gap-1.5"
+          >
+            <i class="fas fa-mask"></i>
+            <span id="seat-3d-spectator-text">Bật khán giả</span>
+          </button>
           <button
             id="seat-3d-view-switch-btn"
             type="button"
@@ -1810,6 +1823,13 @@
         currentViewMode: "student",
         studentViewPose: null,
         teacherViewPose: null,
+        spectatorMode: false,
+        spectatorVelocity: new THREE.Vector3(),
+        pressedKeys: new Set(),
+        interactiveEntities: [],
+        clock: null,
+        moveSpeed: 4.2,
+        sprintMultiplier: 2.1,
         removeListeners: [],
         disposeResources: [],
       };
@@ -3552,6 +3572,10 @@
 
       function switchSeat3DViewMode(mode) {
         if (!seat3DState.active || !seat3DState.camera) return;
+        if (seat3DState.spectatorMode) {
+          showToast("Đang ở chế độ khán giả, hãy tắt để đổi góc mặc định.");
+          return;
+        }
         const pose =
           mode === "teacher"
             ? seat3DState.teacherViewPose
@@ -3585,6 +3609,14 @@
         const text = document.getElementById("seat-3d-view-switch-text");
         if (!btn || !icon || !text) return;
 
+        if (seat3DState.spectatorMode) {
+          btn.disabled = true;
+          btn.classList.add("opacity-60", "cursor-not-allowed");
+          return;
+        }
+
+        btn.disabled = false;
+        btn.classList.remove("opacity-60", "cursor-not-allowed");
         const targetMode =
           seat3DState.currentViewMode === "teacher" ? "student" : "teacher";
         if (targetMode === "teacher") {
@@ -3594,6 +3626,36 @@
           icon.className = "fas fa-user-graduate";
           text.textContent = "Chuyển góc học sinh";
         }
+      }
+
+      function updateSeat3DSpectatorButton() {
+        const text = document.getElementById("seat-3d-spectator-text");
+        const btn = document.getElementById("seat-3d-spectator-btn");
+        if (!text || !btn) return;
+        const isOn = !!seat3DState.spectatorMode;
+        text.textContent = isOn ? "Tắt khán giả" : "Bật khán giả";
+        btn.classList.toggle("bg-indigo-500/90", !isOn);
+        btn.classList.toggle("hover:bg-indigo-600", !isOn);
+        btn.classList.toggle("border-indigo-300", !isOn);
+        btn.classList.toggle("bg-emerald-500/90", isOn);
+        btn.classList.toggle("hover:bg-emerald-600", isOn);
+        btn.classList.toggle("border-emerald-300", isOn);
+      }
+
+      function setSeat3DSpectatorMode(enabled) {
+        if (!seat3DState.active || !seat3DState.camera) return;
+        seat3DState.spectatorMode = !!enabled;
+        seat3DState.pressedKeys.clear();
+        seat3DState.spectatorVelocity.set(0, 0, 0);
+        if (!seat3DState.spectatorMode) {
+          resetSeat3DLook();
+        }
+        updateSeat3DSpectatorButton();
+        updateSeat3DViewSwitchButton();
+      }
+
+      function toggleSeat3DSpectatorMode() {
+        setSeat3DSpectatorMode(!seat3DState.spectatorMode);
       }
 
       function toggleSeat3DViewMode() {
@@ -3646,6 +3708,11 @@
         seat3DState.currentViewMode = "student";
         seat3DState.studentViewPose = null;
         seat3DState.teacherViewPose = null;
+        seat3DState.spectatorMode = false;
+        seat3DState.spectatorVelocity.set(0, 0, 0);
+        seat3DState.pressedKeys.clear();
+        seat3DState.interactiveEntities = [];
+        seat3DState.clock = null;
 
         if (seat3DState.renderer) {
           const canvas = seat3DState.renderer.domElement;
@@ -3855,6 +3922,7 @@
         };
         seat3DState.disposeResources.push(() => woodTex.dispose());
         const tagGroup = new THREE.Group();
+        const interactiveEntities = [];
 
         const teacherDesk = createTeacherDesk3D(deskMaterials);
         teacherDesk.position.set(0, 0, -4.3);
@@ -3909,6 +3977,20 @@
             const offsetX = baseOffsets[idx] * deskScaleX;
             student.position.set(entry.x + offsetX, 0.015, entry.z + 0.56);
             scene.add(student);
+
+            const viewOffset = new THREE.Vector3(0, 1.35, isMale ? 0.18 : 0.16);
+            const worldViewPos = student.localToWorld(viewOffset.clone());
+            interactiveEntities.push({
+              label: studentName,
+              model: student,
+              viewPose: {
+                position: worldViewPos.clone(),
+                yaw: 0,
+                pitch: -0.04,
+                fov: 75,
+                label: `${studentName}`,
+              },
+            });
 
             const backpack = new THREE.Mesh(
               new THREE.BoxGeometry(0.2, 0.26, 0.11),
@@ -3966,8 +4048,12 @@
         seat3DState.renderer = renderer;
         seat3DState.scene = scene;
         seat3DState.camera = camera;
+        seat3DState.clock = new THREE.Clock();
+        seat3DState.interactiveEntities = interactiveEntities;
+        setSeat3DSpectatorMode(false);
         resetSeat3DLook();
         updateSeat3DViewSwitchButton();
+        updateSeat3DSpectatorButton();
 
         const canvas = renderer.domElement;
         const onDown = (x, y) => {
@@ -4010,6 +4096,58 @@
           camera.updateProjectionMatrix();
         };
 
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        const onCanvasClick = (e) => {
+          if (!seat3DState.spectatorMode || e.button !== 0) return;
+          const rect = canvas.getBoundingClientRect();
+          pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          raycaster.setFromCamera(pointer, camera);
+          const models = seat3DState.interactiveEntities.map((it) => it.model);
+          const hit = raycaster.intersectObjects(models, true)[0];
+          if (!hit) return;
+          const entity = seat3DState.interactiveEntities.find((it) => {
+            let matched = false;
+            it.model.traverse((child) => {
+              if (child === hit.object) matched = true;
+            });
+            return matched;
+          });
+          if (!entity) return;
+
+          seat3DState.currentViewMode = "student";
+          const pose = entity.viewPose;
+          seat3DState.camera.position.copy(pose.position);
+          seat3DState.baseEyeHeight = pose.position.y;
+          seat3DState.yaw = pose.yaw;
+          seat3DState.pitch = pose.pitch;
+          seat3DState.fov = pose.fov;
+          camera.fov = seat3DState.fov;
+          camera.updateProjectionMatrix();
+          const currentLabel = document.getElementById("seat-3d-current-name");
+          if (currentLabel)
+            currentLabel.textContent = `Đang xem từ: ${entity.label} (khán giả)`;
+          entity.model.visible = false;
+          setTimeout(() => {
+            entity.model.visible = true;
+          }, 80);
+          applySeat3DCameraLook();
+        };
+
+        const onKeyDown = (e) => {
+          if (!seat3DState.spectatorMode) return;
+          const key = (e.key || "").toLowerCase();
+          if (["w", "a", "s", "d", "q", "e", "shift"].includes(key)) {
+            seat3DState.pressedKeys.add(key);
+            e.preventDefault();
+          }
+        };
+        const onKeyUp = (e) => {
+          const key = (e.key || "").toLowerCase();
+          seat3DState.pressedKeys.delete(key);
+        };
+
         canvas.addEventListener("mousedown", onMouseDown);
         window.addEventListener("mousemove", onMouseMove);
         window.addEventListener("mouseup", stopDrag);
@@ -4017,6 +4155,9 @@
         window.addEventListener("touchmove", onTouchMove, { passive: true });
         window.addEventListener("touchend", stopDrag, { passive: true });
         canvas.addEventListener("wheel", onWheel, { passive: false });
+        canvas.addEventListener("click", onCanvasClick);
+        window.addEventListener("keydown", onKeyDown, { passive: false });
+        window.addEventListener("keyup", onKeyUp, { passive: true });
 
         const resize = () => {
           if (!seat3DState.renderer || !seat3DState.camera) return;
@@ -4036,15 +4177,52 @@
           () => window.removeEventListener("touchmove", onTouchMove),
           () => window.removeEventListener("touchend", stopDrag),
           () => canvas.removeEventListener("wheel", onWheel),
+          () => canvas.removeEventListener("click", onCanvasClick),
+          () => window.removeEventListener("keydown", onKeyDown),
+          () => window.removeEventListener("keyup", onKeyUp),
           () => window.removeEventListener("resize", resize),
         ];
 
         let bobTime = 0;
         const animate = () => {
           if (!seat3DState.active) return;
+          const delta = Math.min(
+            seat3DState.clock?.getDelta?.() || 0.016,
+            0.05,
+          );
           bobTime += 0.016;
-          seat3DState.camera.position.y =
-            seat3DState.baseEyeHeight + Math.sin(bobTime * 1.8) * 0.008;
+          if (seat3DState.spectatorMode) {
+            const forward = new THREE.Vector3(
+              Math.sin(seat3DState.yaw),
+              0,
+              -Math.cos(seat3DState.yaw),
+            );
+            const right = new THREE.Vector3(forward.z, 0, -forward.x);
+            const up = new THREE.Vector3(0, 1, 0);
+            const moveDir = new THREE.Vector3();
+            if (seat3DState.pressedKeys.has("w")) moveDir.add(forward);
+            if (seat3DState.pressedKeys.has("s")) moveDir.sub(forward);
+            if (seat3DState.pressedKeys.has("d")) moveDir.add(right);
+            if (seat3DState.pressedKeys.has("a")) moveDir.sub(right);
+            if (seat3DState.pressedKeys.has("e")) moveDir.add(up);
+            if (seat3DState.pressedKeys.has("q")) moveDir.sub(up);
+            if (moveDir.lengthSq() > 0) {
+              moveDir.normalize();
+              const speed =
+                seat3DState.moveSpeed *
+                (seat3DState.pressedKeys.has("shift")
+                  ? seat3DState.sprintMultiplier
+                  : 1);
+              seat3DState.camera.position.addScaledVector(
+                moveDir,
+                speed * delta,
+              );
+            }
+            seat3DState.baseEyeHeight = seat3DState.camera.position.y;
+          } else {
+            seat3DState.camera.position.y =
+              seat3DState.baseEyeHeight + Math.sin(bobTime * 1.8) * 0.008;
+          }
           const t = performance.now() * 0.001;
           seat3DState.fanBlades.forEach((fan) => {
             fan.rotation.y += 0.5;
