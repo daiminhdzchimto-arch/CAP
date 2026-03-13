@@ -1,3 +1,9 @@
+# [1.4.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.3.1...v1.4.0) (2026-03-13)
+
+### Features
+
+- add spectator mode for 3D classroom viewer ([e1db1c4](https://github.com/daiminhdzchimto-arch/CAP/commit/e1db1c4605bbe824d9b6a9e6b5a09c5788ac49b8))
+
 ## [1.3.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.3.0...v1.3.1) (2026-03-12)
 
 ### Bug Fixes

@@ -1488,8 +1488,9 @@
             nhìn.
           </p>
           <p class="text-[11px] text-gray-600 mt-1">
-            Bật chế độ khán giả để bay tự do xuyên tường bằng WASD + Q/E (Shift
-            để tăng tốc), và chuột trái vào thực thể để xem góc nhìn của họ.
+            Bật chế độ khán giả để bay tự do xuyên tường bằng WASD + Space
+            (Shift + Space để hạ độ cao), và chuột trái vào thực thể để xem góc
+            nhìn của họ.
           </p>
           <p class="text-[11px] text-gray-500 mt-1">
             Dấu chấm ở giữa giúp canh tâm khi quan sát bảng.
@@ -4137,15 +4138,21 @@
 
         const onKeyDown = (e) => {
           if (!seat3DState.spectatorMode) return;
-          const key = (e.key || "").toLowerCase();
-          if (["w", "a", "s", "d", "q", "e", "shift"].includes(key)) {
-            seat3DState.pressedKeys.add(key);
+          const rawKey = e.key || "";
+          const key = rawKey.toLowerCase();
+          const normalizedKey =
+            rawKey === " " || key === "spacebar" ? "space" : key;
+          if (["w", "a", "s", "d", "space", "shift"].includes(normalizedKey)) {
+            seat3DState.pressedKeys.add(normalizedKey);
             e.preventDefault();
           }
         };
         const onKeyUp = (e) => {
-          const key = (e.key || "").toLowerCase();
-          seat3DState.pressedKeys.delete(key);
+          const rawKey = e.key || "";
+          const key = rawKey.toLowerCase();
+          const normalizedKey =
+            rawKey === " " || key === "spacebar" ? "space" : key;
+          seat3DState.pressedKeys.delete(normalizedKey);
         };
 
         canvas.addEventListener("mousedown", onMouseDown);
@@ -4204,8 +4211,10 @@
             if (seat3DState.pressedKeys.has("s")) moveDir.sub(forward);
             if (seat3DState.pressedKeys.has("d")) moveDir.add(right);
             if (seat3DState.pressedKeys.has("a")) moveDir.sub(right);
-            if (seat3DState.pressedKeys.has("e")) moveDir.add(up);
-            if (seat3DState.pressedKeys.has("q")) moveDir.sub(up);
+            if (seat3DState.pressedKeys.has("space")) {
+              if (seat3DState.pressedKeys.has("shift")) moveDir.sub(up);
+              else moveDir.add(up);
+            }
             if (moveDir.lengthSq() > 0) {
               moveDir.normalize();
               const speed =
