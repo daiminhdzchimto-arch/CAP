@@ -1,3 +1,9 @@
+# [1.6.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.5.0...v1.6.0) (2026-03-13)
+
+### Features
+
+- **ui:** add 3D press effects for action icon buttons ([2bd81e3](https://github.com/daiminhdzchimto-arch/CAP/commit/2bd81e3cf268fc9d3fbfaa83dd375d3e74e5e665))
+
 # [1.5.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.4.0...v1.5.0) (2026-03-13)
 
 ### Features
