@@ -125,6 +125,12 @@
           transform: translateY(1px);
           filter: brightness(0.96);
       }
+      .btn-3d i {
+          transition: transform 0.12s ease;
+      }
+      .btn-3d:active i {
+          transform: scale(0.9);
+      }
       .btn-3d-blue {
           background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
           box-shadow: 0 4px 0 #1d4ed8, 0 10px 16px rgba(37, 99, 235, 0.32);
@@ -164,6 +170,12 @@
       }
       .btn-3d-green:active {
           box-shadow: 0 2px 0 #166534, 0 5px 10px rgba(22, 163, 74, 0.28);
+      }
+      .duty-action-btn {
+          width: 42px;
+          height: 42px;
+          padding: 0;
+          font-size: 1rem;
       }
       .tab-switcher {
           position: relative;
@@ -828,23 +840,28 @@
               <div class="w-full flex justify-between mb-6">
                 <button
                   onclick="backToCompetition()"
-                  class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2"
+                  class="btn-3d btn-3d-orange duty-action-btn"
+                  aria-label="Quay lại"
+                  title="Quay lại"
                 >
-                  <i class="fas fa-arrow-left"></i> Quay lại
+                  <i class="fas fa-arrow-left"></i>
                 </button>
                 <div class="flex gap-3">
                   <button
                     onclick="toggleDayOffMode()"
-                    class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2"
+                    class="btn-3d btn-3d-purple duty-action-btn"
+                    aria-label="Bật/tắt ngày nghỉ"
+                    title="Bật/tắt ngày nghỉ"
                   >
                     <i class="fas fa-calendar-times"></i>
-                    <span id="day-off-btn-text">Hiện Ngày Nghỉ</span>
                   </button>
                   <button
                     onclick="downloadImage('duty-board', 'Lich_truc_nhat')"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md flex items-center gap-2"
+                    class="btn-3d btn-3d-blue duty-action-btn"
+                    aria-label="Tải lịch trực"
+                    title="Tải lịch trực"
                   >
-                    <i class="fas fa-file-image"></i> Tải Lịch Trực
+                    <i class="fas fa-file-image"></i>
                   </button>
                 </div>
               </div>
@@ -5510,9 +5527,6 @@
 
       function toggleDayOffMode() {
         dayOffMode = !dayOffMode;
-        document.getElementById("day-off-btn-text").textContent = dayOffMode
-          ? "Ẩn Ngày Nghỉ"
-          : "Hiện Ngày Nghỉ";
       }
 
       // =================================================================
