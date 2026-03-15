@@ -1,3 +1,9 @@
+# [1.8.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.7.0...v1.8.0) (2026-03-15)
+
+### Features
+
+- **ui:** convert competition action buttons to 3d icon buttons ([d93a3d9](https://github.com/daiminhdzchimto-arch/CAP/commit/d93a3d99301ae7657ac7460c8bd28b18c048278d))
+
 # [1.7.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.6.0...v1.7.0) (2026-03-13)
 
 ### Features
