@@ -1,3 +1,9 @@
+# [1.7.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.6.0...v1.7.0) (2026-03-13)
+
+### Features
+
+- **ui:** show teacher desk 3d button on hover ([f81c606](https://github.com/daiminhdzchimto-arch/CAP/commit/f81c606b7c164bd070636222f9759af327d0d896))
+
 # [1.6.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.5.0...v1.6.0) (2026-03-13)
 
 ### Features
