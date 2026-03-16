@@ -4120,11 +4120,14 @@
             .clone()
             .sub(camCfg.position)
             .normalize();
+          const lensOffset = 0.28;
           securityCameraEntities.push({
             label: camCfg.label,
             model: secCam,
             viewPose: {
-              position: camCfg.position.clone(),
+              position: camCfg.position
+                .clone()
+                .add(direction.clone().multiplyScalar(lensOffset)),
               yaw: Math.atan2(direction.x, -direction.z),
               pitch: Math.asin(direction.y),
               fov: 120,
