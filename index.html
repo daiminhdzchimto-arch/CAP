@@ -1927,6 +1927,8 @@
         spectatorVelocity: new THREE.Vector3(),
         pressedKeys: new Set(),
         interactiveEntities: [],
+        securityCameraEntities: [],
+        infraBlinkState: [],
         clock: null,
         moveSpeed: 4.2,
         sprintMultiplier: 2.1,
@@ -3121,6 +3123,72 @@
         return group;
       }
 
+      function createSecurityCamera3D({ label = "Camera an ninh" } = {}) {
+        const group = new THREE.Group();
+        const mount = new THREE.Mesh(
+          new THREE.BoxGeometry(0.05, 0.2, 0.05),
+          new THREE.MeshStandardMaterial({
+            color: 0xe5e7eb,
+            metalness: 0.55,
+            roughness: 0.38,
+          }),
+        );
+        mount.position.y = -0.12;
+        group.add(mount);
+
+        const body = new THREE.Mesh(
+          new THREE.CapsuleGeometry(0.12, 0.28, 6, 14),
+          new THREE.MeshStandardMaterial({
+            color: 0xf8fafc,
+            metalness: 0.42,
+            roughness: 0.3,
+          }),
+        );
+        body.rotation.x = Math.PI / 2;
+        group.add(body);
+
+        const lensMat = new THREE.MeshStandardMaterial({
+          color: 0x0f172a,
+          emissive: 0x020617,
+          roughness: 0.08,
+          metalness: 0.88,
+        });
+        const lens = new THREE.Mesh(
+          new THREE.SphereGeometry(0.08, 20, 16),
+          lensMat,
+        );
+        lens.position.z = 0.18;
+        lens.scale.set(1, 1, 0.62);
+        group.add(lens);
+
+        const irLeds = [];
+        const ledGeometry = new THREE.SphereGeometry(0.012, 10, 10);
+        for (let i = 0; i < 6; i += 1) {
+          const ang = (i / 6) * Math.PI * 2;
+          const led = new THREE.Mesh(
+            ledGeometry,
+            new THREE.MeshStandardMaterial({
+              color: 0xfee2e2,
+              emissive: 0xff2d55,
+              emissiveIntensity: 0.25,
+              roughness: 0.2,
+              metalness: 0.15,
+            }),
+          );
+          led.position.set(Math.cos(ang) * 0.07, Math.sin(ang) * 0.07, 0.15);
+          group.add(led);
+          irLeds.push(led);
+        }
+
+        group.userData = {
+          type: "security-camera",
+          label,
+          irLeds,
+          dispose: () => disposeNode(group),
+        };
+        return group;
+      }
+
       function createRealisticStudentModel(shirtColor, pantsColor, isMale) {
         const group = new THREE.Group();
         const disposableGeometries = new Set();
@@ -3812,6 +3880,8 @@
         seat3DState.spectatorVelocity.set(0, 0, 0);
         seat3DState.pressedKeys.clear();
         seat3DState.interactiveEntities = [];
+        seat3DState.securityCameraEntities = [];
+        seat3DState.infraBlinkState = [];
         seat3DState.clock = null;
 
         if (seat3DState.renderer) {
@@ -4023,10 +4093,52 @@
         seat3DState.disposeResources.push(() => woodTex.dispose());
         const tagGroup = new THREE.Group();
         const interactiveEntities = [];
+        const securityCameraEntities = [];
 
         const teacherDesk = createTeacherDesk3D(deskMaterials);
         teacherDesk.position.set(0, 0, -4.3);
         scene.add(teacherDesk);
+
+        const classroomCameraConfigs = [
+          {
+            label: "Camera cuối lớp",
+            position: new THREE.Vector3(-5.7, 3.45, 5.85),
+            focus: new THREE.Vector3(3.8, 1.35, -4.9),
+          },
+          {
+            label: "Camera đầu lớp",
+            position: new THREE.Vector3(5.7, 3.45, -5.85),
+            focus: new THREE.Vector3(-3.8, 1.35, 4.9),
+          },
+        ];
+        classroomCameraConfigs.forEach((camCfg) => {
+          const secCam = createSecurityCamera3D({ label: camCfg.label });
+          secCam.position.copy(camCfg.position);
+          secCam.lookAt(camCfg.focus);
+          scene.add(secCam);
+          const direction = camCfg.focus
+            .clone()
+            .sub(camCfg.position)
+            .normalize();
+          securityCameraEntities.push({
+            label: camCfg.label,
+            model: secCam,
+            viewPose: {
+              position: camCfg.position.clone(),
+              yaw: Math.atan2(direction.x, -direction.z),
+              pitch: Math.asin(direction.y),
+              fov: 120,
+              label: `${camCfg.label} • Góc nhìn 360°`,
+            },
+            type: "security-camera",
+          });
+        });
+        seat3DState.infraBlinkState = securityCameraEntities.flatMap((cam) =>
+          (cam.model.userData.irLeds || []).map((led, idx) => ({
+            led,
+            offset: idx * 0.25 + Math.random() * 0.6,
+          })),
+        );
 
         const deskEntries = Array.from(
           new Map(entries.map((entry) => [`${entry.deskKey}`, entry])).values(),
@@ -4150,6 +4262,7 @@
         seat3DState.camera = camera;
         seat3DState.clock = new THREE.Clock();
         seat3DState.interactiveEntities = interactiveEntities;
+        seat3DState.securityCameraEntities = securityCameraEntities;
         setSeat3DSpectatorMode(false);
         resetSeat3DLook();
         updateSeat3DViewSwitchButton();
@@ -4204,10 +4317,16 @@
           pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
           raycaster.setFromCamera(pointer, camera);
-          const models = seat3DState.interactiveEntities.map((it) => it.model);
+          const entityPool = [
+            ...seat3DState.interactiveEntities,
+            ...(seat3DState.currentViewMode === "teacher"
+              ? seat3DState.securityCameraEntities
+              : []),
+          ];
+          const models = entityPool.map((it) => it.model);
           const hit = raycaster.intersectObjects(models, true)[0];
           if (!hit) return;
-          const entity = seat3DState.interactiveEntities.find((it) => {
+          const entity = entityPool.find((it) => {
             let matched = false;
             it.model.traverse((child) => {
               if (child === hit.object) matched = true;
@@ -4216,7 +4335,9 @@
           });
           if (!entity) return;
 
-          seat3DState.currentViewMode = "student";
+          if (entity.type !== "security-camera") {
+            seat3DState.currentViewMode = "student";
+          }
           const pose = entity.viewPose;
           seat3DState.camera.position.copy(pose.position);
           seat3DState.baseEyeHeight = pose.position.y;
@@ -4227,7 +4348,7 @@
           camera.updateProjectionMatrix();
           const currentLabel = document.getElementById("seat-3d-current-name");
           if (currentLabel)
-            currentLabel.textContent = `Đang xem từ: ${entity.label} (khán giả)`;
+            currentLabel.textContent = `Đang xem từ: ${pose.label || entity.label}`;
           entity.model.visible = false;
           setTimeout(() => {
             entity.model.visible = true;
@@ -4243,6 +4364,32 @@
             rawKey === " " || key === "spacebar" ? "space" : key;
           if (["w", "a", "s", "d", "space", "shift"].includes(normalizedKey)) {
             seat3DState.pressedKeys.add(normalizedKey);
+            e.preventDefault();
+          }
+          if (
+            key === "c" &&
+            seat3DState.currentViewMode === "teacher" &&
+            seat3DState.securityCameraEntities.length
+          ) {
+            const activeCamIndex = seat3DState.securityCameraEntities.findIndex(
+              (camEntity) =>
+                camEntity.viewPose.position.distanceTo(
+                  seat3DState.camera.position,
+                ) < 0.25,
+            );
+            const nextCam =
+              seat3DState.securityCameraEntities[
+                (activeCamIndex + 1) % seat3DState.securityCameraEntities.length
+              ];
+            seat3DState.camera.position.copy(nextCam.viewPose.position);
+            seat3DState.baseEyeHeight = nextCam.viewPose.position.y;
+            seat3DState.yaw = nextCam.viewPose.yaw;
+            seat3DState.pitch = nextCam.viewPose.pitch;
+            seat3DState.fov = nextCam.viewPose.fov;
+            camera.fov = seat3DState.fov;
+            camera.updateProjectionMatrix();
+            applySeat3DCameraLook();
+            showToast(`Đã chuyển sang ${nextCam.label}`);
             e.preventDefault();
           }
         };
@@ -4363,6 +4510,15 @@
               Math.sin(t * 1.7 + sway.phase * 0.7) * (sway.amplitude * 0.85);
             sway.group.position.y =
               sway.baseY + Math.sin(t * 1.15 + sway.phase) * 0.015;
+          });
+          seat3DState.infraBlinkState.forEach((blink, idx) => {
+            if (!blink.led?.material) return;
+            const pulse =
+              0.25 + Math.max(0, Math.sin(t * 7 + blink.offset)) * 0.95;
+            blink.led.material.emissiveIntensity = pulse;
+            blink.led.scale.setScalar(
+              1 + Math.max(0, Math.sin(t * 10 + idx * 0.33)) * 0.2,
+            );
           });
           tagGroup.children.forEach((tag) => tag.lookAt(camera.position));
           renderer.render(scene, camera);
