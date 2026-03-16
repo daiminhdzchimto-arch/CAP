@@ -1,3 +1,9 @@
+## [1.10.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.10.0...v1.10.1) (2026-03-16)
+
+### Bug Fixes
+
+- **camera:** offset security cam POV ahead of lens ([9fc9181](https://github.com/daiminhdzchimto-arch/CAP/commit/9fc91816574f2cb6f48e85ce3fff297fa880c01f))
+
 # [1.10.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.9.0...v1.10.0) (2026-03-16)
 
 ### Features
