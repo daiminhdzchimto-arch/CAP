@@ -1600,36 +1600,44 @@
             id="seat-3d-spectator-btn"
             type="button"
             onclick="toggleSeat3DSpectatorMode()"
-            class="bg-indigo-500/90 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-lg border border-indigo-300 shadow flex items-center gap-1.5"
+            class="bg-indigo-500/90 hover:bg-indigo-600 text-white text-xs font-bold w-9 h-9 rounded-lg border border-indigo-300 shadow flex items-center justify-center"
+            aria-label="Bật khán giả"
+            title="Bật khán giả"
           >
             <i class="fas fa-mask"></i>
-            <span id="seat-3d-spectator-text">Bật khán giả</span>
           </button>
           <button
             id="seat-3d-view-switch-btn"
             type="button"
             onclick="toggleSeat3DViewMode()"
-            class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow flex items-center gap-1.5"
+            class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold w-9 h-9 rounded-lg border border-gray-200 shadow flex items-center justify-center"
+            aria-label="Chuyển góc bàn GV"
+            title="Chuyển góc bàn GV"
           >
             <i
               id="seat-3d-view-switch-icon"
               class="fas fa-chalkboard-teacher"
             ></i>
-            <span id="seat-3d-view-switch-text">Chuyển góc bàn GV</span>
           </button>
           <button
+            id="seat-3d-reset-look-btn"
             type="button"
             onclick="resetSeat3DLook()"
-            class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 shadow"
+            class="bg-white/90 hover:bg-white text-gray-700 text-xs font-bold w-9 h-9 rounded-lg border border-gray-200 shadow flex items-center justify-center"
+            aria-label="Đặt lại góc nhìn"
+            title="Đặt lại góc nhìn"
           >
-            Đặt lại góc nhìn
+            <i class="fas fa-rotate-right"></i>
           </button>
           <button
+            id="seat-3d-close-btn"
             type="button"
             onclick="closeSeat3DView()"
-            class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow"
+            class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold w-9 h-9 rounded-lg shadow flex items-center justify-center"
+            aria-label="Thoát 3D"
+            title="Thoát 3D"
           >
-            Thoát 3D
+            <i class="fas fa-right-from-bracket"></i>
           </button>
         </div>
       </div>
@@ -3774,8 +3782,7 @@
       function updateSeat3DViewSwitchButton() {
         const btn = document.getElementById("seat-3d-view-switch-btn");
         const icon = document.getElementById("seat-3d-view-switch-icon");
-        const text = document.getElementById("seat-3d-view-switch-text");
-        if (!btn || !icon || !text) return;
+        if (!btn || !icon) return;
 
         if (seat3DState.spectatorMode) {
           btn.disabled = true;
@@ -3789,19 +3796,22 @@
           seat3DState.currentViewMode === "teacher" ? "student" : "teacher";
         if (targetMode === "teacher") {
           icon.className = "fas fa-chalkboard-teacher";
-          text.textContent = "Chuyển góc bàn GV";
+          btn.setAttribute("aria-label", "Chuyển góc bàn GV");
+          btn.setAttribute("title", "Chuyển góc bàn GV");
         } else {
           icon.className = "fas fa-user-graduate";
-          text.textContent = "Chuyển góc học sinh";
+          btn.setAttribute("aria-label", "Chuyển góc học sinh");
+          btn.setAttribute("title", "Chuyển góc học sinh");
         }
       }
 
       function updateSeat3DSpectatorButton() {
-        const text = document.getElementById("seat-3d-spectator-text");
         const btn = document.getElementById("seat-3d-spectator-btn");
-        if (!text || !btn) return;
+        if (!btn) return;
         const isOn = !!seat3DState.spectatorMode;
-        text.textContent = isOn ? "Tắt khán giả" : "Bật khán giả";
+        const spectatorLabel = isOn ? "Tắt khán giả" : "Bật khán giả";
+        btn.setAttribute("aria-label", spectatorLabel);
+        btn.setAttribute("title", spectatorLabel);
         btn.classList.toggle("bg-indigo-500/90", !isOn);
         btn.classList.toggle("hover:bg-indigo-600", !isOn);
         btn.classList.toggle("border-indigo-300", !isOn);
