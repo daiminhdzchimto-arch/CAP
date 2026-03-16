@@ -1,3 +1,9 @@
+# [1.9.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.8.0...v1.9.0) (2026-03-15)
+
+### Features
+
+- convert duty schedule action buttons to 3d icon buttons ([be8e71e](https://github.com/daiminhdzchimto-arch/CAP/commit/be8e71eedfc5dc2a71aba89ee25c86d40585a8ae))
+
 # [1.8.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.7.0...v1.8.0) (2026-03-15)
 
 ### Features
