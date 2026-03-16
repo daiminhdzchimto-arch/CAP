@@ -1,3 +1,9 @@
+# [1.10.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.9.0...v1.10.0) (2026-03-16)
+
+### Features
+
+- **3d:** add diagonal classroom security cameras with IR blink ([a1d9da2](https://github.com/daiminhdzchimto-arch/CAP/commit/a1d9da272bc53325476c556f9961ed4a5ff5afdb))
+
 # [1.9.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.8.0...v1.9.0) (2026-03-15)
 
 ### Features
