@@ -1,3 +1,9 @@
+## [1.19.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.19.0...v1.19.1) (2026-03-18)
+
+### Bug Fixes
+
+- improve modal close UX and overlay dismissal ([1269728](https://github.com/daiminhdzchimto-arch/CAP/commit/12697285b100e677e7a458eef64091c7b028c53b))
+
 # [1.19.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.2...v1.19.0) (2026-03-18)
 
 ### Features

@@ -277,16 +277,16 @@
       .animate-fall-out { animation: fallOut .4s ease-in forwards; }
 
       /* SEATING */
-      .desk-input { background: transparent; border: none; width: 100%; min-height: 48px; height: auto; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; hyphens: auto; scrollbar-width: none; -ms-overflow-style: none; }
+      .desk-input { background: transparent; border: none; width: 100%; min-height: 48px; height: auto; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; hyphens: auto; scrollbar-width: none; -ms-overflow-style: none; min-height: max(44px, var(--desk-input-min-height, 48px)); }
       .desk-input::-webkit-scrollbar { display: none; }
       .desk-input:focus { background-color: rgba(255, 255, 255, 0.5); cursor: text; }
       .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
       .row-container:hover .merge-handle { opacity: 1; }
       .merge-handle:hover { background-color: #3b82f6; color: white; transform: translateY(-50%) scale(1.1); }
-      .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+      .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.9rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
       .split-btn { right: 0; }
       .details-btn { left: 0; top: auto; bottom: 0; }
-      .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+      .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.9rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
       .teacher-desk-box:hover .teacher-view-3d-btn,
       .teacher-desk-box:focus-within .teacher-view-3d-btn { opacity: 1; pointer-events: auto; }
 
@@ -314,9 +314,9 @@
           text-transform: uppercase;
           letter-spacing: 0.08em;
       }
-      .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+      .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.9rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
       .desk-box.is-selected .split-btn, .desk-box.is-selected .details-btn, .desk-box.is-selected .view-3d-btn, .desk-box.is-selected .swap-seat-btn, .desk-box.swap-selected .swap-seat-btn { opacity: 1; pointer-events: auto; }
-      .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
+      .desk-box.has-actions .desk-input { padding-left: 50px; padding-right: 50px; }
       .desk-box { transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease; transform-origin: center; }
       .split-btn:hover { color: #ef4444; }
       .details-btn:hover { color: #3b82f6; }
@@ -426,9 +426,10 @@
       .shuffle-option-btn i { font-size: 1.25rem; width: 24px; text-align: center; }
 
       /* SIDEBAR */
-      #sidebar { position: fixed; top: 0; right: 0; height: 100%; width: 320px; background: white; z-index: 150; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -5px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-      #sidebar.open { transform: translateX(0); }
-      .sidebar-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; items-center; }
+      #sidebar { position: fixed; bottom: 0; right: 0; left: 0; width: 100%; height: auto; max-height: 85vh; background: white; z-index: 150; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0, 0, 1); box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.16); display: flex; flex-direction: column; border-radius: 20px 20px 0 0; }
+      #sidebar.open { transform: translateY(0); }
+      .sidebar-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; items-center; position: relative; }
+      .sidebar-drag-handle { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 52px; height: 5px; border-radius: 9999px; background: #d1d5db; }
       .sidebar-content { flex: 1; overflow-y: auto; padding: 20px; }
 
       /* MINI MAP */
@@ -495,7 +496,7 @@
           :root {
               --desk-font-base: 13;
               --desk-font-min: 9;
-              --desk-input-min-height: 38;
+              --desk-input-min-height: 44;
           }
 
           #seating-layout-row {
@@ -513,21 +514,38 @@
           }
       }
       @media (max-width: 768px) {
+          #seating-layout-row {
+              flex-direction: column !important;
+              gap: 1rem !important;
+          }
+          #left-rows-container,
+          #right-rows-container {
+              max-width: 100%;
+          }
+          .desk-box {
+              min-height: 52px;
+              font-size: clamp(13px, 2.5vw, 15px);
+          }
           #classroom-scroll-content {
               min-width: 900px;
           }
           .desk-box {
               min-width: 80px;
-              min-height: 60px;
+              min-height: 52px;
           }
           .desk-input {
-              min-height: 60px;
+              min-height: max(44px, var(--desk-input-min-height));
           }
-          .desk-box .split-btn,
-          .desk-box .details-btn,
-          .desk-box .swap-seat-btn {
-              display: none !important;
-          }
+      }
+      #classroom-area.portrait-mode #portrait-side-toggle-wrap {
+          display: none;
+      }
+      #classroom-area.portrait-mode.portrait-mode-active #portrait-side-toggle-wrap {
+          display: flex;
+      }
+      #classroom-area.portrait-mode.portrait-mode-active:not(.portrait-side-right) #right-rows-container,
+      #classroom-area.portrait-mode.portrait-mode-active.portrait-side-right #left-rows-container {
+          display: none;
       }
     </style>
   </head>
@@ -901,6 +919,19 @@
                   class="flex flex-col gap-6 w-full max-w-md"
                 ></div>
                 <div
+                  id="portrait-side-toggle-wrap"
+                  class="hidden items-center justify-center"
+                >
+                  <button
+                    id="portrait-side-toggle-btn"
+                    type="button"
+                    onclick="togglePortraitSide()"
+                    class="btn-3d btn-3d-blue px-4 text-sm font-semibold"
+                  >
+                    Đổi dãy
+                  </button>
+                </div>
+                <div
                   id="right-rows-container"
                   class="flex flex-col gap-6 w-full max-w-md"
                 ></div>
@@ -1156,6 +1187,7 @@
       <!-- SIDEBAR -->
       <div id="sidebar">
         <div class="sidebar-header">
+          <span class="sidebar-drag-handle" aria-hidden="true"></span>
           <h2 class="text-lg font-bold text-gray-800">Chi tiết học sinh</h2>
           <button
             onclick="closeSidebar()"
@@ -1410,6 +1442,29 @@
                     <input
                       type="checkbox"
                       id="teacher-view-toggle"
+                      onchange="updateSettings()"
+                    />
+                    <span class="jelly-slider"></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center text-violet-500"
+                    >
+                      <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold">Chế độ dọc</div>
+                      <div class="text-[10px] text-gray-500">
+                        Ở màn dọc chỉ hiển thị 1 dãy, bấm “Đổi dãy” để chuyển
+                      </div>
+                    </div>
+                  </div>
+                  <label class="jelly-switch">
+                    <input
+                      type="checkbox"
+                      id="portrait-mode-toggle"
                       onchange="updateSettings()"
                     />
                     <span class="jelly-slider"></span>
@@ -2268,6 +2323,7 @@
       let selectedStudentSeat = null,
         isEditMode = false;
       let selectedDeskKey = null;
+      let currentPortraitSide = "left";
       let deskLongPressTimer = null;
       let deskLongPressTriggered = false;
       let blackboardCanvas = null;
@@ -2322,6 +2378,7 @@
           powerSave: false,
           showFPS: false,
           teacherView: false,
+          portraitMode: false,
           showBottomOverlay: true,
         },
       };
@@ -5557,6 +5614,44 @@
         isEditMode = false;
       }
 
+      function setupSidebarSwipeClose() {
+        const sidebar = document.getElementById("sidebar");
+        const header = sidebar?.querySelector(".sidebar-header");
+        if (!sidebar || !header) return;
+        let startY = null;
+        let deltaY = 0;
+
+        header.addEventListener(
+          "touchstart",
+          (event) => {
+            if (!sidebar.classList.contains("open")) return;
+            startY = event.touches[0].clientY;
+            deltaY = 0;
+          },
+          { passive: true },
+        );
+
+        header.addEventListener(
+          "touchmove",
+          (event) => {
+            if (startY === null || !sidebar.classList.contains("open")) return;
+            deltaY = event.touches[0].clientY - startY;
+            if (deltaY > 0) {
+              sidebar.style.transform = `translateY(${Math.min(deltaY, 240)}px)`;
+            }
+          },
+          { passive: true },
+        );
+
+        header.addEventListener("touchend", () => {
+          if (startY === null) return;
+          sidebar.style.transform = "";
+          if (deltaY > 90) closeSidebar();
+          startY = null;
+          deltaY = 0;
+        });
+      }
+
       function renderSidebarContent() {
         if (!selectedStudentSeat) return;
         const seat = (
@@ -6302,6 +6397,25 @@
         area.classList.toggle("teacher-view", !!config.settings.teacherView);
       }
 
+      function applyPortraitMode() {
+        const area = document.getElementById("classroom-area");
+        const isPortraitViewport =
+          window.matchMedia("(max-width: 768px)").matches &&
+          window.innerHeight > window.innerWidth;
+        const isActive = !!config.settings.portraitMode && isPortraitViewport;
+        area.classList.toggle("portrait-mode", !!config.settings.portraitMode);
+        area.classList.toggle("portrait-mode-active", isActive);
+        area.classList.toggle(
+          "portrait-side-right",
+          isActive && currentPortraitSide === "right",
+        );
+      }
+
+      function togglePortraitSide() {
+        currentPortraitSide = currentPortraitSide === "left" ? "right" : "left";
+        applyPortraitMode();
+      }
+
       function applyBottomOverlayVisibility() {
         const overlay = document.getElementById("weather-info-overlay");
         if (!overlay) return;
@@ -6384,6 +6498,9 @@
         config.settings.teacherView = document.getElementById(
           "teacher-view-toggle",
         ).checked;
+        config.settings.portraitMode = document.getElementById(
+          "portrait-mode-toggle",
+        ).checked;
         config.settings.showBottomOverlay = document.getElementById(
           "bottom-overlay-toggle",
         ).checked;
@@ -6392,6 +6509,7 @@
           config.settings.intensity.toFixed(1) + "x";
         applyPowerSaveState();
         applyClassroomViewMode();
+        applyPortraitMode();
         applyBottomOverlayVisibility();
 
         if (config.settings.windEnabled && !particleEngine.active)
@@ -7431,6 +7549,8 @@
             userPowerSavePreference;
           document.getElementById("teacher-view-toggle").checked =
             !!config.settings.teacherView;
+          document.getElementById("portrait-mode-toggle").checked =
+            !!config.settings.portraitMode;
           document.getElementById("bottom-overlay-toggle").checked =
             config.settings.showBottomOverlay !== false;
           document.getElementById("wind-intensity-val").innerText =
@@ -7442,9 +7562,12 @@
         applyPowerSaveState();
         document.getElementById("teacher-view-toggle").checked =
           !!config.settings.teacherView;
+        document.getElementById("portrait-mode-toggle").checked =
+          !!config.settings.portraitMode;
         document.getElementById("bottom-overlay-toggle").checked =
           config.settings.showBottomOverlay !== false;
         applyClassroomViewMode();
+        applyPortraitMode();
         applyBottomOverlayVisibility();
         renderAll();
         if (config.settings.windEnabled) particleEngine.init();
@@ -7460,6 +7583,7 @@
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
+        setupSidebarSwipeClose();
 
         // Lucide icons
         lucide.createIcons();
@@ -7467,6 +7591,7 @@
         window.addEventListener("resize", () =>
           moveTopTabIndicator(currentTopTab),
         );
+        window.addEventListener("resize", applyPortraitMode);
         const forceLandscapeBtn = document.getElementById(
           "force-landscape-btn",
         );
