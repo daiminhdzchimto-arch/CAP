@@ -1,3 +1,9 @@
+# [1.13.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.12.2...v1.13.0) (2026-03-18)
+
+### Features
+
+- refresh teacher desk and door reference visuals ([9a50988](https://github.com/daiminhdzchimto-arch/CAP/commit/9a50988eae43f319d4db84463677297df7f17d3a))
+
 ## [1.12.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.12.1...v1.12.2) (2026-03-18)
 
 ### Bug Fixes
