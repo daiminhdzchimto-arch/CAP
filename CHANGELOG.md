@@ -1,3 +1,9 @@
+# [1.18.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.17.0...v1.18.0) (2026-03-18)
+
+### Features
+
+- **classroom:** improve mobile seat interactions and long-press menu ([95f017d](https://github.com/daiminhdzchimto-arch/CAP/commit/95f017deb25ee6d6a35fc54a7dabf02975b4b850))
+
 # [1.17.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.16.2...v1.17.0) (2026-03-18)
 
 ### Features
