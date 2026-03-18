@@ -1,3 +1,9 @@
+## [1.15.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.3...v1.15.4) (2026-03-18)
+
+### Bug Fixes
+
+- **blackboard:** apply selected color to inserted math SVG ([a7fc0fb](https://github.com/daiminhdzchimto-arch/CAP/commit/a7fc0fbc93ed8cdbd35a7d8a3690bc18b0c6691b))
+
 ## [1.15.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.2...v1.15.3) (2026-03-18)
 
 ### Bug Fixes
