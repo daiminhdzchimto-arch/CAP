@@ -5704,8 +5704,6 @@
             });
             const formula = fabric.util.groupSVGElements(objects, options);
             formula.set({
-              left: 200,
-              top: 200,
               originX: "left",
               originY: "top",
             });
@@ -5715,6 +5713,17 @@
               formula.scaleX = scale;
               formula.scaleY = scale;
             }
+            const formulaWidth = formula.getScaledWidth();
+            const formulaHeight = formula.getScaledHeight();
+            const centeredLeft =
+              (blackboardFabric.getWidth() - formulaWidth) / 2;
+            const centeredTop =
+              (blackboardFabric.getHeight() - formulaHeight) / 2;
+            formula.set({
+              left: Math.max(0, centeredLeft),
+              top: Math.max(0, centeredTop),
+            });
+            formula.setCoords();
             blackboardFabric.add(formula);
             blackboardFabric.setActiveObject(formula);
             blackboardFabric.renderAll();
