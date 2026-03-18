@@ -1,3 +1,13 @@
+# [1.15.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.14.0...v1.15.0) (2026-03-18)
+
+### Bug Fixes
+
+- lazy load fabric to satisfy lighthouse budget ([7ada8cd](https://github.com/daiminhdzchimto-arch/CAP/commit/7ada8cd880c19d0b75678db07ca3256fa11c5fe5))
+
+### Features
+
+- add fabric blackboard modal and sync with 3d board ([99a8bed](https://github.com/daiminhdzchimto-arch/CAP/commit/99a8bed11e5059ba0a9189869d9f063ff055a975))
+
 # [1.14.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.13.0...v1.14.0) (2026-03-18)
 
 ### Features
