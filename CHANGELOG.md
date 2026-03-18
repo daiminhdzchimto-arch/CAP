@@ -1,3 +1,9 @@
+## [1.16.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.16.0...v1.16.1) (2026-03-18)
+
+### Bug Fixes
+
+- center inserted math formula on blackboard ([5f74e4a](https://github.com/daiminhdzchimto-arch/CAP/commit/5f74e4a65cc5cc93e3224d3b279b0dca24831dcc))
+
 # [1.16.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.4...v1.16.0) (2026-03-18)
 
 ### Features
