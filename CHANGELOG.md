@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.0...v1.18.1) (2026-03-18)
+
+### Bug Fixes
+
+- improve mobile scrolling and sizing for competition and duty tables ([152b988](https://github.com/daiminhdzchimto-arch/CAP/commit/152b988b32dc8d25e3bc2d586bc32812dcc7babc))
+- improve mobile scrolling and sizing for competition and duty tables ([5ee9217](https://github.com/daiminhdzchimto-arch/CAP/commit/5ee921758036baf674f1b68d605eac77a5f6edd7))
+
 # [1.18.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.17.0...v1.18.0) (2026-03-18)
 
 ### Features
