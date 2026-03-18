@@ -1,3 +1,9 @@
+## [1.15.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.0...v1.15.1) (2026-03-18)
+
+### Bug Fixes
+
+- **blackboard:** render strokes reliably and support LaTeX formulas ([42f7815](https://github.com/daiminhdzchimto-arch/CAP/commit/42f781549326dde71d65e02e70f3c8ad949c471b))
+
 # [1.15.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.14.0...v1.15.0) (2026-03-18)
 
 ### Bug Fixes
