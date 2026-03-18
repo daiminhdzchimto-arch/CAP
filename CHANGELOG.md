@@ -1,3 +1,9 @@
+## [1.15.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.1...v1.15.2) (2026-03-18)
+
+### Bug Fixes
+
+- sync blackboard data with 3D board in real time ([02c4108](https://github.com/daiminhdzchimto-arch/CAP/commit/02c41088704aa01182f401c7606b2c26c5d0ca57))
+
 ## [1.15.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.0...v1.15.1) (2026-03-18)
 
 ### Bug Fixes
