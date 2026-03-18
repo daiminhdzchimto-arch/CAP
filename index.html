@@ -85,6 +85,14 @@
           filter: none;
           background: transparent;
       }
+      .icon-edge-btn {
+          min-width: 44px;
+          min-height: 44px;
+          padding: 0.75rem !important;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+      }
       .icon-edge-btn i {
           transition: transform 0.2s ease, filter 0.2s ease;
       }
@@ -264,7 +272,7 @@
       .merge-handle { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border: 1px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; font-size: 10px; color: #6b7280; transition: all 0.2s; opacity: 0; }
       .row-container:hover .merge-handle { opacity: 1; }
       .merge-handle:hover { background-color: #3b82f6; color: white; transform: translateY(-50%) scale(1.1); }
-      .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+      .split-btn, .details-btn { position: absolute; top: 0; margin: 4px; font-size: 0.75rem; color: #9ca3af; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
       .split-btn { right: 0; }
       .details-btn { left: 0; top: auto; bottom: 0; }
       .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
@@ -295,17 +303,29 @@
           text-transform: uppercase;
           letter-spacing: 0.08em;
       }
-      .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+      .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
       .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
       .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
       .desk-box:hover .swap-seat-btn, .desk-box:focus-within .swap-seat-btn, .desk-box.swap-selected .swap-seat-btn { opacity: 1; pointer-events: auto; }
-      .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
+      .desk-box.has-actions .desk-input { padding-left: 48px; padding-right: 48px; }
       .desk-box { transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease; transform-origin: center; }
       .split-btn:hover { color: #ef4444; }
       .details-btn:hover { color: #3b82f6; }
       .view-3d-btn:hover { color: #0284c7; }
       .teacher-view-3d-btn:hover { color: #0284c7; }
       .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
+      .view-3d-btn,
+      .details-btn,
+      .teacher-view-3d-btn {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
+      }
+      #sidebar button {
+          min-width: 44px;
+          min-height: 44px;
+      }
       #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
       .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -2130,6 +2150,17 @@
         dutyDebtData = {};
       let selectedStudentSeat = null,
         isEditMode = false;
+      const touchSwapConfig = {
+        longPressMs: 420,
+        moveThresholdPx: 12,
+      };
+      const sidebarSwipeState = {
+        startX: 0,
+        startY: 0,
+        latestTranslateX: 0,
+        isTracking: false,
+        isHorizontalSwipe: false,
+      };
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboardData = null;
@@ -2718,6 +2749,92 @@
             };
             ta.addEventListener("click", inputClick);
             cell.addEventListener("click", click);
+            let longPressTimer = null;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let longPressTriggered = false;
+            const clearLongPressTimer = () => {
+              if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+              }
+            };
+            cell.addEventListener(
+              "touchstart",
+              (e) => {
+                if (
+                  e.touches.length !== 1 ||
+                  e.target.closest('[data-action-button="true"]') ||
+                  e.target.closest(".desk-input")
+                ) {
+                  return;
+                }
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                longPressTriggered = false;
+                clearLongPressTimer();
+                longPressTimer = setTimeout(() => {
+                  longPressTriggered = true;
+                  if (
+                    swapSource &&
+                    swapSource.side === side &&
+                    swapSource.r === ri &&
+                    swapSource.c === si
+                  ) {
+                    cancelSwapMode();
+                  } else {
+                    activateSwapMode(side, ri, si);
+                  }
+                  if (navigator.vibrate) navigator.vibrate(25);
+                }, touchSwapConfig.longPressMs);
+              },
+              { passive: true },
+            );
+            cell.addEventListener(
+              "touchmove",
+              (e) => {
+                if (!longPressTimer || e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+                if (Math.hypot(dx, dy) > touchSwapConfig.moveThresholdPx) {
+                  clearLongPressTimer();
+                }
+              },
+              { passive: true },
+            );
+            cell.addEventListener(
+              "touchend",
+              (e) => {
+                clearLongPressTimer();
+                if (longPressTriggered) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                if (!swapSource) return;
+                e.preventDefault();
+                e.stopPropagation();
+                if (
+                  swapSource.side === side &&
+                  swapSource.r === ri &&
+                  swapSource.c === si
+                ) {
+                  cancelSwapMode();
+                } else {
+                  executeSwap(side, ri, si);
+                }
+              },
+              { passive: false },
+            );
+            cell.addEventListener(
+              "touchcancel",
+              () => {
+                clearLongPressTimer();
+              },
+              { passive: true },
+            );
             cell.appendChild(ta);
 
             const swapBtn = createDeskActionButton({
@@ -5147,15 +5264,78 @@
 
       function openSidebar() {
         const sidebar = document.getElementById("sidebar");
+        sidebar.style.transition = "";
+        sidebar.style.transform = "";
         sidebar.classList.add("open");
         animateActionFeedback("#sidebar", "animate-fade-up", 360);
         renderSidebarContent();
       }
 
       function closeSidebar() {
-        document.getElementById("sidebar").classList.remove("open");
+        const sidebar = document.getElementById("sidebar");
+        sidebar.style.transition = "";
+        sidebar.style.transform = "";
+        sidebar.classList.remove("open");
         selectedStudentSeat = null;
         isEditMode = false;
+      }
+
+      function setupSidebarSwipeClose() {
+        const sidebar = document.getElementById("sidebar");
+        if (!sidebar) return;
+        sidebar.addEventListener(
+          "touchstart",
+          (e) => {
+            if (!sidebar.classList.contains("open") || e.touches.length !== 1)
+              return;
+            const touch = e.touches[0];
+            sidebarSwipeState.startX = touch.clientX;
+            sidebarSwipeState.startY = touch.clientY;
+            sidebarSwipeState.latestTranslateX = 0;
+            sidebarSwipeState.isTracking = true;
+            sidebarSwipeState.isHorizontalSwipe = false;
+            sidebar.style.transition = "none";
+          },
+          { passive: true },
+        );
+        sidebar.addEventListener(
+          "touchmove",
+          (e) => {
+            if (!sidebarSwipeState.isTracking || e.touches.length !== 1) return;
+            const touch = e.touches[0];
+            const dx = touch.clientX - sidebarSwipeState.startX;
+            const dy = touch.clientY - sidebarSwipeState.startY;
+
+            if (!sidebarSwipeState.isHorizontalSwipe) {
+              if (Math.abs(dx) < 8) return;
+              sidebarSwipeState.isHorizontalSwipe = Math.abs(dx) > Math.abs(dy);
+            }
+            if (!sidebarSwipeState.isHorizontalSwipe || dx >= 0) return;
+
+            const width = sidebar.offsetWidth || 320;
+            const translateX = Math.min(width, Math.abs(dx));
+            sidebarSwipeState.latestTranslateX = translateX;
+            sidebar.style.transform = `translateX(${translateX}px)`;
+            e.preventDefault();
+          },
+          { passive: false },
+        );
+        const finishSwipe = () => {
+          if (!sidebarSwipeState.isTracking) return;
+          const shouldClose = sidebarSwipeState.latestTranslateX > 72;
+          sidebarSwipeState.isTracking = false;
+          sidebarSwipeState.isHorizontalSwipe = false;
+          sidebarSwipeState.startX = 0;
+          sidebarSwipeState.startY = 0;
+          sidebarSwipeState.latestTranslateX = 0;
+          sidebar.style.transition = "";
+          sidebar.style.transform = "";
+          if (shouldClose) closeSidebar();
+        };
+        sidebar.addEventListener("touchend", finishSwipe, { passive: true });
+        sidebar.addEventListener("touchcancel", finishSwipe, {
+          passive: true,
+        });
       }
 
       function renderSidebarContent() {
@@ -6938,6 +7118,7 @@
           .addEventListener("input", syncOverlays);
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
+        setupSidebarSwipeClose();
 
         // Lucide icons
         lucide.createIcons();
