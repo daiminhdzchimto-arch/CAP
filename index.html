@@ -34,6 +34,12 @@
       name="twitter:description"
       content="Quản lý lớp học hiệu quả - Sắp xếp chỗ ngồi, bảng thi đua, phân công trực nhật."
     />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link
@@ -63,6 +69,37 @@
       }
 
       body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
+      body.theme-dark {
+          background-color: #0f172a;
+          color: #e2e8f0;
+      }
+      body.theme-dark .desk-box {
+          background: #1e293b;
+          border-color: #64748b;
+          box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.45);
+      }
+      body.theme-dark #competition-board,
+      body.theme-dark #duty-board {
+          background: #111827 !important;
+          color: #e5e7eb;
+      }
+      body.theme-dark .modal-content {
+          background-color: #0b1220;
+          color: #e2e8f0;
+          border-color: #334155;
+      }
+      body.theme-contrast .desk-box {
+          border-width: 3px;
+          border-color: #111827;
+          background: #bfdbfe;
+      }
+      body.theme-contrast .desk-input {
+          color: #111827;
+      }
+      body.theme-contrast #competition-board,
+      body.theme-contrast #duty-board {
+          border: 3px solid #111827;
+      }
       button,
       label.cursor-pointer {
           transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
@@ -1395,6 +1432,53 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
+                      class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-700"
+                    >
+                      <i class="fas fa-moon"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold">Dark mode tự động</div>
+                      <div class="text-[10px] text-gray-500">
+                        Tự bật khi thiết bị đang ở chế độ tối
+                      </div>
+                    </div>
+                  </div>
+                  <label class="jelly-switch">
+                    <input
+                      type="checkbox"
+                      id="auto-dark-toggle"
+                      checked
+                      onchange="updateSettings()"
+                    />
+                    <span class="jelly-slider"></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600"
+                    >
+                      <i class="fas fa-circle-half-stroke"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold">Tương phản cao</div>
+                      <div class="text-[10px] text-gray-500">
+                        Tăng độ nổi bật chữ và viền bàn ghế
+                      </div>
+                    </div>
+                  </div>
+                  <label class="jelly-switch">
+                    <input
+                      type="checkbox"
+                      id="high-contrast-toggle"
+                      onchange="updateSettings()"
+                    />
+                    <span class="jelly-slider"></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
                       class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500"
                     >
                       <i class="fas fa-chalkboard-teacher"></i>
@@ -2323,6 +2407,8 @@
           showFPS: false,
           teacherView: false,
           showBottomOverlay: true,
+          autoDarkMode: true,
+          highContrast: false,
         },
       };
       const POWER_SAVE_LOW_BATTERY_THRESHOLD = 0.2;
@@ -2350,6 +2436,10 @@
         void el.offsetWidth;
         el.classList.add(className);
         setTimeout(() => el.classList.remove(className), duration);
+      }
+
+      function triggerHapticFeedback(duration = 20) {
+        if (navigator.vibrate) navigator.vibrate(duration);
       }
 
       function getDeskCell(side, r, c) {
@@ -5382,6 +5472,7 @@
           animateActionFeedback(srcSeat, "animate-pulse-highlight", 340);
         if (dstSeat)
           animateActionFeedback(dstSeat, "animate-pulse-highlight", 340);
+        triggerHapticFeedback(20);
         showToast("Đã hoán đổi vị trí 2 thành viên");
       }
       function updateStatusUI() {
@@ -5470,6 +5561,7 @@
         const pin = document.querySelector(".fixed-badge");
         if (pin) animateActionFeedback(pin, "animate-stamp", 420);
         animateDeskCellById(id, "animate-pulse-highlight", 420);
+        triggerHapticFeedback(20);
       }
 
       function clearAllFixedMembers() {
@@ -6135,6 +6227,7 @@
       function saveBlackboard() {
         if (!blackboardFabric) return;
         persistBlackboardData({ notify: true });
+        triggerHapticFeedback(20);
         closeBlackboardModal();
       }
 
@@ -6308,6 +6401,18 @@
         overlay.classList.toggle("hidden", !config.settings.showBottomOverlay);
       }
 
+      function applyThemeSettings() {
+        const prefersDark = window.matchMedia?.(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        const shouldUseDark = !!config.settings.autoDarkMode && !!prefersDark;
+        document.body.classList.toggle("theme-dark", shouldUseDark);
+        document.body.classList.toggle(
+          "theme-contrast",
+          !!config.settings.highContrast,
+        );
+      }
+
       function syncPowerSaveStatusUI() {
         const status = document.getElementById("power-save-status");
         const toggle = document.getElementById("power-save-toggle");
@@ -6387,12 +6492,18 @@
         config.settings.showBottomOverlay = document.getElementById(
           "bottom-overlay-toggle",
         ).checked;
+        config.settings.autoDarkMode =
+          document.getElementById("auto-dark-toggle").checked;
+        config.settings.highContrast = document.getElementById(
+          "high-contrast-toggle",
+        ).checked;
 
         document.getElementById("wind-intensity-val").innerText =
           config.settings.intensity.toFixed(1) + "x";
         applyPowerSaveState();
         applyClassroomViewMode();
         applyBottomOverlayVisibility();
+        applyThemeSettings();
 
         if (config.settings.windEnabled && !particleEngine.active)
           particleEngine.init();
@@ -6911,6 +7022,7 @@
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
+        triggerHapticFeedback(20);
         showToast("Đã lưu dữ liệu thành công!");
       }
 
@@ -7433,6 +7545,10 @@
             !!config.settings.teacherView;
           document.getElementById("bottom-overlay-toggle").checked =
             config.settings.showBottomOverlay !== false;
+          document.getElementById("auto-dark-toggle").checked =
+            config.settings.autoDarkMode !== false;
+          document.getElementById("high-contrast-toggle").checked =
+            !!config.settings.highContrast;
           document.getElementById("wind-intensity-val").innerText =
             config.settings.intensity.toFixed(1) + "x";
         }
@@ -7446,6 +7562,11 @@
           config.settings.showBottomOverlay !== false;
         applyClassroomViewMode();
         applyBottomOverlayVisibility();
+        document.getElementById("auto-dark-toggle").checked =
+          config.settings.autoDarkMode !== false;
+        document.getElementById("high-contrast-toggle").checked =
+          !!config.settings.highContrast;
+        applyThemeSettings();
         renderAll();
         if (config.settings.windEnabled) particleEngine.init();
         WeatherAdapter.init();
@@ -7503,7 +7624,21 @@
         window.addEventListener("orientationchange", () => {
           void applyMobileLandscapeMode();
         });
+        const colorSchemeMedia = window.matchMedia?.(
+          "(prefers-color-scheme: dark)",
+        );
+        colorSchemeMedia?.addEventListener("change", applyThemeSettings);
       };
+
+      window.addEventListener("resize", () => {
+        const activeElement = document.activeElement;
+        if (!activeElement) return;
+        const isInputElement = activeElement.tagName === "INPUT";
+        const isContentEditable = !!activeElement.isContentEditable;
+        if (isInputElement || isContentEditable) {
+          activeElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
 
       function setupModalOverlayClose() {
         document
