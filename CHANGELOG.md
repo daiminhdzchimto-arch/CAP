@@ -1,3 +1,9 @@
+# [1.16.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.4...v1.16.0) (2026-03-18)
+
+### Features
+
+- **blackboard:** improve toolbar active state and tool feedback ([b0004b7](https://github.com/daiminhdzchimto-arch/CAP/commit/b0004b7bdef646caa1bbcefe1cfc770d9f5db538))
+
 ## [1.15.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.3...v1.15.4) (2026-03-18)
 
 ### Bug Fixes
