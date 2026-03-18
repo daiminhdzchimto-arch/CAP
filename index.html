@@ -6729,6 +6729,49 @@
         applyScale(parseFloat(area.dataset.pinchScale || "1") || 1);
       }
 
+      function setupSidebarSwipeClose() {
+        const sidebar = document.getElementById("sidebar");
+        if (!sidebar) return;
+
+        let startX = null;
+        let startY = null;
+
+        sidebar.addEventListener(
+          "touchstart",
+          (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            startX = touch.clientX;
+            startY = touch.clientY;
+          },
+          { passive: true },
+        );
+
+        sidebar.addEventListener(
+          "touchend",
+          (event) => {
+            if (startX === null || startY === null) return;
+            const touch = event.changedTouches?.[0];
+            if (!touch) {
+              startX = null;
+              startY = null;
+              return;
+            }
+
+            const deltaX = touch.clientX - startX;
+            const deltaY = touch.clientY - startY;
+            startX = null;
+            startY = null;
+
+            // Sidebar mở từ bên phải, vuốt sang phải để đóng.
+            if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1) {
+              closeSidebar();
+            }
+          },
+          { passive: true },
+        );
+      }
+
       function generateTable() {
         const input = document.getElementById("student-list-input").value;
         const names = input
@@ -7701,6 +7744,7 @@
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
         setupClassroomPinchZoom();
+        setupSidebarSwipeClose();
 
         // Lucide icons
         lucide.createIcons();
