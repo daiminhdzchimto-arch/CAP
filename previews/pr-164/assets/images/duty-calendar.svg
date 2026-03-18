@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800" role="img" aria-labelledby="title desc">
+  <title id="title">Lịch trực nhật</title>
+  <desc id="desc">Minh họa lịch trực nhật theo tuần với các khung nhiệm vụ.</desc>
+  <rect width="1000" height="800" fill="#eff6ff"/>
+  <rect x="140" y="90" width="720" height="620" rx="26" fill="#ffffff" stroke="#93c5fd" stroke-width="8"/>
+  <rect x="140" y="90" width="720" height="120" rx="26" fill="#2563eb"/>
+  <text x="500" y="165" text-anchor="middle" font-size="42" fill="#eff6ff" font-family="'Segoe UI', sans-serif" font-weight="700">LỊCH TRỰC NHẬT</text>
+  <g fill="#dbeafe">
+    <rect x="190" y="250" width="180" height="120" rx="14"/>
+    <rect x="410" y="250" width="180" height="120" rx="14"/>
+    <rect x="630" y="250" width="180" height="120" rx="14"/>
+    <rect x="190" y="410" width="180" height="120" rx="14"/>
+    <rect x="410" y="410" width="180" height="120" rx="14"/>
+    <rect x="630" y="410" width="180" height="120" rx="14"/>
+  </g>
+  <text x="280" y="318" text-anchor="middle" font-size="26" fill="#1e3a8a">Quét lớp</text>
+  <text x="500" y="318" text-anchor="middle" font-size="26" fill="#1e3a8a">Đổ rác</text>
+  <text x="720" y="318" text-anchor="middle" font-size="26" fill="#1e3a8a">Giặt khăn</text>
+  <text x="280" y="478" text-anchor="middle" font-size="26" fill="#1e3a8a">Tưới cây</text>
+  <text x="500" y="478" text-anchor="middle" font-size="26" fill="#1e3a8a">Lau bảng</text>
+  <text x="720" y="478" text-anchor="middle" font-size="26" fill="#1e3a8a">Trực khu vực</text>
+</svg>
