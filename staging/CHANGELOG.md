@@ -1,3 +1,9 @@
+# [1.12.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.11.0...v1.12.0) (2026-03-18)
+
+### Features
+
+- complete 180-degree teacher classroom view ([020b69c](https://github.com/daiminhdzchimto-arch/CAP/commit/020b69c40485b46a5530c5793a15dffe39745c9f))
+
 # [1.11.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.10.1...v1.11.0) (2026-03-16)
 
 ### Features
