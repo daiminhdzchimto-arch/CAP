@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.2...v1.19.0) (2026-03-18)
+
+### Features
+
+- make orientation prompt dismissible on mobile ([3643229](https://github.com/daiminhdzchimto-arch/CAP/commit/3643229b7baa59159cb99acb54f206da93764360))
+- **ui:** add fluid font and spacing tokens for buttons and labels ([c6d5b9c](https://github.com/daiminhdzchimto-arch/CAP/commit/c6d5b9c88e02f82190a1e4569a875dcf867abffa))
+
 ## [1.18.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.1...v1.18.2) (2026-03-18)
 
 ### Performance Improvements
