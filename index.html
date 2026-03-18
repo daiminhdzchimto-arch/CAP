@@ -5386,33 +5386,7 @@
 
       function updateBoardTextureFromData() {
         if (!seat3DState.boardCanvas || !seat3DState.boardTexture) return;
-        const boardCtx = seat3DState.boardCanvas.getContext("2d");
-        drawDefaultBlackboardBackground(
-          boardCtx,
-          seat3DState.boardCanvas.width,
-          seat3DState.boardCanvas.height,
-        );
-
-        if (!blackboardData || typeof fabric === "undefined") {
-          seat3DState.boardTexture.needsUpdate = true;
-          return;
-        }
-
-        const offCanvas = document.createElement("canvas");
-        offCanvas.width = 800;
-        offCanvas.height = 400;
-        const staticCanvas = new fabric.StaticCanvas(offCanvas, {
-          width: 800,
-          height: 400,
-          backgroundColor: "#0a0a0a",
-        });
-        staticCanvas.loadFromJSON(blackboardData, () => {
-          staticCanvas.renderAll();
-          boardCtx.clearRect(0, 0, 800, 400);
-          boardCtx.drawImage(offCanvas, 0, 0);
-          seat3DState.boardTexture.needsUpdate = true;
-          staticCanvas.dispose();
-        });
+        seat3DState.boardTexture.needsUpdate = true;
       }
 
       function persistBlackboardData({ notify = false } = {}) {
