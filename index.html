@@ -270,6 +270,31 @@
       .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
       .teacher-desk-box:hover .teacher-view-3d-btn,
       .teacher-desk-box:focus-within .teacher-view-3d-btn { opacity: 1; pointer-events: auto; }
+
+      .wood-texture {
+          background-image: repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 5px,
+              rgba(0, 0, 0, 0.03) 5px,
+              rgba(0, 0, 0, 0.03) 10px
+          );
+      }
+      .glass-reflection {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0) 100%);
+      }
+      .mini-reference-label {
+          font-size: 9px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+      }
+      .board-shadow {
+          box-shadow:
+              0 14px 18px -6px rgba(0, 0, 0, 0.35),
+              0 8px 9px -6px rgba(0, 0, 0, 0.22),
+              inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+      }
       .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
       .desk-box:hover .split-btn, .desk-box:hover .details-btn, .desk-box:focus-within .split-btn, .desk-box:focus-within .details-btn { opacity: 1; pointer-events: auto; }
       .desk-box:hover .view-3d-btn, .desk-box:focus-within .view-3d-btn { opacity: 1; pointer-events: auto; }
@@ -638,46 +663,95 @@
               id="classroom-reference-row"
               class="w-full flex justify-between items-start mb-8 z-10"
             >
-              <div class="flex flex-col items-center gap-1 text-gray-500">
-                <div
-                  class="w-16 h-12 bg-amber-700 border-2 border-amber-900 rounded-t-xl rounded-b-sm shadow-sm relative overflow-hidden"
-                >
+              <div class="flex flex-col items-center gap-2 text-gray-500">
+                <div class="relative group cursor-pointer mt-1">
                   <div
-                    class="absolute inset-y-0 left-1/2 w-px bg-amber-900/70"
-                  ></div>
-                  <div
-                    class="absolute top-5 left-5 w-1.5 h-1.5 bg-yellow-200 rounded-full"
-                  ></div>
-                  <div
-                    class="absolute top-5 right-5 w-1.5 h-1.5 bg-yellow-200 rounded-full"
-                  ></div>
-                </div>
-                <span class="text-[9px] font-bold uppercase tracking-wide"
-                  >Cửa ra vào</span
-                >
-              </div>
-
-              <div
-                class="w-1/2 h-12 bg-gray-800 rounded-b-3xl flex items-center justify-center shadow-lg"
-              >
-                <span
-                  class="text-white font-bold tracking-[0.5em] text-sm uppercase"
-                  >Bảng Giảng</span
-                >
-              </div>
-
-              <div class="flex flex-col items-center gap-1 text-gray-500">
-                <div
-                  class="teacher-desk-box w-24 h-11 bg-amber-100 border-2 border-amber-300 rounded-lg flex items-end justify-center pb-1 shadow-sm relative"
-                >
-                  <div
-                    class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-2 bg-amber-200 border border-amber-300 rounded-sm"
-                  ></div>
-                  <div
-                    class="text-[8px] font-bold uppercase tracking-wide text-amber-700"
+                    class="w-24 h-16 bg-stone-800 rounded-lg shadow-lg p-1 flex gap-0.5 relative transition-transform duration-300 group-hover:-translate-y-0.5"
                   >
-                    Bàn Giáo Viên
+                    <div
+                      class="w-1/2 h-full bg-gradient-to-r from-orange-900 to-[#7a3b1a] rounded-sm relative wood-texture shadow-[inset_2px_0_4px_rgba(0,0,0,0.35)] overflow-hidden"
+                    >
+                      <div
+                        class="absolute top-1.5 left-1.5 right-1.5 bottom-4 bg-[#1e293b] rounded-sm border border-orange-950/60 glass-reflection"
+                      ></div>
+                      <div
+                        class="absolute bottom-1.5 right-1 w-0.5 h-5 bg-gradient-to-b from-slate-300 to-slate-500 rounded-full"
+                      ></div>
+                    </div>
+                    <div
+                      class="w-1/2 h-full bg-gradient-to-l from-orange-900 to-[#7a3b1a] rounded-sm relative wood-texture shadow-[inset_-2px_0_4px_rgba(0,0,0,0.35)] overflow-hidden"
+                    >
+                      <div
+                        class="absolute top-1.5 left-1.5 right-1.5 bottom-4 bg-[#1e293b] rounded-sm border border-orange-950/60 glass-reflection"
+                      ></div>
+                      <div
+                        class="absolute bottom-1.5 left-1 w-0.5 h-5 bg-gradient-to-b from-slate-300 to-slate-500 rounded-full"
+                      ></div>
+                    </div>
                   </div>
+                </div>
+                <span class="mini-reference-label">Cửa ra vào</span>
+              </div>
+
+              <div class="relative group w-1/2 h-12">
+                <div
+                  class="w-full h-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-lg board-shadow border-2 border-[#334155] flex items-center justify-center relative transition-transform duration-300 group-hover:-translate-y-0.5"
+                >
+                  <div
+                    class="absolute inset-1 border border-slate-600/45 rounded-sm"
+                  ></div>
+                  <div
+                    class="absolute -bottom-1 w-11/12 h-1.5 bg-slate-600 rounded-b-md shadow-sm flex items-center px-2 gap-1"
+                  >
+                    <div class="w-3 h-0.5 bg-white/80 rounded-full"></div>
+                    <div class="w-2 h-0.5 bg-yellow-200/80 rounded-full"></div>
+                    <div
+                      class="w-4 h-0.5 bg-blue-400/80 rounded-sm ml-auto"
+                    ></div>
+                  </div>
+                  <span
+                    class="text-white font-bold tracking-[0.5em] text-sm uppercase drop-shadow-md"
+                    >Bảng Giảng</span
+                  >
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center gap-2 text-gray-500">
+                <div
+                  class="teacher-desk-box w-32 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg shadow-lg relative wood-texture border border-amber-300/40 ring-2 ring-black/5 overflow-hidden"
+                >
+                  <div
+                    class="absolute top-2 left-2 w-8 h-6 flex flex-col items-center"
+                  >
+                    <div
+                      class="w-full h-3.5 bg-slate-200 rounded-t-sm border border-slate-300 relative glass-reflection"
+                    >
+                      <div
+                        class="absolute inset-0.5 bg-slate-800 rounded-[2px]"
+                      ></div>
+                    </div>
+                    <div
+                      class="w-[110%] h-2.5 bg-slate-300 rounded-b-sm border-t border-slate-400 flex items-center justify-center"
+                    >
+                      <div class="w-1/3 h-0.5 bg-slate-400 rounded-full"></div>
+                    </div>
+                  </div>
+                  <div
+                    class="absolute top-2 right-2 w-4 h-7 bg-white rounded-[2px] shadow-sm rotate-6 border border-slate-200"
+                  ></div>
+                  <div
+                    class="absolute bottom-2 right-8 w-3.5 h-3.5 bg-white rounded-full border border-slate-100 flex items-center justify-center"
+                  >
+                    <div
+                      class="w-2.5 h-2.5 rounded-full bg-amber-900 border border-amber-800"
+                    ></div>
+                    <div
+                      class="absolute -right-1 top-0.5 w-1 h-2 border border-white rounded-r-sm"
+                    ></div>
+                  </div>
+                  <div
+                    class="absolute bottom-1.5 left-2.5 w-3.5 h-3.5 bg-emerald-600 rounded-full border border-emerald-800"
+                  ></div>
                   <button
                     type="button"
                     onclick="openTeacherDesk3DView()"
@@ -687,6 +761,9 @@
                     <i class="fas fa-vr-cardboard"></i>
                   </button>
                 </div>
+                <span class="mini-reference-label text-amber-700"
+                  >Bàn giáo viên</span
+                >
               </div>
             </div>
 
