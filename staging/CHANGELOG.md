@@ -1,3 +1,9 @@
+## [1.12.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.12.1...v1.12.2) (2026-03-18)
+
+### Bug Fixes
+
+- **layout:** keep reference markers fixed in teacher view ([9b417e3](https://github.com/daiminhdzchimto-arch/CAP/commit/9b417e3f467df0150a166742adfa8cfdf13d2062))
+
 ## [1.12.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.12.0...v1.12.1) (2026-03-18)
 
 ### Bug Fixes
