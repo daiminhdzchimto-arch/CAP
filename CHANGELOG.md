@@ -1,3 +1,9 @@
+# [1.14.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.13.0...v1.14.0) (2026-03-18)
+
+### Features
+
+- **classroom:** refresh board reference styling ([ed475e4](https://github.com/daiminhdzchimto-arch/CAP/commit/ed475e459e173c21f75bd2dba96a3c2177e069d5))
+
 # [1.13.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.12.2...v1.13.0) (2026-03-18)
 
 ### Features
