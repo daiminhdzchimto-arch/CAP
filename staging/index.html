@@ -2133,7 +2133,6 @@
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboardData = null;
-      let isBlackboardSyncBound = false;
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
       let currentBlackboardTool = "pencil";
@@ -5509,7 +5508,7 @@
             blackboardFabric.renderAll();
           });
         }
-        if (!isBlackboardSyncBound) {
+        if (!blackboardFabric.__persistSyncHandlerBound) {
           [
             "path:created",
             "object:added",
@@ -5518,7 +5517,7 @@
           ].forEach((eventName) => {
             blackboardFabric.on(eventName, () => persistBlackboardData());
           });
-          isBlackboardSyncBound = true;
+          blackboardFabric.__persistSyncHandlerBound = true;
         }
         syncBlackboardCanvasSize();
       }
