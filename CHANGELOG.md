@@ -1,3 +1,9 @@
+## [1.12.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.12.0...v1.12.1) (2026-03-18)
+
+### Bug Fixes
+
+- correct 2d teacher-view reference row orientation ([453cfd9](https://github.com/daiminhdzchimto-arch/CAP/commit/453cfd98f031cdb7eb29ed36709953b683ad8c19))
+
 # [1.12.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.11.0...v1.12.0) (2026-03-18)
 
 ### Features
