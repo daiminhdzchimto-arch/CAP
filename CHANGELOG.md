@@ -1,3 +1,9 @@
+# [1.20.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.19.1...v1.20.0) (2026-03-18)
+
+### Features
+
+- **ui:** add portrait seating mode and bottom sheet sidebar ([66602a3](https://github.com/daiminhdzchimto-arch/CAP/commit/66602a3d1de530ad9b51ec34424b97ca2d764862))
+
 ## [1.19.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.19.0...v1.19.1) (2026-03-18)
 
 ### Bug Fixes
