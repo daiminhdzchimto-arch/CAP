@@ -44,12 +44,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -2250,6 +2244,12 @@
         CHALKBOARD_CANVAS_WIDTH / CHALKBOARD_RATIO,
       );
       const CHALKBOARD_BG = "#1b4332";
+      const FABRIC_CDN_URL =
+        "https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js";
+      const KATEX_CSS_CDN_URL =
+        "https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css";
+      const KATEX_JS_CDN_URL =
+        "https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js";
       let chalkboardFabric = null;
       let chalkboardMode = "draw";
       let chalkStrokeColor = "#ffffff";
@@ -2257,6 +2257,8 @@
       let chalkShapeDraft = null;
       let chalkShapeOrigin = null;
       let chalkTextureSourceCanvas = null;
+      let fabricLoadPromise = null;
+      let katexLoadPromise = null;
 
       function ensureChalkTextureCanvas() {
         if (!chalkTextureSourceCanvas) {
@@ -2267,6 +2269,72 @@
           ctx.fillStyle = CHALKBOARD_BG;
           ctx.fillRect(0, 0, CHALKBOARD_CANVAS_WIDTH, CHALKBOARD_CANVAS_HEIGHT);
         }
+      }
+
+      function loadScriptOnce(url) {
+        return new Promise((resolve, reject) => {
+          const existing = document.querySelector(`script[src="${url}"]`);
+          if (existing) {
+            if (existing.dataset.loaded === "true") {
+              resolve();
+              return;
+            }
+            existing.addEventListener("load", () => resolve(), { once: true });
+            existing.addEventListener(
+              "error",
+              () => reject(new Error(`Không tải được script: ${url}`)),
+              { once: true },
+            );
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = url;
+          script.async = true;
+          script.onload = () => {
+            script.dataset.loaded = "true";
+            resolve();
+          };
+          script.onerror = () =>
+            reject(new Error(`Không tải được script: ${url}`));
+          document.head.appendChild(script);
+        });
+      }
+
+      function loadStylesheetOnce(url) {
+        return new Promise((resolve, reject) => {
+          const existing = document.querySelector(`link[href="${url}"]`);
+          if (existing) {
+            resolve();
+            return;
+          }
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = url;
+          link.onload = () => resolve();
+          link.onerror = () =>
+            reject(new Error(`Không tải được stylesheet: ${url}`));
+          document.head.appendChild(link);
+        });
+      }
+
+      async function ensureFabricLoaded() {
+        if (window.fabric) return;
+        if (!fabricLoadPromise) {
+          fabricLoadPromise = loadScriptOnce(FABRIC_CDN_URL);
+        }
+        await fabricLoadPromise;
+      }
+
+      async function ensureKatexLoaded() {
+        if (window.katex) return;
+        if (!katexLoadPromise) {
+          katexLoadPromise = Promise.all([
+            loadStylesheetOnce(KATEX_CSS_CDN_URL),
+            loadScriptOnce(KATEX_JS_CDN_URL),
+          ]);
+        }
+        await katexLoadPromise;
       }
 
       let config = {
@@ -2539,12 +2607,8 @@
         const latex = (input.value || "").trim();
         if (!latex) return;
 
-        if (!window.katex) {
-          showToast("Không tải được KaTeX. Vui lòng kiểm tra mạng.");
-          return;
-        }
-
         try {
+          await ensureKatexLoaded();
           katex.render(latex, preview, {
             throwOnError: false,
             displayMode: true,
@@ -2608,9 +2672,19 @@
         seat3DState.boardTexture = texture;
       }
 
-      function openChalkboardModal() {
-        initializeChalkboardEditor();
-        document.getElementById("chalkboard-modal")?.classList.add("open");
+      async function openChalkboardModal() {
+        const trigger = document.getElementById("classroom-board-trigger");
+        try {
+          if (trigger) trigger.classList.add("opacity-70");
+          await ensureFabricLoaded();
+          initializeChalkboardEditor();
+          document.getElementById("chalkboard-modal")?.classList.add("open");
+        } catch (error) {
+          console.error(error);
+          showToast("Không thể tải công cụ bảng đen. Vui lòng thử lại.");
+        } finally {
+          if (trigger) trigger.classList.remove("opacity-70");
+        }
       }
 
       function closeChalkboardModal() {
