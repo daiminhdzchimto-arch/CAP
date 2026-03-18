@@ -1260,6 +1260,10 @@
                     <span class="jelly-slider"></span>
                   </label>
                 </div>
+                <div
+                  id="power-save-status"
+                  class="text-[10px] text-orange-600 bg-orange-50 border border-orange-100 rounded-lg px-2 py-1 hidden"
+                ></div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
@@ -2185,6 +2189,16 @@
           showBottomOverlay: true,
         },
       };
+      const POWER_SAVE_LOW_BATTERY_THRESHOLD = 0.2;
+      const INTERACTION_IDLE_THRESHOLD_MS = 7000;
+      let userPowerSavePreference = false;
+
+      const batteryState = {
+        supported: false,
+        manager: null,
+        isLowBattery: false,
+        autoPowerSaveActive: false,
+      };
 
       function animateActionFeedback(
         selector,
@@ -2285,9 +2299,25 @@
             secondary: "#f1faee",
           };
           this.lastTime = 0;
+          this.accumulator = 0;
           this.fps = 0;
           this.frameCount = 0;
           this.fpsTime = 0;
+          this.lastInteractionTime = Date.now();
+          this.lastIdleState = false;
+          this.boundMarkInteraction = () => this.markInteraction();
+
+          [
+            "pointerdown",
+            "pointermove",
+            "touchstart",
+            "keydown",
+            "wheel",
+          ].forEach((eventName) => {
+            window.addEventListener(eventName, this.boundMarkInteraction, {
+              passive: true,
+            });
+          });
 
           window.addEventListener("resize", () => this.resize());
           this.resize();
@@ -2300,11 +2330,45 @@
 
         init() {
           this.active = true;
+          this.lastTime = 0;
+          this.accumulator = 0;
           this.particles = [];
-          const count = config.settings.powerSave ? 15 : 40;
+          const count = this.getTargetParticleCount();
           for (let i = 0; i < count; i++)
             this.particles.push(this.createParticle(true));
           requestAnimationFrame((t) => this.loop(t));
+        }
+
+        markInteraction() {
+          this.lastInteractionTime = Date.now();
+        }
+
+        getTargetParticleCount() {
+          if (this.isIdle()) return config.settings.powerSave ? 8 : 20;
+          return config.settings.powerSave ? 15 : 40;
+        }
+
+        getTargetFps() {
+          if (config.settings.powerSave) return this.isIdle() ? 8 : 16;
+          return this.isIdle() ? 18 : 30;
+        }
+
+        isIdle() {
+          return (
+            Date.now() - this.lastInteractionTime >
+            INTERACTION_IDLE_THRESHOLD_MS
+          );
+        }
+
+        syncParticleCount() {
+          const targetCount = this.getTargetParticleCount();
+          if (this.particles.length > targetCount) {
+            this.particles.length = targetCount;
+            return;
+          }
+          while (this.particles.length < targetCount) {
+            this.particles.push(this.createParticle(true));
+          }
         }
 
         createParticle(randomPos = false) {
@@ -2340,8 +2404,21 @@
             return;
           }
 
-          const dt = time - this.lastTime;
+          const dtRaw = this.lastTime ? time - this.lastTime : 16.67;
           this.lastTime = time;
+          const targetFrameInterval = 1000 / this.getTargetFps();
+          this.accumulator += Math.min(dtRaw, 200);
+          const idleNow = this.isIdle();
+          if (idleNow !== this.lastIdleState) {
+            this.syncParticleCount();
+            this.lastIdleState = idleNow;
+          }
+          if (this.accumulator < targetFrameInterval) {
+            requestAnimationFrame((t) => this.loop(t));
+            return;
+          }
+          const dt = this.accumulator;
+          this.accumulator = 0;
 
           // FPS Calc
           this.frameCount++;
@@ -2426,6 +2503,7 @@
           console.log(
             `[ParticleEngine] Đã nhận gió: Vector(${this.windVector.x.toFixed(2)}, ${this.windVector.y.toFixed(2)}), Giật: ${this.windGust}`,
           );
+          this.syncParticleCount();
         }
 
         setSpecies(speciesData) {
@@ -2471,18 +2549,21 @@
       const WeatherAdapter = {
         config: {
           useRealLocation: false,
+          preferredRealLocation: false,
           fallbackData: { speed: 2, deg: 180, gust: 4 },
         },
         currentSpecies: null,
+        initialized: false,
 
         init() {
           const savedWeatherConfig = localStorage.getItem(
             "classApp_weatherConfig",
           );
           if (savedWeatherConfig) {
-            this.config.useRealLocation =
-              JSON.parse(savedWeatherConfig).useRealLocation;
+            const parsedConfig = JSON.parse(savedWeatherConfig);
+            this.config.preferredRealLocation = !!parsedConfig.useRealLocation;
           }
+          this.config.useRealLocation = this.computeEffectiveRealWeather();
 
           this.determineSpecies();
 
@@ -2490,17 +2571,48 @@
           if (toggleBtn) {
             toggleBtn.checked = this.config.useRealLocation;
             toggleBtn.addEventListener("change", (e) => {
-              this.config.useRealLocation = e.target.checked;
+              this.config.preferredRealLocation = e.target.checked;
+              this.config.useRealLocation = this.computeEffectiveRealWeather();
+              this.syncRealWeatherToggleState();
               localStorage.setItem(
                 "classApp_weatherConfig",
                 JSON.stringify({
-                  useRealLocation: this.config.useRealLocation,
+                  useRealLocation: this.config.preferredRealLocation,
                 }),
               );
               this.fetchAndUpdate();
             });
           }
 
+          this.syncRealWeatherToggleState();
+          this.fetchAndUpdate();
+          this.initialized = true;
+        },
+
+        computeEffectiveRealWeather() {
+          return (
+            this.config.preferredRealLocation &&
+            !batteryState.autoPowerSaveActive &&
+            !config.settings.powerSave
+          );
+        },
+
+        syncRealWeatherToggleState() {
+          const toggle = document.getElementById("real-weather-toggle");
+          if (!toggle) return;
+          const forcedOff =
+            this.config.preferredRealLocation && !this.config.useRealLocation;
+          toggle.checked = this.config.useRealLocation;
+          toggle.disabled = forcedOff;
+          toggle.title = forcedOff
+            ? "Thời tiết thực tạm tắt để tiết kiệm pin."
+            : "";
+        },
+
+        refreshWeatherMode() {
+          if (!this.initialized) return;
+          this.config.useRealLocation = this.computeEffectiveRealWeather();
+          this.syncRealWeatherToggleState();
           this.fetchAndUpdate();
         },
 
@@ -2566,6 +2678,8 @@
               const toggle = document.getElementById("real-weather-toggle");
               if (toggle) toggle.checked = false;
               this.config.useRealLocation = false;
+              this.config.preferredRealLocation = false;
+              this.syncRealWeatherToggleState();
               localStorage.setItem(
                 "classApp_weatherConfig",
                 JSON.stringify({ useRealLocation: false }),
@@ -5909,6 +6023,70 @@
         overlay.classList.toggle("hidden", !config.settings.showBottomOverlay);
       }
 
+      function syncPowerSaveStatusUI() {
+        const status = document.getElementById("power-save-status");
+        const toggle = document.getElementById("power-save-toggle");
+        if (!status || !toggle) return;
+
+        if (batteryState.autoPowerSaveActive) {
+          const batteryLevel = batteryState.manager
+            ? Math.round(batteryState.manager.level * 100)
+            : null;
+          const batteryText =
+            batteryLevel !== null ? `${batteryLevel}%` : "thấp";
+          status.innerText = `Đã tự động bật tiết kiệm pin (pin ${batteryText}).`;
+          status.classList.remove("hidden");
+          toggle.checked = true;
+          toggle.disabled = true;
+          toggle.title = "Đang khóa do pin yếu.";
+          return;
+        }
+
+        status.classList.add("hidden");
+        toggle.disabled = false;
+        toggle.title = "";
+        toggle.checked = !!userPowerSavePreference;
+      }
+
+      function applyPowerSaveState() {
+        const effectivePowerSave =
+          !!userPowerSavePreference || batteryState.autoPowerSaveActive;
+        config.settings.powerSave = effectivePowerSave;
+        syncPowerSaveStatusUI();
+        if (particleEngine?.active) particleEngine.syncParticleCount();
+        if (WeatherAdapter?.refreshWeatherMode)
+          WeatherAdapter.refreshWeatherMode();
+      }
+
+      function evaluateBatteryPowerSave() {
+        if (!batteryState.supported || !batteryState.manager) return;
+        const batteryManager = batteryState.manager;
+        batteryState.isLowBattery =
+          !batteryManager.charging &&
+          batteryManager.level <= POWER_SAVE_LOW_BATTERY_THRESHOLD;
+        batteryState.autoPowerSaveActive = batteryState.isLowBattery;
+        applyPowerSaveState();
+      }
+
+      async function initBatteryOptimization() {
+        if (!navigator.getBattery) {
+          syncPowerSaveStatusUI();
+          return;
+        }
+        try {
+          const batteryManager = await navigator.getBattery();
+          batteryState.supported = true;
+          batteryState.manager = batteryManager;
+          const batteryListener = () => evaluateBatteryPowerSave();
+          batteryManager.addEventListener("chargingchange", batteryListener);
+          batteryManager.addEventListener("levelchange", batteryListener);
+          evaluateBatteryPowerSave();
+        } catch (error) {
+          console.warn("Battery API unavailable:", error);
+          syncPowerSaveStatusUI();
+        }
+      }
+
       function updateSettings() {
         config.settings.windEnabled = document.getElementById(
           "wind-enabled-toggle",
@@ -5916,7 +6094,7 @@
         config.settings.intensity = parseFloat(
           document.getElementById("wind-intensity-range").value,
         );
-        config.settings.powerSave =
+        userPowerSavePreference =
           document.getElementById("power-save-toggle").checked;
         config.settings.teacherView = document.getElementById(
           "teacher-view-toggle",
@@ -5927,6 +6105,7 @@
 
         document.getElementById("wind-intensity-val").innerText =
           config.settings.intensity.toFixed(1) + "x";
+        applyPowerSaveState();
         applyClassroomViewMode();
         applyBottomOverlayVisibility();
 
@@ -6910,8 +7089,9 @@
             config.settings.windEnabled;
           document.getElementById("wind-intensity-range").value =
             config.settings.intensity;
+          userPowerSavePreference = !!config.settings.powerSave;
           document.getElementById("power-save-toggle").checked =
-            config.settings.powerSave;
+            userPowerSavePreference;
           document.getElementById("teacher-view-toggle").checked =
             !!config.settings.teacherView;
           document.getElementById("bottom-overlay-toggle").checked =
@@ -6919,6 +7099,10 @@
           document.getElementById("wind-intensity-val").innerText =
             config.settings.intensity.toFixed(1) + "x";
         }
+        userPowerSavePreference =
+          !!document.getElementById("power-save-toggle").checked;
+        await initBatteryOptimization();
+        applyPowerSaveState();
         document.getElementById("teacher-view-toggle").checked =
           !!config.settings.teacherView;
         document.getElementById("bottom-overlay-toggle").checked =
