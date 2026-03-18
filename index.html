@@ -58,6 +58,15 @@
           --desk-font-base: 16;
           --desk-font-min: 11;
           --desk-input-min-height: 48;
+          --shell-px: 1rem;
+          --shell-py: 1.5rem;
+          --classroom-padding: 2rem;
+          --toolbar-padding: 0.5rem;
+          --toolbar-gap: 1rem;
+          --overlay-title-size: 2.2rem;
+          --overlay-subtitle-size: 1.1rem;
+          --content-font-size: 0.95rem;
+          --reference-row-margin: 2rem;
       }
 
       body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
@@ -308,8 +317,8 @@
       .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
       #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; }
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
-      .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
-      .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
+      .classroom-info-header h2 { font-size: var(--overlay-title-size); font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
+      .classroom-info-header p { font-size: var(--overlay-subtitle-size); font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
       .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; display: flex; align-items: center; justify-content: center; min-height: 48px; }
       #classroom-area.teacher-view #classroom-reference-row { flex-direction: row; }
       #classroom-area.teacher-view #seating-layout-row { flex-direction: row-reverse; }
@@ -437,6 +446,91 @@
       }
       #orientation-lock-overlay.show {
           display: flex;
+      }
+
+      #app-shell > nav .max-w-7xl,
+      #app-shell > .max-w-7xl {
+          padding-left: var(--shell-px);
+          padding-right: var(--shell-px);
+      }
+
+      #app-shell > .max-w-7xl {
+          padding-top: var(--shell-py);
+          padding-bottom: var(--shell-py);
+      }
+
+      #tab-seating > div:first-child {
+          padding: var(--toolbar-padding);
+          gap: var(--toolbar-gap);
+      }
+
+      #tab-seating #classroom-area {
+          padding: var(--classroom-padding);
+      }
+
+      #classroom-reference-row {
+          margin-bottom: var(--reference-row-margin);
+      }
+
+      #tab-seating,
+      #tab-competition {
+          font-size: var(--content-font-size);
+      }
+
+      @media (max-width: 479px) {
+          :root {
+              --shell-px: 0.6rem;
+              --shell-py: 0.9rem;
+              --classroom-padding: 0.8rem;
+              --toolbar-padding: 0.45rem;
+              --toolbar-gap: 0.5rem;
+              --overlay-title-size: 1.35rem;
+              --overlay-subtitle-size: 0.82rem;
+              --content-font-size: 0.84rem;
+              --reference-row-margin: 1rem;
+          }
+      }
+
+      @media (min-width: 480px) and (max-width: 639px) {
+          :root {
+              --shell-px: 0.8rem;
+              --shell-py: 1.1rem;
+              --classroom-padding: 1rem;
+              --toolbar-padding: 0.5rem;
+              --toolbar-gap: 0.65rem;
+              --overlay-title-size: 1.55rem;
+              --overlay-subtitle-size: 0.9rem;
+              --content-font-size: 0.88rem;
+              --reference-row-margin: 1.2rem;
+          }
+      }
+
+      @media (min-width: 640px) and (max-width: 767px) {
+          :root {
+              --shell-px: 0.95rem;
+              --shell-py: 1.25rem;
+              --classroom-padding: 1.25rem;
+              --toolbar-padding: 0.55rem;
+              --toolbar-gap: 0.75rem;
+              --overlay-title-size: 1.75rem;
+              --overlay-subtitle-size: 0.95rem;
+              --content-font-size: 0.91rem;
+              --reference-row-margin: 1.5rem;
+          }
+      }
+
+      @media (min-width: 768px) and (max-width: 1023px) {
+          :root {
+              --shell-px: 1.1rem;
+              --shell-py: 1.4rem;
+              --classroom-padding: 1.6rem;
+              --toolbar-padding: 0.55rem;
+              --toolbar-gap: 0.85rem;
+              --overlay-title-size: 1.95rem;
+              --overlay-subtitle-size: 1rem;
+              --content-font-size: 0.93rem;
+              --reference-row-margin: 1.75rem;
+          }
       }
 
       @media (max-height: 500px) and (orientation: landscape) {
