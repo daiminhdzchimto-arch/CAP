@@ -2119,6 +2119,8 @@
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboardData = null;
+      let isBlackboardSyncBound = false;
+      let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
@@ -5413,6 +5415,17 @@
         });
       }
 
+      function persistBlackboardData({ notify = false } = {}) {
+        if (!blackboardFabric || isBlackboardHydrating) return;
+        blackboardData = blackboardFabric.toJSON();
+        localStorage.setItem(
+          "classApp_blackboard",
+          JSON.stringify(blackboardData),
+        );
+        updateBoardTextureFromData();
+        if (notify) showToast("Đã lưu nội dung bảng!");
+      }
+
       function loadBlackboardData() {
         const saved = localStorage.getItem("classApp_blackboard");
         if (!saved) return;
@@ -5501,9 +5514,22 @@
           document.getElementById("blackboard-color").value || "#ffffff";
         blackboardFabric.freeDrawingBrush.width = 3;
         if (blackboardData) {
+          isBlackboardHydrating = true;
           blackboardFabric.loadFromJSON(blackboardData, () => {
+            isBlackboardHydrating = false;
             blackboardFabric.renderAll();
           });
+        }
+        if (!isBlackboardSyncBound) {
+          [
+            "path:created",
+            "object:added",
+            "object:modified",
+            "object:removed",
+          ].forEach((eventName) => {
+            blackboardFabric.on(eventName, () => persistBlackboardData());
+          });
+          isBlackboardSyncBound = true;
         }
         syncBlackboardCanvasSize();
       }
@@ -5612,6 +5638,7 @@
         blackboardFabric.clear();
         blackboardFabric.backgroundColor = "#0a0a0a";
         blackboardFabric.renderAll();
+        persistBlackboardData();
       }
 
       async function insertMathFormula() {
@@ -5661,13 +5688,7 @@
 
       function saveBlackboard() {
         if (!blackboardFabric) return;
-        blackboardData = blackboardFabric.toJSON();
-        localStorage.setItem(
-          "classApp_blackboard",
-          JSON.stringify(blackboardData),
-        );
-        updateBoardTextureFromData();
-        showToast("Đã lưu nội dung bảng!");
+        persistBlackboardData({ notify: true });
         closeBlackboardModal();
       }
 
