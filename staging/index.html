@@ -714,14 +714,14 @@
       </nav>
 
       <div
-        class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around py-2 md:hidden z-50"
+        class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden flex z-50"
       >
         <button
           onclick="switchTab('seating')"
           data-tab-button
           data-tab-target="seating"
           data-tab-variant="mobile"
-          class="mobile-tab-btn active flex flex-col items-center text-xs text-blue-600"
+          class="mobile-tab-btn active flex-1 py-3 flex flex-col items-center text-xs text-blue-600"
           aria-label="Chuyển sang tab Sơ đồ lớp"
         >
           <i class="fas fa-chair"></i>
@@ -732,7 +732,7 @@
           data-tab-button
           data-tab-target="competition"
           data-tab-variant="mobile"
-          class="mobile-tab-btn flex flex-col items-center text-xs text-gray-500"
+          class="mobile-tab-btn flex-1 py-3 flex flex-col items-center text-xs text-gray-500"
           aria-label="Chuyển sang tab Thi đua và Trực nhật"
         >
           <i class="fas fa-trophy"></i>
@@ -1963,6 +1963,17 @@
             <i class="fas fa-mask"></i>
           </button>
           <button
+            id="seat-3d-economy-btn"
+            type="button"
+            onclick="toggleSeat3DMobileEconomyMode()"
+            class="bg-emerald-500/90 hover:bg-emerald-600 text-white text-[10px] font-bold px-2 h-9 rounded-lg border border-emerald-300 shadow flex items-center justify-center"
+            aria-label="Chế độ tiết kiệm 3D"
+            title="Chế độ tiết kiệm 3D"
+          >
+            <i class="fas fa-leaf mr-1"></i>
+            <span id="seat-3d-economy-label">Tiết kiệm</span>
+          </button>
+          <button
             id="seat-3d-view-switch-btn"
             type="button"
             onclick="toggleSeat3DViewMode()"
@@ -2086,6 +2097,12 @@
               onclick="clearBlackboard()"
             >
               <i class="fas fa-trash-alt"></i> Xoá
+            </button>
+            <button
+              class="tool-btn bg-sky-700 text-white px-3 py-1 rounded text-sm hover:bg-sky-600"
+              onclick="toggleBlackboardFullscreen()"
+            >
+              <i class="fas fa-expand"></i> Toàn màn hình
             </button>
             <button
               class="tool-btn bg-emerald-700 text-white px-3 py-1 rounded text-sm hover:bg-emerald-600 ml-auto"
@@ -2410,6 +2427,8 @@
       let currentPortraitSide = "left";
       let deskLongPressTimer = null;
       let deskLongPressTriggered = false;
+      const DESK_LONG_PRESS_MS = 600;
+      const DESK_SWIPE_THRESHOLD_PX = 56;
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboardData = null;
@@ -2451,6 +2470,7 @@
         sprintMultiplier: 2.1,
         boardTexture: null,
         boardCanvas: null,
+        mobileEconomyMode: false,
         removeListeners: [],
         disposeResources: [],
       };
@@ -3199,11 +3219,23 @@
             const buildCellContextActions = () => {
               const actions = [
                 {
-                  label: "Hoán đổi chỗ",
-                  icon: '<i class="fas fa-exchange-alt"></i>',
-                  onClick: () => handleSwapButtonClick(null, side, ri, si),
+                  label: fixedMembers.includes(seat.id) ? "Bỏ ghim" : "Ghim",
+                  icon: '<i class="fas fa-thumbtack"></i>',
+                  onClick: () => toggleFixed(seat.id),
                 },
               ];
+              if (seat.name.trim()) {
+                actions.push({
+                  label: "Xem 3D",
+                  icon: '<i class="fas fa-vr-cardboard"></i>',
+                  onClick: () => openSeat3DView(side, ri, si),
+                });
+              }
+              actions.push({
+                label: "Đổi tên",
+                icon: '<i class="fas fa-pen"></i>',
+                onClick: () => promptRenameSeat(side, ri, si),
+              });
               if (seat.name.trim()) {
                 actions.push({
                   label: "Xem chi tiết",
@@ -3243,7 +3275,68 @@
                     touch.clientY,
                     buildCellContextActions(),
                   );
-                }, 520);
+                }, DESK_LONG_PRESS_MS);
+              },
+              { passive: true },
+            );
+            let swipeStartTouch = null;
+            let swipeConsumed = false;
+            cell.addEventListener(
+              "touchstart",
+              (e) => {
+                const touch = e.touches && e.touches[0];
+                if (!touch) return;
+                swipeConsumed = false;
+                swipeStartTouch = {
+                  x: touch.clientX,
+                  y: touch.clientY,
+                };
+              },
+              { passive: true },
+            );
+            cell.addEventListener(
+              "touchmove",
+              (e) => {
+                if (!swipeStartTouch || swipeConsumed) return;
+                const touch = e.touches && e.touches[0];
+                if (!touch) return;
+                const dx = touch.clientX - swipeStartTouch.x;
+                const dy = touch.clientY - swipeStartTouch.y;
+                if (
+                  Math.abs(dx) < DESK_SWIPE_THRESHOLD_PX ||
+                  Math.abs(dx) < Math.abs(dy) * 1.3
+                ) {
+                  return;
+                }
+                const targetSeatIndex = si + (dx > 0 ? 1 : -1);
+                if (targetSeatIndex < 0 || targetSeatIndex >= row.length) {
+                  swipeConsumed = true;
+                  return;
+                }
+                const swapped = swapSeatNames(
+                  { side, r: ri, c: si },
+                  { side, r: ri, c: targetSeatIndex },
+                );
+                if (swapped) {
+                  renderAll();
+                  const sourceCell = getDeskCell(side, ri, si);
+                  const targetCell = getDeskCell(side, ri, targetSeatIndex);
+                  if (sourceCell)
+                    animateActionFeedback(
+                      sourceCell,
+                      "animate-wobble-swap",
+                      420,
+                    );
+                  if (targetCell)
+                    animateActionFeedback(
+                      targetCell,
+                      "animate-wobble-swap",
+                      420,
+                    );
+                  showToast("Đã đổi chỗ bằng vuốt ngang.");
+                }
+                swipeConsumed = true;
+                swipeStartTouch = null;
               },
               { passive: true },
             );
@@ -3252,6 +3345,10 @@
                 eventName,
                 () => {
                   clearLongPressTimer();
+                  if (eventName === "touchend" || eventName === "touchcancel") {
+                    swipeStartTouch = null;
+                    swipeConsumed = false;
+                  }
                   if (eventName !== "touchmove") {
                     setTimeout(() => {
                       deskLongPressTriggered = false;
@@ -4607,6 +4704,34 @@
         btn.classList.toggle("border-emerald-300", isOn);
       }
 
+      function updateSeat3DEconomyButton() {
+        const btn = document.getElementById("seat-3d-economy-btn");
+        const label = document.getElementById("seat-3d-economy-label");
+        if (!btn || !label) return;
+        const isOn = !!seat3DState.mobileEconomyMode;
+        label.textContent = isOn ? "Đang tiết kiệm" : "Tiết kiệm";
+        btn.classList.toggle("bg-emerald-500/90", !isOn);
+        btn.classList.toggle("hover:bg-emerald-600", !isOn);
+        btn.classList.toggle("border-emerald-300", !isOn);
+        btn.classList.toggle("bg-amber-500/90", isOn);
+        btn.classList.toggle("hover:bg-amber-600", isOn);
+        btn.classList.toggle("border-amber-300", isOn);
+      }
+
+      function setSeat3DMobileEconomyMode(enabled) {
+        seat3DState.mobileEconomyMode = !!enabled;
+        updateSeat3DEconomyButton();
+        showToast(
+          seat3DState.mobileEconomyMode
+            ? "Đã bật chế độ tiết kiệm 3D."
+            : "Đã tắt chế độ tiết kiệm 3D.",
+        );
+      }
+
+      function toggleSeat3DMobileEconomyMode() {
+        setSeat3DMobileEconomyMode(!seat3DState.mobileEconomyMode);
+      }
+
       function setSeat3DSpectatorMode(enabled) {
         if (!seat3DState.active || !seat3DState.camera) return;
         seat3DState.spectatorMode = !!enabled;
@@ -4682,6 +4807,7 @@
         seat3DState.clock = null;
         seat3DState.boardCanvas = null;
         seat3DState.boardTexture = null;
+        seat3DState.mobileEconomyMode = false;
 
         if (seat3DState.renderer) {
           const canvas = seat3DState.renderer.domElement;
@@ -4761,6 +4887,9 @@
         const wrap = document.getElementById("seat-3d-canvas");
         const currentLabel = document.getElementById("seat-3d-current-name");
         const guideToggle = document.getElementById("seat-3d-guide-toggle");
+        const isMobile = isLikelyMobileDevice();
+        seat3DState.mobileEconomyMode = isMobile || !!config.settings.powerSave;
+        updateSeat3DEconomyButton();
         currentLabel.textContent = `Đang xem từ: ${sourceName}`;
         viewer.classList.remove("hidden");
         setSeat3DGuideVisible(false);
@@ -4819,7 +4948,11 @@
           220,
         );
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        if (isMobile) {
+          renderer.setPixelRatio(1);
+        } else {
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        }
         renderer.setSize(wrap.clientWidth, wrap.clientHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -4968,7 +5101,8 @@
                 name === sourceName
               ),
           );
-          validNames.slice(0, 4).forEach((studentName, idx) => {
+          const mobileSeatLimit = seat3DState.mobileEconomyMode ? 2 : 4;
+          validNames.slice(0, mobileSeatLimit).forEach((studentName, idx) => {
             const isMale = isMaleName(studentName);
             const harmoniousOutfits = [
               { shirt: 0x3b82f6, pants: 0x1e293b },
@@ -5009,17 +5143,19 @@
               },
             });
 
-            const backpack = new THREE.Mesh(
-              new THREE.BoxGeometry(0.2, 0.26, 0.11),
-              new THREE.MeshStandardMaterial({
-                color: isMale ? 0x1f2937 : 0x334155,
-                roughness: 0.72,
-                metalness: 0.08,
-              }),
-            );
-            backpack.position.set(entry.x + offsetX, 0.59, entry.z + 0.88);
-            backpack.castShadow = true;
-            scene.add(backpack);
+            if (!seat3DState.mobileEconomyMode) {
+              const backpack = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 0.26, 0.11),
+                new THREE.MeshStandardMaterial({
+                  color: isMale ? 0x1f2937 : 0x334155,
+                  roughness: 0.72,
+                  metalness: 0.08,
+                }),
+              );
+              backpack.position.set(entry.x + offsetX, 0.59, entry.z + 0.88);
+              backpack.castShadow = true;
+              scene.add(backpack);
+            }
             if (student.userData.dispose)
               seat3DState.disposeResources.push(student.userData.dispose);
 
@@ -5284,8 +5420,9 @@
               seat3DState.baseEyeHeight + Math.sin(bobTime * 1.8) * 0.008;
           }
           const t = performance.now() * 0.001;
+          const fanSpeed = seat3DState.mobileEconomyMode ? 0.16 : 0.5;
           seat3DState.fanBlades.forEach((fan) => {
-            fan.rotation.y += 0.5;
+            fan.rotation.y += fanSpeed;
           });
 
           seat3DState.lightBlinkState.forEach((blinkState, idx) => {
@@ -5303,28 +5440,30 @@
             blinkState.light.material.emissiveIntensity = blinkState.current;
           });
 
-          const windSway = Math.min(
-            0.15,
-            0.03 + config.settings.intensity * 0.025,
-          );
-          const windX = Math.abs(particleEngine?.windVector?.x || 0) * 0.002;
-          seat3DState.windowLeafSways.forEach((sway) => {
-            const osc = Math.sin(t * 1.25 + sway.phase) * sway.amplitude;
-            sway.group.rotation.y = Math.PI / 2 + osc + windSway + windX;
-            sway.group.rotation.z =
-              Math.sin(t * 1.7 + sway.phase * 0.7) * (sway.amplitude * 0.85);
-            sway.group.position.y =
-              sway.baseY + Math.sin(t * 1.15 + sway.phase) * 0.015;
-          });
-          seat3DState.infraBlinkState.forEach((blink, idx) => {
-            if (!blink.led?.material) return;
-            const pulse =
-              0.25 + Math.max(0, Math.sin(t * 7 + blink.offset)) * 0.95;
-            blink.led.material.emissiveIntensity = pulse;
-            blink.led.scale.setScalar(
-              1 + Math.max(0, Math.sin(t * 10 + idx * 0.33)) * 0.2,
+          if (!seat3DState.mobileEconomyMode) {
+            const windSway = Math.min(
+              0.15,
+              0.03 + config.settings.intensity * 0.025,
             );
-          });
+            const windX = Math.abs(particleEngine?.windVector?.x || 0) * 0.002;
+            seat3DState.windowLeafSways.forEach((sway) => {
+              const osc = Math.sin(t * 1.25 + sway.phase) * sway.amplitude;
+              sway.group.rotation.y = Math.PI / 2 + osc + windSway + windX;
+              sway.group.rotation.z =
+                Math.sin(t * 1.7 + sway.phase * 0.7) * (sway.amplitude * 0.85);
+              sway.group.position.y =
+                sway.baseY + Math.sin(t * 1.15 + sway.phase) * 0.015;
+            });
+            seat3DState.infraBlinkState.forEach((blink, idx) => {
+              if (!blink.led?.material) return;
+              const pulse =
+                0.25 + Math.max(0, Math.sin(t * 7 + blink.offset)) * 0.95;
+              blink.led.material.emissiveIntensity = pulse;
+              blink.led.scale.setScalar(
+                1 + Math.max(0, Math.sin(t * 10 + idx * 0.33)) * 0.2,
+              );
+            });
+          }
           tagGroup.children.forEach((tag) => tag.lookAt(camera.position));
           renderer.render(scene, camera);
           seat3DState.animationId = requestAnimationFrame(animate);
@@ -5488,6 +5627,32 @@
           420,
         );
       }
+      function promptRenameSeat(side, rowIndex, colIndex) {
+        const data = side === "left" ? leftSideData : rightSideData;
+        const seat = data?.[rowIndex]?.[colIndex];
+        if (!seat) return;
+        const nextName = prompt("Nhập tên mới cho ghế:", seat.name || "");
+        if (nextName === null) return;
+        seat.name = nextName.trim();
+        renderAll();
+        const cell = getDeskCell(side, rowIndex, colIndex);
+        if (cell) animateActionFeedback(cell, "animate-pulse-highlight", 320);
+        showToast("Đã cập nhật tên ghế.");
+      }
+      function swapSeatNames(source, target) {
+        if (!source || !target) return false;
+        const sourceData =
+          source.side === "left" ? leftSideData : rightSideData;
+        const targetData =
+          target.side === "left" ? leftSideData : rightSideData;
+        const sourceSeat = sourceData?.[source.r]?.[source.c];
+        const targetSeat = targetData?.[target.r]?.[target.c];
+        if (!sourceSeat || !targetSeat) return false;
+        const tmp = sourceSeat.name;
+        sourceSeat.name = targetSeat.name;
+        targetSeat.name = tmp;
+        return true;
+      }
       function handleSwapButtonClick(event, side, r, c) {
         if (event) {
           event.preventDefault();
@@ -5514,11 +5679,10 @@
       }
       function executeSwap(ts, tr, tc) {
         const src = { ...swapSource };
-        const sa = swapSource.side === "left" ? leftSideData : rightSideData;
-        const ta = ts === "left" ? leftSideData : rightSideData;
-        const tmp = sa[swapSource.r][swapSource.c].name;
-        sa[swapSource.r][swapSource.c].name = ta[tr][tc].name;
-        ta[tr][tc].name = tmp;
+        swapSeatNames(
+          { side: swapSource.side, r: swapSource.r, c: swapSource.c },
+          { side: ts, r: tr, c: tc },
+        );
         swapSource = null;
         renderAll();
         const srcSeat = getDeskCell(src.side, src.r, src.c);
@@ -6177,7 +6341,26 @@
         updateBlackboardToolStatus(currentBlackboardTool);
         if (!isBlackboardResizeBound) {
           window.addEventListener("resize", syncBlackboardCanvasSize);
+          window.addEventListener(
+            "orientationchange",
+            syncBlackboardCanvasSize,
+          );
           isBlackboardResizeBound = true;
+        }
+      }
+
+      async function toggleBlackboardFullscreen() {
+        const wrap = document.getElementById("blackboard-canvas-wrap");
+        if (!wrap) return;
+        try {
+          if (!document.fullscreenElement && wrap.requestFullscreen) {
+            await wrap.requestFullscreen();
+          } else if (document.fullscreenElement && document.exitFullscreen) {
+            await document.exitFullscreen();
+          }
+          requestAnimationFrame(syncBlackboardCanvasSize);
+        } catch (error) {
+          showToast("Không thể chuyển toàn màn hình bảng đen.");
         }
       }
 
@@ -6717,6 +6900,114 @@
           { passive: true },
         );
       }
+
+      function setupClassroomPinchZoom() {
+        const area = document.getElementById("classroom-area");
+        const content = document.getElementById("classroom-scroll-content");
+        if (!area || !content) return;
+
+        let baseScale = 1;
+        let pinchStartDistance = 0;
+        const clampScale = (value) => Math.max(0.8, Math.min(1.8, value));
+        const applyScale = (scale) => {
+          const nextScale = clampScale(scale);
+          content.style.transformOrigin = "top center";
+          content.style.transform = `scale(${nextScale})`;
+          content.style.transition = "transform 80ms linear";
+          area.dataset.pinchScale = String(nextScale);
+          baseScale = nextScale;
+        };
+
+        area.addEventListener(
+          "touchstart",
+          (event) => {
+            if (event.touches.length !== 2) return;
+            const [first, second] = event.touches;
+            pinchStartDistance = Math.hypot(
+              first.clientX - second.clientX,
+              first.clientY - second.clientY,
+            );
+          },
+          { passive: true },
+        );
+
+        area.addEventListener(
+          "touchmove",
+          (event) => {
+            if (event.touches.length !== 2 || !pinchStartDistance) return;
+            const [first, second] = event.touches;
+            const moveDistance = Math.hypot(
+              first.clientX - second.clientX,
+              first.clientY - second.clientY,
+            );
+            if (!moveDistance) return;
+            applyScale(baseScale * (moveDistance / pinchStartDistance));
+            pinchStartDistance = moveDistance;
+          },
+          { passive: true },
+        );
+
+        area.addEventListener(
+          "touchend",
+          () => {
+            pinchStartDistance = 0;
+          },
+          { passive: true },
+        );
+
+        applyScale(parseFloat(area.dataset.pinchScale || "1") || 1);
+      }
+
+      function setupSidebarSwipeClose() {
+        const sidebar = document.getElementById("sidebar");
+        if (!sidebar) return;
+
+        let startX = null;
+        let startY = null;
+
+        sidebar.addEventListener(
+          "touchstart",
+          (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            startX = touch.clientX;
+            startY = touch.clientY;
+          },
+          { passive: true },
+        );
+
+        sidebar.addEventListener(
+          "touchend",
+          (event) => {
+            if (startX === null || startY === null) return;
+            const touch = event.changedTouches?.[0];
+            if (!touch) {
+              startX = null;
+              startY = null;
+              return;
+            }
+
+            const deltaX = touch.clientX - startX;
+            const deltaY = touch.clientY - startY;
+            startX = null;
+            startY = null;
+
+            // Sidebar mở từ bên phải, vuốt sang phải để đóng.
+            if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1) {
+              closeSidebar();
+            }
+          },
+          { passive: true },
+        );
+      }
+
+      window.addEventListener(
+        "load",
+        () => {
+          setupClassroomPinchZoom();
+        },
+        { once: true },
+      );
 
       function generateTable() {
         const input = document.getElementById("student-list-input").value;
