@@ -1751,14 +1751,16 @@
             class="flex flex-wrap gap-2 mb-3 bg-stone-800 p-2 rounded-lg border border-amber-900"
           >
             <button
-              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
-              onclick="setBlackboardTool('pencil')"
+              class="tool-btn active bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="setBlackboardTool('pencil', this)"
+              data-blackboard-tool="pencil"
             >
               <i class="fas fa-pencil-alt"></i> Bút
             </button>
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
-              onclick="setBlackboardTool('eraser')"
+              onclick="setBlackboardTool('eraser', this)"
+              data-blackboard-tool="eraser"
             >
               <i class="fas fa-eraser"></i> Tẩy
             </button>
@@ -1793,6 +1795,18 @@
               class="w-8 h-8 rounded border-0"
               title="Màu vẽ"
             />
+            <span
+              id="blackboard-current-color"
+              class="text-xs text-amber-100 px-2 py-1 rounded bg-stone-700"
+            >
+              #FFFFFF
+            </span>
+            <span
+              id="blackboard-tool-status"
+              class="text-xs text-amber-100 px-2 py-1 rounded bg-stone-700"
+            >
+              Đang dùng: <i class="fas fa-pencil-alt"></i> Bút
+            </span>
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="clearBlackboard()"
@@ -2122,6 +2136,7 @@
       let isBlackboardSyncBound = false;
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
+      let currentBlackboardTool = "pencil";
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isBlackboardResizeBound = false;
@@ -5534,6 +5549,40 @@
         syncBlackboardCanvasSize();
       }
 
+      function updateBlackboardToolButtons(activeTool) {
+        document
+          .querySelectorAll(".tool-btn[data-blackboard-tool]")
+          .forEach((btn) => {
+            const isActive = btn.dataset.blackboardTool === activeTool;
+            btn.classList.toggle("active", isActive);
+            btn.classList.toggle("bg-blue-200", isActive);
+            btn.classList.toggle("text-stone-900", isActive);
+            btn.classList.toggle("bg-stone-700", !isActive);
+            btn.classList.toggle("text-white", !isActive);
+          });
+      }
+
+      function updateBlackboardToolStatus(tool) {
+        const status = document.getElementById("blackboard-tool-status");
+        if (!status) return;
+        if (tool === "eraser") {
+          status.innerHTML = 'Đang dùng: <i class="fas fa-eraser"></i> Tẩy';
+          return;
+        }
+        status.innerHTML = 'Đang dùng: <i class="fas fa-pencil-alt"></i> Bút';
+      }
+
+      function updateBlackboardColorPreview(value) {
+        const color = (value || "#ffffff").toUpperCase();
+        const colorPreview = document.getElementById(
+          "blackboard-current-color",
+        );
+        if (!colorPreview) return;
+        colorPreview.textContent = color;
+        colorPreview.style.backgroundColor = color;
+        colorPreview.style.color = color === "#FFFFFF" ? "#111827" : "#F8FAFC";
+      }
+
       async function openBlackboardModal() {
         const modal = document.getElementById("blackboard-modal");
         modal.classList.add("open");
@@ -5554,14 +5603,19 @@
         requestAnimationFrame(syncBlackboardCanvasSize);
         blackboardFabric?.renderAll();
 
+        const colorPicker = document.getElementById("blackboard-color");
+        updateBlackboardColorPreview(colorPicker.value);
         if (!isBlackboardColorBound) {
-          const colorPicker = document.getElementById("blackboard-color");
           colorPicker.addEventListener("input", (e) => {
             if (!blackboardFabric) return;
+            updateBlackboardColorPreview(e.target.value);
+            if (currentBlackboardTool === "eraser") return;
             blackboardFabric.freeDrawingBrush.color = e.target.value;
           });
           isBlackboardColorBound = true;
         }
+        updateBlackboardToolButtons(currentBlackboardTool);
+        updateBlackboardToolStatus(currentBlackboardTool);
         if (!isBlackboardResizeBound) {
           window.addEventListener("resize", syncBlackboardCanvasSize);
           isBlackboardResizeBound = true;
@@ -5572,9 +5626,16 @@
         document.getElementById("blackboard-modal").classList.remove("open");
       }
 
-      function setBlackboardTool(tool) {
+      function setBlackboardTool(tool, buttonEl) {
         if (!blackboardFabric) return;
         blackboardFabric.isDrawingMode = true;
+        currentBlackboardTool = tool;
+        if (buttonEl?.dataset?.blackboardTool) {
+          updateBlackboardToolButtons(buttonEl.dataset.blackboardTool);
+        } else {
+          updateBlackboardToolButtons(tool);
+        }
+        updateBlackboardToolStatus(tool);
         if (tool === "eraser") {
           blackboardFabric.freeDrawingBrush.color = "#0a0a0a";
           return;
