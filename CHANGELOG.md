@@ -1,3 +1,9 @@
+## [1.18.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.1...v1.18.2) (2026-03-18)
+
+### Performance Improvements
+
+- add adaptive battery and particle optimizations ([f07f732](https://github.com/daiminhdzchimto-arch/CAP/commit/f07f732f6cf57eedb970c2614e9a890b0b3179c3))
+
 ## [1.18.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.0...v1.18.1) (2026-03-18)
 
 ### Bug Fixes
