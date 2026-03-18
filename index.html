@@ -177,6 +177,79 @@
           padding: 0;
           font-size: 1rem;
       }
+      .toolbar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+      }
+      .toolbar-scroll::-webkit-scrollbar {
+          height: 6px;
+      }
+      .toolbar-scroll::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 999px;
+      }
+      .toolbar-action {
+          min-width: 44px;
+          min-height: 44px;
+          border-radius: 12px;
+          padding: 0.45rem 0.65rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.35rem;
+          white-space: nowrap;
+          font-size: 0.7rem;
+          font-weight: 700;
+          flex-shrink: 0;
+          border: 1px solid transparent;
+      }
+      .toolbar-action i {
+          font-size: 0.85rem;
+      }
+      .toolbar-action-neutral {
+          background: #f8fafc;
+          color: #334155;
+          border-color: #e2e8f0;
+      }
+      .toolbar-action-neutral:hover {
+          background: #f1f5f9;
+      }
+      .toolbar-action-primary {
+          background: #2563eb;
+          color: #fff;
+          border-color: #1d4ed8;
+      }
+      .toolbar-action-primary:hover {
+          background: #1d4ed8;
+      }
+      .toolbar-action-accent {
+          background: #f97316;
+          color: #fff;
+          border-color: #c2410c;
+      }
+      .toolbar-action-accent:hover {
+          background: #ea580c;
+      }
+      .toolbar-action-success {
+          background: #16a34a;
+          color: #fff;
+          border-color: #166534;
+      }
+      .toolbar-action-success:hover {
+          background: #15803d;
+      }
+      .toolbar-action-danger {
+          background: #fee2e2;
+          color: #b91c1c;
+          border-color: #fecaca;
+      }
+      .toolbar-action-danger:hover {
+          background: #fecaca;
+      }
+      .toolbar-more-item {
+          width: 100%;
+          justify-content: flex-start;
+      }
       .tab-switcher {
           position: relative;
           isolation: isolate;
@@ -595,58 +668,78 @@
               <div class="h-8 w-px bg-gray-200 mx-2"></div>
               <div id="status-msg" class="hidden"></div>
             </div>
-            <div class="flex items-center gap-2">
-              <button
-                onclick="rotateClass('up')"
-                class="icon-edge-btn p-2 text-gray-600 transition"
-                title="Xoay lên"
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+              <div
+                class="toolbar-scroll flex items-center gap-2 overflow-x-auto max-w-full pr-1 pb-1"
               >
-                <i class="fas fa-arrow-up"></i>
-              </button>
-              <button
-                onclick="rotateClass('down')"
-                class="icon-edge-btn p-2 text-gray-600 transition"
-                title="Xoay xuống"
-              >
-                <i class="fas fa-arrow-down"></i>
-              </button>
-              <button
-                onclick="flipSeatingVertically()"
-                class="icon-edge-btn p-2 text-purple-600 transition"
-                title="Lật/Xoay Dọc"
-              >
-                <i class="fas fa-exchange-alt"></i>
-              </button>
-              <div class="h-6 w-px bg-gray-200 mx-1"></div>
-              <button
-                onclick="openShuffleModal()"
-                class="btn-3d btn-3d-orange text-sm font-bold"
-                title="Sắp xếp"
-              >
-                <i class="fas fa-random"></i>
-              </button>
-              <button
-                onclick="clearAllFixedMembers()"
-                class="btn-3d btn-3d-purple text-sm font-bold"
-                title="Xoá toàn bộ trạng thái ghim bàn ghế"
-              >
-                <i class="fas fa-unlock"></i>
-              </button>
-              <button
-                onclick="resetLayout()"
-                class="icon-edge-btn p-2 text-red-500 transition"
-                title="Làm mới"
-              >
-                <i class="fas fa-sync-alt"></i>
-              </button>
-              <div class="h-6 w-px bg-gray-200 mx-1"></div>
-              <button
-                onclick="downloadImage('classroom-area', 'So_do_lop')"
-                class="btn-3d btn-3d-green text-sm font-bold"
-                title="Chụp ảnh"
-              >
-                <i class="fas fa-camera"></i>
-              </button>
+                <button
+                  onclick="openShuffleModal()"
+                  class="toolbar-action toolbar-action-accent transition"
+                  title="Sắp xếp"
+                >
+                  <i class="fas fa-random"></i><span>Xếp</span>
+                </button>
+                <button
+                  onclick="downloadImage('classroom-area', 'So_do_lop')"
+                  class="toolbar-action toolbar-action-success transition"
+                  title="Chụp ảnh"
+                >
+                  <i class="fas fa-camera"></i><span>Ảnh</span>
+                </button>
+                <button
+                  onclick="rotateClass('up')"
+                  class="toolbar-action toolbar-action-neutral transition"
+                  title="Xoay lên"
+                >
+                  <i class="fas fa-arrow-up"></i><span>Lên</span>
+                </button>
+                <button
+                  onclick="rotateClass('down')"
+                  class="toolbar-action toolbar-action-neutral transition"
+                  title="Xoay xuống"
+                >
+                  <i class="fas fa-arrow-down"></i><span>Xuống</span>
+                </button>
+                <button
+                  onclick="flipSeatingVertically()"
+                  class="toolbar-action toolbar-action-primary transition"
+                  title="Lật dọc"
+                >
+                  <i class="fas fa-exchange-alt"></i><span>Lật</span>
+                </button>
+                <button
+                  onclick="resetLayout()"
+                  class="toolbar-action toolbar-action-danger transition"
+                  title="Làm mới"
+                >
+                  <i class="fas fa-sync-alt"></i><span>Reset</span>
+                </button>
+              </div>
+              <div id="seating-toolbar-more" class="relative shrink-0">
+                <button
+                  id="seating-toolbar-more-toggle"
+                  class="toolbar-action toolbar-action-neutral transition"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  title="Tùy chọn khác"
+                >
+                  <i class="fas fa-ellipsis"></i><span>Khác</span>
+                </button>
+                <div
+                  id="seating-toolbar-more-menu"
+                  class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-30"
+                >
+                  <button
+                    onclick="clearAllFixedMembers()"
+                    data-close-toolbar-menu="true"
+                    class="toolbar-action toolbar-action-neutral toolbar-more-item transition"
+                    title="Xoá toàn bộ trạng thái ghim bàn ghế"
+                  >
+                    <i class="fas fa-unlock text-purple-600"></i>
+                    <span>Bỏ ghim toàn lớp</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -6898,6 +6991,34 @@
         setOrientationOverlayVisible(!lockSuccess && stillPortrait);
       }
 
+      function setupSeatingToolbarMenu() {
+        const toolbar = document.getElementById("seating-toolbar-more");
+        const toggle = document.getElementById("seating-toolbar-more-toggle");
+        const menu = document.getElementById("seating-toolbar-more-menu");
+        if (!toolbar || !toggle || !menu) return;
+
+        const closeMenu = () => {
+          menu.classList.add("hidden");
+          toggle.setAttribute("aria-expanded", "false");
+        };
+
+        toggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isHidden = menu.classList.toggle("hidden");
+          toggle.setAttribute("aria-expanded", isHidden ? "false" : "true");
+        });
+
+        toolbar
+          .querySelectorAll("[data-close-toolbar-menu='true']")
+          .forEach((btn) => {
+            btn.addEventListener("click", closeMenu);
+          });
+
+        document.addEventListener("click", (e) => {
+          if (!toolbar.contains(e.target)) closeMenu();
+        });
+      }
+
       // INITIALIZATION
       window.onload = async () => {
         loadData();
@@ -6938,6 +7059,7 @@
           .addEventListener("input", syncOverlays);
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
+        setupSeatingToolbarMenu();
 
         // Lucide icons
         lucide.createIcons();
