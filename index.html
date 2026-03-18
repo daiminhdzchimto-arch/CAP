@@ -2129,9 +2129,16 @@
       let isBlackboardSyncBound = false;
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
+      let isBlackboardWarningBound = false;
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isBlackboardResizeBound = false;
+      if (typeof window.updateBlackboardColorPreview !== "function") {
+        window.updateBlackboardColorPreview = () => {};
+      }
+      if (typeof window.currentBlackboardTool === "undefined") {
+        window.currentBlackboardTool = "pencil";
+      }
       let seat3DState = {
         active: false,
         renderer: null,
@@ -5539,6 +5546,7 @@
           isBlackboardSyncBound = true;
         }
         syncBlackboardCanvasSize();
+        bindBlackboardWarningListener();
         refreshBlackboardColorWarning();
       }
 
@@ -5585,6 +5593,16 @@
         warning.classList.toggle("hidden", !isDarkColor);
       }
 
+      function bindBlackboardWarningListener() {
+        if (isBlackboardWarningBound) return;
+        const colorPicker = document.getElementById("blackboard-color");
+        if (!colorPicker) return;
+        colorPicker.addEventListener("input", (e) => {
+          refreshBlackboardColorWarning(e.target.value);
+        });
+        isBlackboardWarningBound = true;
+      }
+
       async function openBlackboardModal() {
         const modal = document.getElementById("blackboard-modal");
         modal.classList.add("open");
@@ -5610,18 +5628,9 @@
           const colorPicker = document.getElementById("blackboard-color");
           colorPicker.addEventListener("input", (e) => {
             if (!blackboardFabric) return;
-            const selectedColor = e.target.value;
-            if (typeof updateBlackboardColorPreview === "function") {
-              updateBlackboardColorPreview(selectedColor);
-            }
-            refreshBlackboardColorWarning(selectedColor);
-            if (
-              typeof currentBlackboardTool !== "undefined" &&
-              currentBlackboardTool === "eraser"
-            ) {
-              return;
-            }
-            blackboardFabric.freeDrawingBrush.color = selectedColor;
+            window.updateBlackboardColorPreview(e.target.value);
+            if (window.currentBlackboardTool === "eraser") return;
+            blackboardFabric.freeDrawingBrush.color = e.target.value;
           });
           isBlackboardColorBound = true;
         }
@@ -5637,6 +5646,7 @@
 
       function setBlackboardTool(tool) {
         if (!blackboardFabric) return;
+        window.currentBlackboardTool = tool;
         blackboardFabric.isDrawingMode = true;
         if (tool === "eraser") {
           blackboardFabric.freeDrawingBrush.color = "#0a0a0a";
