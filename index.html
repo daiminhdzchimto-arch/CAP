@@ -211,6 +211,12 @@
       .tab-btn.active {
           color: #2563eb;
       }
+      .mobile-tab-btn {
+          transition: color 0.2s ease;
+      }
+      .mobile-tab-btn.active {
+          color: #2563eb;
+      }
       .tab-content { display: none; opacity: 0; }
       .tab-content.active { display: block; opacity: 1; }
       .tab-content.tab-enter-right { animation: tabSlideInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -532,6 +538,9 @@
               <button
                 id="btn-tab-seating"
                 onclick="switchTab('seating')"
+                data-tab-button
+                data-tab-target="seating"
+                data-tab-variant="top"
                 class="tab-btn active px-3 py-2 rounded-md text-sm font-semibold text-blue-600 transition-all whitespace-nowrap"
               >
                 Sơ đồ lớp
@@ -539,6 +548,9 @@
               <button
                 id="btn-tab-competition"
                 onclick="switchTab('competition')"
+                data-tab-button
+                data-tab-target="competition"
+                data-tab-variant="top"
                 class="tab-btn px-3 py-2 rounded-md text-sm font-semibold text-gray-500 transition-all whitespace-nowrap"
               >
                 Thi đua & Trực nhật
@@ -571,7 +583,34 @@
         </div>
       </nav>
 
-      <div class="max-w-7xl mx-auto px-4 py-6">
+      <div
+        class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around py-2 md:hidden z-50"
+      >
+        <button
+          onclick="switchTab('seating')"
+          data-tab-button
+          data-tab-target="seating"
+          data-tab-variant="mobile"
+          class="mobile-tab-btn active flex flex-col items-center text-xs text-blue-600"
+          aria-label="Chuyển sang tab Sơ đồ lớp"
+        >
+          <i class="fas fa-chair"></i>
+          <span>Sơ đồ lớp</span>
+        </button>
+        <button
+          onclick="switchTab('competition')"
+          data-tab-button
+          data-tab-target="competition"
+          data-tab-variant="mobile"
+          class="mobile-tab-btn flex flex-col items-center text-xs text-gray-500"
+          aria-label="Chuyển sang tab Thi đua và Trực nhật"
+        >
+          <i class="fas fa-trophy"></i>
+          <span>Thi đua</span>
+        </button>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
         <!-- TAB SEATING -->
         <div id="tab-seating" class="tab-content active">
           <div
@@ -5944,6 +5983,8 @@
       // COMPETITION & DUTY (PRESERVED)
       // =================================================================
       let currentTopTab = "seating";
+      let tabTouchStartX = null;
+      let tabTouchStartY = null;
 
       function moveTopTabIndicator(tab) {
         const switcher = document.getElementById("top-tab-switcher");
@@ -5979,16 +6020,48 @@
         targetTab.classList.add("active", directionClass);
         animateActionFeedback(targetTab, "animate-fade-up", 360);
 
-        document.querySelectorAll('[id^="btn-tab-"]').forEach((b) => {
-          b.classList.remove("active", "text-blue-600");
-          b.classList.add("text-gray-500");
+        document.querySelectorAll("[data-tab-button]").forEach((btn) => {
+          const isActive = btn.dataset.tabTarget === t;
+          btn.classList.toggle("active", isActive);
+          btn.classList.toggle("text-blue-600", isActive);
+          btn.classList.toggle("text-gray-500", !isActive);
         });
-        const activeBtn = document.getElementById("btn-tab-" + t);
-        activeBtn.classList.add("active", "text-blue-600");
-        activeBtn.classList.remove("text-gray-500");
 
         currentTopTab = t;
         moveTopTabIndicator(t);
+      }
+
+      function setupTabSwipeNavigation() {
+        const swipeContainer = document.querySelector("main");
+        if (!swipeContainer) return;
+
+        swipeContainer.addEventListener(
+          "touchstart",
+          (event) => {
+            const [touch] = event.changedTouches;
+            tabTouchStartX = touch?.clientX ?? null;
+            tabTouchStartY = touch?.clientY ?? null;
+          },
+          { passive: true },
+        );
+
+        swipeContainer.addEventListener(
+          "touchend",
+          (event) => {
+            if (tabTouchStartX === null || tabTouchStartY === null) return;
+            const [touch] = event.changedTouches;
+            const deltaX = (touch?.clientX ?? tabTouchStartX) - tabTouchStartX;
+            const deltaY = (touch?.clientY ?? tabTouchStartY) - tabTouchStartY;
+            tabTouchStartX = null;
+            tabTouchStartY = null;
+
+            if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY))
+              return;
+            if (deltaX < 0) switchTab("competition");
+            if (deltaX > 0) switchTab("seating");
+          },
+          { passive: true },
+        );
       }
 
       function generateTable() {
@@ -6938,6 +7011,7 @@
           .addEventListener("input", syncOverlays);
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
+        setupTabSwipeNavigation();
 
         // Lucide icons
         lucide.createIcons();
