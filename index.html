@@ -1806,6 +1806,13 @@
               <i class="fas fa-save"></i> Lưu
             </button>
           </div>
+          <p
+            id="blackboard-color-warning"
+            class="hidden mb-3 text-xs text-amber-300/90"
+          >
+            Cảnh báo: Màu tối có thể khó nhìn trên bảng đen. Nên ưu tiên màu
+            sáng (trắng, vàng, xanh nhạt...).
+          </p>
 
           <div
             id="blackboard-canvas-wrap"
@@ -5532,6 +5539,50 @@
           isBlackboardSyncBound = true;
         }
         syncBlackboardCanvasSize();
+        refreshBlackboardColorWarning();
+      }
+
+      function parseHexColor(color) {
+        if (typeof color !== "string") return null;
+        const normalized = color.trim().toLowerCase();
+        const shortHex = /^#([a-f0-9]{3})$/i;
+        const longHex = /^#([a-f0-9]{6})$/i;
+        if (shortHex.test(normalized)) {
+          const [, raw] = normalized.match(shortHex);
+          return raw.split("").map((ch) => parseInt(ch + ch, 16));
+        }
+        if (longHex.test(normalized)) {
+          const [, raw] = normalized.match(longHex);
+          return [
+            parseInt(raw.slice(0, 2), 16),
+            parseInt(raw.slice(2, 4), 16),
+            parseInt(raw.slice(4, 6), 16),
+          ];
+        }
+        return null;
+      }
+
+      function getRelativeLuminance(color) {
+        const rgb = parseHexColor(color);
+        if (!rgb) return 0;
+        const transformed = rgb.map((channel) => {
+          const c = channel / 255;
+          return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+        });
+        return (
+          transformed[0] * 0.2126 +
+          transformed[1] * 0.7152 +
+          transformed[2] * 0.0722
+        );
+      }
+
+      function refreshBlackboardColorWarning(colorOverride = null) {
+        const warning = document.getElementById("blackboard-color-warning");
+        const colorPicker = document.getElementById("blackboard-color");
+        if (!warning || !colorPicker) return;
+        const color = colorOverride || colorPicker.value || "#ffffff";
+        const isDarkColor = getRelativeLuminance(color) < 0.35;
+        warning.classList.toggle("hidden", !isDarkColor);
       }
 
       async function openBlackboardModal() {
@@ -5553,12 +5604,15 @@
         }
         requestAnimationFrame(syncBlackboardCanvasSize);
         blackboardFabric?.renderAll();
+        refreshBlackboardColorWarning();
 
         if (!isBlackboardColorBound) {
           const colorPicker = document.getElementById("blackboard-color");
           colorPicker.addEventListener("input", (e) => {
             if (!blackboardFabric) return;
-            blackboardFabric.freeDrawingBrush.color = e.target.value;
+            const selectedColor = e.target.value;
+            blackboardFabric.freeDrawingBrush.color = selectedColor;
+            refreshBlackboardColorWarning(selectedColor);
           });
           isBlackboardColorBound = true;
         }
@@ -5581,6 +5635,7 @@
         }
         const color = document.getElementById("blackboard-color").value;
         blackboardFabric.freeDrawingBrush.color = color || "#ffffff";
+        refreshBlackboardColorWarning(color);
       }
 
       function addBlackboardText() {
