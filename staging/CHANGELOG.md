@@ -1,3 +1,9 @@
+# [1.17.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.16.2...v1.17.0) (2026-03-18)
+
+### Features
+
+- add mobile bottom tab nav and swipe switching ([b814836](https://github.com/daiminhdzchimto-arch/CAP/commit/b814836a022d40c675a41d0062a798329a300743))
+
 ## [1.16.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.16.1...v1.16.2) (2026-03-18)
 
 ### Bug Fixes
