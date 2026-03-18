@@ -44,6 +44,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -361,6 +367,95 @@
       .modal-content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s; max-height: 95vh; overflow-y: auto; }
       .modal-overlay.open .modal-content { transform: scale(1); }
       #duty-modal .modal-content { width: 95%; max-width: 1100px; }
+      #chalkboard-modal { z-index: 180; }
+      #chalkboard-modal .modal-content {
+          width: min(96vw, 1500px);
+          height: min(94vh, 980px);
+          max-width: none;
+          max-height: none;
+          border-radius: 18px;
+          padding: 14px;
+          overflow: hidden;
+          background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      }
+      .chalkboard-toolbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+          border-radius: 12px;
+          padding: 10px 12px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+      }
+      .chalk-btn {
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          background: #f8fafc;
+          color: #1f2937;
+          font-size: 0.78rem;
+          font-weight: 700;
+          padding: 0.45rem 0.7rem;
+      }
+      .chalk-btn.active { background: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
+      .chalk-color {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          border: 2px solid #fff;
+          box-shadow: 0 0 0 1px #94a3b8;
+      }
+      .chalkboard-frame {
+          flex: 1;
+          min-height: 360px;
+          border-radius: 14px;
+          border: 10px solid #8b5a2b;
+          box-shadow: inset 0 0 0 2px rgba(58, 35, 13, 0.48), 0 8px 24px rgba(15, 23, 42, 0.25);
+          padding: 12px;
+          background: linear-gradient(145deg, #966136, #6f4522);
+      }
+      .chalkboard-surface-wrap {
+          width: 100%;
+          height: 100%;
+          border-radius: 6px;
+          overflow: auto;
+          background:
+              repeating-linear-gradient(
+                  0deg,
+                  rgba(255, 255, 255, 0.05) 0px,
+                  rgba(255, 255, 255, 0.05) 1px,
+                  rgba(0, 0, 0, 0) 1px,
+                  rgba(0, 0, 0, 0) 28px
+              ),
+              repeating-linear-gradient(
+                  90deg,
+                  rgba(255, 255, 255, 0.03) 0px,
+                  rgba(255, 255, 255, 0.03) 1px,
+                  rgba(0, 0, 0, 0) 1px,
+                  rgba(0, 0, 0, 0) 28px
+              ),
+              radial-gradient(circle at 25% 20%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 52%),
+              #1b4332;
+      }
+      #chalkboard-canvas {
+          display: block;
+          width: min(100%, 1280px);
+          margin: 0 auto;
+          aspect-ratio: 4.8 / 1.55;
+          border: 1px solid rgba(255,255,255,0.12);
+      }
+      #classroom-board-trigger { cursor: pointer; }
+      #classroom-board-trigger .board-badge {
+          position: absolute;
+          right: 10px;
+          top: 7px;
+          font-size: 0.55rem;
+          border-radius: 999px;
+          padding: 2px 6px;
+          color: #bae6fd;
+          border: 1px solid rgba(186, 230, 253, 0.45);
+          background: rgba(15, 23, 42, 0.55);
+      }
       .mini-row { cursor: pointer; padding: 4px; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; }
       .mini-row:hover { background-color: #f3f4f6; border-color: #d1d5db; }
       .duty-selected-class { background-color: #dcfce7 !important; border-color: #22c55e !important; }
@@ -695,6 +790,9 @@
 
               <div class="w-1/2 relative group">
                 <div
+                  id="classroom-board-trigger"
+                  onclick="openChalkboardModal()"
+                  title="Mở bảng đen tương tác"
                   class="w-full h-12 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-lg board-shadow border-2 border-[#334155] flex items-center justify-center relative transition-transform duration-300 group-hover:-translate-y-0.5"
                 >
                   <div
@@ -713,6 +811,7 @@
                     class="text-white font-bold tracking-[0.45em] text-xs sm:text-sm uppercase"
                     >Bảng Giảng</span
                   >
+                  <span class="board-badge">2D ↔ 3D</span>
                 </div>
               </div>
 
@@ -1609,6 +1708,124 @@
         </div>
       </div>
 
+      <div id="chalkboard-modal" class="modal-overlay">
+        <div class="modal-content flex flex-col gap-3">
+          <div class="flex items-center justify-between px-2">
+            <h2 class="text-lg sm:text-xl font-black text-emerald-900">
+              <i class="fas fa-chalkboard mr-2"></i>Bảng Đen Tương Tác
+            </h2>
+            <button
+              onclick="closeChalkboardModal()"
+              class="text-slate-500 hover:text-red-500 transition"
+              title="Đóng bảng đen"
+            >
+              <i class="fas fa-times text-2xl"></i>
+            </button>
+          </div>
+
+          <div class="chalkboard-toolbar">
+            <button type="button" class="chalk-btn" id="chalk-tool-draw">
+              Bút phấn
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-tool-text">
+              Text
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-tool-line">
+              Đường thẳng
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-tool-rect">
+              Hình chữ nhật
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-tool-circle">
+              Hình tròn
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-tool-eraser">
+              Cục tẩy
+            </button>
+
+            <div class="h-6 w-px bg-slate-300 mx-1"></div>
+            <span class="text-xs font-bold text-slate-500">Màu phấn</span>
+            <button
+              class="chalk-color"
+              type="button"
+              style="background: #ffffff"
+              data-color="#ffffff"
+              title="Trắng"
+            ></button>
+            <button
+              class="chalk-color"
+              type="button"
+              style="background: #ffe066"
+              data-color="#ffe066"
+              title="Vàng"
+            ></button>
+            <button
+              class="chalk-color"
+              type="button"
+              style="background: #ff6b6b"
+              data-color="#ff6b6b"
+              title="Đỏ"
+            ></button>
+            <button
+              class="chalk-color"
+              type="button"
+              style="background: #66d9e8"
+              data-color="#66d9e8"
+              title="Xanh"
+            ></button>
+
+            <div class="h-6 w-px bg-slate-300 mx-1"></div>
+            <span class="text-xs font-bold text-slate-500">Canh chữ</span>
+            <button type="button" class="chalk-btn" id="chalk-align-left">
+              Trái
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-align-center">
+              Giữa
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-align-right">
+              Phải
+            </button>
+          </div>
+
+          <div class="chalkboard-toolbar">
+            <label
+              class="text-xs font-bold text-slate-500"
+              for="chalk-latex-input"
+              >Công thức LaTeX</label
+            >
+            <input
+              id="chalk-latex-input"
+              type="text"
+              class="flex-1 min-w-[260px] p-2 border rounded-lg text-sm"
+              placeholder="Ví dụ: \\int_0^1 x^2\\,dx = \\frac{1}{3}"
+            />
+            <button type="button" class="chalk-btn" id="chalk-insert-latex">
+              Chèn công thức
+            </button>
+            <button type="button" class="chalk-btn" id="chalk-clear-all">
+              Xóa trắng bảng
+            </button>
+            <button
+              type="button"
+              class="btn-3d btn-3d-green ml-auto px-3"
+              id="chalk-apply-3d"
+            >
+              <i class="fas fa-cube mr-1"></i>Lên Bảng 3D
+            </button>
+          </div>
+
+          <div class="chalkboard-frame">
+            <div class="chalkboard-surface-wrap">
+              <canvas id="chalkboard-canvas" width="1600" height="517"></canvas>
+            </div>
+          </div>
+          <div
+            id="chalkboard-math-preview"
+            class="hidden absolute -left-[9999px] top-0"
+          ></div>
+        </div>
+      </div>
+
       <div id="toast">Đã lưu dữ liệu thành công!</div>
 
       <!-- Thời tiết Overlay -->
@@ -2022,7 +2239,35 @@
         sprintMultiplier: 2.1,
         removeListeners: [],
         disposeResources: [],
+        boardMesh: null,
+        boardTexture: null,
       };
+
+      // ==================== BẢNG ĐEN TƯƠNG TÁC (2D -> 3D) ====================
+      const CHALKBOARD_RATIO = 4.8 / 1.55;
+      const CHALKBOARD_CANVAS_WIDTH = 1600;
+      const CHALKBOARD_CANVAS_HEIGHT = Math.round(
+        CHALKBOARD_CANVAS_WIDTH / CHALKBOARD_RATIO,
+      );
+      const CHALKBOARD_BG = "#1b4332";
+      let chalkboardFabric = null;
+      let chalkboardMode = "draw";
+      let chalkStrokeColor = "#ffffff";
+      let chalkTextAlign = "left";
+      let chalkShapeDraft = null;
+      let chalkShapeOrigin = null;
+      let chalkTextureSourceCanvas = null;
+
+      function ensureChalkTextureCanvas() {
+        if (!chalkTextureSourceCanvas) {
+          chalkTextureSourceCanvas = document.createElement("canvas");
+          chalkTextureSourceCanvas.width = CHALKBOARD_CANVAS_WIDTH;
+          chalkTextureSourceCanvas.height = CHALKBOARD_CANVAS_HEIGHT;
+          const ctx = chalkTextureSourceCanvas.getContext("2d");
+          ctx.fillStyle = CHALKBOARD_BG;
+          ctx.fillRect(0, 0, CHALKBOARD_CANVAS_WIDTH, CHALKBOARD_CANVAS_HEIGHT);
+        }
+      }
 
       let config = {
         settings: {
@@ -2049,6 +2294,334 @@
         void el.offsetWidth;
         el.classList.add(className);
         setTimeout(() => el.classList.remove(className), duration);
+      }
+
+      function setActiveChalkToolButton(mode) {
+        const toolButtonMap = {
+          draw: "chalk-tool-draw",
+          text: "chalk-tool-text",
+          line: "chalk-tool-line",
+          rect: "chalk-tool-rect",
+          circle: "chalk-tool-circle",
+          eraser: "chalk-tool-eraser",
+        };
+        Object.entries(toolButtonMap).forEach(([tool, id]) => {
+          const btn = document.getElementById(id);
+          if (!btn) return;
+          btn.classList.toggle("active", tool === mode);
+        });
+      }
+
+      function updateChalkboardBrush() {
+        if (!chalkboardFabric) return;
+        if (chalkboardMode === "eraser" && fabric.EraserBrush) {
+          const eraser = new fabric.EraserBrush(chalkboardFabric);
+          eraser.width = 22;
+          chalkboardFabric.freeDrawingBrush = eraser;
+          chalkboardFabric.isDrawingMode = true;
+          return;
+        }
+
+        const brush = new fabric.PencilBrush(chalkboardFabric);
+        brush.color = chalkStrokeColor;
+        brush.width = 3.5;
+        // Mô phỏng nét phấn: hơi mờ và có dash nhỏ để tạo cảm giác răng cưa nhẹ.
+        brush.shadow = new fabric.Shadow({
+          color: `${chalkStrokeColor}AA`,
+          blur: 2,
+          offsetX: 0,
+          offsetY: 0,
+        });
+        brush.strokeLineCap = "round";
+        brush.strokeLineJoin = "round";
+        brush.decimate = 0.25;
+        chalkboardFabric.freeDrawingBrush = brush;
+        chalkboardFabric.isDrawingMode = chalkboardMode === "draw";
+      }
+
+      function setChalkboardMode(mode) {
+        chalkboardMode = mode;
+        setActiveChalkToolButton(mode);
+        if (!chalkboardFabric) return;
+        chalkboardFabric.selection = mode !== "draw";
+        if (mode === "draw" || mode === "eraser") {
+          updateChalkboardBrush();
+        } else {
+          chalkboardFabric.isDrawingMode = false;
+        }
+      }
+
+      function initializeChalkboardEditor() {
+        if (chalkboardFabric) return;
+        ensureChalkTextureCanvas();
+        const canvasEl = document.getElementById("chalkboard-canvas");
+        if (!canvasEl || !window.fabric) return;
+        canvasEl.width = CHALKBOARD_CANVAS_WIDTH;
+        canvasEl.height = CHALKBOARD_CANVAS_HEIGHT;
+
+        chalkboardFabric = new fabric.Canvas("chalkboard-canvas", {
+          preserveObjectStacking: true,
+          selection: true,
+        });
+        chalkboardFabric.setDimensions({
+          width: CHALKBOARD_CANVAS_WIDTH,
+          height: CHALKBOARD_CANVAS_HEIGHT,
+        });
+        chalkboardFabric.backgroundColor = CHALKBOARD_BG;
+        chalkboardFabric.renderAll();
+
+        updateChalkboardBrush();
+        setChalkboardMode("draw");
+
+        // Click để chèn text khi đang ở mode text.
+        chalkboardFabric.on("mouse:down", (opt) => {
+          if (chalkboardMode === "text") {
+            const pointer = chalkboardFabric.getPointer(opt.e);
+            const text = new fabric.IText("Nhập nội dung", {
+              left: pointer.x,
+              top: pointer.y,
+              fill: chalkStrokeColor,
+              fontSize: 36,
+              fontFamily: "Noto Sans Vietnamese, sans-serif",
+              textAlign: chalkTextAlign,
+            });
+            chalkboardFabric.add(text);
+            chalkboardFabric.setActiveObject(text);
+            text.enterEditing();
+            text.selectAll();
+            return;
+          }
+
+          if (!["line", "rect", "circle"].includes(chalkboardMode)) return;
+          const pointer = chalkboardFabric.getPointer(opt.e);
+          chalkShapeOrigin = pointer;
+          if (chalkboardMode === "line") {
+            chalkShapeDraft = new fabric.Line(
+              [pointer.x, pointer.y, pointer.x, pointer.y],
+              {
+                stroke: chalkStrokeColor,
+                strokeWidth: 3,
+                selectable: false,
+                evented: false,
+              },
+            );
+          } else if (chalkboardMode === "rect") {
+            chalkShapeDraft = new fabric.Rect({
+              left: pointer.x,
+              top: pointer.y,
+              width: 0,
+              height: 0,
+              fill: "transparent",
+              stroke: chalkStrokeColor,
+              strokeWidth: 3,
+              selectable: false,
+              evented: false,
+            });
+          } else {
+            chalkShapeDraft = new fabric.Circle({
+              left: pointer.x,
+              top: pointer.y,
+              radius: 1,
+              fill: "transparent",
+              stroke: chalkStrokeColor,
+              strokeWidth: 3,
+              selectable: false,
+              evented: false,
+            });
+          }
+          chalkboardFabric.add(chalkShapeDraft);
+        });
+
+        chalkboardFabric.on("mouse:move", (opt) => {
+          if (!chalkShapeDraft || !chalkShapeOrigin) return;
+          const pointer = chalkboardFabric.getPointer(opt.e);
+          if (chalkboardMode === "line") {
+            chalkShapeDraft.set({ x2: pointer.x, y2: pointer.y });
+          } else if (chalkboardMode === "rect") {
+            chalkShapeDraft.set({
+              left: Math.min(chalkShapeOrigin.x, pointer.x),
+              top: Math.min(chalkShapeOrigin.y, pointer.y),
+              width: Math.abs(pointer.x - chalkShapeOrigin.x),
+              height: Math.abs(pointer.y - chalkShapeOrigin.y),
+            });
+          } else if (chalkboardMode === "circle") {
+            const radius = Math.hypot(
+              pointer.x - chalkShapeOrigin.x,
+              pointer.y - chalkShapeOrigin.y,
+            );
+            chalkShapeDraft.set({
+              radius: Math.max(1, radius),
+              left: chalkShapeOrigin.x - radius,
+              top: chalkShapeOrigin.y - radius,
+            });
+          }
+          chalkboardFabric.renderAll();
+        });
+
+        chalkboardFabric.on("mouse:up", () => {
+          if (!chalkShapeDraft) return;
+          chalkShapeDraft.set({ selectable: true, evented: true });
+          chalkShapeDraft = null;
+          chalkShapeOrigin = null;
+        });
+      }
+
+      function bindChalkboardToolbarEvents() {
+        const toolMappings = [
+          ["chalk-tool-draw", "draw"],
+          ["chalk-tool-text", "text"],
+          ["chalk-tool-line", "line"],
+          ["chalk-tool-rect", "rect"],
+          ["chalk-tool-circle", "circle"],
+          ["chalk-tool-eraser", "eraser"],
+        ];
+        toolMappings.forEach(([id, mode]) => {
+          const button = document.getElementById(id);
+          if (!button) return;
+          button.addEventListener("click", () => setChalkboardMode(mode));
+        });
+
+        document.querySelectorAll(".chalk-color").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            chalkStrokeColor = btn.dataset.color || "#ffffff";
+            if (chalkboardFabric) {
+              const activeObj = chalkboardFabric.getActiveObject();
+              if (activeObj) {
+                activeObj.set("fill", chalkStrokeColor);
+                activeObj.set("stroke", chalkStrokeColor);
+                chalkboardFabric.renderAll();
+              }
+            }
+            updateChalkboardBrush();
+          });
+        });
+
+        [
+          ["chalk-align-left", "left"],
+          ["chalk-align-center", "center"],
+          ["chalk-align-right", "right"],
+        ].forEach(([id, align]) => {
+          const button = document.getElementById(id);
+          if (!button) return;
+          button.addEventListener("click", () => {
+            chalkTextAlign = align;
+            const activeObj = chalkboardFabric?.getActiveObject();
+            if (activeObj && activeObj.type === "i-text") {
+              activeObj.set("textAlign", align);
+              chalkboardFabric.renderAll();
+            }
+          });
+        });
+
+        document
+          .getElementById("chalk-clear-all")
+          ?.addEventListener("click", clearChalkboardCanvas);
+        document
+          .getElementById("chalk-insert-latex")
+          ?.addEventListener("click", insertLatexToChalkboard);
+        document
+          .getElementById("chalk-apply-3d")
+          ?.addEventListener("click", applyChalkboardTo3D);
+      }
+
+      function clearChalkboardCanvas() {
+        if (!chalkboardFabric) return;
+        chalkboardFabric
+          .getObjects()
+          .forEach((obj) => chalkboardFabric.remove(obj));
+        chalkboardFabric.renderAll();
+      }
+
+      async function insertLatexToChalkboard() {
+        const input = document.getElementById("chalk-latex-input");
+        const preview = document.getElementById("chalkboard-math-preview");
+        if (!input || !preview || !chalkboardFabric) return;
+        const latex = (input.value || "").trim();
+        if (!latex) return;
+
+        if (!window.katex) {
+          showToast("Không tải được KaTeX. Vui lòng kiểm tra mạng.");
+          return;
+        }
+
+        try {
+          katex.render(latex, preview, {
+            throwOnError: false,
+            displayMode: true,
+            output: "html",
+          });
+          const rendered = await html2canvas(preview, {
+            backgroundColor: null,
+            scale: 2,
+          });
+          const dataURL = rendered.toDataURL("image/png");
+          fabric.Image.fromURL(dataURL, (img) => {
+            img.set({
+              left: CHALKBOARD_CANVAS_WIDTH * 0.2,
+              top: CHALKBOARD_CANVAS_HEIGHT * 0.2,
+              selectable: true,
+            });
+            const scale = Math.min(
+              1.6,
+              CHALKBOARD_CANVAS_WIDTH / (img.width * 2.2),
+            );
+            img.scale(scale);
+            chalkboardFabric.add(img);
+            chalkboardFabric.setActiveObject(img);
+            chalkboardFabric.renderAll();
+          });
+        } catch (error) {
+          console.error("Lỗi render LaTeX:", error);
+          showToast("Không thể render công thức LaTeX.");
+        }
+      }
+
+      function copyFabricToTextureCanvas() {
+        ensureChalkTextureCanvas();
+        const ctx = chalkTextureSourceCanvas.getContext("2d");
+        ctx.clearRect(0, 0, CHALKBOARD_CANVAS_WIDTH, CHALKBOARD_CANVAS_HEIGHT);
+        ctx.fillStyle = CHALKBOARD_BG;
+        ctx.fillRect(0, 0, CHALKBOARD_CANVAS_WIDTH, CHALKBOARD_CANVAS_HEIGHT);
+        if (chalkboardFabric) {
+          ctx.drawImage(chalkboardFabric.lowerCanvasEl, 0, 0);
+        }
+      }
+
+      function applyChalkTextureToBoardMesh() {
+        if (
+          !seat3DState.boardMesh ||
+          !window.THREE ||
+          !chalkTextureSourceCanvas
+        )
+          return;
+        if (seat3DState.boardTexture) {
+          seat3DState.boardTexture.dispose();
+        }
+        const texture = new THREE.CanvasTexture(chalkTextureSourceCanvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.needsUpdate = true;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        seat3DState.boardMesh.material.map = texture;
+        seat3DState.boardMesh.material.color.setHex(0xffffff);
+        seat3DState.boardMesh.material.needsUpdate = true;
+        seat3DState.boardTexture = texture;
+      }
+
+      function openChalkboardModal() {
+        initializeChalkboardEditor();
+        document.getElementById("chalkboard-modal")?.classList.add("open");
+      }
+
+      function closeChalkboardModal() {
+        document.getElementById("chalkboard-modal")?.classList.remove("open");
+      }
+
+      function applyChalkboardTo3D() {
+        copyFabricToTextureCanvas();
+        applyChalkTextureToBoardMesh();
+        closeChalkboardModal();
+        showToast("Đã cập nhật nội dung bảng cho không gian 3D.");
       }
 
       function getDeskCell(side, r, c) {
@@ -3734,6 +4307,7 @@
             fanBlades,
             fluorescentLights,
             windowLeafSways,
+            boardSurface,
             dispose: () => {
               disposeNode(roomGroup);
             },
@@ -3973,6 +4547,11 @@
         seat3DState.securityCameraEntities = [];
         seat3DState.infraBlinkState = [];
         seat3DState.clock = null;
+        seat3DState.boardMesh = null;
+        if (seat3DState.boardTexture) {
+          seat3DState.boardTexture.dispose();
+          seat3DState.boardTexture = null;
+        }
 
         if (seat3DState.renderer) {
           const canvas = seat3DState.renderer.domElement;
@@ -4122,6 +4701,8 @@
         seat3DState.fanBlades = roomSetup.fanBlades;
         seat3DState.fluorescentLights = roomSetup.fluorescentLights;
         seat3DState.windowLeafSways = roomSetup.windowLeafSways;
+        seat3DState.boardMesh = roomSetup.boardSurface || null;
+        applyChalkTextureToBoardMesh();
         seat3DState.lightBlinkState = seat3DState.fluorescentLights.map(
           (light) => ({
             light,
@@ -6415,6 +6996,8 @@
           .addEventListener("input", syncOverlays);
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
+        bindChalkboardToolbarEvents();
+        ensureChalkTextureCanvas();
 
         // Lucide icons
         lucide.createIcons();
@@ -6452,6 +7035,21 @@
       });
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && seat3DState.active) closeSeat3DView();
+        if (e.key === "Escape") closeChalkboardModal();
+        if (
+          e.key === "Delete" &&
+          chalkboardFabric &&
+          document
+            .getElementById("chalkboard-modal")
+            ?.classList.contains("open")
+        ) {
+          const activeObj = chalkboardFabric.getActiveObject();
+          if (activeObj) {
+            chalkboardFabric.remove(activeObj);
+            chalkboardFabric.discardActiveObject();
+            chalkboardFabric.requestRenderAll();
+          }
+        }
       });
     </script>
   </body>
