@@ -58,6 +58,8 @@
           --desk-font-base: 16;
           --desk-font-min: 11;
           --desk-input-min-height: 48;
+          --ui-font-fluid: clamp(0.75rem, 0.68rem + 0.45vw, 1rem);
+          --ui-gap-fluid: clamp(0.5rem, 0.42rem + 0.4vw, 0.875rem);
       }
 
       body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
@@ -65,6 +67,17 @@
       label.cursor-pointer {
           transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
           will-change: transform;
+      }
+      button,
+      label,
+      .fluid-label {
+          font-size: var(--ui-font-fluid);
+      }
+      button.fluid-spacing,
+      label.fluid-spacing,
+      .fluid-spacing {
+          padding-inline: var(--ui-gap-fluid);
+          padding-block: calc(var(--ui-gap-fluid) * 0.65);
       }
       button:hover,
       label.cursor-pointer:hover {
