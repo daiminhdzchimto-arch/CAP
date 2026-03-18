@@ -1808,6 +1808,7 @@
           </div>
 
           <div
+            id="blackboard-canvas-wrap"
             class="relative bg-black border-4 border-amber-900 rounded-lg overflow-hidden"
             style="box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8)"
           >
@@ -1815,7 +1816,12 @@
               id="blackboard-canvas"
               width="800"
               height="400"
-              style="width: 100%; height: auto; background: #0a0a0a"
+              style="
+                display: block;
+                width: 800px;
+                height: 400px;
+                background: #0a0a0a;
+              "
             ></canvas>
           </div>
 
@@ -2115,6 +2121,8 @@
       let blackboardData = null;
       let isBlackboardColorBound = false;
       let fabricLoaderPromise = null;
+      let mathJaxLoaderPromise = null;
+      let isBlackboardResizeBound = false;
       let seat3DState = {
         active: false,
         renderer: null,
@@ -5433,6 +5441,49 @@
         return fabricLoaderPromise;
       }
 
+      function loadMathJaxLibrary() {
+        if (window.MathJax?.tex2svgPromise) return Promise.resolve();
+        if (mathJaxLoaderPromise) return mathJaxLoaderPromise;
+
+        mathJaxLoaderPromise = new Promise((resolve, reject) => {
+          window.MathJax = window.MathJax || {
+            tex: {
+              inlineMath: [
+                ["$", "$"],
+                ["\\(", "\\)"],
+              ],
+            },
+            svg: { fontCache: "local" },
+            startup: { typeset: false },
+          };
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error("Không thể tải thư viện hiển thị công thức."));
+          document.head.appendChild(script);
+        });
+
+        return mathJaxLoaderPromise;
+      }
+
+      function syncBlackboardCanvasSize() {
+        if (!blackboardFabric) return;
+        const wrap = document.getElementById("blackboard-canvas-wrap");
+        if (!wrap) return;
+        const maxWidth = Math.max(320, Math.min(800, wrap.clientWidth || 800));
+        const displayWidth = Math.round(maxWidth);
+        const displayHeight = Math.round((displayWidth * 400) / 800);
+        blackboardFabric.setDimensions({ width: 800, height: 400 });
+        blackboardFabric.setDimensions(
+          { width: `${displayWidth}px`, height: `${displayHeight}px` },
+          { cssOnly: true },
+        );
+        blackboardFabric.calcOffset();
+        blackboardFabric.requestRenderAll();
+      }
+
       function initBlackboardFabric() {
         if (blackboardFabric || typeof fabric === "undefined") return;
         blackboardCanvas = document.getElementById("blackboard-canvas");
@@ -5441,6 +5492,7 @@
           width: 800,
           height: 400,
           backgroundColor: "#0a0a0a",
+          preserveObjectStacking: true,
         });
         blackboardFabric.freeDrawingBrush = new fabric.PencilBrush(
           blackboardFabric,
@@ -5453,6 +5505,7 @@
             blackboardFabric.renderAll();
           });
         }
+        syncBlackboardCanvasSize();
       }
 
       async function openBlackboardModal() {
@@ -5472,6 +5525,7 @@
           }
           initBlackboardFabric();
         }
+        requestAnimationFrame(syncBlackboardCanvasSize);
         blackboardFabric?.renderAll();
 
         if (!isBlackboardColorBound) {
@@ -5481,6 +5535,10 @@
             blackboardFabric.freeDrawingBrush.color = e.target.value;
           });
           isBlackboardColorBound = true;
+        }
+        if (!isBlackboardResizeBound) {
+          window.addEventListener("resize", syncBlackboardCanvasSize);
+          isBlackboardResizeBound = true;
         }
       }
 
@@ -5556,20 +5614,49 @@
         blackboardFabric.renderAll();
       }
 
-      function insertMathFormula() {
+      async function insertMathFormula() {
         const input = document.getElementById("math-input").value.trim();
         if (!input || !blackboardFabric) return;
-        const textObj = new fabric.IText(input, {
-          left: 200,
-          top: 200,
-          fontSize: 24,
-          fill: "#ffffaa",
-          fontFamily: "Courier New",
-          editable: true,
-        });
-        blackboardFabric.add(textObj);
-        blackboardFabric.renderAll();
-        document.getElementById("math-input").value = "";
+        try {
+          await loadMathJaxLibrary();
+          await window.MathJax.startup.promise;
+          const svgNode = await window.MathJax.tex2svgPromise(input, {
+            display: true,
+          });
+          const svg = svgNode.querySelector("svg");
+          if (!svg) throw new Error("Không thể tạo công thức.");
+          svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+          const color =
+            document.getElementById("blackboard-color").value || "#ffffaa";
+          svg.style.color = color;
+          const svgMarkup = new XMLSerializer().serializeToString(svg);
+
+          fabric.loadSVGFromString(svgMarkup, (objects, options) => {
+            if (!objects?.length) {
+              showToast("Không thể chèn công thức.");
+              return;
+            }
+            const formula = fabric.util.groupSVGElements(objects, options);
+            formula.set({
+              left: 200,
+              top: 200,
+              originX: "left",
+              originY: "top",
+            });
+            const maxWidth = 320;
+            if (formula.width > maxWidth) {
+              const scale = maxWidth / formula.width;
+              formula.scaleX = scale;
+              formula.scaleY = scale;
+            }
+            blackboardFabric.add(formula);
+            blackboardFabric.setActiveObject(formula);
+            blackboardFabric.renderAll();
+            document.getElementById("math-input").value = "";
+          });
+        } catch (err) {
+          showToast(err?.message || "Không thể hiển thị công thức.");
+        }
       }
 
       function saveBlackboard() {
