@@ -1,3 +1,9 @@
+## [1.15.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.2...v1.15.3) (2026-03-18)
+
+### Bug Fixes
+
+- avoid fabric canvas overwrite on board texture update ([c71670f](https://github.com/daiminhdzchimto-arch/CAP/commit/c71670fb1a3a9477e5e68f4302c9e1cf61d6199d))
+
 ## [1.15.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.15.1...v1.15.2) (2026-03-18)
 
 ### Bug Fixes

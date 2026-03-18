@@ -5637,6 +5637,10 @@
               showToast("Không thể chèn công thức.");
               return;
             }
+            objects.forEach((obj) => {
+              if (obj.stroke) obj.set("stroke", color);
+              if (obj.fill && obj.fill !== "none") obj.set("fill", color);
+            });
             const formula = fabric.util.groupSVGElements(objects, options);
             formula.set({
               left: 200,
