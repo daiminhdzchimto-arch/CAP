@@ -288,6 +288,11 @@
       .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; display: flex; align-items: center; justify-content: center; min-height: 48px; }
       #classroom-area.teacher-view #classroom-reference-row,
       #classroom-area.teacher-view #seating-layout-row { flex-direction: row-reverse; }
+      #classroom-area.teacher-view #left-rows-container,
+      #classroom-area.teacher-view #right-rows-container { flex-direction: column-reverse; }
+      #classroom-area.teacher-view .row-container { flex-direction: row-reverse; }
+      #classroom-area.teacher-view #classroom-reference-row > :first-child { order: 3; }
+      #classroom-area.teacher-view #classroom-reference-row > :last-child { order: 1; }
       .is-fixed-hidden .fixed-badge { display: none !important; }
       .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
       .is-conflict-hidden.desk-box.has-conflict { border-color: #374151 !important; }
