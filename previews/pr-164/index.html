@@ -44,7 +44,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -2115,6 +2114,7 @@
       let blackboardFabric = null;
       let blackboardData = null;
       let isBlackboardColorBound = false;
+      let fabricLoaderPromise = null;
       let seat3DState = {
         active: false,
         renderer: null,
@@ -5415,32 +5415,64 @@
         }
       }
 
-      function openBlackboardModal() {
+      function loadFabricLibrary() {
+        if (typeof window.fabric !== "undefined") return Promise.resolve();
+        if (fabricLoaderPromise) return fabricLoaderPromise;
+
+        fabricLoaderPromise = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src =
+            "https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js";
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error("Không thể tải thư viện Fabric.js"));
+          document.head.appendChild(script);
+        });
+
+        return fabricLoaderPromise;
+      }
+
+      function initBlackboardFabric() {
+        if (blackboardFabric || typeof fabric === "undefined") return;
+        blackboardCanvas = document.getElementById("blackboard-canvas");
+        blackboardFabric = new fabric.Canvas(blackboardCanvas, {
+          isDrawingMode: true,
+          width: 800,
+          height: 400,
+          backgroundColor: "#0a0a0a",
+        });
+        blackboardFabric.freeDrawingBrush = new fabric.PencilBrush(
+          blackboardFabric,
+        );
+        blackboardFabric.freeDrawingBrush.color =
+          document.getElementById("blackboard-color").value || "#ffffff";
+        blackboardFabric.freeDrawingBrush.width = 3;
+        if (blackboardData) {
+          blackboardFabric.loadFromJSON(blackboardData, () => {
+            blackboardFabric.renderAll();
+          });
+        }
+      }
+
+      async function openBlackboardModal() {
         const modal = document.getElementById("blackboard-modal");
         modal.classList.add("open");
 
-        if (!blackboardFabric && typeof fabric !== "undefined") {
-          blackboardCanvas = document.getElementById("blackboard-canvas");
-          blackboardFabric = new fabric.Canvas(blackboardCanvas, {
-            isDrawingMode: true,
-            width: 800,
-            height: 400,
-            backgroundColor: "#0a0a0a",
-          });
-          blackboardFabric.freeDrawingBrush = new fabric.PencilBrush(
-            blackboardFabric,
-          );
-          blackboardFabric.freeDrawingBrush.color =
-            document.getElementById("blackboard-color").value || "#ffffff";
-          blackboardFabric.freeDrawingBrush.width = 3;
-          if (blackboardData) {
-            blackboardFabric.loadFromJSON(blackboardData, () => {
-              blackboardFabric.renderAll();
-            });
+        if (!blackboardFabric) {
+          if (typeof fabric === "undefined") {
+            showToast("Đang tải bảng đen...");
+            try {
+              await loadFabricLibrary();
+            } catch (err) {
+              closeBlackboardModal();
+              showToast(err?.message || "Không thể mở bảng đen.");
+              return;
+            }
           }
-        } else if (blackboardFabric) {
-          blackboardFabric.renderAll();
+          initBlackboardFabric();
         }
+        blackboardFabric?.renderAll();
 
         if (!isBlackboardColorBound) {
           const colorPicker = document.getElementById("blackboard-color");
