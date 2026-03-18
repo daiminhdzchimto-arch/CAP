@@ -6772,6 +6772,14 @@
         );
       }
 
+      window.addEventListener(
+        "load",
+        () => {
+          setupClassroomPinchZoom();
+        },
+        { once: true },
+      );
+
       function generateTable() {
         const input = document.getElementById("student-list-input").value;
         const names = input
@@ -7743,7 +7751,6 @@
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
-        setupClassroomPinchZoom();
         setupSidebarSwipeClose();
 
         // Lucide icons
