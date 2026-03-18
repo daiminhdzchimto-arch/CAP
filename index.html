@@ -5611,8 +5611,17 @@
           colorPicker.addEventListener("input", (e) => {
             if (!blackboardFabric) return;
             const selectedColor = e.target.value;
-            blackboardFabric.freeDrawingBrush.color = selectedColor;
+            if (typeof updateBlackboardColorPreview === "function") {
+              updateBlackboardColorPreview(selectedColor);
+            }
             refreshBlackboardColorWarning(selectedColor);
+            if (
+              typeof currentBlackboardTool !== "undefined" &&
+              currentBlackboardTool === "eraser"
+            ) {
+              return;
+            }
+            blackboardFabric.freeDrawingBrush.color = selectedColor;
           });
           isBlackboardColorBound = true;
         }
