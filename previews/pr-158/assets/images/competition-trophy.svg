@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+  <title id="title">Cúp thi đua</title>
+  <desc id="desc">Biểu tượng cúp thi đua màu vàng dùng cho bảng thành tích lớp học.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef08a"/>
+      <stop offset="1" stop-color="#eab308"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="900" fill="#0f172a"/>
+  <path d="M290 170h320v120c0 132-74 244-160 298-86-54-160-166-160-298z" fill="url(#gold)"/>
+  <path d="M250 200h40v120c0 52-44 94-98 94h-34v-60h34c20 0 38-16 38-34z" fill="#facc15"/>
+  <path d="M610 200h40v120c0 52 44 94 98 94h34v-60h-34c-20 0-38-16-38-34z" fill="#facc15"/>
+  <rect x="400" y="470" width="100" height="150" rx="12" fill="#d97706"/>
+  <rect x="290" y="620" width="320" height="80" rx="18" fill="#92400e"/>
+  <circle cx="450" cy="320" r="66" fill="#fef9c3" opacity="0.45"/>
+  <text x="450" y="336" text-anchor="middle" font-size="70" fill="#a16207" font-weight="700" font-family="'Segoe UI', sans-serif">1</text>
+</svg>
