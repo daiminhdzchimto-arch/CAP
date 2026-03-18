@@ -1,3 +1,9 @@
+## [1.16.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.16.1...v1.16.2) (2026-03-18)
+
+### Bug Fixes
+
+- blackboard autosave sync listener binding ([98226db](https://github.com/daiminhdzchimto-arch/CAP/commit/98226db99575ed7d6db13e780d1f8c3eaf0fd269))
+
 ## [1.16.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.16.0...v1.16.1) (2026-03-18)
 
 ### Bug Fixes
