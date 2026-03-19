@@ -7390,6 +7390,7 @@
         a.download = `ClassroomData_${document.getElementById("classroom-title").value || "Export"}_${randomID}.cap`;
         a.click();
         URL.revokeObjectURL(url);
+        closeShareModal();
         showToast("Đã xuất file thành công!");
       }
 

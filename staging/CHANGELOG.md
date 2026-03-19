@@ -1,3 +1,9 @@
+# [1.25.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.24.2...v1.25.0) (2026-03-19)
+
+### Features
+
+- **blackboard:** add select-drag mode and docs-like text tools ([8d4e0a1](https://github.com/daiminhdzchimto-arch/CAP/commit/8d4e0a1f46089e22c32441182e0fd0b88e5e3482))
+
 ## [1.24.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.24.1...v1.24.2) (2026-03-19)
 
 ### Bug Fixes
