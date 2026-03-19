@@ -1949,6 +1949,22 @@
               <i class="fas fa-trash-alt"></i> Xoá
             </button>
             <button
+              id="blackboard-undo-btn"
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              onclick="undoBlackboard()"
+              title="Hoàn tác"
+            >
+              <i class="fas fa-undo"></i> Undo
+            </button>
+            <button
+              id="blackboard-redo-btn"
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              onclick="redoBlackboard()"
+              title="Làm lại"
+            >
+              <i class="fas fa-redo"></i> Redo
+            </button>
+            <button
               class="tool-btn bg-cyan-700 text-white px-3 py-1 rounded text-sm hover:bg-cyan-600"
               onclick="syncWith3DViewer({ notify: true })"
             >
@@ -2281,8 +2297,11 @@
       let blackboard3DTexture = null;
       let blackboardData = null;
       let isBlackboardHydrating = false;
+      let isBlackboardApplyingHistory = false;
       let isBlackboardColorBound = false;
       let currentBlackboardTool = "pencil";
+      let blackboardHistory = [];
+      let blackboardHistoryIndex = -1;
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isBlackboardResizeBound = false;
@@ -5844,8 +5863,82 @@
         if (notify) showToast("Đã đồng bộ bảng đen với chế độ xem 3D.");
       }
 
+      function updateBlackboardHistoryButtons() {
+        const undoBtn = document.getElementById("blackboard-undo-btn");
+        const redoBtn = document.getElementById("blackboard-redo-btn");
+        if (undoBtn) undoBtn.disabled = blackboardHistoryIndex <= 0;
+        if (redoBtn) {
+          redoBtn.disabled =
+            blackboardHistoryIndex >= blackboardHistory.length - 1;
+        }
+      }
+
+      function saveBlackboardHistoryState(force = false) {
+        if (
+          !blackboardFabric ||
+          isBlackboardHydrating ||
+          isBlackboardApplyingHistory
+        ) {
+          return;
+        }
+        const snapshot = JSON.stringify(blackboardFabric.toJSON());
+        if (
+          !force &&
+          blackboardHistoryIndex >= 0 &&
+          blackboardHistory[blackboardHistoryIndex] === snapshot
+        ) {
+          updateBlackboardHistoryButtons();
+          return;
+        }
+        if (blackboardHistoryIndex < blackboardHistory.length - 1) {
+          blackboardHistory = blackboardHistory.slice(
+            0,
+            blackboardHistoryIndex + 1,
+          );
+        }
+        blackboardHistory.push(snapshot);
+        if (blackboardHistory.length > 60) {
+          blackboardHistory.shift();
+        }
+        blackboardHistoryIndex = blackboardHistory.length - 1;
+        updateBlackboardHistoryButtons();
+      }
+
+      function applyBlackboardHistorySnapshot(snapshot) {
+        if (!blackboardFabric || !snapshot) return;
+        isBlackboardApplyingHistory = true;
+        blackboardFabric.loadFromJSON(JSON.parse(snapshot), () => {
+          isBlackboardApplyingHistory = false;
+          blackboardFabric.renderAll();
+          syncWith3DViewer();
+          persistBlackboardData();
+          updateBlackboardHistoryButtons();
+        });
+      }
+
+      function undoBlackboard() {
+        if (blackboardHistoryIndex <= 0) return;
+        blackboardHistoryIndex -= 1;
+        applyBlackboardHistorySnapshot(
+          blackboardHistory[blackboardHistoryIndex],
+        );
+      }
+
+      function redoBlackboard() {
+        if (blackboardHistoryIndex >= blackboardHistory.length - 1) return;
+        blackboardHistoryIndex += 1;
+        applyBlackboardHistorySnapshot(
+          blackboardHistory[blackboardHistoryIndex],
+        );
+      }
+
       function persistBlackboardData({ notify = false } = {}) {
-        if (!blackboardFabric || isBlackboardHydrating) return;
+        if (
+          !blackboardFabric ||
+          isBlackboardHydrating ||
+          isBlackboardApplyingHistory
+        )
+          return;
         blackboardData = blackboardFabric.toJSON();
         localStorage.setItem(
           "classApp_blackboard",
@@ -5957,6 +6050,7 @@
           ].forEach((eventName) => {
             blackboardFabric.on(eventName, () => {
               syncWith3DViewer();
+              saveBlackboardHistoryState();
               persistBlackboardData();
             });
           });
@@ -5968,6 +6062,7 @@
           );
           blackboardFabric.__persistSyncHandlerBound = true;
         }
+        saveBlackboardHistoryState(true);
         syncBlackboardCanvasSize();
         blackboardFabric.renderAll();
       }
