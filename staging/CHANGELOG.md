@@ -1,3 +1,10 @@
+## [1.22.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.22.1...v1.22.2) (2026-03-19)
+
+### Bug Fixes
+
+- lazy-load katex to satisfy performance budget ([78d0d9f](https://github.com/daiminhdzchimto-arch/CAP/commit/78d0d9fe9a41ee152ca5c792744a9fef342444ed))
+- render latex on blackboard with katex preview ([72e039b](https://github.com/daiminhdzchimto-arch/CAP/commit/72e039bbeedddeed73a028d608b4115043142897))
+
 ## [1.22.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.22.0...v1.22.1) (2026-03-19)
 
 ### Bug Fixes
