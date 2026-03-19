@@ -44,11 +44,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -1954,6 +1949,20 @@
               <i class="fas fa-trash-alt"></i> Xoá
             </button>
             <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="undoBlackboard()"
+              title="Hoàn tác"
+            >
+              <i class="fas fa-undo"></i> Undo
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="redoBlackboard()"
+              title="Làm lại"
+            >
+              <i class="fas fa-redo"></i> Redo
+            </button>
+            <button
               class="tool-btn bg-emerald-700 text-white px-3 py-1 rounded text-sm hover:bg-emerald-600 ml-auto"
               onclick="saveBlackboard()"
             >
@@ -2290,7 +2299,14 @@
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
       let currentBlackboardTool = "pencil";
+      const BLACKBOARD_BACKGROUND = "#1e293b";
+      const BLACKBOARD_DEFAULT_COLOR = "#ffffff";
+      const BLACKBOARD_HISTORY_LIMIT = 40;
+      let blackboardHistory = [];
+      let blackboardHistoryIndex = -1;
+      let isBlackboardUndoRedoApplying = false;
       let fabricLoaderPromise = null;
+      let katexLoaderPromise = null;
       let isLatexInputBound = false;
       let isBlackboardResizeBound = false;
       let seat3DState = {
@@ -5787,7 +5803,7 @@
 
       function drawDefaultBlackboardBackground(ctx, width = 800, height = 400) {
         if (!ctx) return;
-        ctx.fillStyle = "#1e293b";
+        ctx.fillStyle = BLACKBOARD_BACKGROUND;
         ctx.fillRect(0, 0, width, height);
         ctx.strokeStyle = "#222";
         ctx.lineWidth = 2;
@@ -5797,6 +5813,67 @@
           ctx.lineTo(width, y);
           ctx.stroke();
         }
+      }
+
+      function configureBlackboardBrush() {
+        if (!blackboardFabric?.freeDrawingBrush) return;
+        blackboardFabric.freeDrawingBrush.width = 4;
+        blackboardFabric.freeDrawingBrush.color =
+          currentBlackboardTool === "eraser"
+            ? BLACKBOARD_BACKGROUND
+            : document.getElementById("blackboard-color")?.value ||
+              BLACKBOARD_DEFAULT_COLOR;
+      }
+
+      function saveBlackboardHistoryState() {
+        if (
+          !blackboardFabric ||
+          isBlackboardHydrating ||
+          isBlackboardUndoRedoApplying
+        )
+          return;
+        const snapshot = JSON.stringify(blackboardFabric.toJSON());
+        const currentSnapshot = blackboardHistory[blackboardHistoryIndex];
+        if (snapshot === currentSnapshot) return;
+        blackboardHistory = blackboardHistory.slice(
+          0,
+          blackboardHistoryIndex + 1,
+        );
+        blackboardHistory.push(snapshot);
+        if (blackboardHistory.length > BLACKBOARD_HISTORY_LIMIT) {
+          blackboardHistory.shift();
+        } else {
+          blackboardHistoryIndex += 1;
+        }
+        if (blackboardHistory.length && blackboardHistoryIndex < 0) {
+          blackboardHistoryIndex = 0;
+        }
+      }
+
+      function applyBlackboardHistory(index) {
+        if (!blackboardFabric || index < 0 || index >= blackboardHistory.length)
+          return;
+        isBlackboardUndoRedoApplying = true;
+        blackboardHistoryIndex = index;
+        blackboardFabric.loadFromJSON(blackboardHistory[index], () => {
+          blackboardFabric.renderAll();
+          isBlackboardUndoRedoApplying = false;
+          persistBlackboardData();
+        });
+      }
+
+      function undoBlackboard() {
+        if (!blackboardFabric || blackboardHistoryIndex <= 0) return;
+        applyBlackboardHistory(blackboardHistoryIndex - 1);
+      }
+
+      function redoBlackboard() {
+        if (
+          !blackboardFabric ||
+          blackboardHistoryIndex >= blackboardHistory.length - 1
+        )
+          return;
+        applyBlackboardHistory(blackboardHistoryIndex + 1);
       }
 
       function create3DBlackboard() {
@@ -5882,6 +5959,55 @@
         return fabricLoaderPromise;
       }
 
+      function loadKaTeXLibrary() {
+        if (window.katex?.renderToString) return Promise.resolve();
+        if (katexLoaderPromise) return katexLoaderPromise;
+
+        katexLoaderPromise = new Promise((resolve, reject) => {
+          const cssHref =
+            "https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css";
+          const scriptSrc =
+            "https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js";
+
+          if (!document.querySelector(`link[href="${cssHref}"]`)) {
+            const css = document.createElement("link");
+            css.rel = "stylesheet";
+            css.href = cssHref;
+            document.head.appendChild(css);
+          }
+
+          if (window.katex?.renderToString) {
+            resolve();
+            return;
+          }
+
+          const existingScript = document.querySelector(
+            `script[src="${scriptSrc}"]`,
+          );
+          if (existingScript) {
+            existingScript.addEventListener("load", () => resolve(), {
+              once: true,
+            });
+            existingScript.addEventListener(
+              "error",
+              () => reject(new Error("Không thể tải thư viện KaTeX.")),
+              { once: true },
+            );
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = scriptSrc;
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error("Không thể tải thư viện KaTeX."));
+          document.head.appendChild(script);
+        });
+
+        return katexLoaderPromise;
+      }
+
       function syncBlackboardCanvasSize() {
         if (!blackboardFabric) return;
         const wrap = document.getElementById("blackboard-canvas-wrap");
@@ -5905,20 +6031,27 @@
           isDrawingMode: true,
           width: 800,
           height: 400,
-          backgroundColor: "#1e293b",
+          backgroundColor: BLACKBOARD_BACKGROUND,
           preserveObjectStacking: true,
+          enableRetinaScaling: true,
         });
+        blackboardFabric.allowTouchScrolling = false;
+        if (blackboardFabric.lowerCanvasEl) {
+          blackboardFabric.lowerCanvasEl.style.touchAction = "none";
+        }
         blackboardFabric.freeDrawingBrush = new fabric.PencilBrush(
           blackboardFabric,
         );
-        blackboardFabric.freeDrawingBrush.color = "#ffffff";
-        blackboardFabric.freeDrawingBrush.width = 4;
+        configureBlackboardBrush();
         if (blackboardData) {
           isBlackboardHydrating = true;
           blackboardFabric.loadFromJSON(blackboardData, () => {
             isBlackboardHydrating = false;
             blackboardFabric.renderAll();
+            saveBlackboardHistoryState();
           });
+        } else {
+          saveBlackboardHistoryState();
         }
         if (!blackboardFabric.__persistSyncHandlerBound) {
           [
@@ -5931,6 +6064,7 @@
               if (blackboard3DTexture) {
                 blackboard3DTexture.needsUpdate = true;
               }
+              saveBlackboardHistoryState();
               persistBlackboardData();
             });
           });
@@ -5994,6 +6128,12 @@
         requestAnimationFrame(syncBlackboardCanvasSize);
         blackboardFabric?.renderAll();
 
+        try {
+          await loadKaTeXLibrary();
+        } catch (err) {
+          showToast(err?.message || "Không thể tải KaTeX.");
+        }
+
         const colorPicker = document.getElementById("blackboard-color");
         updateBlackboardColorPreview(colorPicker.value);
         if (!isBlackboardColorBound) {
@@ -6001,7 +6141,7 @@
             if (!blackboardFabric) return;
             updateBlackboardColorPreview(e.target.value);
             if (currentBlackboardTool === "eraser") return;
-            blackboardFabric.freeDrawingBrush.color = e.target.value;
+            configureBlackboardBrush();
           });
           isBlackboardColorBound = true;
         }
@@ -6009,6 +6149,7 @@
         updateLatexPreview(document.getElementById("latex-input")?.value || "");
         updateBlackboardToolButtons(currentBlackboardTool);
         updateBlackboardToolStatus(currentBlackboardTool);
+        configureBlackboardBrush();
         if (!isBlackboardResizeBound) {
           window.addEventListener("resize", syncBlackboardCanvasSize);
           isBlackboardResizeBound = true;
@@ -6029,12 +6170,7 @@
           updateBlackboardToolButtons(tool);
         }
         updateBlackboardToolStatus(tool);
-        if (tool === "eraser") {
-          blackboardFabric.freeDrawingBrush.color = "#1e293b";
-          return;
-        }
-        const color = document.getElementById("blackboard-color").value;
-        blackboardFabric.freeDrawingBrush.color = color || "#ffffff";
+        configureBlackboardBrush();
       }
 
       function addBlackboardText() {
@@ -6090,8 +6226,9 @@
       function clearBlackboard() {
         if (!blackboardFabric) return;
         blackboardFabric.clear();
-        blackboardFabric.backgroundColor = "#1e293b";
+        blackboardFabric.backgroundColor = BLACKBOARD_BACKGROUND;
         blackboardFabric.renderAll();
+        saveBlackboardHistoryState();
         persistBlackboardData();
       }
 
@@ -6108,7 +6245,7 @@
 
         if (!window.katex?.renderToString) {
           previewEl.innerHTML =
-            '<span style="color:#f87171">Không tải được KaTeX. Vui lòng thử lại.</span>';
+            '<span style="color:#f87171">KaTeX chưa sẵn sàng. Vui lòng thử lại sau vài giây.</span>';
           return;
         }
 
@@ -6215,6 +6352,7 @@
         showToast("Đang render công thức bằng KaTeX...");
 
         try {
+          await loadKaTeXLibrary();
           const img = await renderLaTeXToFabricImage(latexText, hexColor);
           const scaleFactor = 0.5;
           img.set({
