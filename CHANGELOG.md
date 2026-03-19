@@ -1,3 +1,9 @@
+# [1.24.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.23.1...v1.24.0) (2026-03-19)
+
+### Features
+
+- **blackboard:** stabilize 3D sync with mirror canvas and MathJax ([578499e](https://github.com/daiminhdzchimto-arch/CAP/commit/578499eeeedd5a23565c1f57fe03be9f8e7476ec))
+
 ## [1.23.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.23.0...v1.23.1) (2026-03-19)
 
 ### Bug Fixes
