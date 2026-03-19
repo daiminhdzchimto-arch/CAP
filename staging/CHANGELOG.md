@@ -1,3 +1,9 @@
+## [1.22.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.22.0...v1.22.1) (2026-03-19)
+
+### Bug Fixes
+
+- **blackboard:** improve drawing clarity and canvas reliability ([c8c74b2](https://github.com/daiminhdzchimto-arch/CAP/commit/c8c74b260f6471bb93a3a35cbe80733c1b0dcc61))
+
 # [1.22.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.21.0...v1.22.0) (2026-03-19)
 
 ### Features
