@@ -1949,6 +1949,20 @@
               <i class="fas fa-trash-alt"></i> Xoá
             </button>
             <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="undoBlackboard()"
+              title="Hoàn tác"
+            >
+              <i class="fas fa-undo"></i> Undo
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="redoBlackboard()"
+              title="Làm lại"
+            >
+              <i class="fas fa-redo"></i> Redo
+            </button>
+            <button
               class="tool-btn bg-emerald-700 text-white px-3 py-1 rounded text-sm hover:bg-emerald-600 ml-auto"
               onclick="saveBlackboard()"
             >
@@ -2277,6 +2291,12 @@
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
       let currentBlackboardTool = "pencil";
+      const BLACKBOARD_BACKGROUND = "#1e293b";
+      const BLACKBOARD_DEFAULT_COLOR = "#ffffff";
+      const BLACKBOARD_HISTORY_LIMIT = 40;
+      let blackboardHistory = [];
+      let blackboardHistoryIndex = -1;
+      let isBlackboardUndoRedoApplying = false;
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isBlackboardResizeBound = false;
@@ -5774,7 +5794,7 @@
 
       function drawDefaultBlackboardBackground(ctx, width = 800, height = 400) {
         if (!ctx) return;
-        ctx.fillStyle = "#1e293b";
+        ctx.fillStyle = BLACKBOARD_BACKGROUND;
         ctx.fillRect(0, 0, width, height);
         ctx.strokeStyle = "#222";
         ctx.lineWidth = 2;
@@ -5784,6 +5804,67 @@
           ctx.lineTo(width, y);
           ctx.stroke();
         }
+      }
+
+      function configureBlackboardBrush() {
+        if (!blackboardFabric?.freeDrawingBrush) return;
+        blackboardFabric.freeDrawingBrush.width = 4;
+        blackboardFabric.freeDrawingBrush.color =
+          currentBlackboardTool === "eraser"
+            ? BLACKBOARD_BACKGROUND
+            : document.getElementById("blackboard-color")?.value ||
+              BLACKBOARD_DEFAULT_COLOR;
+      }
+
+      function saveBlackboardHistoryState() {
+        if (
+          !blackboardFabric ||
+          isBlackboardHydrating ||
+          isBlackboardUndoRedoApplying
+        )
+          return;
+        const snapshot = JSON.stringify(blackboardFabric.toJSON());
+        const currentSnapshot = blackboardHistory[blackboardHistoryIndex];
+        if (snapshot === currentSnapshot) return;
+        blackboardHistory = blackboardHistory.slice(
+          0,
+          blackboardHistoryIndex + 1,
+        );
+        blackboardHistory.push(snapshot);
+        if (blackboardHistory.length > BLACKBOARD_HISTORY_LIMIT) {
+          blackboardHistory.shift();
+        } else {
+          blackboardHistoryIndex += 1;
+        }
+        if (blackboardHistory.length && blackboardHistoryIndex < 0) {
+          blackboardHistoryIndex = 0;
+        }
+      }
+
+      function applyBlackboardHistory(index) {
+        if (!blackboardFabric || index < 0 || index >= blackboardHistory.length)
+          return;
+        isBlackboardUndoRedoApplying = true;
+        blackboardHistoryIndex = index;
+        blackboardFabric.loadFromJSON(blackboardHistory[index], () => {
+          blackboardFabric.renderAll();
+          isBlackboardUndoRedoApplying = false;
+          persistBlackboardData();
+        });
+      }
+
+      function undoBlackboard() {
+        if (!blackboardFabric || blackboardHistoryIndex <= 0) return;
+        applyBlackboardHistory(blackboardHistoryIndex - 1);
+      }
+
+      function redoBlackboard() {
+        if (
+          !blackboardFabric ||
+          blackboardHistoryIndex >= blackboardHistory.length - 1
+        )
+          return;
+        applyBlackboardHistory(blackboardHistoryIndex + 1);
       }
 
       function create3DBlackboard() {
@@ -5919,20 +6000,27 @@
           isDrawingMode: true,
           width: 800,
           height: 400,
-          backgroundColor: "#1e293b",
+          backgroundColor: BLACKBOARD_BACKGROUND,
           preserveObjectStacking: true,
+          enableRetinaScaling: true,
         });
+        blackboardFabric.allowTouchScrolling = false;
+        if (blackboardFabric.lowerCanvasEl) {
+          blackboardFabric.lowerCanvasEl.style.touchAction = "none";
+        }
         blackboardFabric.freeDrawingBrush = new fabric.PencilBrush(
           blackboardFabric,
         );
-        blackboardFabric.freeDrawingBrush.color = "#ffffff";
-        blackboardFabric.freeDrawingBrush.width = 4;
+        configureBlackboardBrush();
         if (blackboardData) {
           isBlackboardHydrating = true;
           blackboardFabric.loadFromJSON(blackboardData, () => {
             isBlackboardHydrating = false;
             blackboardFabric.renderAll();
+            saveBlackboardHistoryState();
           });
+        } else {
+          saveBlackboardHistoryState();
         }
         if (!blackboardFabric.__persistSyncHandlerBound) {
           [
@@ -5945,6 +6033,7 @@
               if (blackboard3DTexture) {
                 blackboard3DTexture.needsUpdate = true;
               }
+              saveBlackboardHistoryState();
               persistBlackboardData();
             });
           });
@@ -6015,12 +6104,13 @@
             if (!blackboardFabric) return;
             updateBlackboardColorPreview(e.target.value);
             if (currentBlackboardTool === "eraser") return;
-            blackboardFabric.freeDrawingBrush.color = e.target.value;
+            configureBlackboardBrush();
           });
           isBlackboardColorBound = true;
         }
         updateBlackboardToolButtons(currentBlackboardTool);
         updateBlackboardToolStatus(currentBlackboardTool);
+        configureBlackboardBrush();
         if (!isBlackboardResizeBound) {
           window.addEventListener("resize", syncBlackboardCanvasSize);
           isBlackboardResizeBound = true;
@@ -6041,12 +6131,7 @@
           updateBlackboardToolButtons(tool);
         }
         updateBlackboardToolStatus(tool);
-        if (tool === "eraser") {
-          blackboardFabric.freeDrawingBrush.color = "#1e293b";
-          return;
-        }
-        const color = document.getElementById("blackboard-color").value;
-        blackboardFabric.freeDrawingBrush.color = color || "#ffffff";
+        configureBlackboardBrush();
       }
 
       function addBlackboardText() {
@@ -6102,8 +6187,9 @@
       function clearBlackboard() {
         if (!blackboardFabric) return;
         blackboardFabric.clear();
-        blackboardFabric.backgroundColor = "#1e293b";
+        blackboardFabric.backgroundColor = BLACKBOARD_BACKGROUND;
         blackboardFabric.renderAll();
+        saveBlackboardHistoryState();
         persistBlackboardData();
       }
 
