@@ -1,3 +1,9 @@
+# [1.22.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.21.0...v1.22.0) (2026-03-19)
+
+### Features
+
+- **blackboard:** improve Fabric defaults, LaTeX insert, and 3D texture sync ([6574a80](https://github.com/daiminhdzchimto-arch/CAP/commit/6574a80807f17e7017bc9b50bc6d59ae6aa6d64b))
+
 # [1.19.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.2...v1.19.0) (2026-03-18)
 
 ### Features
