@@ -1,3 +1,9 @@
+## [1.24.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.24.1...v1.24.2) (2026-03-19)
+
+### Bug Fixes
+
+- **ui:** remove formula helper text in blackboard panel ([ef34027](https://github.com/daiminhdzchimto-arch/CAP/commit/ef3402718b74a74ab3b032d90055c8b2c12bcf17))
+
 ## [1.24.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.24.0...v1.24.1) (2026-03-19)
 
 ### Bug Fixes
