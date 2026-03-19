@@ -1,26 +1,3 @@
-# [1.21.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.20.0...v1.21.0) (2026-03-18)
-
-### Bug Fixes
-
-- avoid merge conflict by decoupling pinch-zoom init from onload ([723bc0f](https://github.com/daiminhdzchimto-arch/CAP/commit/723bc0f965f72873ff0388cf70aa6a6d6aada4c7))
-- resolve init conflict by keeping pinch zoom and sidebar swipe close ([9706ab2](https://github.com/daiminhdzchimto-arch/CAP/commit/9706ab2a8436ca55ade6f49963624c1aaed918f7))
-
-### Features
-
-- add advanced mobile gestures and 3d/blackboard optimizations ([470458e](https://github.com/daiminhdzchimto-arch/CAP/commit/470458ef5975ae08046f163498c1e0a8888cfecb))
-
-# [1.20.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.19.1...v1.20.0) (2026-03-18)
-
-### Features
-
-- **ui:** add portrait seating mode and bottom sheet sidebar ([66602a3](https://github.com/daiminhdzchimto-arch/CAP/commit/66602a3d1de530ad9b51ec34424b97ca2d764862))
-
-## [1.19.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.19.0...v1.19.1) (2026-03-18)
-
-### Bug Fixes
-
-- improve modal close UX and overlay dismissal ([1269728](https://github.com/daiminhdzchimto-arch/CAP/commit/12697285b100e677e7a458eef64091c7b028c53b))
-
 # [1.19.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.18.2...v1.19.0) (2026-03-18)
 
 ### Features
