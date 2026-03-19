@@ -6331,7 +6331,7 @@
 
         renderMathJaxSvgMarkup(latexFormula)
           .then((svgMarkup) => {
-            previewEl.innerHTML = svgMarkup;
+            previewEl.innerHTML = `<div style="font-size:30px;line-height:1.2">${svgMarkup}</div>`;
           })
           .catch((error) => {
             const safeMessage = (
@@ -6406,7 +6406,19 @@
         try {
           await loadMathJaxLibrary();
           const img = await renderLaTeXToFabricImage(latexText, hexColor);
-          const scaleFactor = 0.5;
+          const sourceWidth = Math.max(img.width || 0, 1);
+          const sourceHeight = Math.max(img.height || 0, 1);
+          const minTargetWidth = 180;
+          const maxTargetWidth = blackboardFabric.width * 0.45;
+          const maxTargetHeight = blackboardFabric.height * 0.35;
+          const desiredWidth = Math.min(
+            maxTargetWidth,
+            Math.max(minTargetWidth, sourceWidth),
+          );
+          let scaleFactor = desiredWidth / sourceWidth;
+          if (sourceHeight * scaleFactor > maxTargetHeight) {
+            scaleFactor = maxTargetHeight / sourceHeight;
+          }
           img.set({
             left: blackboardFabric.width / 2 - (img.width * scaleFactor) / 2,
             top: blackboardFabric.height / 2 - (img.height * scaleFactor) / 2,
