@@ -44,6 +44,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -1990,6 +1995,14 @@
               Chèn
             </button>
           </div>
+          <div
+            id="latex-preview"
+            class="mt-2 min-h-[56px] rounded border border-amber-800/60 bg-stone-900/70 px-3 py-2 text-white overflow-auto"
+          >
+            <span class="text-amber-200/70 text-xs"
+              >Xem trước công thức sẽ hiển thị tại đây.</span
+            >
+          </div>
           <p class="text-xs text-amber-300/70 mt-1">
             * Dùng cú pháp LaTeX, ví dụ: \frac{a}{b}, \sum, \int. Sau khi chèn,
             có thể kéo chỉnh sửa.
@@ -2278,7 +2291,7 @@
       let isBlackboardColorBound = false;
       let currentBlackboardTool = "pencil";
       let fabricLoaderPromise = null;
-      let mathJaxLoaderPromise = null;
+      let isLatexInputBound = false;
       let isBlackboardResizeBound = false;
       let seat3DState = {
         active: false,
@@ -5869,33 +5882,6 @@
         return fabricLoaderPromise;
       }
 
-      function loadMathJaxLibrary() {
-        if (window.MathJax?.tex2svgPromise) return Promise.resolve();
-        if (mathJaxLoaderPromise) return mathJaxLoaderPromise;
-
-        mathJaxLoaderPromise = new Promise((resolve, reject) => {
-          window.MathJax = window.MathJax || {
-            tex: {
-              inlineMath: [
-                ["$", "$"],
-                ["\\(", "\\)"],
-              ],
-            },
-            svg: { fontCache: "local" },
-            startup: { typeset: false },
-          };
-          const script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () =>
-            reject(new Error("Không thể tải thư viện hiển thị công thức."));
-          document.head.appendChild(script);
-        });
-
-        return mathJaxLoaderPromise;
-      }
-
       function syncBlackboardCanvasSize() {
         if (!blackboardFabric) return;
         const wrap = document.getElementById("blackboard-canvas-wrap");
@@ -6019,6 +6005,8 @@
           });
           isBlackboardColorBound = true;
         }
+        bindLatexInputEvents();
+        updateLatexPreview(document.getElementById("latex-input")?.value || "");
         updateBlackboardToolButtons(currentBlackboardTool);
         updateBlackboardToolStatus(currentBlackboardTool);
         if (!isBlackboardResizeBound) {
@@ -6107,7 +6095,108 @@
         persistBlackboardData();
       }
 
-      function insertLaTeXToBlackboard() {
+      function updateLatexPreview(rawFormula) {
+        const previewEl = document.getElementById("latex-preview");
+        if (!previewEl) return;
+
+        const latexFormula = (rawFormula || "").trim();
+        if (!latexFormula) {
+          previewEl.innerHTML =
+            '<span class="text-amber-200/70 text-xs">Xem trước công thức sẽ hiển thị tại đây.</span>';
+          return;
+        }
+
+        if (!window.katex?.renderToString) {
+          previewEl.innerHTML =
+            '<span style="color:#f87171">Không tải được KaTeX. Vui lòng thử lại.</span>';
+          return;
+        }
+
+        try {
+          previewEl.innerHTML = window.katex.renderToString(latexFormula, {
+            throwOnError: true,
+            displayMode: true,
+          });
+        } catch (error) {
+          const safeMessage = (
+            error?.message || "Công thức không hợp lệ."
+          ).replace(/[<>]/g, "");
+          previewEl.innerHTML = `<span style="color:#f87171">Lỗi cú pháp: ${safeMessage}</span>`;
+        }
+      }
+
+      function bindLatexInputEvents() {
+        if (isLatexInputBound) return;
+        const latexInputEl = document.getElementById("latex-input");
+        if (!latexInputEl) return;
+
+        latexInputEl.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            insertLaTeXToBlackboard();
+          }
+        });
+
+        latexInputEl.addEventListener("input", (e) => {
+          updateLatexPreview(e.target.value);
+        });
+
+        isLatexInputBound = true;
+      }
+
+      async function renderLaTeXToFabricImage(
+        latexFormula,
+        colorHex = "ffffff",
+      ) {
+        if (!window.katex?.renderToString) {
+          throw new Error("Không thể tải thư viện KaTeX.");
+        }
+
+        const renderedHtml = window.katex.renderToString(latexFormula, {
+          throwOnError: true,
+          displayMode: true,
+        });
+
+        const tempEl = document.createElement("div");
+        tempEl.style.position = "fixed";
+        tempEl.style.left = "-9999px";
+        tempEl.style.top = "-9999px";
+        tempEl.style.padding = "12px 16px";
+        tempEl.style.background = "transparent";
+        tempEl.style.color = `#${colorHex}`;
+        tempEl.style.fontSize = "32px";
+        tempEl.innerHTML = renderedHtml;
+        document.body.appendChild(tempEl);
+
+        try {
+          tempEl.querySelectorAll(".katex").forEach((node) => {
+            node.style.color = `#${colorHex}`;
+          });
+
+          const rasterCanvas = await html2canvas(tempEl, {
+            backgroundColor: null,
+            scale: 2,
+            useCORS: true,
+          });
+
+          return await new Promise((resolve, reject) => {
+            fabric.Image.fromURL(
+              rasterCanvas.toDataURL("image/png"),
+              (fabricImg) => {
+                if (!fabricImg) {
+                  reject(new Error("Không thể chèn công thức vào bảng."));
+                  return;
+                }
+                resolve(fabricImg);
+              },
+            );
+          });
+        } finally {
+          tempEl.remove();
+        }
+      }
+
+      async function insertLaTeXToBlackboard() {
         if (!blackboardFabric) return;
 
         const latexInputEl = document.getElementById("latex-input");
@@ -6118,40 +6207,44 @@
           return;
         }
 
-        showToast("Đang tạo công thức...");
-
         const colorPicker = document.getElementById("blackboard-color");
         const hexColor = colorPicker
           ? colorPicker.value.replace("#", "")
           : "ffffff";
-        const latexUrl = `https://latex.codecogs.com/svg.image?\\color[HTML]{${hexColor}}\\huge\\space ${encodeURIComponent(latexText)}`;
 
-        fabric.Image.fromURL(
-          latexUrl,
-          (img) => {
-            const scaleFactor = 0.6;
-            img.set({
-              left: blackboardFabric.width / 2 - (img.width * scaleFactor) / 2,
-              top: blackboardFabric.height / 2 - (img.height * scaleFactor) / 2,
-              scaleX: scaleFactor,
-              scaleY: scaleFactor,
-              borderColor: "#3b82f6",
-              cornerColor: "#3b82f6",
-              transparentCorners: false,
-              cornerSize: 10,
-            });
+        showToast("Đang render công thức bằng KaTeX...");
 
-            blackboardFabric.isDrawingMode = false;
-            blackboardFabric.add(img);
-            blackboardFabric.setActiveObject(img);
-            blackboardFabric.renderAll();
+        try {
+          const img = await renderLaTeXToFabricImage(latexText, hexColor);
+          const scaleFactor = 0.5;
+          img.set({
+            left: blackboardFabric.width / 2 - (img.width * scaleFactor) / 2,
+            top: blackboardFabric.height / 2 - (img.height * scaleFactor) / 2,
+            scaleX: scaleFactor,
+            scaleY: scaleFactor,
+            borderColor: "#3b82f6",
+            cornerColor: "#3b82f6",
+            transparentCorners: false,
+            cornerSize: 10,
+          });
 
-            if (blackboard3DTexture) blackboard3DTexture.needsUpdate = true;
-            if (latexInputEl) latexInputEl.value = "";
-            showToast("Đã chèn công thức thành công!");
-          },
-          { crossOrigin: "anonymous" },
-        );
+          blackboardFabric.isDrawingMode = false;
+          blackboardFabric.add(img);
+          blackboardFabric.setActiveObject(img);
+          blackboardFabric.renderAll();
+
+          if (blackboard3DTexture) blackboard3DTexture.needsUpdate = true;
+          if (latexInputEl) {
+            latexInputEl.value = "";
+            updateLatexPreview("");
+          }
+          showToast("Đã chèn công thức thành công!");
+        } catch (error) {
+          showToast(
+            `Công thức LaTeX không hợp lệ: ${error?.message || "Lỗi không xác định."}`,
+          );
+          updateLatexPreview(latexText);
+        }
       }
 
       function insertMathFormula() {
