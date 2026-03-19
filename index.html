@@ -44,6 +44,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -7440,6 +7445,26 @@
         setOrientationOverlayVisible(!getOrientationPromptIgnored());
       }
 
+      function runPostFixChecks() {
+        const canvas = document.getElementById("particle-canvas");
+        const ctx = canvas?.getContext("2d") ?? null;
+
+        // Test drawing
+        console.log("Canvas context:", ctx !== null);
+        console.log(
+          "Canvas size:",
+          canvas?.width ?? 0,
+          "x",
+          canvas?.height ?? 0,
+        );
+
+        // Test LaTeX
+        console.log("KaTeX loaded:", typeof katex !== "undefined");
+
+        // Test 3D sync
+        console.log("Three.js loaded:", typeof THREE !== "undefined");
+      }
+
       // INITIALIZATION
       window.onload = async () => {
         loadData();
@@ -7523,6 +7548,7 @@
           });
         }
         await applyMobileLandscapeMode();
+        runPostFixChecks();
         window.addEventListener("resize", () => {
           void applyMobileLandscapeMode();
         });
