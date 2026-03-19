@@ -1,3 +1,13 @@
+# [1.23.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.22.2...v1.23.0) (2026-03-19)
+
+### Bug Fixes
+
+- remove KaTeX CDN to satisfy resource budget checks ([0f5d053](https://github.com/daiminhdzchimto-arch/CAP/commit/0f5d05344b041b61e9ffac5ab7630abdf91357ae))
+
+### Features
+
+- add post-fix runtime diagnostics for canvas, KaTeX, and Three.js ([8c743db](https://github.com/daiminhdzchimto-arch/CAP/commit/8c743db340da03b8da0e477ed8da534ba34377f9))
+
 ## [1.22.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.22.1...v1.22.2) (2026-03-19)
 
 ### Bug Fixes
