@@ -1,3 +1,9 @@
+## [1.23.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.23.0...v1.23.1) (2026-03-19)
+
+### Bug Fixes
+
+- remove selection frame from LaTeX formulas on blackboard ([cf42bde](https://github.com/daiminhdzchimto-arch/CAP/commit/cf42bde33ee9be6e30b210fdf32e63d8a251084b))
+
 # [1.23.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.22.2...v1.23.0) (2026-03-19)
 
 ### Bug Fixes

@@ -1969,22 +1969,41 @@
             </button>
           </div>
 
-          <div
-            id="blackboard-canvas-wrap"
-            class="relative bg-black border-4 border-amber-900 rounded-lg overflow-hidden"
-            style="box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8)"
-          >
-            <canvas
-              id="blackboard-canvas"
-              width="800"
-              height="400"
-              style="
-                display: block;
-                width: 800px;
-                height: 400px;
-                background: #1e293b;
-              "
-            ></canvas>
+          <div class="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-3">
+            <div
+              id="blackboard-canvas-wrap"
+              class="relative bg-black border-4 border-amber-900 rounded-lg overflow-hidden"
+              style="box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8)"
+            >
+              <canvas
+                id="blackboard-canvas"
+                width="800"
+                height="400"
+                style="
+                  display: block;
+                  width: 800px;
+                  height: 400px;
+                  background: #1e293b;
+                "
+              ></canvas>
+            </div>
+            <div
+              class="bg-stone-900/70 rounded-lg border border-amber-900/70 p-2 flex flex-col"
+            >
+              <div class="text-xs text-amber-200 mb-2 uppercase tracking-wide">
+                Xem trước trực tiếp
+              </div>
+              <canvas
+                id="blackboard-live-preview"
+                width="800"
+                height="400"
+                class="w-full h-auto rounded border border-amber-700/60 bg-slate-800"
+              ></canvas>
+              <p class="text-[11px] text-amber-300/80 mt-2 leading-relaxed">
+                Preview này dùng chung nguồn với bảng 3D để đảm bảo nội dung
+                luôn đồng bộ.
+              </p>
+            </div>
           </div>
 
           <div class="mt-3 flex items-center gap-2 text-amber-200 text-sm">
@@ -2294,6 +2313,8 @@
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboard3DTexture = null;
+      let blackboardMirrorCanvas = null;
+      let blackboardMirrorCtx = null;
       let blackboardData = null;
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
@@ -2305,7 +2326,7 @@
       let blackboardHistoryIndex = -1;
       let isBlackboardUndoRedoApplying = false;
       let fabricLoaderPromise = null;
-      let katexLoaderPromise = null;
+      let mathJaxLoaderPromise = null;
       let isLatexInputBound = false;
       let isBlackboardResizeBound = false;
       let seat3DState = {
@@ -5876,9 +5897,6 @@
       }
 
       function create3DBlackboard() {
-        const fabricCanvasEl =
-          document.querySelector(".lower-canvas") ||
-          document.getElementById("blackboard-canvas");
         const fallbackCanvas = document.createElement("canvas");
         fallbackCanvas.width = 800;
         fallbackCanvas.height = 400;
@@ -5887,10 +5905,9 @@
           800,
           400,
         );
+        const textureSource = blackboardMirrorCanvas || fallbackCanvas;
 
-        blackboard3DTexture = new THREE.CanvasTexture(
-          fabricCanvasEl || fallbackCanvas,
-        );
+        blackboard3DTexture = new THREE.CanvasTexture(textureSource);
         blackboard3DTexture.generateMipmaps = false;
         blackboard3DTexture.minFilter = THREE.LinearFilter;
         blackboard3DTexture.magFilter = THREE.LinearFilter;
@@ -5910,13 +5927,59 @@
         };
       }
 
-      function updateBoardTextureFromData() {
-        if (blackboard3DTexture) {
-          blackboard3DTexture.needsUpdate = true;
+      function ensureBlackboardMirrorCanvas() {
+        if (!blackboardMirrorCanvas) {
+          blackboardMirrorCanvas = document.createElement("canvas");
+          blackboardMirrorCanvas.width = 800;
+          blackboardMirrorCanvas.height = 400;
         }
-        if (seat3DState.boardCanvas && seat3DState.boardTexture) {
+        if (!blackboardMirrorCtx) {
+          blackboardMirrorCtx = blackboardMirrorCanvas.getContext("2d");
+        }
+      }
+
+      function refreshBlackboardMirror() {
+        if (!blackboardFabric) return;
+        ensureBlackboardMirrorCanvas();
+        if (!blackboardMirrorCtx || !blackboardFabric.lowerCanvasEl) return;
+
+        const w = blackboardFabric.getWidth();
+        const h = blackboardFabric.getHeight();
+
+        if (blackboardMirrorCanvas.width !== w)
+          blackboardMirrorCanvas.width = w;
+        if (blackboardMirrorCanvas.height !== h)
+          blackboardMirrorCanvas.height = h;
+
+        blackboardMirrorCtx.clearRect(0, 0, w, h);
+        blackboardMirrorCtx.drawImage(
+          blackboardFabric.lowerCanvasEl,
+          0,
+          0,
+          w,
+          h,
+        );
+
+        const livePreviewEl = document.getElementById(
+          "blackboard-live-preview",
+        );
+        if (livePreviewEl instanceof HTMLCanvasElement) {
+          if (livePreviewEl.width !== w) livePreviewEl.width = w;
+          if (livePreviewEl.height !== h) livePreviewEl.height = h;
+          const previewCtx = livePreviewEl.getContext("2d");
+          if (previewCtx) {
+            previewCtx.clearRect(0, 0, w, h);
+            previewCtx.drawImage(blackboardMirrorCanvas, 0, 0, w, h);
+          }
+        }
+
+        if (blackboard3DTexture) blackboard3DTexture.needsUpdate = true;
+        if (seat3DState.boardTexture)
           seat3DState.boardTexture.needsUpdate = true;
-        }
+      }
+
+      function updateBoardTextureFromData() {
+        refreshBlackboardMirror();
       }
 
       function persistBlackboardData({ notify = false } = {}) {
@@ -5958,27 +6021,23 @@
         return fabricLoaderPromise;
       }
 
-      function loadKaTeXLibrary() {
-        if (window.katex?.renderToString) return Promise.resolve();
-        if (katexLoaderPromise) return katexLoaderPromise;
+      function loadMathJaxLibrary() {
+        if (window.MathJax?.tex2svgPromise) return Promise.resolve();
+        if (mathJaxLoaderPromise) return mathJaxLoaderPromise;
 
-        katexLoaderPromise = new Promise((resolve, reject) => {
-          const cssHref =
-            "https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css";
+        mathJaxLoaderPromise = new Promise((resolve, reject) => {
           const scriptSrc =
-            "https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js";
-
-          if (!document.querySelector(`link[href="${cssHref}"]`)) {
-            const css = document.createElement("link");
-            css.rel = "stylesheet";
-            css.href = cssHref;
-            document.head.appendChild(css);
-          }
-
-          if (window.katex?.renderToString) {
-            resolve();
-            return;
-          }
+            "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
+          window.MathJax = window.MathJax || {
+            tex: {
+              inlineMath: [
+                ["$", "$"],
+                ["\\(", "\\)"],
+              ],
+            },
+            svg: { fontCache: "local" },
+            startup: { typeset: false },
+          };
 
           const existingScript = document.querySelector(
             `script[src="${scriptSrc}"]`,
@@ -5989,7 +6048,7 @@
             });
             existingScript.addEventListener(
               "error",
-              () => reject(new Error("Không thể tải thư viện KaTeX.")),
+              () => reject(new Error("Không thể tải thư viện MathJax.")),
               { once: true },
             );
             return;
@@ -6000,11 +6059,11 @@
           script.async = true;
           script.onload = () => resolve();
           script.onerror = () =>
-            reject(new Error("Không thể tải thư viện KaTeX."));
+            reject(new Error("Không thể tải thư viện MathJax."));
           document.head.appendChild(script);
         });
 
-        return katexLoaderPromise;
+        return mathJaxLoaderPromise;
       }
 
       function syncBlackboardCanvasSize() {
@@ -6025,6 +6084,7 @@
 
       function initBlackboardFabric() {
         if (blackboardFabric || typeof fabric === "undefined") return;
+        ensureBlackboardMirrorCanvas();
         blackboardCanvas = document.getElementById("blackboard-canvas");
         blackboardFabric = new fabric.Canvas(blackboardCanvas, {
           isDrawingMode: true,
@@ -6047,6 +6107,7 @@
           blackboardFabric.loadFromJSON(blackboardData, () => {
             isBlackboardHydrating = false;
             blackboardFabric.renderAll();
+            refreshBlackboardMirror();
             saveBlackboardHistoryState();
           });
         } else {
@@ -6060,17 +6121,17 @@
             "object:removed",
           ].forEach((eventName) => {
             blackboardFabric.on(eventName, () => {
-              if (blackboard3DTexture) {
-                blackboard3DTexture.needsUpdate = true;
-              }
+              refreshBlackboardMirror();
               saveBlackboardHistoryState();
               persistBlackboardData();
             });
           });
+          blackboardFabric.on("after:render", refreshBlackboardMirror);
           blackboardFabric.__persistSyncHandlerBound = true;
         }
         syncBlackboardCanvasSize();
         blackboardFabric.renderAll();
+        refreshBlackboardMirror();
       }
 
       function updateBlackboardToolButtons(activeTool) {
@@ -6128,9 +6189,9 @@
         blackboardFabric?.renderAll();
 
         try {
-          await loadKaTeXLibrary();
+          await loadMathJaxLibrary();
         } catch (err) {
-          showToast(err?.message || "Không thể tải KaTeX.");
+          showToast(err?.message || "Không thể tải MathJax.");
         }
 
         const colorPicker = document.getElementById("blackboard-color");
@@ -6149,6 +6210,7 @@
         updateBlackboardToolButtons(currentBlackboardTool);
         updateBlackboardToolStatus(currentBlackboardTool);
         configureBlackboardBrush();
+        refreshBlackboardMirror();
         if (!isBlackboardResizeBound) {
           window.addEventListener("resize", syncBlackboardCanvasSize);
           isBlackboardResizeBound = true;
@@ -6186,6 +6248,7 @@
         });
         blackboardFabric.add(textObj);
         blackboardFabric.renderAll();
+        refreshBlackboardMirror();
       }
 
       function addBlackboardShape(type) {
@@ -6220,6 +6283,7 @@
         if (!shape) return;
         blackboardFabric.add(shape);
         blackboardFabric.renderAll();
+        refreshBlackboardMirror();
       }
 
       function clearBlackboard() {
@@ -6227,8 +6291,25 @@
         blackboardFabric.clear();
         blackboardFabric.backgroundColor = BLACKBOARD_BACKGROUND;
         blackboardFabric.renderAll();
+        refreshBlackboardMirror();
         saveBlackboardHistoryState();
         persistBlackboardData();
+      }
+
+      async function renderMathJaxSvgMarkup(latexFormula, colorHex = "ffffff") {
+        await loadMathJaxLibrary();
+        const mathNode = await window.MathJax.tex2svgPromise(latexFormula, {
+          display: true,
+        });
+        const svgEl = mathNode.querySelector("svg");
+        if (!svgEl) throw new Error("Không thể render SVG từ công thức.");
+        const clonedSvg = svgEl.cloneNode(true);
+        clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        clonedSvg.setAttribute(
+          "style",
+          `color:#${colorHex};max-width:100%;height:auto;`,
+        );
+        return clonedSvg.outerHTML;
       }
 
       function updateLatexPreview(rawFormula) {
@@ -6242,23 +6323,22 @@
           return;
         }
 
-        if (!window.katex?.renderToString) {
+        if (!window.MathJax?.tex2svgPromise) {
           previewEl.innerHTML =
-            '<span style="color:#f87171">KaTeX chưa sẵn sàng. Vui lòng thử lại sau vài giây.</span>';
+            '<span style="color:#f87171">MathJax chưa sẵn sàng. Vui lòng thử lại sau vài giây.</span>';
           return;
         }
 
-        try {
-          previewEl.innerHTML = window.katex.renderToString(latexFormula, {
-            throwOnError: true,
-            displayMode: true,
+        renderMathJaxSvgMarkup(latexFormula)
+          .then((svgMarkup) => {
+            previewEl.innerHTML = svgMarkup;
+          })
+          .catch((error) => {
+            const safeMessage = (
+              error?.message || "Công thức không hợp lệ."
+            ).replace(/[<>]/g, "");
+            previewEl.innerHTML = `<span style="color:#f87171">Lỗi cú pháp: ${safeMessage}</span>`;
           });
-        } catch (error) {
-          const safeMessage = (
-            error?.message || "Công thức không hợp lệ."
-          ).replace(/[<>]/g, "");
-          previewEl.innerHTML = `<span style="color:#f87171">Lỗi cú pháp: ${safeMessage}</span>`;
-        }
       }
 
       function bindLatexInputEvents() {
@@ -6284,51 +6364,24 @@
         latexFormula,
         colorHex = "ffffff",
       ) {
-        if (!window.katex?.renderToString) {
-          throw new Error("Không thể tải thư viện KaTeX.");
-        }
-
-        const renderedHtml = window.katex.renderToString(latexFormula, {
-          throwOnError: true,
-          displayMode: true,
+        const svgMarkup = await renderMathJaxSvgMarkup(latexFormula, colorHex);
+        const svgBlob = new Blob([svgMarkup], {
+          type: "image/svg+xml;charset=utf-8",
         });
-
-        const tempEl = document.createElement("div");
-        tempEl.style.position = "fixed";
-        tempEl.style.left = "-9999px";
-        tempEl.style.top = "-9999px";
-        tempEl.style.padding = "12px 16px";
-        tempEl.style.background = "transparent";
-        tempEl.style.color = `#${colorHex}`;
-        tempEl.style.fontSize = "32px";
-        tempEl.innerHTML = renderedHtml;
-        document.body.appendChild(tempEl);
+        const svgObjectUrl = URL.createObjectURL(svgBlob);
 
         try {
-          tempEl.querySelectorAll(".katex").forEach((node) => {
-            node.style.color = `#${colorHex}`;
-          });
-
-          const rasterCanvas = await html2canvas(tempEl, {
-            backgroundColor: null,
-            scale: 2,
-            useCORS: true,
-          });
-
           return await new Promise((resolve, reject) => {
-            fabric.Image.fromURL(
-              rasterCanvas.toDataURL("image/png"),
-              (fabricImg) => {
-                if (!fabricImg) {
-                  reject(new Error("Không thể chèn công thức vào bảng."));
-                  return;
-                }
-                resolve(fabricImg);
-              },
-            );
+            fabric.Image.fromURL(svgObjectUrl, (fabricImg) => {
+              if (!fabricImg) {
+                reject(new Error("Không thể chèn công thức vào bảng."));
+                return;
+              }
+              resolve(fabricImg);
+            });
           });
         } finally {
-          tempEl.remove();
+          URL.revokeObjectURL(svgObjectUrl);
         }
       }
 
@@ -6348,10 +6401,10 @@
           ? colorPicker.value.replace("#", "")
           : "ffffff";
 
-        showToast("Đang render công thức bằng KaTeX...");
+        showToast("Đang render công thức bằng MathJax...");
 
         try {
-          await loadKaTeXLibrary();
+          await loadMathJaxLibrary();
           const img = await renderLaTeXToFabricImage(latexText, hexColor);
           const scaleFactor = 0.5;
           img.set({
@@ -6367,8 +6420,7 @@
           blackboardFabric.add(img);
           blackboardFabric.setActiveObject(img);
           blackboardFabric.renderAll();
-
-          if (blackboard3DTexture) blackboard3DTexture.needsUpdate = true;
+          refreshBlackboardMirror();
           if (latexInputEl) {
             latexInputEl.value = "";
             updateLatexPreview("");
@@ -7682,7 +7734,10 @@
         );
 
         // Test LaTeX
-        console.log("KaTeX loaded:", typeof katex !== "undefined");
+        console.log(
+          "MathJax loaded:",
+          typeof window.MathJax?.tex2svgPromise === "function",
+        );
 
         // Test 3D sync
         console.log("Three.js loaded:", typeof THREE !== "undefined");
