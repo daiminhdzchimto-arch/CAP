@@ -1969,7 +1969,7 @@
                 display: block;
                 width: 800px;
                 height: 400px;
-                background: #0a0a0a;
+                background: #1e293b;
               "
             ></canvas>
           </div>
@@ -1979,12 +1979,12 @@
             <span>Gõ công thức: </span>
             <input
               type="text"
-              id="math-input"
+              id="latex-input"
               placeholder="VD: \sqrt{x^2 + y^2}"
               class="bg-stone-800 border border-amber-700 rounded px-2 py-1 text-white flex-1"
             />
             <button
-              onclick="insertMathFormula()"
+              onclick="insertLaTeXToBlackboard()"
               class="bg-amber-700 hover:bg-amber-600 px-3 py-1 rounded text-white"
             >
               Chèn
@@ -2272,6 +2272,7 @@
       let deskLongPressTriggered = false;
       let blackboardCanvas = null;
       let blackboardFabric = null;
+      let blackboard3DTexture = null;
       let blackboardData = null;
       let isBlackboardHydrating = false;
       let isBlackboardColorBound = false;
@@ -4249,22 +4250,7 @@
           boardFrame.position.set(0, 2.2, -halfD - EDGE / 2 + 0.08);
           roomGroup.add(boardFrame);
 
-          const boardCanvas = document.createElement("canvas");
-          boardCanvas.width = 800;
-          boardCanvas.height = 400;
-          const boardCtx = boardCanvas.getContext("2d");
-          drawDefaultBlackboardBackground(boardCtx, 800, 400);
-          const boardTexture = new THREE.CanvasTexture(boardCanvas);
-          boardTexture.minFilter = THREE.LinearFilter;
-          boardTexture.magFilter = THREE.LinearFilter;
-
-          const boardSurface = new THREE.Mesh(
-            new THREE.BoxGeometry(4.8, 1.55, 0.05),
-            new THREE.MeshStandardMaterial({
-              map: boardTexture,
-              side: THREE.DoubleSide,
-            }),
-          );
+          const { boardSurface, boardTexture } = create3DBlackboard();
           boardSurface.position.set(0, 2.2, -halfD - EDGE / 2 + 0.16);
           roomGroup.add(boardSurface);
 
@@ -4291,10 +4277,13 @@
             fanBlades,
             fluorescentLights,
             windowLeafSways,
-            boardCanvas,
+            boardCanvas: boardTexture?.image || null,
             boardTexture,
             dispose: () => {
-              boardTexture.dispose();
+              if (blackboard3DTexture === boardTexture) {
+                blackboard3DTexture = null;
+              }
+              boardTexture?.dispose?.();
               disposeNode(roomGroup);
             },
           };
@@ -5785,7 +5774,7 @@
 
       function drawDefaultBlackboardBackground(ctx, width = 800, height = 400) {
         if (!ctx) return;
-        ctx.fillStyle = "#0a0a0a";
+        ctx.fillStyle = "#1e293b";
         ctx.fillRect(0, 0, width, height);
         ctx.strokeStyle = "#222";
         ctx.lineWidth = 2;
@@ -5797,9 +5786,48 @@
         }
       }
 
+      function create3DBlackboard() {
+        const fabricCanvasEl =
+          document.querySelector(".lower-canvas") ||
+          document.getElementById("blackboard-canvas");
+        const fallbackCanvas = document.createElement("canvas");
+        fallbackCanvas.width = 800;
+        fallbackCanvas.height = 400;
+        drawDefaultBlackboardBackground(
+          fallbackCanvas.getContext("2d"),
+          800,
+          400,
+        );
+
+        blackboard3DTexture = new THREE.CanvasTexture(
+          fabricCanvasEl || fallbackCanvas,
+        );
+        blackboard3DTexture.generateMipmaps = false;
+        blackboard3DTexture.minFilter = THREE.LinearFilter;
+        blackboard3DTexture.magFilter = THREE.LinearFilter;
+
+        const boardMat = new THREE.MeshStandardMaterial({
+          map: blackboard3DTexture,
+          roughness: 0.8,
+          metalness: 0.1,
+          side: THREE.DoubleSide,
+        });
+        const boardGeo = new THREE.BoxGeometry(4.8, 1.55, 0.05);
+        const boardSurface = new THREE.Mesh(boardGeo, boardMat);
+
+        return {
+          boardSurface,
+          boardTexture: blackboard3DTexture,
+        };
+      }
+
       function updateBoardTextureFromData() {
-        if (!seat3DState.boardCanvas || !seat3DState.boardTexture) return;
-        seat3DState.boardTexture.needsUpdate = true;
+        if (blackboard3DTexture) {
+          blackboard3DTexture.needsUpdate = true;
+        }
+        if (seat3DState.boardCanvas && seat3DState.boardTexture) {
+          seat3DState.boardTexture.needsUpdate = true;
+        }
       }
 
       function persistBlackboardData({ notify = false } = {}) {
@@ -5891,15 +5919,14 @@
           isDrawingMode: true,
           width: 800,
           height: 400,
-          backgroundColor: "#0a0a0a",
+          backgroundColor: "#1e293b",
           preserveObjectStacking: true,
         });
         blackboardFabric.freeDrawingBrush = new fabric.PencilBrush(
           blackboardFabric,
         );
-        blackboardFabric.freeDrawingBrush.color =
-          document.getElementById("blackboard-color").value || "#ffffff";
-        blackboardFabric.freeDrawingBrush.width = 3;
+        blackboardFabric.freeDrawingBrush.color = "#ffffff";
+        blackboardFabric.freeDrawingBrush.width = 4;
         if (blackboardData) {
           isBlackboardHydrating = true;
           blackboardFabric.loadFromJSON(blackboardData, () => {
@@ -5914,11 +5941,17 @@
             "object:modified",
             "object:removed",
           ].forEach((eventName) => {
-            blackboardFabric.on(eventName, () => persistBlackboardData());
+            blackboardFabric.on(eventName, () => {
+              if (blackboard3DTexture) {
+                blackboard3DTexture.needsUpdate = true;
+              }
+              persistBlackboardData();
+            });
           });
           blackboardFabric.__persistSyncHandlerBound = true;
         }
         syncBlackboardCanvasSize();
+        blackboardFabric.renderAll();
       }
 
       function updateBlackboardToolButtons(activeTool) {
@@ -6009,7 +6042,7 @@
         }
         updateBlackboardToolStatus(tool);
         if (tool === "eraser") {
-          blackboardFabric.freeDrawingBrush.color = "#0a0a0a";
+          blackboardFabric.freeDrawingBrush.color = "#1e293b";
           return;
         }
         const color = document.getElementById("blackboard-color").value;
@@ -6069,67 +6102,60 @@
       function clearBlackboard() {
         if (!blackboardFabric) return;
         blackboardFabric.clear();
-        blackboardFabric.backgroundColor = "#0a0a0a";
+        blackboardFabric.backgroundColor = "#1e293b";
         blackboardFabric.renderAll();
         persistBlackboardData();
       }
 
-      async function insertMathFormula() {
-        const input = document.getElementById("math-input").value.trim();
-        if (!input || !blackboardFabric) return;
-        try {
-          await loadMathJaxLibrary();
-          await window.MathJax.startup.promise;
-          const svgNode = await window.MathJax.tex2svgPromise(input, {
-            display: true,
-          });
-          const svg = svgNode.querySelector("svg");
-          if (!svg) throw new Error("Không thể tạo công thức.");
-          svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-          const color =
-            document.getElementById("blackboard-color").value || "#ffffaa";
-          svg.style.color = color;
-          const svgMarkup = new XMLSerializer().serializeToString(svg);
+      function insertLaTeXToBlackboard() {
+        if (!blackboardFabric) return;
 
-          fabric.loadSVGFromString(svgMarkup, (objects, options) => {
-            if (!objects?.length) {
-              showToast("Không thể chèn công thức.");
-              return;
-            }
-            objects.forEach((obj) => {
-              if (obj.stroke) obj.set("stroke", color);
-              if (obj.fill && obj.fill !== "none") obj.set("fill", color);
-            });
-            const formula = fabric.util.groupSVGElements(objects, options);
-            formula.set({
-              originX: "left",
-              originY: "top",
-            });
-            const maxWidth = 320;
-            if (formula.width > maxWidth) {
-              const scale = maxWidth / formula.width;
-              formula.scaleX = scale;
-              formula.scaleY = scale;
-            }
-            const formulaWidth = formula.getScaledWidth();
-            const formulaHeight = formula.getScaledHeight();
-            const centeredLeft =
-              (blackboardFabric.getWidth() - formulaWidth) / 2;
-            const centeredTop =
-              (blackboardFabric.getHeight() - formulaHeight) / 2;
-            formula.set({
-              left: Math.max(0, centeredLeft),
-              top: Math.max(0, centeredTop),
-            });
-            formula.setCoords();
-            blackboardFabric.add(formula);
-            blackboardFabric.setActiveObject(formula);
-            blackboardFabric.renderAll();
-            document.getElementById("math-input").value = "";
-          });
-        } catch (err) {
-          showToast(err?.message || "Không thể hiển thị công thức.");
+        const latexInputEl = document.getElementById("latex-input");
+        const latexText = latexInputEl ? latexInputEl.value.trim() : "";
+
+        if (!latexText) {
+          showToast("Vui lòng nhập công thức LaTeX.");
+          return;
         }
+
+        showToast("Đang tạo công thức...");
+
+        const colorPicker = document.getElementById("blackboard-color");
+        const hexColor = colorPicker
+          ? colorPicker.value.replace("#", "")
+          : "ffffff";
+        const latexUrl = `https://latex.codecogs.com/svg.image?\\color[HTML]{${hexColor}}\\huge\\space ${encodeURIComponent(latexText)}`;
+
+        fabric.Image.fromURL(
+          latexUrl,
+          (img) => {
+            const scaleFactor = 0.6;
+            img.set({
+              left: blackboardFabric.width / 2 - (img.width * scaleFactor) / 2,
+              top: blackboardFabric.height / 2 - (img.height * scaleFactor) / 2,
+              scaleX: scaleFactor,
+              scaleY: scaleFactor,
+              borderColor: "#3b82f6",
+              cornerColor: "#3b82f6",
+              transparentCorners: false,
+              cornerSize: 10,
+            });
+
+            blackboardFabric.isDrawingMode = false;
+            blackboardFabric.add(img);
+            blackboardFabric.setActiveObject(img);
+            blackboardFabric.renderAll();
+
+            if (blackboard3DTexture) blackboard3DTexture.needsUpdate = true;
+            if (latexInputEl) latexInputEl.value = "";
+            showToast("Đã chèn công thức thành công!");
+          },
+          { crossOrigin: "anonymous" },
+        );
+      }
+
+      function insertMathFormula() {
+        insertLaTeXToBlackboard();
       }
 
       function saveBlackboard() {
