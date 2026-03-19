@@ -1,3 +1,9 @@
+## [1.24.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.24.0...v1.24.1) (2026-03-19)
+
+### Bug Fixes
+
+- **blackboard:** increase visible size of rendered latex formulas ([b9c58a3](https://github.com/daiminhdzchimto-arch/CAP/commit/b9c58a3cbceed354d9fdbcbf6e665850e9c198f3))
+
 # [1.24.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.23.1...v1.24.0) (2026-03-19)
 
 ### Features
