@@ -2332,6 +2332,8 @@
 
       let leftSideData = [],
         rightSideData = [];
+      const STORAGE_KEY = "classApp_v28";
+      const LEGACY_STORAGE_KEY = "classApp_v2.5";
       let swapSource = null,
         dutySelection = {},
         genderMap = {};
@@ -5544,7 +5546,8 @@
         document
           .querySelectorAll('input[type="file"]')
           .forEach((input) => (input.value = ""));
-        localStorage.removeItem("classApp_v2.5");
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
         renderAll();
         animateActionFeedback("#classroom-area", "animate-ripple-reset", 700);
         showToast("Đã làm mới toàn bộ dữ liệu!");
@@ -7576,7 +7579,7 @@
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
         };
-        localStorage.setItem("classApp_v2.5", JSON.stringify(data));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         syncOverlays();
         showToast("Đã lưu dữ liệu thành công!");
       }
@@ -7687,13 +7690,49 @@
       }
 
       function loadData() {
-        const raw = localStorage.getItem("classApp_v2.5");
+        const raw =
+          localStorage.getItem(STORAGE_KEY) ||
+          localStorage.getItem(LEGACY_STORAGE_KEY);
         if (!raw) {
           leftSideData = createDefaultArray(ROW_COUNT);
           rightSideData = createDefaultArray(ROW_COUNT);
           return;
         }
-        const data = JSON.parse(raw);
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (error) {
+          leftSideData = createDefaultArray(ROW_COUNT);
+          rightSideData = createDefaultArray(ROW_COUNT);
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          return;
+        }
+
+        const isValidRowWidth = (side) =>
+          Array.isArray(side) &&
+          side.length > 0 &&
+          side.every((row) => {
+            if (!Array.isArray(row)) return false;
+            const totalWidth = row.reduce(
+              (sum, seat) => sum + (Number(seat?.width) || 0),
+              0,
+            );
+            return totalWidth === 4;
+          });
+
+        if (
+          !data?.seating ||
+          !isValidRowWidth(data.seating.left) ||
+          !isValidRowWidth(data.seating.right)
+        ) {
+          leftSideData = createDefaultArray(ROW_COUNT);
+          rightSideData = createDefaultArray(ROW_COUNT);
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          return;
+        }
+
         leftSideData = data.seating.left;
         rightSideData = data.seating.right;
         fixedMembers = data.fixedMembers || [];
