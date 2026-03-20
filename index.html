@@ -274,6 +274,8 @@
       .animate-camera-flash { animation: cameraFlash .6s ease-out; }
       .animate-fade-up { animation: fadeInUp .35s ease-out; }
       .animate-fall-out { animation: fallOut .4s ease-in forwards; }
+      #blackboard-live-preview.preview-select-mode { cursor: grab; }
+      #blackboard-live-preview.preview-select-mode:active { cursor: grabbing; }
 
       /* SEATING */
       .desk-input { background: transparent; border: none; width: 100%; min-height: 48px; height: auto; text-align: center; font-weight: 600; color: #1f2937; resize: none; outline: none; font-size: 1rem; line-height: 1.2; padding: 10px 8px; cursor: pointer; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; hyphens: auto; scrollbar-width: none; -ms-overflow-style: none; }
@@ -2363,6 +2365,7 @@
       let blackboardHistory = [];
       let blackboardHistoryIndex = -1;
       let isBlackboardUndoRedoApplying = false;
+      let isBlackboardPreviewInteractionBound = false;
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isLatexInputBound = false;
@@ -5976,6 +5979,108 @@
         }
       }
 
+      function updateBlackboardPreviewInteractivity() {
+        const previewEl = document.getElementById("blackboard-live-preview");
+        if (!(previewEl instanceof HTMLCanvasElement)) return;
+        const isSelectMode = currentBlackboardTool === "select";
+        previewEl.classList.toggle("preview-select-mode", isSelectMode);
+      }
+
+      function bindBlackboardLivePreviewInteractions() {
+        if (isBlackboardPreviewInteractionBound) return;
+        const previewEl = document.getElementById("blackboard-live-preview");
+        if (!(previewEl instanceof HTMLCanvasElement)) return;
+
+        const relayMouseEventToFabric = (type, sourceEvent) => {
+          if (!blackboardFabric || currentBlackboardTool !== "select") return;
+          const targetCanvas = blackboardFabric.upperCanvasEl;
+          if (!(targetCanvas instanceof HTMLCanvasElement)) return;
+
+          const previewRect = previewEl.getBoundingClientRect();
+          const fabricRect = targetCanvas.getBoundingClientRect();
+          const relativeX = sourceEvent.clientX - previewRect.left;
+          const relativeY = sourceEvent.clientY - previewRect.top;
+          const scaleX = fabricRect.width / Math.max(previewRect.width, 1);
+          const scaleY = fabricRect.height / Math.max(previewRect.height, 1);
+          const mappedX = fabricRect.left + relativeX * scaleX;
+          const mappedY = fabricRect.top + relativeY * scaleY;
+
+          const simulatedEvent = new MouseEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            clientX: mappedX,
+            clientY: mappedY,
+            button: sourceEvent.button ?? 0,
+            buttons: sourceEvent.buttons ?? 0,
+            ctrlKey: sourceEvent.ctrlKey,
+            shiftKey: sourceEvent.shiftKey,
+            altKey: sourceEvent.altKey,
+            metaKey: sourceEvent.metaKey,
+          });
+          targetCanvas.dispatchEvent(simulatedEvent);
+          sourceEvent.preventDefault();
+        };
+
+        previewEl.addEventListener("mousedown", (event) => {
+          relayMouseEventToFabric("mousedown", event);
+        });
+        previewEl.addEventListener("mousemove", (event) => {
+          relayMouseEventToFabric("mousemove", event);
+        });
+        window.addEventListener("mouseup", (event) => {
+          relayMouseEventToFabric("mouseup", event);
+        });
+        previewEl.addEventListener("click", (event) => {
+          relayMouseEventToFabric("click", event);
+        });
+        previewEl.addEventListener(
+          "touchstart",
+          (event) => {
+            const touch = event.touches?.[0];
+            if (!touch) return;
+            relayMouseEventToFabric("mousedown", {
+              ...event,
+              clientX: touch.clientX,
+              clientY: touch.clientY,
+              button: 0,
+              buttons: 1,
+            });
+          },
+          { passive: false },
+        );
+        previewEl.addEventListener(
+          "touchmove",
+          (event) => {
+            const touch = event.touches?.[0];
+            if (!touch) return;
+            relayMouseEventToFabric("mousemove", {
+              ...event,
+              clientX: touch.clientX,
+              clientY: touch.clientY,
+              button: 0,
+              buttons: 1,
+            });
+          },
+          { passive: false },
+        );
+        window.addEventListener(
+          "touchend",
+          (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            relayMouseEventToFabric("mouseup", {
+              ...event,
+              clientX: touch.clientX,
+              clientY: touch.clientY,
+              button: 0,
+              buttons: 0,
+            });
+          },
+          { passive: false },
+        );
+        isBlackboardPreviewInteractionBound = true;
+      }
+
       function refreshBlackboardMirror() {
         if (!blackboardFabric) return;
         ensureBlackboardMirrorCanvas();
@@ -5997,6 +6102,15 @@
           w,
           h,
         );
+        if (blackboardFabric.upperCanvasEl) {
+          blackboardMirrorCtx.drawImage(
+            blackboardFabric.upperCanvasEl,
+            0,
+            0,
+            w,
+            h,
+          );
+        }
 
         const livePreviewEl = document.getElementById(
           "blackboard-live-preview",
@@ -6131,6 +6245,7 @@
           backgroundColor: BLACKBOARD_BACKGROUND,
           preserveObjectStacking: true,
           enableRetinaScaling: true,
+          selection: false,
         });
         blackboardFabric.allowTouchScrolling = false;
         if (blackboardFabric.lowerCanvasEl) {
@@ -6157,6 +6272,9 @@
             "object:added",
             "object:modified",
             "object:removed",
+            "selection:created",
+            "selection:updated",
+            "selection:cleared",
           ].forEach((eventName) => {
             blackboardFabric.on(eventName, () => {
               refreshBlackboardMirror();
@@ -6168,6 +6286,8 @@
           blackboardFabric.__persistSyncHandlerBound = true;
         }
         setBlackboardTool(currentBlackboardTool);
+        bindBlackboardLivePreviewInteractions();
+        updateBlackboardPreviewInteractivity();
         syncBlackboardCanvasSize();
         blackboardFabric.renderAll();
         refreshBlackboardMirror();
@@ -6316,9 +6436,11 @@
           isBlackboardColorBound = true;
         }
         bindLatexInputEvents();
+        bindBlackboardLivePreviewInteractions();
         updateLatexPreview(document.getElementById("latex-input")?.value || "");
         updateBlackboardToolButtons(currentBlackboardTool);
         updateBlackboardToolStatus(currentBlackboardTool);
+        updateBlackboardPreviewInteractivity();
         configureBlackboardBrush();
         refreshBlackboardMirror();
         if (!isBlackboardResizeBound) {
@@ -6337,6 +6459,7 @@
         const isSelectMode = tool === "select";
         blackboardFabric.isDrawingMode = !isSelectMode;
         setBlackboardObjectsSelectable(isSelectMode);
+        blackboardFabric.selection = false;
         if (!isSelectMode) {
           blackboardFabric.discardActiveObject();
         }
@@ -6346,7 +6469,9 @@
           updateBlackboardToolButtons(tool);
         }
         updateBlackboardToolStatus(tool);
+        updateBlackboardPreviewInteractivity();
         configureBlackboardBrush();
+        refreshBlackboardMirror();
       }
 
       function addBlackboardText() {
