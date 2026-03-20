@@ -1,3 +1,9 @@
+# [1.26.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.25.1...v1.26.0) (2026-03-20)
+
+### Features
+
+- improve blackboard live preview selection interactions ([c8fa68e](https://github.com/daiminhdzchimto-arch/CAP/commit/c8fa68e262e250eba4387cb91f66c53115baabde))
+
 ## [1.25.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.25.0...v1.25.1) (2026-03-19)
 
 ### Bug Fixes

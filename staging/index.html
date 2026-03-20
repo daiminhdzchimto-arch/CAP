@@ -2366,6 +2366,15 @@
       let blackboardHistoryIndex = -1;
       let isBlackboardUndoRedoApplying = false;
       let isBlackboardPreviewInteractionBound = false;
+      let blackboardPreviewDragState = {
+        activePointerId: null,
+        isPointerDown: false,
+        isDraggingObject: false,
+        targetObject: null,
+        offsetX: 0,
+        offsetY: 0,
+        moved: false,
+      };
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isLatexInputBound = false;
@@ -5991,60 +6000,130 @@
         const previewEl = document.getElementById("blackboard-live-preview");
         if (!(previewEl instanceof HTMLCanvasElement)) return;
 
-        const relayMouseEventToFabric = (type, sourceEvent) => {
-          if (!blackboardFabric || currentBlackboardTool !== "select") return;
-          const targetCanvas = blackboardFabric.upperCanvasEl;
-          if (!(targetCanvas instanceof HTMLCanvasElement)) return;
-
+        const getPointerFromPreview = (sourceEvent) => {
           const previewRect = previewEl.getBoundingClientRect();
-          const fabricRect = targetCanvas.getBoundingClientRect();
           const relativeX = sourceEvent.clientX - previewRect.left;
           const relativeY = sourceEvent.clientY - previewRect.top;
-          const scaleX = fabricRect.width / Math.max(previewRect.width, 1);
-          const scaleY = fabricRect.height / Math.max(previewRect.height, 1);
-          const mappedX = fabricRect.left + relativeX * scaleX;
-          const mappedY = fabricRect.top + relativeY * scaleY;
+          const fabricWidth = blackboardFabric.getWidth();
+          const fabricHeight = blackboardFabric.getHeight();
+          return {
+            x:
+              (relativeX / Math.max(previewRect.width, 1)) *
+              Math.max(fabricWidth, 1),
+            y:
+              (relativeY / Math.max(previewRect.height, 1)) *
+              Math.max(fabricHeight, 1),
+          };
+        };
 
-          const simulatedEvent = new MouseEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            clientX: mappedX,
-            clientY: mappedY,
-            button: sourceEvent.button ?? 0,
-            buttons: sourceEvent.buttons ?? 0,
-            ctrlKey: sourceEvent.ctrlKey,
-            shiftKey: sourceEvent.shiftKey,
-            altKey: sourceEvent.altKey,
-            metaKey: sourceEvent.metaKey,
-          });
-          targetCanvas.dispatchEvent(simulatedEvent);
+        const getTopObjectAtPointer = (pointer) => {
+          if (!blackboardFabric || typeof fabric === "undefined") return null;
+          const point = new fabric.Point(pointer.x, pointer.y);
+          const objects = blackboardFabric
+            .getObjects()
+            .filter((obj) => obj?.visible !== false && obj?.evented !== false);
+          for (let idx = objects.length - 1; idx >= 0; idx -= 1) {
+            const obj = objects[idx];
+            if (obj.containsPoint?.(point)) return obj;
+          }
+          return null;
+        };
+
+        const beginPointerInteraction = (sourceEvent, pointerId = "mouse") => {
+          if (!blackboardFabric || currentBlackboardTool !== "select") return;
+          const pointer = getPointerFromPreview(sourceEvent);
+          const target = getTopObjectAtPointer(pointer);
+          blackboardPreviewDragState.activePointerId = pointerId;
+          blackboardPreviewDragState.isPointerDown = true;
+          blackboardPreviewDragState.isDraggingObject = !!target;
+          blackboardPreviewDragState.targetObject = target;
+          blackboardPreviewDragState.offsetX = target
+            ? pointer.x - (target.left ?? 0)
+            : 0;
+          blackboardPreviewDragState.offsetY = target
+            ? pointer.y - (target.top ?? 0)
+            : 0;
+          blackboardPreviewDragState.moved = false;
+          if (target) {
+            blackboardFabric.setActiveObject(target);
+          } else {
+            blackboardFabric.discardActiveObject();
+          }
+          blackboardFabric.requestRenderAll();
           sourceEvent.preventDefault();
         };
 
+        const movePointerInteraction = (sourceEvent, pointerId = "mouse") => {
+          if (
+            !blackboardFabric ||
+            currentBlackboardTool !== "select" ||
+            !blackboardPreviewDragState.isPointerDown ||
+            blackboardPreviewDragState.activePointerId !== pointerId ||
+            !blackboardPreviewDragState.isDraggingObject ||
+            !blackboardPreviewDragState.targetObject
+          ) {
+            return;
+          }
+          const pointer = getPointerFromPreview(sourceEvent);
+          const target = blackboardPreviewDragState.targetObject;
+          const nextLeft = pointer.x - blackboardPreviewDragState.offsetX;
+          const nextTop = pointer.y - blackboardPreviewDragState.offsetY;
+          target.set({
+            left: nextLeft,
+            top: nextTop,
+          });
+          target.setCoords?.();
+          blackboardPreviewDragState.moved = true;
+          blackboardFabric.requestRenderAll();
+          sourceEvent.preventDefault();
+        };
+
+        const endPointerInteraction = (sourceEvent, pointerId = "mouse") => {
+          if (
+            !blackboardFabric ||
+            blackboardPreviewDragState.activePointerId !== pointerId
+          ) {
+            return;
+          }
+          const target = blackboardPreviewDragState.targetObject;
+          const didMove = blackboardPreviewDragState.moved;
+          blackboardPreviewDragState.activePointerId = null;
+          blackboardPreviewDragState.isPointerDown = false;
+          blackboardPreviewDragState.isDraggingObject = false;
+          blackboardPreviewDragState.targetObject = null;
+          blackboardPreviewDragState.offsetX = 0;
+          blackboardPreviewDragState.offsetY = 0;
+          blackboardPreviewDragState.moved = false;
+          if (target && didMove) {
+            blackboardFabric.fire("object:modified", { target });
+          } else if (target) {
+            blackboardFabric.requestRenderAll();
+          }
+          sourceEvent?.preventDefault?.();
+        };
+
         previewEl.addEventListener("mousedown", (event) => {
-          relayMouseEventToFabric("mousedown", event);
+          beginPointerInteraction(event, "mouse");
         });
         previewEl.addEventListener("mousemove", (event) => {
-          relayMouseEventToFabric("mousemove", event);
+          movePointerInteraction(event, "mouse");
         });
         window.addEventListener("mouseup", (event) => {
-          relayMouseEventToFabric("mouseup", event);
-        });
-        previewEl.addEventListener("click", (event) => {
-          relayMouseEventToFabric("click", event);
+          endPointerInteraction(event, "mouse");
         });
         previewEl.addEventListener(
           "touchstart",
           (event) => {
             const touch = event.touches?.[0];
             if (!touch) return;
-            relayMouseEventToFabric("mousedown", {
-              ...event,
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-              button: 0,
-              buttons: 1,
-            });
+            beginPointerInteraction(
+              {
+                ...event,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+              },
+              touch.identifier,
+            );
           },
           { passive: false },
         );
@@ -6053,13 +6132,14 @@
           (event) => {
             const touch = event.touches?.[0];
             if (!touch) return;
-            relayMouseEventToFabric("mousemove", {
-              ...event,
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-              button: 0,
-              buttons: 1,
-            });
+            movePointerInteraction(
+              {
+                ...event,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+              },
+              touch.identifier,
+            );
           },
           { passive: false },
         );
@@ -6068,15 +6148,43 @@
           (event) => {
             const touch = event.changedTouches?.[0];
             if (!touch) return;
-            relayMouseEventToFabric("mouseup", {
-              ...event,
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-              button: 0,
-              buttons: 0,
-            });
+            endPointerInteraction(
+              {
+                ...event,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+              },
+              touch.identifier,
+            );
           },
           { passive: false },
+        );
+        window.addEventListener(
+          "touchcancel",
+          (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            endPointerInteraction(
+              {
+                ...event,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+              },
+              touch.identifier,
+            );
+          },
+          { passive: false },
+        );
+        previewEl.addEventListener("mouseleave", (event) => {
+          if (!blackboardPreviewDragState.isPointerDown) return;
+          movePointerInteraction(
+            {
+              ...event,
+              clientX: event.clientX,
+              clientY: event.clientY,
+            },
+            "mouse",
+          );
         );
         isBlackboardPreviewInteractionBound = true;
       }
