@@ -1,3 +1,9 @@
+## [1.27.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.27.0...v1.27.1) (2026-03-20)
+
+### Bug Fixes
+
+- **storage:** recover seating layout when saved data is invalid ([2e64322](https://github.com/daiminhdzchimto-arch/CAP/commit/2e6432285bcbdf5571eefea514f086e8a242c9fb))
+
 # [1.27.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.26.0...v1.27.0) (2026-03-20)
 
 ### Features
