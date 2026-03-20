@@ -1,9 +1,3 @@
-# [1.27.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.26.0...v1.27.0) (2026-03-20)
-
-### Features
-
-- **blackboard:** decouple live preview drag from board canvas ([ec422bc](https://github.com/daiminhdzchimto-arch/CAP/commit/ec422bc11c9ecf7ff0fdad0f5b736ee58e3765a5))
-
 # [1.26.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.25.1...v1.26.0) (2026-03-20)
 
 ### Features
