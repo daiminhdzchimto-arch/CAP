@@ -1,3 +1,9 @@
+## [1.25.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.25.0...v1.25.1) (2026-03-19)
+
+### Bug Fixes
+
+- **share-modal:** close modal automatically after file export ([9d42b81](https://github.com/daiminhdzchimto-arch/CAP/commit/9d42b8183cd504863c97c379d2bfa73dcf9d53f0))
+
 # [1.25.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.24.2...v1.25.0) (2026-03-19)
 
 ### Features
