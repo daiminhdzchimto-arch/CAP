@@ -1,3 +1,9 @@
+# [1.28.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.27.1...v1.28.0) (2026-03-21)
+
+### Features
+
+- add architectural dark-mode CAP Classroom prototype screens ([c522983](https://github.com/daiminhdzchimto-arch/CAP/commit/c5229831ab4b7c84d4fe60806c3d9d1b30dfe5be))
+
 ## [1.25.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.25.0...v1.25.1) (2026-03-19)
 
 ### Bug Fixes
