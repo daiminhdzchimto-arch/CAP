@@ -1,3 +1,9 @@
+## [1.28.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.28.0...v1.28.1) (2026-03-21)
+
+### Bug Fixes
+
+- **cdn:** pin floating runtime CDN versions ([82aba93](https://github.com/daiminhdzchimto-arch/CAP/commit/82aba93948540ee9ff29a75a6a2b8510dbdb05f1))
+
 # [1.28.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.27.1...v1.28.0) (2026-03-21)
 
 ### Features
