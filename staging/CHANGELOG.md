@@ -1,3 +1,9 @@
+# [1.30.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.29.0...v1.30.0) (2026-03-22)
+
+### Features
+
+- auto reload app when new version is deployed ([e1a38a3](https://github.com/daiminhdzchimto-arch/CAP/commit/e1a38a31f688230c08d8f69e65caab37ea53e7bc))
+
 # [1.29.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.28.1...v1.29.0) (2026-03-22)
 
 ### Features
