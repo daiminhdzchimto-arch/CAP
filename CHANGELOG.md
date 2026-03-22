@@ -1,3 +1,9 @@
+## [1.32.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.32.0...v1.32.1) (2026-03-22)
+
+### Bug Fixes
+
+- **ui:** remove classroom reference labels from header visuals ([cf28e46](https://github.com/daiminhdzchimto-arch/CAP/commit/cf28e46de358e6c70991073266c3464b9ae3f3ba))
+
 # [1.32.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.31.0...v1.32.0) (2026-03-22)
 
 ### Features
