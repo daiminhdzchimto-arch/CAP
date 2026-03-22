@@ -1,3 +1,9 @@
+# [1.32.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.31.0...v1.32.0) (2026-03-22)
+
+### Features
+
+- **auto-refresh:** reload client when new deploy commit is detected ([7d6df3d](https://github.com/daiminhdzchimto-arch/CAP/commit/7d6df3dddfb5ea5c1d707e8d83c406c2af5b387f))
+
 # [1.31.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.30.0...v1.31.0) (2026-03-22)
 
 ### Features
