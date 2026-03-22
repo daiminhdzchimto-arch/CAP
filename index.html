@@ -1996,6 +1996,13 @@
             </span>
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="deleteActiveBlackboardObject()"
+              title="Xoá đối tượng đang chọn (Delete/Backspace)"
+            >
+              <i class="fas fa-eraser"></i> Xoá đối tượng
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="clearBlackboard()"
             >
               <i class="fas fa-trash-alt"></i> Xoá
@@ -6109,15 +6116,8 @@
           w,
           h,
         );
-        if (blackboardFabric.upperCanvasEl) {
-          blackboardMirrorCtx.drawImage(
-            blackboardFabric.upperCanvasEl,
-            0,
-            0,
-            w,
-            h,
-          );
-        }
+        // Không đồng bộ upperCanvasEl sang bản xem trước/3D để tự động ẩn
+        // viền chọn (selection box, control handles) quanh đối tượng.
 
         const livePreviewEl = document.getElementById(
           "blackboard-live-preview",
@@ -6540,6 +6540,21 @@
         blackboardFabric.clear();
         blackboardFabric.backgroundColor = BLACKBOARD_BACKGROUND;
         blackboardFabric.renderAll();
+        refreshBlackboardMirror();
+        saveBlackboardHistoryState();
+        persistBlackboardData();
+      }
+
+      function deleteActiveBlackboardObject() {
+        if (!blackboardFabric) return;
+        const active = blackboardFabric.getActiveObject();
+        if (!active) {
+          showToast("Hãy chọn đối tượng cần xoá trên bảng đen.");
+          return;
+        }
+        blackboardFabric.remove(active);
+        blackboardFabric.discardActiveObject();
+        blackboardFabric.requestRenderAll();
         refreshBlackboardMirror();
         saveBlackboardHistoryState();
         persistBlackboardData();
@@ -8209,6 +8224,17 @@
       });
       document.addEventListener("scroll", hideDeskContextMenu, true);
       document.addEventListener("keydown", (e) => {
+        const blackboardModal = document.getElementById("blackboard-modal");
+        const isBlackboardOpen = blackboardModal?.classList.contains("open");
+        if (
+          isBlackboardOpen &&
+          (e.key === "Delete" || e.key === "Backspace") &&
+          !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")
+        ) {
+          e.preventDefault();
+          deleteActiveBlackboardObject();
+          return;
+        }
         if (e.key === "Escape" && seat3DState.active) closeSeat3DView();
         if (e.key === "Escape") {
           hideDeskContextMenu();
