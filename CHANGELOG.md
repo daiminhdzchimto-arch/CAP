@@ -1,3 +1,9 @@
+# [1.29.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.28.1...v1.29.0) (2026-03-22)
+
+### Features
+
+- auto-save data on tab switch and page exit ([1b45d50](https://github.com/daiminhdzchimto-arch/CAP/commit/1b45d500cfe167b3ee6f588ec6ced9cd291e082f))
+
 ## [1.28.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.28.0...v1.28.1) (2026-03-21)
 
 ### Bug Fixes
