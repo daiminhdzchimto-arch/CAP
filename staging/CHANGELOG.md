@@ -1,3 +1,9 @@
+# [1.31.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.30.0...v1.31.0) (2026-03-22)
+
+### Features
+
+- **blackboard:** delete selected object and hide 3d selection frame ([74e4d39](https://github.com/daiminhdzchimto-arch/CAP/commit/74e4d39f7c8e2dbf418e534fe0f57d71e3a64c84))
+
 # [1.30.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.29.0...v1.30.0) (2026-03-22)
 
 ### Features
