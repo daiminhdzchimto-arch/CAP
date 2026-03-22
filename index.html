@@ -7448,12 +7448,16 @@
           });
       }
 
-      function saveData() {
-        animateActionFeedback(
-          'button[title="Lưu"]',
-          "animate-flash-success",
-          380,
-        );
+      let lastAutoSaveAt = 0;
+
+      function saveData({ notify = true, animate = true } = {}) {
+        if (animate) {
+          animateActionFeedback(
+            'button[title="Lưu"]',
+            "animate-flash-success",
+            380,
+          );
+        }
         const data = {
           seating: { left: leftSideData, right: rightSideData },
           fixedMembers,
@@ -7470,7 +7474,40 @@
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
-        showToast("Đã lưu dữ liệu thành công!");
+        if (notify) showToast("Đã lưu dữ liệu thành công!");
+      }
+
+      function autoSaveAllData(trigger = "auto") {
+        const now = Date.now();
+        if (now - lastAutoSaveAt < 800) return;
+        lastAutoSaveAt = now;
+        saveData({ notify: false, animate: false });
+        persistBlackboardData({ notify: false });
+        console.debug(
+          `[CAP] Auto-saved (${trigger}) at ${new Date(now).toISOString()}`,
+        );
+      }
+
+      function setupAutoSaveOnPageLifecycle() {
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "hidden") {
+            autoSaveAllData("visibility-hidden");
+          }
+        });
+
+        window.addEventListener("pagehide", () => {
+          autoSaveAllData("pagehide");
+        });
+
+        window.addEventListener("beforeunload", () => {
+          autoSaveAllData("beforeunload");
+        });
+
+        window.addEventListener("blur", () => {
+          if (document.visibilityState === "hidden") {
+            autoSaveAllData("window-blur");
+          }
+        });
       }
 
       function syncOverlays() {
@@ -8081,6 +8118,7 @@
         }
         await applyMobileLandscapeMode();
         runPostFixChecks();
+        setupAutoSaveOnPageLifecycle();
         window.addEventListener("resize", () => {
           void applyMobileLandscapeMode();
         });
