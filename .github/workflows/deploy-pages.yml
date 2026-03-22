@@ -44,6 +44,16 @@ jobs:
       - name: Build site
         run: npm run build
 
+      - name: Generate runtime version metadata
+        run: |
+          cat > version.json <<EOF
+          {
+            "commit": "${GITHUB_SHA}",
+            "shortCommit": "${GITHUB_SHA::7}",
+            "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
       - name: Prepare deploy bundle
         run: |
           mkdir -p .deploy/site

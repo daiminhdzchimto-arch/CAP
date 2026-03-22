@@ -2427,6 +2427,10 @@
       const POWER_SAVE_LOW_BATTERY_THRESHOLD = 0.2;
       const INTERACTION_IDLE_THRESHOLD_MS = 7000;
       let userPowerSavePreference = false;
+      const APP_VERSION_ENDPOINT = new URL(
+        "./version.json",
+        window.location.href,
+      );
 
       const batteryState = {
         supported: false,
@@ -2440,6 +2444,7 @@
         document
           .querySelector("meta[name='app-version']")
           ?.getAttribute("content") ?? "";
+      let currentDeployCommit = "";
 
       function animateActionFeedback(
         selector,
@@ -8069,6 +8074,32 @@
 
       async function checkForAppUpdate() {
         try {
+          const deployVersionResponse = await fetch(
+            `${APP_VERSION_ENDPOINT.toString()}?_appVersionCheck=${Date.now()}`,
+            { cache: "no-store" },
+          );
+          if (deployVersionResponse.ok) {
+            const deployVersionPayload = await deployVersionResponse.json();
+            const latestDeployCommit =
+              typeof deployVersionPayload?.commit === "string"
+                ? deployVersionPayload.commit.trim()
+                : "";
+
+            if (!currentDeployCommit && latestDeployCommit) {
+              currentDeployCommit = latestDeployCommit;
+              return;
+            }
+
+            if (
+              latestDeployCommit &&
+              latestDeployCommit !== currentDeployCommit
+            ) {
+              showToast("Đã có phiên bản mới, hệ thống sẽ tự tải lại...");
+              setTimeout(() => window.location.reload(), 900);
+              return;
+            }
+          }
+
           const targetUrl = new URL(window.location.href);
           targetUrl.searchParams.set("_appVersionCheck", Date.now().toString());
           const response = await fetch(targetUrl.toString(), {
