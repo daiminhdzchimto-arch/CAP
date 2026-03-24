@@ -1,3 +1,9 @@
+# [1.51.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.50.0...v1.51.0) (2026-03-24)
+
+### Features
+
+- **a11y:** improve keyboard navigation and aria labeling ([7220171](https://github.com/daiminhdzchimto-arch/CAP/commit/722017166578154a7e78fffd55aabca7e86a1b81))
+
 # [1.50.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.49.0...v1.50.0) (2026-03-24)
 
 ### Features
