@@ -2734,6 +2734,8 @@
         afternoonOff = false;
       let currentSchedule = null,
         dutyDebtData = {};
+      let shuffleHistory = [];
+      let shuffleHistoryCounter = 0;
       const DUTY_DAYS = ["2", "3", "4", "5", "6", "7"];
       const DUTY_ROLE_KEYS = [
         "sweep",
@@ -8061,6 +8063,8 @@
             afternoonOff: !!afternoonOff,
           },
           layoutConfig: { ...layoutConfig },
+          shuffleHistory: [...shuffleHistory],
+          shuffleHistoryCounter,
         };
       }
 
@@ -8131,6 +8135,14 @@
               snapshot.layoutConfig?.columnsPerRow || DEFAULT_LAYOUT_COLUMNS,
             roomShape: snapshot.layoutConfig?.roomShape || "rectangle",
           };
+          shuffleHistory = Array.isArray(snapshot.shuffleHistory)
+            ? snapshot.shuffleHistory
+            : [];
+          shuffleHistoryCounter = Number.isFinite(
+            snapshot.shuffleHistoryCounter,
+          )
+            ? snapshot.shuffleHistoryCounter
+            : shuffleHistory.length;
           setLayoutInputsFromState();
           syncOverlays();
           renderAll();
@@ -8760,6 +8772,8 @@
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           dutySchedule: currentSchedule,
           layoutConfig,
+          shuffleHistory,
+          shuffleHistoryCounter,
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
@@ -8832,6 +8846,8 @@
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           dutySchedule: currentSchedule,
           layoutConfig,
+          shuffleHistory,
+          shuffleHistoryCounter,
         };
         const blob = new Blob([JSON.stringify(data)], {
           type: "application/json",
@@ -8910,6 +8926,12 @@
               afternoonOff = data.dutySettings.afternoonOff || false;
             }
             currentSchedule = data.dutySchedule || null;
+            shuffleHistory = Array.isArray(data.shuffleHistory)
+              ? data.shuffleHistory
+              : [];
+            shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+              ? data.shuffleHistoryCounter
+              : shuffleHistory.length;
             setLayoutInputsFromState();
             syncOverlays();
             renderAll();
@@ -8982,6 +9004,12 @@
           afternoonOff = data.dutySettings.afternoonOff || false;
         }
         currentSchedule = data.dutySchedule || null;
+        shuffleHistory = Array.isArray(data.shuffleHistory)
+          ? data.shuffleHistory
+          : [];
+        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+          ? data.shuffleHistoryCounter
+          : shuffleHistory.length;
         setLayoutInputsFromState();
       }
 
