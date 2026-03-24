@@ -1,3 +1,9 @@
+# [1.53.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.52.0...v1.53.0) (2026-03-24)
+
+### Features
+
+- add configurable classroom layout metadata and special desks ([5d91ccb](https://github.com/daiminhdzchimto-arch/CAP/commit/5d91ccb812de64e401824e98e8616fcf49505a25))
+
 # [1.52.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.51.0...v1.52.0) (2026-03-24)
 
 ### Features
