@@ -224,6 +224,26 @@
       .tab-btn.active {
           color: #2563eb;
       }
+      .text-gray-400 {
+          color: #4b5563 !important;
+      }
+      .text-gray-500 {
+          color: #374151 !important;
+      }
+      .text-slate-400 {
+          color: #475569 !important;
+      }
+      .text-slate-500 {
+          color: #334155 !important;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible,
+      [tabindex]:focus-visible {
+          outline: 3px solid #2563eb;
+          outline-offset: 2px;
+      }
       .mobile-tab-btn {
           transition: color 0.2s ease;
       }
@@ -655,6 +675,9 @@
             <div
               id="top-tab-switcher"
               class="tab-switcher hidden md:flex items-center bg-gray-100 p-1 rounded-lg"
+              role="tablist"
+              aria-label="Điều hướng tab chính"
+              data-keyboard-toolbar
             >
               <span
                 id="top-tab-indicator"
@@ -687,6 +710,7 @@
                 onclick="openShareModal()"
                 class="icon-edge-btn p-2 text-gray-500 hover:text-purple-600 transition-colors"
                 title="Chia sẻ"
+                aria-label="Chia sẻ"
               >
                 <i class="fas fa-share-nodes"></i>
               </button>
@@ -694,6 +718,7 @@
                 onclick="openSettingsModal()"
                 class="icon-edge-btn p-2 text-gray-500 hover:text-blue-600 transition-colors"
                 title="Cài đặt"
+                aria-label="Cài đặt"
               >
                 <i class="fas fa-cog"></i>
               </button>
@@ -701,6 +726,7 @@
                 onclick="saveData()"
                 class="btn-3d btn-3d-blue text-sm font-bold"
                 title="Lưu"
+                aria-label="Lưu dữ liệu"
               >
                 <i class="fas fa-save"></i>
               </button>
@@ -760,11 +786,16 @@
               <div class="h-8 w-px bg-gray-200 mx-2"></div>
               <div id="status-msg" class="hidden"></div>
             </div>
-            <div class="flex items-center gap-2">
+            <div
+              class="flex items-center gap-2"
+              data-keyboard-toolbar
+              aria-label="Thanh công cụ sơ đồ lớp"
+            >
               <button
                 onclick="rotateClass('up')"
                 class="icon-edge-btn p-2 text-gray-600 transition"
                 title="Xoay lên"
+                aria-label="Xoay lên"
               >
                 <i class="fas fa-arrow-up"></i>
               </button>
@@ -772,6 +803,7 @@
                 onclick="rotateClass('down')"
                 class="icon-edge-btn p-2 text-gray-600 transition"
                 title="Xoay xuống"
+                aria-label="Xoay xuống"
               >
                 <i class="fas fa-arrow-down"></i>
               </button>
@@ -779,6 +811,7 @@
                 onclick="flipSeatingVertically()"
                 class="icon-edge-btn p-2 text-purple-600 transition"
                 title="Lật/Xoay Dọc"
+                aria-label="Lật/Xoay dọc"
               >
                 <i class="fas fa-exchange-alt"></i>
               </button>
@@ -787,6 +820,7 @@
                 onclick="openShuffleModal()"
                 class="btn-3d btn-3d-orange text-sm font-bold"
                 title="Sắp xếp"
+                aria-label="Sắp xếp bàn ghế"
               >
                 <i class="fas fa-random"></i>
               </button>
@@ -794,6 +828,7 @@
                 onclick="clearAllFixedMembers()"
                 class="btn-3d btn-3d-purple text-sm font-bold"
                 title="Xoá toàn bộ trạng thái ghim bàn ghế"
+                aria-label="Xóa toàn bộ trạng thái ghim bàn ghế"
               >
                 <i class="fas fa-unlock"></i>
               </button>
@@ -801,6 +836,7 @@
                 onclick="resetLayout()"
                 class="icon-edge-btn p-2 text-red-500 transition"
                 title="Làm mới"
+                aria-label="Làm mới bố cục"
               >
                 <i class="fas fa-sync-alt"></i>
               </button>
@@ -809,6 +845,7 @@
                 onclick="downloadImage('classroom-area', 'So_do_lop')"
                 class="btn-3d btn-3d-green text-sm font-bold"
                 title="Chụp ảnh"
+                aria-label="Chụp ảnh sơ đồ lớp"
               >
                 <i class="fas fa-camera"></i>
               </button>
@@ -1927,6 +1964,8 @@
 
           <div
             class="flex flex-wrap gap-2 mb-3 bg-stone-800 p-2 rounded-lg border border-amber-900"
+            data-keyboard-toolbar
+            aria-label="Thanh công cụ bảng đen"
           >
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
@@ -1960,6 +1999,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="formatActiveBlackboardText('bold')"
               title="Đậm (Ctrl+B)"
+              aria-label="In đậm văn bản"
             >
               <i class="fas fa-bold"></i>
             </button>
@@ -1967,6 +2007,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="formatActiveBlackboardText('italic')"
               title="Nghiêng (Ctrl+I)"
+              aria-label="In nghiêng văn bản"
             >
               <i class="fas fa-italic"></i>
             </button>
@@ -1974,6 +2015,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="formatActiveBlackboardText('underline')"
               title="Gạch chân (Ctrl+U)"
+              aria-label="Gạch chân văn bản"
             >
               <i class="fas fa-underline"></i>
             </button>
@@ -1981,6 +2023,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="alignActiveBlackboardText('left')"
               title="Canh trái"
+              aria-label="Canh trái văn bản"
             >
               <i class="fas fa-align-left"></i>
             </button>
@@ -1988,6 +2031,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="alignActiveBlackboardText('center')"
               title="Canh giữa"
+              aria-label="Canh giữa văn bản"
             >
               <i class="fas fa-align-center"></i>
             </button>
@@ -1995,6 +2039,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="alignActiveBlackboardText('right')"
               title="Canh phải"
+              aria-label="Canh phải văn bản"
             >
               <i class="fas fa-align-right"></i>
             </button>
@@ -3136,6 +3181,39 @@
             cell.dataset.r = ri;
             cell.dataset.c = si;
             cell.dataset.seatId = seat.id;
+            cell.tabIndex = 0;
+            cell.setAttribute("role", "button");
+            const studentName =
+              typeof seat.name === "string" && seat.name.trim()
+                ? seat.name.trim()
+                : "Bàn trống";
+            cell.setAttribute(
+              "aria-label",
+              `${studentName}, dãy ${ri + 1}, vị trí ${si + 1}`,
+            );
+            cell.addEventListener("keydown", (event) => {
+              const { key } = event;
+              if (key === "Enter" || key === " ") {
+                event.preventDefault();
+                selectDeskCell(side, ri, si);
+                const activeInput = cell.querySelector("textarea, input");
+                if (activeInput) activeInput.focus();
+                return;
+              }
+              const arrowKeyMap = {
+                ArrowLeft: [0, -1],
+                ArrowRight: [0, 1],
+                ArrowUp: [-1, 0],
+                ArrowDown: [1, 0],
+              };
+              if (!arrowKeyMap[key]) return;
+              event.preventDefault();
+              const [dr, dc] = arrowKeyMap[key];
+              const nextCell = document.querySelector(
+                `.desk-box[data-side="${side}"][data-r="${ri + dr}"][data-c="${si + dc}"]`,
+              );
+              if (nextCell instanceof HTMLElement) nextCell.focus();
+            });
 
             if (isFixed) {
               const badge = document.createElement("div");
@@ -7116,6 +7194,109 @@
         );
       }
 
+      function setupAutoAriaLabelsForIconButtons() {
+        document.querySelectorAll("button").forEach((button) => {
+          if (button.getAttribute("aria-label")) return;
+          const text = (button.textContent || "").trim();
+          if (text) return;
+          const title = button.getAttribute("title");
+          if (title) button.setAttribute("aria-label", title);
+        });
+      }
+
+      function setupToolbarKeyboardNavigation() {
+        const selector =
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        document.querySelectorAll("[data-keyboard-toolbar]").forEach((bar) => {
+          bar.addEventListener("keydown", (event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+              return;
+            const focusables = [...bar.querySelectorAll(selector)].filter(
+              (node) =>
+                node instanceof HTMLElement &&
+                !node.hasAttribute("hidden") &&
+                node.offsetParent !== null,
+            );
+            if (!focusables.length) return;
+            const currentIndex = focusables.indexOf(document.activeElement);
+            if (currentIndex < 0) return;
+            event.preventDefault();
+            if (event.key === "Home") return focusables[0].focus();
+            if (event.key === "End")
+              return focusables[focusables.length - 1].focus();
+            const step = event.key === "ArrowRight" ? 1 : -1;
+            const nextIndex =
+              (currentIndex + step + focusables.length) % focusables.length;
+            focusables[nextIndex].focus();
+          });
+        });
+      }
+
+      function setupGlobalKeyboardAccessibility() {
+        document.addEventListener("keydown", (event) => {
+          const tagName = document.activeElement?.tagName || "";
+          const isTypingTarget =
+            ["INPUT", "TEXTAREA", "SELECT"].includes(tagName) ||
+            document.activeElement?.isContentEditable;
+          const blackboardModal = document.getElementById("blackboard-modal");
+          const isBlackboardOpen = blackboardModal?.classList.contains("open");
+
+          if (event.altKey && !event.ctrlKey && !event.shiftKey) {
+            if (event.key === "1") {
+              event.preventDefault();
+              switchTab("seating");
+            } else if (event.key === "2") {
+              event.preventDefault();
+              switchTab("competition");
+            }
+          }
+
+          if (!isBlackboardOpen || isTypingTarget) return;
+          const shortcutKey = event.key.toLowerCase();
+          if (event.ctrlKey && shortcutKey === "z") {
+            event.preventDefault();
+            undoBlackboard();
+            return;
+          }
+          if (event.ctrlKey && shortcutKey === "y") {
+            event.preventDefault();
+            redoBlackboard();
+            return;
+          }
+          if (event.ctrlKey && shortcutKey === "s") {
+            event.preventDefault();
+            saveBlackboard();
+            return;
+          }
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
+          const blackboardActionMap = {
+            v: () =>
+              setBlackboardTool(
+                "select",
+                document.querySelector('[data-blackboard-tool="select"]'),
+              ),
+            b: () =>
+              setBlackboardTool(
+                "pencil",
+                document.querySelector('[data-blackboard-tool="pencil"]'),
+              ),
+            e: () =>
+              setBlackboardTool(
+                "eraser",
+                document.querySelector('[data-blackboard-tool="eraser"]'),
+              ),
+            t: () => addBlackboardText(),
+            c: () => addBlackboardShape("circle"),
+            r: () => addBlackboardShape("rect"),
+            l: () => addBlackboardShape("line"),
+          };
+          const action = blackboardActionMap[shortcutKey];
+          if (!action) return;
+          event.preventDefault();
+          action();
+        });
+      }
+
       function generateTable() {
         const input = document.getElementById("student-list-input").value;
         const names = input
@@ -8223,6 +8404,9 @@
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
+        setupAutoAriaLabelsForIconButtons();
+        setupToolbarKeyboardNavigation();
+        setupGlobalKeyboardAccessibility();
 
         // Lucide icons
         lucide.createIcons();
