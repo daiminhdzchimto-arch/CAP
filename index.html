@@ -7735,6 +7735,7 @@
             cols: getLayoutCols(),
             roomShape: layoutState.roomShape || "rectangle",
           },
+          dutySchedule: currentSchedule,
           fixedMembers,
           conflictGraph: Object.fromEntries(
             Object.entries(conflictGraph).map(([k, v]) => [k, Array.from(v)]),
@@ -7923,6 +7924,7 @@
           morningOff = data.dutySettings.morningOff || false;
           afternoonOff = data.dutySettings.afternoonOff || false;
         }
+        currentSchedule = data.dutySchedule || null;
         const normalizeSpecialType = (seat) => ({
           ...seat,
           specialType:
