@@ -454,7 +454,19 @@
           letter-spacing: 0.08em;
       }
       .swap-seat-btn { position: absolute; bottom: 0; right: 0; margin: 4px; font-size: 0.75rem; color: #d97706; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s, background-color 0.2s; background: rgba(255, 255, 255, 0.95); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
-      .desk-box.is-selected .split-btn, .desk-box.is-selected .details-btn, .desk-box.is-selected .view-3d-btn, .desk-box.is-selected .swap-seat-btn, .desk-box.swap-selected .swap-seat-btn { opacity: 1; pointer-events: auto; }
+      .desk-box.is-selected .split-btn,
+      .desk-box.is-selected .details-btn,
+      .desk-box.is-selected .view-3d-btn,
+      .desk-box.is-selected .swap-seat-btn,
+      .desk-box:focus-within .split-btn,
+      .desk-box:focus-within .details-btn,
+      .desk-box:focus-within .view-3d-btn,
+      .desk-box:focus-within .swap-seat-btn,
+      .desk-box:hover .split-btn,
+      .desk-box:hover .details-btn,
+      .desk-box:hover .view-3d-btn,
+      .desk-box:hover .swap-seat-btn,
+      .desk-box.swap-selected .swap-seat-btn { opacity: 1; pointer-events: auto; }
       .desk-box.has-actions .desk-input { padding-left: 24px; padding-right: 24px; }
       .desk-box { transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease; transform-origin: center; }
       .split-btn:hover { color: #ef4444; }
