@@ -1,3 +1,9 @@
+# [1.43.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.42.0...v1.43.0) (2026-03-24)
+
+### Features
+
+- **docs:** đề xuất đăng nhập Google/GitHub để đồng bộ ([700c327](https://github.com/daiminhdzchimto-arch/CAP/commit/700c3272e9c91e4a1d8264416b8bb7946b6af8f5))
+
 # [1.42.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.41.0...v1.42.0) (2026-03-24)
 
 ### Features
