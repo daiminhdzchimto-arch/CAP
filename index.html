@@ -2327,6 +2327,16 @@
               Chèn
             </button>
           </div>
+          <div class="mt-2 text-xs text-amber-300/90">
+            Xem trước realtime:
+            <span class="text-emerald-300">tự động cập nhật khi bạn gõ</span>
+          </div>
+          <div
+            id="latex-suggestion-chips"
+            class="mt-2 flex flex-wrap items-center gap-2"
+          >
+            <span class="text-xs text-amber-300/80 mr-1">Gợi ý nhanh:</span>
+          </div>
           <div
             id="latex-preview"
             class="mt-2 min-h-[56px] rounded border border-amber-800/60 bg-stone-900/70 px-3 py-2 text-white overflow-auto"
@@ -2641,7 +2651,20 @@
       let fabricLoaderPromise = null;
       let mathJaxLoaderPromise = null;
       let isLatexInputBound = false;
+      let latexPreviewDebounceTimer = null;
+      let latexPreviewRequestId = 0;
       let isBlackboardResizeBound = false;
+      const COMMON_LATEX_SUGGESTIONS = [
+        { label: "Phân số", formula: "\\frac{a}{b}" },
+        { label: "Căn bậc hai", formula: "\\sqrt{x^2 + y^2}" },
+        { label: "Tổng Sigma", formula: "\\sum_{i=1}^{n} i" },
+        { label: "Tích phân", formula: "\\int_{a}^{b} f(x)\\,dx" },
+        { label: "Giới hạn", formula: "\\lim_{x \\to 0} \\frac{\\sin x}{x}" },
+        {
+          label: "Ma trận",
+          formula: "\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}",
+        },
+      ];
       let seat3DState = {
         active: false,
         renderer: null,
@@ -7015,27 +7038,54 @@
         if (!previewEl) return;
 
         const latexFormula = (rawFormula || "").trim();
+        const requestId = ++latexPreviewRequestId;
         if (!latexFormula) {
           previewEl.innerHTML = "";
           return;
         }
 
-        if (!window.MathJax?.tex2svgPromise) {
-          previewEl.innerHTML =
-            '<span style="color:#f87171">MathJax chưa sẵn sàng. Vui lòng thử lại sau vài giây.</span>';
-          return;
-        }
-
-        renderMathJaxSvgMarkup(latexFormula)
+        previewEl.innerHTML =
+          '<span style="color:#94a3b8">Đang render công thức...</span>';
+        loadMathJaxLibrary()
+          .then(() => renderMathJaxSvgMarkup(latexFormula))
           .then((svgMarkup) => {
+            if (requestId !== latexPreviewRequestId) return;
             previewEl.innerHTML = `<div style="font-size:30px;line-height:1.2">${svgMarkup}</div>`;
           })
           .catch((error) => {
+            if (requestId !== latexPreviewRequestId) return;
             const safeMessage = (
               error?.message || "Công thức không hợp lệ."
             ).replace(/[<>]/g, "");
             previewEl.innerHTML = `<span style="color:#f87171">Lỗi cú pháp: ${safeMessage}</span>`;
           });
+      }
+
+      function renderLatexSuggestionChips() {
+        const container = document.getElementById("latex-suggestion-chips");
+        const latexInputEl = document.getElementById("latex-input");
+        if (!container || !latexInputEl) return;
+
+        const existingButtons = Array.from(
+          container.querySelectorAll("[data-latex-suggestion]"),
+        );
+        existingButtons.forEach((button) => button.remove());
+
+        COMMON_LATEX_SUGGESTIONS.forEach((item) => {
+          const chipBtn = document.createElement("button");
+          chipBtn.type = "button";
+          chipBtn.dataset.latexSuggestion = item.formula;
+          chipBtn.className =
+            "px-2 py-1 rounded border border-amber-700/70 bg-stone-800 text-amber-100 text-xs hover:bg-stone-700";
+          chipBtn.title = item.formula;
+          chipBtn.textContent = item.label;
+          chipBtn.addEventListener("click", () => {
+            latexInputEl.value = item.formula;
+            latexInputEl.dispatchEvent(new Event("input", { bubbles: true }));
+            latexInputEl.focus();
+          });
+          container.appendChild(chipBtn);
+        });
       }
 
       function bindLatexInputEvents() {
@@ -7051,9 +7101,13 @@
         });
 
         latexInputEl.addEventListener("input", (e) => {
-          updateLatexPreview(e.target.value);
+          clearTimeout(latexPreviewDebounceTimer);
+          latexPreviewDebounceTimer = setTimeout(() => {
+            updateLatexPreview(e.target.value);
+          }, 120);
         });
 
+        renderLatexSuggestionChips();
         isLatexInputBound = true;
       }
 
