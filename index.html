@@ -125,6 +125,25 @@
           transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
           will-change: transform;
       }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      [role="button"]:focus-visible,
+      [tabindex]:not([tabindex="-1"]):focus-visible {
+          outline: 3px solid #f59e0b;
+          outline-offset: 2px;
+          box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.4);
+      }
+      .text-gray-400 {
+          color: #4b5563 !important;
+      }
+      .text-gray-500 {
+          color: #374151 !important;
+      }
+      .text-gray-600 {
+          color: #1f2937 !important;
+      }
       button,
       label,
       .fluid-label {
@@ -2184,7 +2203,10 @@
           </div>
 
           <div
+            id="blackboard-toolbar"
             class="flex flex-wrap gap-2 mb-3 bg-stone-800 p-2 rounded-lg border border-amber-900"
+            role="toolbar"
+            aria-label="Thanh công cụ bảng đen"
           >
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
@@ -2226,6 +2248,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="formatActiveBlackboardText('bold')"
               title="Đậm (Ctrl+B)"
+              aria-label="Định dạng chữ đậm"
             >
               <i class="fas fa-bold"></i>
             </button>
@@ -2233,6 +2256,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="formatActiveBlackboardText('italic')"
               title="Nghiêng (Ctrl+I)"
+              aria-label="Định dạng chữ nghiêng"
             >
               <i class="fas fa-italic"></i>
             </button>
@@ -2240,6 +2264,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="formatActiveBlackboardText('underline')"
               title="Gạch chân (Ctrl+U)"
+              aria-label="Định dạng gạch chân"
             >
               <i class="fas fa-underline"></i>
             </button>
@@ -2247,6 +2272,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="alignActiveBlackboardText('left')"
               title="Canh trái"
+              aria-label="Canh lề trái"
             >
               <i class="fas fa-align-left"></i>
             </button>
@@ -2254,6 +2280,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="alignActiveBlackboardText('center')"
               title="Canh giữa"
+              aria-label="Canh giữa"
             >
               <i class="fas fa-align-center"></i>
             </button>
@@ -2261,6 +2288,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="alignActiveBlackboardText('right')"
               title="Canh phải"
+              aria-label="Canh lề phải"
             >
               <i class="fas fa-align-right"></i>
             </button>
@@ -2306,6 +2334,7 @@
               value="#ffffff"
               class="w-8 h-8 rounded border-0"
               title="Màu vẽ"
+              aria-label="Chọn màu vẽ"
             />
             <span
               id="blackboard-current-color"
@@ -2323,6 +2352,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="zoomOutBlackboard()"
               title="Thu nhỏ bảng đen"
+              aria-label="Thu nhỏ bảng đen"
             >
               <i class="fas fa-search-minus"></i>
             </button>
@@ -2336,6 +2366,7 @@
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="zoomInBlackboard()"
               title="Phóng to bảng đen"
+              aria-label="Phóng to bảng đen"
             >
               <i class="fas fa-search-plus"></i>
             </button>
@@ -8232,6 +8263,112 @@
         );
       }
 
+      function isNaturallyFocusableElement(el) {
+        if (!(el instanceof HTMLElement)) return true;
+        return /^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(el.tagName);
+      }
+
+      function makeElementKeyboardClickable(el) {
+        if (!(el instanceof HTMLElement)) return;
+        if (!isNaturallyFocusableElement(el) && !el.hasAttribute("tabindex")) {
+          el.tabIndex = 0;
+        }
+        if (!el.hasAttribute("role")) {
+          el.setAttribute("role", "button");
+        }
+        if (el.dataset.keyboardClickBound === "1") return;
+        el.dataset.keyboardClickBound = "1";
+        el.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          el.click();
+        });
+      }
+
+      function applyIconButtonAriaLabels(scope = document) {
+        const fallbackLabels = {
+          "fa-bold": "Định dạng chữ đậm",
+          "fa-italic": "Định dạng chữ nghiêng",
+          "fa-underline": "Định dạng gạch chân",
+          "fa-align-left": "Canh lề trái",
+          "fa-align-center": "Canh giữa",
+          "fa-align-right": "Canh lề phải",
+          "fa-search-minus": "Thu nhỏ",
+          "fa-search-plus": "Phóng to",
+          "fa-times": "Đóng",
+        };
+        scope.querySelectorAll("button").forEach((buttonEl) => {
+          if (buttonEl.getAttribute("aria-label")) return;
+          const text = (buttonEl.textContent || "").trim();
+          if (text) return;
+          const title = buttonEl.getAttribute("title") || "";
+          if (title) {
+            buttonEl.setAttribute("aria-label", title);
+            return;
+          }
+          const iconClass = buttonEl.querySelector("i")?.className || "";
+          const matched = Object.keys(fallbackLabels).find((key) =>
+            iconClass.includes(key),
+          );
+          if (matched)
+            buttonEl.setAttribute("aria-label", fallbackLabels[matched]);
+        });
+      }
+
+      function setupToolbarKeyboardNavigation() {
+        const toolbar = document.getElementById("blackboard-toolbar");
+        if (!toolbar) return;
+        const getItems = () =>
+          Array.from(
+            toolbar.querySelectorAll("button, input, select, [tabindex]"),
+          ).filter((el) => !el.hasAttribute("disabled"));
+        toolbar.addEventListener("keydown", (event) => {
+          const keys = [
+            "ArrowRight",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowUp",
+            "Home",
+            "End",
+          ];
+          if (!keys.includes(event.key)) return;
+          const items = getItems();
+          if (!items.length) return;
+          const activeIndex = items.indexOf(document.activeElement);
+          if (activeIndex < 0) return;
+          event.preventDefault();
+          if (event.key === "Home") {
+            items[0].focus();
+            return;
+          }
+          if (event.key === "End") {
+            items[items.length - 1].focus();
+            return;
+          }
+          const step =
+            event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+          const nextIndex = (activeIndex + step + items.length) % items.length;
+          items[nextIndex].focus();
+        });
+      }
+
+      function setupAccessibilityEnhancements() {
+        applyIconButtonAriaLabels(document);
+        setupToolbarKeyboardNavigation();
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (!(node instanceof HTMLElement)) return;
+              applyIconButtonAriaLabels(node);
+            });
+          });
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      }
+
       function setupKeyboardShortcuts() {
         document.addEventListener("keydown", (event) => {
           const key = event.key.toLowerCase();
@@ -8555,6 +8692,11 @@
           else cls += "bg-white border-gray-200";
           d.className = cls;
           d.onclick = () => toggleDutySel(side, ri);
+          d.setAttribute(
+            "aria-label",
+            `Chọn dãy trực nhật ${side} hàng ${ri + 1}`,
+          );
+          makeElementKeyboardClickable(d);
           row.forEach((s) => {
             const sd = document.createElement("div");
             sd.style.width =
@@ -8623,6 +8765,11 @@
             genderMap[n] = !m;
             renderGenderList();
           };
+          l.setAttribute(
+            "aria-label",
+            `Chuyển giới tính của ${n}. Hiện tại: ${m ? "Nam" : "Nữ"}`,
+          );
+          makeElementKeyboardClickable(l);
           d.appendChild(nameSpan);
           d.appendChild(l);
           c.appendChild(d);
@@ -9822,6 +9969,7 @@
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
         setupKeyboardShortcuts();
+        setupAccessibilityEnhancements();
         setupGlobalHistoryTracking();
         commitGlobalHistorySnapshot("initial-load");
 
