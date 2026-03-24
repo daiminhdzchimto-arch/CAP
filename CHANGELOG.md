@@ -1,3 +1,9 @@
+# [1.39.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.38.0...v1.39.0) (2026-03-24)
+
+### Features
+
+- **seating:** support drag and drop seat swapping ([e4b28b6](https://github.com/daiminhdzchimto-arch/CAP/commit/e4b28b6c3d9734b02eb639bbf5a41ba361da7757))
+
 # [1.38.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.37.1...v1.38.0) (2026-03-24)
 
 ### Features
