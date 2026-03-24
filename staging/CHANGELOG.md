@@ -1,3 +1,9 @@
+# [1.40.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.39.0...v1.40.0) (2026-03-24)
+
+### Features
+
+- **blackboard:** add marker, more shapes, and zoom controls ([0972681](https://github.com/daiminhdzchimto-arch/CAP/commit/097268114c55e7fed287c29cf2e411d112ea33dc))
+
 # [1.39.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.38.0...v1.39.0) (2026-03-24)
 
 ### Features
