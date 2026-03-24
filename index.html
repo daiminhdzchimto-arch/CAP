@@ -3190,6 +3190,7 @@
         config: {
           useRealLocation: false,
           preferredRealLocation: false,
+          preferredSpecies: "auto",
           fallbackData: {
             speed: 2,
             deg: 180,
@@ -3210,6 +3211,9 @@
           if (savedWeatherConfig) {
             const parsedConfig = JSON.parse(savedWeatherConfig);
             this.config.preferredRealLocation = !!parsedConfig.useRealLocation;
+            if (typeof parsedConfig.preferredSpecies === "string") {
+              this.config.preferredSpecies = parsedConfig.preferredSpecies;
+            }
           }
           this.config.useRealLocation = this.computeEffectiveRealWeather();
 
@@ -3224,6 +3228,16 @@
               this.syncRealWeatherToggleState();
               this.saveWeatherConfig();
               this.fetchAndUpdate();
+            });
+          }
+
+          const speciesSelect = document.getElementById("species-select");
+          if (speciesSelect) {
+            speciesSelect.value = this.config.preferredSpecies || "auto";
+            speciesSelect.addEventListener("change", (e) => {
+              this.config.preferredSpecies = e.target.value;
+              this.determineSpecies();
+              this.saveWeatherConfig();
             });
           }
 
@@ -3257,6 +3271,7 @@
             "classApp_weatherConfig",
             JSON.stringify({
               useRealLocation: this.config.preferredRealLocation,
+              preferredSpecies: this.config.preferredSpecies,
             }),
           );
         },
@@ -3270,9 +3285,18 @@
 
         determineSpecies() {
           try {
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            this.currentSpecies =
-              SPECIES_DATABASE[tz] || SPECIES_DATABASE.DEFAULT;
+            const preferredKey = this.config.preferredSpecies;
+            if (
+              preferredKey &&
+              preferredKey !== "auto" &&
+              SPECIES_DATABASE[preferredKey]
+            ) {
+              this.currentSpecies = SPECIES_DATABASE[preferredKey];
+            } else {
+              const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              this.currentSpecies =
+                SPECIES_DATABASE[tz] || SPECIES_DATABASE.DEFAULT;
+            }
           } catch (error) {
             this.currentSpecies = SPECIES_DATABASE.DEFAULT;
           }
