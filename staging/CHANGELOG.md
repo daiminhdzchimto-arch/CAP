@@ -1,3 +1,9 @@
+# [1.45.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.44.0...v1.45.0) (2026-03-24)
+
+### Features
+
+- add lazy wind effects, PWA offline support, and keyboard shortcuts ([bc8f94a](https://github.com/daiminhdzchimto-arch/CAP/commit/bc8f94a8a3e56e5442daa620443a26b9e45f7418))
+
 # [1.44.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.43.0...v1.44.0) (2026-03-24)
 
 ### Features
