@@ -469,6 +469,29 @@
         .duty-header-lg { font-size: 1rem; gap: 6px; }
         .header-input { width: 60px; font-size: 1rem; }
         .header-date-input { width: 116px; font-size: 0.95rem; }
+        #view-competition-main {
+            gap: 1rem;
+        }
+        #view-competition-main > div {
+            width: 100% !important;
+            position: static !important;
+        }
+        #view-competition-main > div:first-child {
+            order: 1;
+        }
+        #view-competition-main > div:last-child {
+            order: 2;
+        }
+        #competition-board {
+            padding: 1rem;
+        }
+        .table-scroll-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+        }
+        .comp-table {
+            min-width: 720px;
+        }
       }
 
       /* SHUFFLE MODAL */
@@ -565,7 +588,17 @@
       }
       @media (max-width: 768px) {
           #classroom-scroll-content {
-              min-width: 900px;
+              min-width: 100%;
+          }
+          #seating-layout-row {
+              flex-direction: column;
+              align-items: stretch;
+              gap: 1rem;
+          }
+          #left-rows-container,
+          #right-rows-container {
+              max-width: 100%;
+              width: 100%;
           }
           .desk-box {
               min-width: 80px;
