@@ -1,3 +1,9 @@
+## [1.46.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.46.0...v1.46.1) (2026-03-24)
+
+### Bug Fixes
+
+- improve classroom dark-mode text contrast ([b312866](https://github.com/daiminhdzchimto-arch/CAP/commit/b3128661698839708151498ee7603b47c8192e80))
+
 # [1.46.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.45.0...v1.46.0) (2026-03-24)
 
 ### Features
