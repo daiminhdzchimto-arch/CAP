@@ -1508,6 +1508,29 @@
                     ></div>
                   </label>
                 </div>
+                <div
+                  class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100"
+                >
+                  <div>
+                    <h4 class="text-sm font-semibold text-gray-700">
+                      Loài cây hiển thị
+                    </h4>
+                    <p class="text-xs text-gray-500">
+                      Chọn theo địa phương hoặc theo sở thích lớp
+                    </p>
+                  </div>
+                  <select
+                    id="species-select"
+                    class="text-xs font-semibold border border-green-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-200"
+                  >
+                    <option value="auto">Tự động theo múi giờ</option>
+                    <option value="VN">Phượng Vĩ</option>
+                    <option value="JP">Hoa Anh Đào</option>
+                    <option value="US">Cây Phong</option>
+                    <option value="EU">Sồi Châu Âu</option>
+                    <option value="DEFAULT">Bàng Đài Loan</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -2378,6 +2401,13 @@
           particleSprite: "green_leaf",
         },
       };
+      const SPECIES_PRESET_MAP = Object.values(SPECIES_DATABASE).reduce(
+        (acc, species) => {
+          acc[species.id] = species;
+          return acc;
+        },
+        {},
+      );
 
       let leftSideData = [],
         rightSideData = [];
@@ -2837,6 +2867,7 @@
         config: {
           useRealLocation: false,
           preferredRealLocation: false,
+          preferredSpeciesId: "auto",
           fallbackData: { speed: 2, deg: 180, gust: 4 },
         },
         currentSpecies: null,
@@ -2849,6 +2880,8 @@
           if (savedWeatherConfig) {
             const parsedConfig = JSON.parse(savedWeatherConfig);
             this.config.preferredRealLocation = !!parsedConfig.useRealLocation;
+            this.config.preferredSpeciesId =
+              parsedConfig.preferredSpeciesId || "auto";
           }
           this.config.useRealLocation = this.computeEffectiveRealWeather();
 
@@ -2861,19 +2894,37 @@
               this.config.preferredRealLocation = e.target.checked;
               this.config.useRealLocation = this.computeEffectiveRealWeather();
               this.syncRealWeatherToggleState();
-              localStorage.setItem(
-                "classApp_weatherConfig",
-                JSON.stringify({
-                  useRealLocation: this.config.preferredRealLocation,
-                }),
-              );
+              this.saveWeatherConfig();
               this.fetchAndUpdate();
+            });
+          }
+          const speciesSelect = document.getElementById("species-select");
+          if (speciesSelect) {
+            speciesSelect.value = this.config.preferredSpeciesId || "auto";
+            speciesSelect.addEventListener("change", (event) => {
+              this.config.preferredSpeciesId = event.target.value || "auto";
+              this.determineSpecies();
+              this.saveWeatherConfig();
+              this.applyWeather(
+                particleEngine.currentWeather || this.config.fallbackData,
+                this.config.useRealLocation,
+              );
             });
           }
 
           this.syncRealWeatherToggleState();
           this.fetchAndUpdate();
           this.initialized = true;
+        },
+
+        saveWeatherConfig() {
+          localStorage.setItem(
+            "classApp_weatherConfig",
+            JSON.stringify({
+              useRealLocation: this.config.preferredRealLocation,
+              preferredSpeciesId: this.config.preferredSpeciesId,
+            }),
+          );
         },
 
         computeEffectiveRealWeather() {
@@ -2904,12 +2955,25 @@
         },
 
         determineSpecies() {
-          try {
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (
+            this.config.preferredSpeciesId &&
+            this.config.preferredSpeciesId !== "auto"
+          ) {
             this.currentSpecies =
-              SPECIES_DATABASE[tz] || SPECIES_DATABASE.DEFAULT;
-          } catch (error) {
-            this.currentSpecies = SPECIES_DATABASE.DEFAULT;
+              SPECIES_PRESET_MAP[this.config.preferredSpeciesId] ||
+              SPECIES_DATABASE.DEFAULT;
+          } else {
+            try {
+              const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              this.currentSpecies =
+                SPECIES_DATABASE[tz] || SPECIES_DATABASE.DEFAULT;
+            } catch (error) {
+              this.currentSpecies = SPECIES_DATABASE.DEFAULT;
+            }
+          }
+          const speciesSelect = document.getElementById("species-select");
+          if (speciesSelect) {
+            speciesSelect.value = this.config.preferredSpeciesId || "auto";
           }
 
           if (
@@ -2967,10 +3031,7 @@
               this.config.useRealLocation = false;
               this.config.preferredRealLocation = false;
               this.syncRealWeatherToggleState();
-              localStorage.setItem(
-                "classApp_weatherConfig",
-                JSON.stringify({ useRealLocation: false }),
-              );
+              this.saveWeatherConfig();
               this.applyWeather(this.config.fallbackData, false);
             },
           );
