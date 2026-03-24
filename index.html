@@ -467,6 +467,12 @@
       .footer-editable:focus { border-bottom-color: #2563eb; background-color: #eff6ff; }
       .spider-web-line { margin-top: 8px; font-size: 1.35rem; color: #111827; }
       .duty-note-outside { margin-top: 10px; font-size: 1.7rem; color: #111827; font-weight: 700; padding-left: 5px; }
+      .duty-home-alert { border: 1px solid #bfdbfe; background: linear-gradient(90deg, #eff6ff 0%, #f8fafc 100%); }
+      .duty-preview-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+      .duty-preview-table th,
+      .duty-preview-table td { border: 1px solid #d1d5db; padding: 4px 6px; text-align: center; }
+      .duty-preview-table th { background: #dbeafe; font-weight: 700; color: #1e3a8a; }
+      .duty-preview-table td { background: #fff; color: #1f2937; }
       .points-badge { font-size: 0.7rem; font-weight: bold; color: white; background-color: #ef4444; padding: 1px 4px; border-radius: 4px; margin-left: 4px; display: inline-block; white-space: nowrap; }
       .day-off { background-color: #f3f4f6 !important; color: #9ca3af; font-style: italic; }
       .day-off .editable-cell { cursor: not-allowed; background-color: #f3f4f6 !important; color: #9ca3af; }
@@ -814,6 +820,13 @@
       </div>
 
       <div class="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
+        <div
+          id="duty-home-alert"
+          class="duty-home-alert hidden mb-4 rounded-xl px-4 py-3 text-sm text-blue-900 font-semibold flex items-center gap-2"
+        >
+          <i class="fas fa-bell text-blue-600"></i>
+          <span id="duty-home-alert-text">Đang tải lịch trực hôm nay...</span>
+        </div>
         <!-- TAB SEATING -->
         <div id="tab-seating" class="tab-content active">
           <div
@@ -1179,6 +1192,14 @@
                   <i class="fas fa-arrow-left"></i>
                 </button>
                 <div class="flex gap-3">
+                  <button
+                    onclick="openDutySwapPrompt()"
+                    class="btn-3d btn-3d-green duty-action-btn"
+                    aria-label="Đổi lịch nhanh giữa 2 học sinh"
+                    title="Đổi lịch nhanh"
+                  >
+                    <i class="fas fa-exchange-alt"></i>
+                  </button>
                   <button
                     onclick="toggleDayOffMode()"
                     class="btn-3d btn-3d-purple duty-action-btn"
@@ -1744,6 +1765,29 @@
                       ><input type="checkbox" id="afternoon-off" /> Chiều</label
                     >
                   </div>
+                </div>
+              </div>
+
+              <div
+                class="mt-6 bg-blue-50 p-4 rounded-xl border border-blue-100"
+              >
+                <h4 class="text-sm font-bold text-blue-800 mb-2">
+                  Xem trước lịch tuần
+                </h4>
+                <div class="table-scroll-container">
+                  <table class="duty-preview-table">
+                    <thead>
+                      <tr>
+                        <th>Thứ</th>
+                        <th>Quét lớp</th>
+                        <th>Đổ rác</th>
+                        <th>Lau bảng</th>
+                        <th>VS khu vực</th>
+                        <th>Theo dõi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="duty-preview-tbody"></tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -2503,6 +2547,16 @@
         afternoonOff = false;
       let currentSchedule = null,
         dutyDebtData = {};
+      const DUTY_DAYS = ["2", "3", "4", "5", "6", "7"];
+      const DUTY_ROLE_KEYS = [
+        "sweep",
+        "trash",
+        "board",
+        "area",
+        "closeDoor",
+        "monitorClass",
+        "monitorArea",
+      ];
       let selectedStudentSeat = null,
         isEditMode = false;
       let selectedDeskKey = null;
@@ -7300,9 +7354,17 @@
 
       function openDutyModal() {
         document.getElementById("duty-modal").classList.add("open");
+        document.getElementById("excluded-members").value =
+          excludedMembers.join("\n");
+        document
+          .querySelectorAll(".day-off-check")
+          .forEach((cb) => (cb.checked = dayOffs.includes(cb.value)));
+        document.getElementById("morning-off").checked = morningOff;
+        document.getElementById("afternoon-off").checked = afternoonOff;
         renderMiniMapDuty("mini-map-left", leftSideData, "left");
         renderMiniMapDuty("mini-map-right", rightSideData, "right");
         renderGenderList();
+        renderDutyPreview(buildDutySchedule(collectEligibleDutyStudents()));
       }
 
       function closeDutyModal() {
@@ -7350,6 +7412,8 @@
         renderMiniMapDuty("mini-map-left", leftSideData, "left");
         renderMiniMapDuty("mini-map-right", rightSideData, "right");
         renderGenderList();
+        saveDutySettings();
+        renderDutyPreview(buildDutySchedule(collectEligibleDutyStudents()));
       }
 
       function renderGenderList() {
@@ -7501,7 +7565,141 @@
         afternoonOff = document.getElementById("afternoon-off").checked;
       }
 
+      function parseDutyNamesFromCell(rawText = "") {
+        return rawText
+          .split(/[\n,;/]+/g)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function collectEligibleDutyStudents() {
+        const selectedNames = [];
+        [leftSideData, rightSideData].forEach((side, sideIndex) => {
+          side.forEach((row, rowIndex) => {
+            const key = `${sideIndex === 0 ? "left" : "right"}-${rowIndex}`;
+            if (!dutySelection[key]) return;
+            row.forEach((seat) =>
+              selectedNames.push(...getSeatEntityNames(seat)),
+            );
+          });
+        });
+        const excludedSet = new Set(
+          excludedMembers.map((name) => normalizeNameToken(name)),
+        );
+        return [...new Set(selectedNames)].filter(
+          (name) => !excludedSet.has(normalizeNameToken(name)),
+        );
+      }
+
+      function buildDutySchedule(students = []) {
+        const safeList =
+          students.length > 0 ? students : ["(chưa có)", "(chưa có)"];
+        const days = DUTY_DAYS.map((day, dayIndex) => {
+          const roles = {};
+          DUTY_ROLE_KEYS.forEach((roleKey, roleIndex) => {
+            roles[roleKey] = safeList[(dayIndex + roleIndex) % safeList.length];
+          });
+          return { day, roles };
+        });
+        return { days };
+      }
+
+      function renderDutyPreview(schedule) {
+        const previewBody = document.getElementById("duty-preview-tbody");
+        if (!previewBody) return;
+        previewBody.innerHTML = "";
+        const days = schedule?.days || [];
+        days.forEach((dayData) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><strong>T${dayData.day}</strong></td>
+            <td>${dayData.roles.sweep || ""}</td>
+            <td>${dayData.roles.trash || ""}</td>
+            <td>${dayData.roles.board || ""}</td>
+            <td>${dayData.roles.area || ""}</td>
+            <td>${dayData.roles.monitorClass || ""}</td>
+          `;
+          previewBody.appendChild(row);
+        });
+      }
+
+      function updateDutyHomeAlert() {
+        const alertWrap = document.getElementById("duty-home-alert");
+        const alertText = document.getElementById("duty-home-alert-text");
+        if (!alertWrap || !alertText) return;
+        const todayJsDay = new Date().getDay();
+        const todayDuty = todayJsDay === 0 ? "7" : String(todayJsDay + 1);
+        const row = document.querySelector(
+          `#duty-tbody tr[data-duty-day="${todayDuty}"]`,
+        );
+        if (!row) {
+          alertWrap.classList.add("hidden");
+          return;
+        }
+        const names = new Set();
+        row.querySelectorAll(".editable-cell").forEach((cell) => {
+          parseDutyNamesFromCell(cell.innerText).forEach((name) =>
+            names.add(name),
+          );
+        });
+        const dutyText = names.size
+          ? Array.from(names).join(", ")
+          : "Chưa có phân công";
+        alertText.textContent = `Hôm nay (T${todayDuty}): ${dutyText}`;
+        alertWrap.classList.remove("hidden");
+      }
+
+      function openDutySwapPrompt() {
+        const firstName = window.prompt("Nhập học sinh thứ nhất cần đổi lịch:");
+        if (!firstName || !firstName.trim()) return;
+        const secondName = window.prompt("Nhập học sinh thứ hai cần đổi lịch:");
+        if (!secondName || !secondName.trim()) return;
+        quickSwapDutyStudents(firstName.trim(), secondName.trim());
+      }
+
+      function quickSwapDutyStudents(firstName, secondName) {
+        const normA = normalizeNameToken(firstName);
+        const normB = normalizeNameToken(secondName);
+        if (normA === normB) {
+          showToast("Hai học sinh trùng nhau, không cần đổi.");
+          return;
+        }
+        let swappedCells = 0;
+        document
+          .querySelectorAll("#duty-tbody .editable-cell")
+          .forEach((cell) => {
+            const original = parseDutyNamesFromCell(cell.innerText);
+            if (!original.length) return;
+            let changed = false;
+            const swapped = original.map((name) => {
+              const norm = normalizeNameToken(name);
+              if (norm === normA) {
+                changed = true;
+                return secondName;
+              }
+              if (norm === normB) {
+                changed = true;
+                return firstName;
+              }
+              return name;
+            });
+            if (changed) {
+              cell.innerText = swapped.join(", ");
+              swappedCells += 1;
+            }
+          });
+        if (swappedCells === 0) {
+          showToast("Không tìm thấy tên để đổi trong lịch hiện tại.");
+          return;
+        }
+        updateDutyHomeAlert();
+        showToast(`Đã đổi lịch nhanh giữa ${firstName} và ${secondName}.`);
+      }
+
       function confirmDutyAssignment() {
+        saveDutySettings();
+        const students = collectEligibleDutyStudents();
+        currentSchedule = buildDutySchedule(students);
         closeDutyModal();
         document
           .getElementById("view-competition-main")
@@ -7509,26 +7707,31 @@
         document
           .getElementById("view-duty-schedule")
           .classList.remove("hidden");
-        // Simplified schedule for demo
-        renderDutyTable({ schedule: {}, cleaners: [], mode: "zero" });
+        renderDutyTable(currentSchedule);
       }
 
-      function renderDutyTable(data) {
+      function renderDutyTable(data = currentSchedule) {
         const tbody = document.getElementById("duty-tbody");
         tbody.innerHTML = "";
-        ["2", "3", "4", "5", "6", "7"].forEach((d, index) => {
+        const schedule = data?.days?.length ? data : buildDutySchedule([]);
+        schedule.days.forEach((dayData, index) => {
           const tr = document.createElement("tr");
-          tr.innerHTML = `<td class="text-xl">${d}</td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>
-                    ${index % 2 === 0 ? '<td rowspan="2"><div class="editable-cell h-full" contenteditable="true"></div></td>' : ""}
-                    <td><div class="editable-cell" contenteditable="true"></div></td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>
+          tr.dataset.dutyDay = dayData.day;
+          tr.innerHTML = `<td class="text-xl">${dayData.day}</td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
+                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>`;
           tbody.appendChild(tr);
         });
+        tbody.querySelectorAll(".editable-cell").forEach((cell) => {
+          cell.addEventListener("input", updateDutyHomeAlert);
+        });
+        updateDutyHomeAlert();
       }
 
       function backToCompetition() {
@@ -7656,6 +7859,7 @@
           studentList: document.getElementById("student-list-input").value,
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
+          dutySchedule: currentSchedule,
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
@@ -7726,6 +7930,7 @@
           studentList: document.getElementById("student-list-input").value,
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
+          dutySchedule: currentSchedule,
         };
         const blob = new Blob([JSON.stringify(data)], {
           type: "application/json",
@@ -7789,6 +7994,7 @@
               morningOff = data.dutySettings.morningOff || false;
               afternoonOff = data.dutySettings.afternoonOff || false;
             }
+            currentSchedule = data.dutySchedule || null;
             syncOverlays();
             renderAll();
             closeShareModal();
@@ -7828,6 +8034,7 @@
           morningOff = data.dutySettings.morningOff || false;
           afternoonOff = data.dutySettings.afternoonOff || false;
         }
+        currentSchedule = data.dutySchedule || null;
       }
 
       function getISOWeekNumber(date) {
@@ -8367,6 +8574,12 @@
         document
           .getElementById("school-year")
           .addEventListener("input", syncOverlays);
+        document
+          .getElementById("excluded-members")
+          .addEventListener("input", () => {
+            saveDutySettings();
+            renderDutyPreview(buildDutySchedule(collectEligibleDutyStudents()));
+          });
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
@@ -8408,6 +8621,7 @@
         }
         await applyMobileLandscapeMode();
         runPostFixChecks();
+        updateDutyHomeAlert();
         setupAutoSaveOnPageLifecycle();
         setupAutoRefresh();
         void checkForAppUpdate();
