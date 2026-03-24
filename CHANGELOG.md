@@ -1,3 +1,9 @@
+# [1.33.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.32.1...v1.33.0) (2026-03-24)
+
+### Features
+
+- **ui:** add 2.5D depth styling for classroom reference objects ([e6c80fe](https://github.com/daiminhdzchimto-arch/CAP/commit/e6c80fe86dd39e9998a24552eea9d2aff0972af2))
+
 ## [1.32.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.32.0...v1.32.1) (2026-03-22)
 
 ### Bug Fixes
