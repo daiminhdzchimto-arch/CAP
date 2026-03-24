@@ -1,3 +1,9 @@
+# [1.37.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.36.0...v1.37.0) (2026-03-24)
+
+### Features
+
+- **ui:** add descriptive tooltips for sort and header actions ([a7ed19b](https://github.com/daiminhdzchimto-arch/CAP/commit/a7ed19b04da3678a3ce0e40a8b39db1ebe8798f4))
+
 # [1.36.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.35.0...v1.36.0) (2026-03-24)
 
 ### Features
