@@ -7614,6 +7614,31 @@
       }
 
       function clearAllData() {
+        const stepOneConfirmed = confirm(
+          "⚠️ Cảnh báo: thao tác này sẽ xóa TOÀN BỘ dữ liệu đã lưu trên thiết bị này.\n\nBạn có chắc chắn muốn tiếp tục không?",
+        );
+        if (!stepOneConfirmed) {
+          showToast("Đã hủy thao tác xóa dữ liệu.");
+          return;
+        }
+
+        const confirmationKeyword = "XÓA";
+        const typedConfirmation = prompt(
+          `Bước 2/2: Để xác nhận xóa toàn bộ dữ liệu, vui lòng nhập chính xác "${confirmationKeyword}".`,
+        );
+        if (typedConfirmation === null) {
+          showToast("Đã hủy thao tác xóa dữ liệu.");
+          return;
+        }
+
+        if (
+          typedConfirmation.trim().toLocaleUpperCase("vi-VN") !==
+          confirmationKeyword
+        ) {
+          showToast("Xác nhận không đúng. Dữ liệu chưa bị xóa.");
+          return;
+        }
+
         localStorage.clear();
         location.reload();
       }
