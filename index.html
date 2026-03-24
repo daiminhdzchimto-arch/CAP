@@ -845,7 +845,7 @@
                 <i class="fas fa-cog"></i>
               </button>
               <button
-                onclick="saveData()"
+                onclick="saveAllData()"
                 class="btn-3d btn-3d-blue text-sm font-bold"
                 title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này"
                 aria-label="Lưu dữ liệu lớp học"
@@ -7092,10 +7092,17 @@
       function persistBlackboardData({ notify = false } = {}) {
         if (!blackboardFabric || isBlackboardHydrating) return;
         blackboardData = blackboardFabric.toJSON();
-        localStorage.setItem(
-          "classApp_blackboard",
-          JSON.stringify(blackboardData),
-        );
+        try {
+          localStorage.setItem(
+            "classApp_blackboard",
+            JSON.stringify(blackboardData),
+          );
+        } catch (error) {
+          console.error("[CAP] Failed to persist blackboard data:", error);
+          if (notify)
+            showToast("Không thể lưu nội dung bảng (bộ nhớ trình duyệt đầy).");
+          return;
+        }
         updateBoardTextureFromData();
         if (notify) showToast("Đã lưu nội dung bảng!");
       }
@@ -8373,6 +8380,7 @@
 
       function switchTab(t) {
         if (currentTopTab === t) return;
+        autoSaveAllData(`tab-switch:${currentTopTab}->${t}`);
         animateActionFeedback("#tab-" + t, "animate-pulse-highlight", 450);
         if (seat3DState.active) closeSeat3DView();
         const tabOrder = ["seating", "competition"];
@@ -8750,8 +8758,7 @@
 
           if (key === "s") {
             event.preventDefault();
-            saveData();
-            persistBlackboardData();
+            saveAllData();
             commitGlobalHistorySnapshot("shortcut-save");
             return;
           }
@@ -9552,17 +9559,36 @@
           shuffleHistory,
           shuffleHistoryCounter,
         };
-        localStorage.setItem("classApp_v2.5", JSON.stringify(data));
+        try {
+          localStorage.setItem("classApp_v2.5", JSON.stringify(data));
+        } catch (error) {
+          console.error("[CAP] Failed to persist class data:", error);
+          showToast("Không thể lưu dữ liệu lớp học (bộ nhớ trình duyệt đầy).");
+          return false;
+        }
         syncOverlays();
         if (notify) showToast("Đã lưu dữ liệu thành công!");
+        return true;
+      }
+
+      function saveAllData({
+        notify = true,
+        animate = true,
+        saveBlackboard = true,
+      } = {}) {
+        const classDataSaved = saveData({ notify, animate });
+        if (!classDataSaved) return false;
+        if (saveBlackboard) {
+          persistBlackboardData({ notify: false });
+        }
+        return true;
       }
 
       function autoSaveAllData(trigger = "auto") {
         const now = Date.now();
         if (now - lastAutoSaveAt < 800) return;
         lastAutoSaveAt = now;
-        saveData({ notify: false, animate: false });
-        persistBlackboardData({ notify: false });
+        saveAllData({ notify: false, animate: false, saveBlackboard: true });
         console.debug(
           `[CAP] Auto-saved (${trigger}) at ${new Date(now).toISOString()}`,
         );
