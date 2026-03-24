@@ -42,6 +42,8 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
@@ -1025,6 +1027,38 @@
                   title="Tải ảnh bảng"
                 >
                   <i class="fas fa-file-image"></i>
+                </button>
+                <button
+                  onclick="exportCompetitionReportExcel('week')"
+                  class="btn-3d btn-3d-green"
+                  aria-label="Xuất Excel tuần"
+                  title="Xuất Excel tuần"
+                >
+                  <i class="fas fa-file-excel"></i>
+                </button>
+                <button
+                  onclick="exportCompetitionReportExcel('month')"
+                  class="btn-3d btn-3d-green"
+                  aria-label="Xuất Excel tháng"
+                  title="Xuất Excel tháng"
+                >
+                  <i class="fas fa-file-excel"></i>
+                </button>
+                <button
+                  onclick="exportCompetitionReportPdf('week')"
+                  class="btn-3d btn-3d-orange"
+                  aria-label="Xuất PDF tuần"
+                  title="Xuất PDF tuần"
+                >
+                  <i class="fas fa-file-pdf"></i>
+                </button>
+                <button
+                  onclick="exportCompetitionReportPdf('month')"
+                  class="btn-3d btn-3d-orange"
+                  aria-label="Xuất PDF tháng"
+                  title="Xuất PDF tháng"
+                >
+                  <i class="fas fa-file-pdf"></i>
                 </button>
               </div>
               <div
@@ -7514,6 +7548,232 @@
               s.classList.remove("is-conflict-hidden"),
             );
           });
+      }
+
+      function normalizeFilename(value = "") {
+        return (value || "khong_xac_dinh")
+          .toString()
+          .trim()
+          .replace(/\s+/g, "_")
+          .replace(/[^\p{L}\p{N}_-]+/gu, "")
+          .slice(0, 60);
+      }
+
+      function getCompetitionPeriodLabel(period = "week") {
+        const periodType = period === "month" ? "month" : "week";
+        const dateInputs = document.querySelectorAll(
+          "#competition-board .date-input",
+        );
+        const weekValue = dateInputs[0]?.value?.trim() || "";
+        const monthValue = dateInputs[1]?.value?.trim() || "";
+        const now = new Date();
+        const fallbackWeek = `Tuan_${Math.ceil(now.getDate() / 7)}`;
+        const fallbackMonth = `Thang_${now.getMonth() + 1}_${now.getFullYear()}`;
+        const rawValue =
+          periodType === "week"
+            ? weekValue || fallbackWeek
+            : monthValue || fallbackMonth;
+        return {
+          periodType,
+          rawValue,
+          safeValue: normalizeFilename(rawValue),
+          displayValue: rawValue,
+        };
+      }
+
+      function collectCompetitionRows() {
+        const rows = [];
+        document.querySelectorAll("#competition-tbody tr").forEach((tr) => {
+          const tds = tr.querySelectorAll("td");
+          if (tds.length < 4 || tr.querySelector(".editable-cell") === null)
+            return;
+
+          const parseCell = (cell) => {
+            const editable = cell.querySelector(".editable-cell");
+            const badge = cell.querySelector(".points-badge");
+            return {
+              text: editable ? editable.innerText.trim() : "",
+              points: badge
+                ? Number.parseInt(
+                    (badge.textContent || "").replace(/\D/g, ""),
+                    10,
+                  ) || 0
+                : 0,
+            };
+          };
+
+          const achievement = parseCell(tds[2]);
+          const violation = parseCell(tds[3]);
+          rows.push({
+            stt: tds[0].innerText.trim(),
+            name: tds[1].innerText.trim(),
+            achievementText: achievement.text,
+            violationText: violation.text,
+            achievementPoints: achievement.points,
+            violationPoints: violation.points,
+          });
+        });
+        return rows;
+      }
+
+      function exportCompetitionReportExcel(period = "week") {
+        const reportRows = collectCompetitionRows();
+        if (!reportRows.length) {
+          showToast("Chưa có dữ liệu thi đua để xuất Excel.");
+          return;
+        }
+        if (!window.XLSX) {
+          showToast("Thiếu thư viện Excel. Vui lòng tải lại trang.");
+          return;
+        }
+
+        const periodInfo = getCompetitionPeriodLabel(period);
+        const classroomTitle =
+          document.getElementById("classroom-title").value || "Lop_hoc";
+        const exportedAt = new Date().toLocaleString("vi-VN");
+        const headerRows = [
+          [
+            "BÁO CÁO THI ĐUA",
+            periodInfo.periodType === "week" ? "Cuối tuần" : "Cuối tháng",
+          ],
+          ["Lớp", classroomTitle],
+          ["Kỳ báo cáo", periodInfo.displayValue],
+          ["Thời gian xuất", exportedAt],
+          [],
+          [
+            "STT",
+            "Họ và tên",
+            "Thành tích",
+            "Điểm thành tích",
+            "Vi phạm",
+            "Điểm vi phạm",
+          ],
+        ];
+        const dataRows = reportRows.map((item) => [
+          item.stt,
+          item.name,
+          item.achievementText,
+          item.achievementPoints,
+          item.violationText,
+          item.violationPoints,
+        ]);
+
+        const worksheet = XLSX.utils.aoa_to_sheet([...headerRows, ...dataRows]);
+        worksheet["!cols"] = [
+          { wch: 8 },
+          { wch: 28 },
+          { wch: 34 },
+          { wch: 16 },
+          { wch: 34 },
+          { wch: 14 },
+        ];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "BaoCaoThiDua");
+        XLSX.writeFile(
+          workbook,
+          `Bao_cao_thi_dua_${periodInfo.periodType}_${periodInfo.safeValue}_${normalizeFilename(classroomTitle)}.xlsx`,
+        );
+        showToast("Đã xuất báo cáo thi đua Excel.");
+      }
+
+      async function exportCompetitionReportPdf(period = "week") {
+        const reportRows = collectCompetitionRows();
+        if (!reportRows.length) {
+          showToast("Chưa có dữ liệu thi đua để xuất PDF.");
+          return;
+        }
+        if (!window.jspdf?.jsPDF) {
+          showToast("Thiếu thư viện PDF. Vui lòng tải lại trang.");
+          return;
+        }
+
+        const periodInfo = getCompetitionPeriodLabel(period);
+        const classroomTitle =
+          document.getElementById("classroom-title").value || "Lop_hoc";
+        const board = document.getElementById("competition-board");
+        animateActionFeedback(
+          "#competition-board",
+          "animate-flash-success",
+          380,
+        );
+
+        const canvas = await html2canvas(board, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const contentWidth = pageWidth - margin * 2;
+        const contentHeight = (canvas.height * contentWidth) / canvas.width;
+        const imageData = canvas.toDataURL("image/png");
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(14);
+        pdf.text("BAO CAO THI DUA", margin, 8);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.text(
+          `Lop: ${classroomTitle} | Ky: ${periodInfo.displayValue} | Xuat luc: ${new Date().toLocaleString("vi-VN")}`,
+          margin,
+          13,
+        );
+
+        if (contentHeight <= pageHeight - 18) {
+          pdf.addImage(
+            imageData,
+            "PNG",
+            margin,
+            16,
+            contentWidth,
+            contentHeight,
+          );
+        } else {
+          let yOffset = 0;
+          let pageNumber = 0;
+          const pixelPerPage =
+            ((pageHeight - 20) * canvas.width) / contentWidth;
+          while (yOffset < canvas.height) {
+            if (pageNumber > 0) pdf.addPage();
+            const pageCanvas = document.createElement("canvas");
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = Math.min(pixelPerPage, canvas.height - yOffset);
+            const ctx = pageCanvas.getContext("2d");
+            ctx.drawImage(
+              canvas,
+              0,
+              yOffset,
+              canvas.width,
+              pageCanvas.height,
+              0,
+              0,
+              canvas.width,
+              pageCanvas.height,
+            );
+            const pageImageData = pageCanvas.toDataURL("image/png");
+            const pageImageHeight =
+              (pageCanvas.height * contentWidth) / pageCanvas.width;
+            pdf.addImage(
+              pageImageData,
+              "PNG",
+              margin,
+              16,
+              contentWidth,
+              pageImageHeight,
+            );
+            yOffset += pixelPerPage;
+            pageNumber += 1;
+          }
+        }
+
+        pdf.save(
+          `Bao_cao_thi_dua_${periodInfo.periodType}_${periodInfo.safeValue}_${normalizeFilename(classroomTitle)}.pdf`,
+        );
+        showToast("Đã xuất báo cáo thi đua PDF.");
       }
 
       let lastAutoSaveAt = 0;
