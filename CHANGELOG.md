@@ -1,3 +1,9 @@
+# [1.42.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.41.0...v1.42.0) (2026-03-24)
+
+### Features
+
+- **weather:** add rain snow and sunshine effects from live weather ([83ba010](https://github.com/daiminhdzchimto-arch/CAP/commit/83ba010b191d259c815ea5f19359b23c13b6971f))
+
 # [1.41.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.40.0...v1.41.0) (2026-03-24)
 
 ### Features
