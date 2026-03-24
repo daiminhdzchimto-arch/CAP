@@ -1,3 +1,9 @@
+# [1.36.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.35.0...v1.36.0) (2026-03-24)
+
+### Features
+
+- **settings:** thêm dark mode trong cài đặt ([b398dea](https://github.com/daiminhdzchimto-arch/CAP/commit/b398deae757bb93247e0b30113e9803a87fae5ae))
+
 # [1.35.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.34.1...v1.35.0) (2026-03-24)
 
 ### Features
