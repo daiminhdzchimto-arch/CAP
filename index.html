@@ -43,6 +43,7 @@
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
     <style>
@@ -2067,6 +2068,20 @@
               onclick="saveBlackboard()"
             >
               <i class="fas fa-save"></i> Lưu
+            </button>
+            <button
+              class="tool-btn bg-sky-700 text-white px-3 py-1 rounded text-sm hover:bg-sky-600"
+              onclick="copyBlackboardShareLink()"
+              title="Sao chép link chia sẻ bảng đen"
+            >
+              <i class="fas fa-link"></i> Chia sẻ link
+            </button>
+            <button
+              class="tool-btn bg-rose-700 text-white px-3 py-1 rounded text-sm hover:bg-rose-600"
+              onclick="exportBlackboardToPdf()"
+              title="Xuất bảng đen sang PDF"
+            >
+              <i class="fas fa-file-pdf"></i> Xuất PDF
             </button>
           </div>
 
@@ -6765,6 +6780,121 @@
         closeBlackboardModal();
       }
 
+      function getBlackboardSharePayload() {
+        if (blackboardFabric) {
+          return blackboardFabric.toJSON();
+        }
+        return blackboardData;
+      }
+
+      function copyBlackboardShareLink() {
+        const payload = getBlackboardSharePayload();
+        if (!payload) {
+          showToast("Bảng đen đang trống, chưa có gì để chia sẻ.");
+          return;
+        }
+        try {
+          const encodedPayload = LZString.compressToEncodedURIComponent(
+            JSON.stringify(payload),
+          );
+          const shareUrl = new URL(window.location.href);
+          shareUrl.searchParams.set("bb", encodedPayload);
+          const finalLink = shareUrl.toString();
+          navigator.clipboard
+            .writeText(finalLink)
+            .then(() => showToast("Đã sao chép link bảng đen!"))
+            .catch(() => {
+              const fallbackInput = document.createElement("textarea");
+              fallbackInput.value = finalLink;
+              fallbackInput.style.position = "fixed";
+              fallbackInput.style.opacity = "0";
+              document.body.appendChild(fallbackInput);
+              fallbackInput.focus();
+              fallbackInput.select();
+              document.execCommand("copy");
+              fallbackInput.remove();
+              showToast("Đã sao chép link bảng đen!");
+            });
+        } catch (error) {
+          showToast(`Không thể tạo link chia sẻ: ${error?.message || "Lỗi."}`);
+        }
+      }
+
+      function hydrateBlackboardFromUrl() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const encodedPayload = searchParams.get("bb");
+        if (!encodedPayload) return;
+
+        try {
+          const decoded =
+            LZString.decompressFromEncodedURIComponent(encodedPayload);
+          if (!decoded) throw new Error("Mã chia sẻ không hợp lệ.");
+          const parsed = JSON.parse(decoded);
+          blackboardData = parsed;
+          localStorage.setItem("classApp_blackboard", JSON.stringify(parsed));
+          showToast("Đã nạp bảng đen từ link chia sẻ!");
+        } catch (error) {
+          showToast(
+            `Không thể đọc link chia sẻ bảng đen: ${error?.message || "Lỗi."}`,
+          );
+        } finally {
+          searchParams.delete("bb");
+          const cleanUrl = `${window.location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}${window.location.hash || ""}`;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      }
+
+      function exportBlackboardToPdf() {
+        if (!blackboardFabric) {
+          showToast("Hãy mở bảng đen trước khi xuất PDF.");
+          return;
+        }
+        const jsPdfCtor = window.jspdf?.jsPDF;
+        if (!jsPdfCtor) {
+          showToast("Không tải được thư viện PDF. Vui lòng thử lại.");
+          return;
+        }
+
+        try {
+          const pdf = new jsPdfCtor({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4",
+          });
+          const imageData = blackboardFabric.toDataURL({
+            format: "png",
+            multiplier: 2,
+          });
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          const margin = 10;
+          const targetWidth = pageWidth - margin * 2;
+          const targetHeight = pageHeight - margin * 2;
+          const boardRatio = blackboardFabric.width / blackboardFabric.height;
+
+          let drawWidth = targetWidth;
+          let drawHeight = drawWidth / boardRatio;
+          if (drawHeight > targetHeight) {
+            drawHeight = targetHeight;
+            drawWidth = drawHeight * boardRatio;
+          }
+
+          const x = (pageWidth - drawWidth) / 2;
+          const y = (pageHeight - drawHeight) / 2;
+          pdf.addImage(imageData, "PNG", x, y, drawWidth, drawHeight);
+
+          const title = (
+            document.getElementById("classroom-title")?.value || "Bang_den"
+          )
+            .trim()
+            .replace(/[^\p{L}\p{N}_-]+/gu, "_");
+          pdf.save(`Bang_den_${title || "lop_hoc"}.pdf`);
+          showToast("Đã xuất PDF bảng đen thành công!");
+        } catch (error) {
+          showToast(`Xuất PDF thất bại: ${error?.message || "Lỗi."}`);
+        }
+      }
+
       // =================================================================
       // SHUFFLE & SETTINGS
       // =================================================================
@@ -8180,6 +8310,7 @@
       // INITIALIZATION
       window.onload = async () => {
         loadData();
+        hydrateBlackboardFromUrl();
         loadBlackboardData();
         syncOverlays();
         const savedConfig = localStorage.getItem("classApp_config");
