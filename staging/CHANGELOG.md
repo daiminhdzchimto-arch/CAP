@@ -1,3 +1,9 @@
+# [1.35.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.34.1...v1.35.0) (2026-03-24)
+
+### Features
+
+- improve mobile responsive layout for seating and competition views ([247d7ef](https://github.com/daiminhdzchimto-arch/CAP/commit/247d7efea97099fa26c7b09653b5bd98c6a15795))
+
 ## [1.34.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.34.0...v1.34.1) (2026-03-24)
 
 ### Bug Fixes

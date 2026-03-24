@@ -63,6 +63,47 @@
       }
 
       body { font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; overflow-x: hidden; }
+      body.dark-mode {
+          background-color: #0b1220;
+          color: #e5e7eb;
+      }
+      body.dark-mode .bg-white,
+      body.dark-mode .bg-white\/95 {
+          background-color: #111827 !important;
+      }
+      body.dark-mode .bg-gray-50,
+      body.dark-mode .bg-gray-100 {
+          background-color: #1f2937 !important;
+      }
+      body.dark-mode .border,
+      body.dark-mode [class*="border-gray-"],
+      body.dark-mode [class*="border-blue-"] {
+          border-color: #374151 !important;
+      }
+      body.dark-mode .text-gray-400,
+      body.dark-mode .text-gray-500,
+      body.dark-mode .text-gray-600,
+      body.dark-mode .text-gray-700,
+      body.dark-mode .text-gray-800 {
+          color: #d1d5db !important;
+      }
+      body.dark-mode .modal-content {
+          background: #111827;
+          color: #e5e7eb;
+      }
+      body.dark-mode .tab-indicator {
+          background: #1f2937;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+      }
+      body.dark-mode input,
+      body.dark-mode textarea,
+      body.dark-mode select {
+          color: #e5e7eb;
+      }
+      body.dark-mode input::placeholder,
+      body.dark-mode textarea::placeholder {
+          color: #9ca3af;
+      }
       button,
       label.cursor-pointer {
           transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
@@ -1517,6 +1558,29 @@
                     <span class="jelly-slider"></span>
                   </label>
                 </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-700"
+                    >
+                      <i class="fas fa-moon"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold">Giao diện tối</div>
+                      <div class="text-[10px] text-gray-500">
+                        Giảm chói mắt khi dạy ban đêm hoặc chiếu màn hình
+                      </div>
+                    </div>
+                  </div>
+                  <label class="jelly-switch">
+                    <input
+                      type="checkbox"
+                      id="dark-mode-toggle"
+                      onchange="updateSettings()"
+                    />
+                    <span class="jelly-slider"></span>
+                  </label>
+                </div>
                 <div
                   class="flex items-center justify-between p-3 bg-gray-50 rounded-lg mt-3"
                 >
@@ -2496,6 +2560,7 @@
           showFPS: false,
           teacherView: false,
           showBottomOverlay: true,
+          darkMode: false,
         },
       };
       const POWER_SAVE_LOW_BATTERY_THRESHOLD = 0.2;
@@ -6968,6 +7033,10 @@
         overlay.classList.toggle("hidden", !config.settings.showBottomOverlay);
       }
 
+      function applyThemeMode() {
+        document.body.classList.toggle("dark-mode", !!config.settings.darkMode);
+      }
+
       function syncPowerSaveStatusUI() {
         const status = document.getElementById("power-save-status");
         const toggle = document.getElementById("power-save-toggle");
@@ -7047,12 +7116,15 @@
         config.settings.showBottomOverlay = document.getElementById(
           "bottom-overlay-toggle",
         ).checked;
+        config.settings.darkMode =
+          document.getElementById("dark-mode-toggle").checked;
 
         document.getElementById("wind-intensity-val").innerText =
           config.settings.intensity.toFixed(1) + "x";
         applyPowerSaveState();
         applyClassroomViewMode();
         applyBottomOverlayVisibility();
+        applyThemeMode();
 
         if (config.settings.windEnabled && !particleEngine.active)
           particleEngine.init();
@@ -8229,6 +8301,8 @@
             !!config.settings.teacherView;
           document.getElementById("bottom-overlay-toggle").checked =
             config.settings.showBottomOverlay !== false;
+          document.getElementById("dark-mode-toggle").checked =
+            !!config.settings.darkMode;
           document.getElementById("wind-intensity-val").innerText =
             config.settings.intensity.toFixed(1) + "x";
         }
@@ -8240,8 +8314,11 @@
           !!config.settings.teacherView;
         document.getElementById("bottom-overlay-toggle").checked =
           config.settings.showBottomOverlay !== false;
+        document.getElementById("dark-mode-toggle").checked =
+          !!config.settings.darkMode;
         applyClassroomViewMode();
         applyBottomOverlayVisibility();
+        applyThemeMode();
         renderAll();
         if (config.settings.windEnabled) particleEngine.init();
         WeatherAdapter.init();
