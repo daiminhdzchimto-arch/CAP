@@ -1,3 +1,9 @@
+# [1.47.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.46.1...v1.47.0) (2026-03-24)
+
+### Features
+
+- lưu lịch sử sắp xếp chỗ ngồi để khôi phục sơ đồ ([f7cfd73](https://github.com/daiminhdzchimto-arch/CAP/commit/f7cfd73f1b1b66e01e2a2b3cc5b0a1fb370fc09e))
+
 ## [1.46.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.46.0...v1.46.1) (2026-03-24)
 
 ### Bug Fixes
