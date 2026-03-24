@@ -7637,6 +7637,7 @@
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           shuffleHistory,
           shuffleHistoryCounter,
+          dutySchedule: currentSchedule,
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
@@ -7709,6 +7710,7 @@
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           shuffleHistory,
           shuffleHistoryCounter,
+          dutySchedule: currentSchedule,
         };
         const blob = new Blob([JSON.stringify(data)], {
           type: "application/json",
@@ -7780,6 +7782,7 @@
               data.shuffleHistoryCounter >= 0
                 ? data.shuffleHistoryCounter
                 : shuffleHistory.length;
+            currentSchedule = data.dutySchedule || null;
             syncOverlays();
             renderAll();
             closeShareModal();
@@ -7827,6 +7830,7 @@
           data.shuffleHistoryCounter >= 0
             ? data.shuffleHistoryCounter
             : shuffleHistory.length;
+        currentSchedule = data.dutySchedule || null;
       }
 
       function createDefaultArray(rows) {
