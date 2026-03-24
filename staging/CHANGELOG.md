@@ -1,3 +1,9 @@
+## [1.37.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.37.0...v1.37.1) (2026-03-24)
+
+### Bug Fixes
+
+- auto-fill current week and month on app load ([8e9e26a](https://github.com/daiminhdzchimto-arch/CAP/commit/8e9e26a3d0d681ee813c7c18b61373d3b78a8f52))
+
 # [1.37.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.36.0...v1.37.0) (2026-03-24)
 
 ### Features
