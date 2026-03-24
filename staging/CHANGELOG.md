@@ -1,3 +1,9 @@
+# [1.44.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.43.0...v1.44.0) (2026-03-24)
+
+### Features
+
+- **settings:** require 2-step confirm before clearing data ([784c1f6](https://github.com/daiminhdzchimto-arch/CAP/commit/784c1f61812c6ed2af409755b630ca14f35db37c))
+
 # [1.43.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.42.0...v1.43.0) (2026-03-24)
 
 ### Features

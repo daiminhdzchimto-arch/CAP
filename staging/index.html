@@ -36,6 +36,12 @@
       content="Quản lý lớp học hiệu quả - Sắp xếp chỗ ngồi, bảng thi đua, phân công trực nhật."
     />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CAP Classroom" />
     <script src="https://cdn.tailwindcss.com?v=3.4.17"></script>
     <link
       rel="stylesheet"
@@ -2738,6 +2744,12 @@
       };
       const AUTO_REFRESH_CHECK_INTERVAL_MS = 120000;
       let autoRefreshTimer = null;
+      const GLOBAL_HISTORY_LIMIT = 50;
+      const GLOBAL_HISTORY_DEBOUNCE_MS = 260;
+      let globalStateHistory = [];
+      let globalStateHistoryIndex = -1;
+      let globalHistoryTimer = null;
+      let isApplyingGlobalHistory = false;
       let currentAppVersion =
         document
           .querySelector("meta[name='app-version']")
@@ -3062,6 +3074,7 @@
 
         stop() {
           this.active = false;
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
         setWeather(weatherData) {
@@ -7608,8 +7621,7 @@
         applyBottomOverlayVisibility();
         applyThemeMode();
 
-        if (config.settings.windEnabled && !particleEngine.active)
-          particleEngine.init();
+        syncWindEffectsForActiveTab();
         localStorage.setItem("classApp_config", JSON.stringify(config));
       }
 
@@ -7693,6 +7705,19 @@
 
         currentTopTab = t;
         moveTopTabIndicator(t);
+        syncWindEffectsForActiveTab();
+      }
+
+      function shouldRunWindEffects() {
+        return currentTopTab === "seating" && config.settings.windEnabled;
+      }
+
+      function syncWindEffectsForActiveTab() {
+        if (shouldRunWindEffects()) {
+          if (!particleEngine.active) particleEngine.init();
+          return;
+        }
+        if (particleEngine.active) particleEngine.stop();
       }
 
       function setupTabSwipeNavigation() {
@@ -7777,6 +7802,205 @@
           tr.appendChild(point2Td);
           tbody.appendChild(tr);
         });
+      }
+
+      function captureGlobalStateSnapshot() {
+        return {
+          seating: JSON.parse(
+            JSON.stringify({ left: leftSideData, right: rightSideData }),
+          ),
+          fixedMembers: [...fixedMembers],
+          conflictGraph: Object.fromEntries(
+            Object.entries(conflictGraph).map(([key, values]) => [
+              key,
+              Array.from(values),
+            ]),
+          ),
+          titles: {
+            classroomTitle: document.getElementById("classroom-title").value,
+            schoolYear: document.getElementById("school-year").value,
+          },
+          studentList: document.getElementById("student-list-input").value,
+          genderMap: JSON.parse(JSON.stringify(genderMap || {})),
+          dutySettings: {
+            dayOffs: [...dayOffs],
+            excludedMembers: [...excludedMembers],
+            morningOff: !!morningOff,
+            afternoonOff: !!afternoonOff,
+          },
+        };
+      }
+
+      function commitGlobalHistorySnapshot(reason = "manual") {
+        if (isApplyingGlobalHistory) return;
+        const snapshot = captureGlobalStateSnapshot();
+        const serialized = JSON.stringify(snapshot);
+        const currentSerialized =
+          globalStateHistoryIndex >= 0
+            ? globalStateHistory[globalStateHistoryIndex]?.serialized
+            : "";
+        if (serialized === currentSerialized) return;
+
+        globalStateHistory = globalStateHistory.slice(
+          0,
+          globalStateHistoryIndex + 1,
+        );
+        globalStateHistory.push({ serialized, snapshot });
+        if (globalStateHistory.length > GLOBAL_HISTORY_LIMIT) {
+          const overflow = globalStateHistory.length - GLOBAL_HISTORY_LIMIT;
+          globalStateHistory.splice(0, overflow);
+        }
+        globalStateHistoryIndex = globalStateHistory.length - 1;
+        console.debug(
+          `[CAP] Snapshot lịch sử toàn cục (${reason}) #${globalStateHistoryIndex + 1}`,
+        );
+      }
+
+      function scheduleGlobalHistorySnapshot(reason = "auto") {
+        if (isApplyingGlobalHistory) return;
+        if (globalHistoryTimer) clearTimeout(globalHistoryTimer);
+        globalHistoryTimer = setTimeout(() => {
+          commitGlobalHistorySnapshot(reason);
+        }, GLOBAL_HISTORY_DEBOUNCE_MS);
+      }
+
+      function applyGlobalStateSnapshot(snapshot) {
+        if (!snapshot) return;
+        isApplyingGlobalHistory = true;
+        try {
+          leftSideData = JSON.parse(
+            JSON.stringify(snapshot.seating?.left || []),
+          );
+          rightSideData = JSON.parse(
+            JSON.stringify(snapshot.seating?.right || []),
+          );
+          fixedMembers = [...(snapshot.fixedMembers || [])];
+          conflictGraph = normalizeConflictGraphEntities(
+            snapshot.conflictGraph || {},
+          );
+          const titles = snapshot.titles || {};
+          document.getElementById("classroom-title").value =
+            titles.classroomTitle || "";
+          document.getElementById("school-year").value =
+            titles.schoolYear || "";
+          document.getElementById("student-list-input").value =
+            snapshot.studentList || "";
+          genderMap = JSON.parse(JSON.stringify(snapshot.genderMap || {}));
+          const dutySettings = snapshot.dutySettings || {};
+          dayOffs = [...(dutySettings.dayOffs || [])];
+          excludedMembers = [...(dutySettings.excludedMembers || [])];
+          morningOff = !!dutySettings.morningOff;
+          afternoonOff = !!dutySettings.afternoonOff;
+          syncOverlays();
+          renderAll();
+          saveData({ notify: false, animate: false });
+        } finally {
+          isApplyingGlobalHistory = false;
+        }
+      }
+
+      function undoGlobalState() {
+        if (globalStateHistoryIndex <= 0) {
+          showToast("Không còn bước undo.");
+          return;
+        }
+        globalStateHistoryIndex -= 1;
+        applyGlobalStateSnapshot(
+          globalStateHistory[globalStateHistoryIndex]?.snapshot,
+        );
+        showToast("Đã undo toàn cục.");
+      }
+
+      function redoGlobalState() {
+        if (globalStateHistoryIndex >= globalStateHistory.length - 1) {
+          showToast("Không còn bước redo.");
+          return;
+        }
+        globalStateHistoryIndex += 1;
+        applyGlobalStateSnapshot(
+          globalStateHistory[globalStateHistoryIndex]?.snapshot,
+        );
+        showToast("Đã redo toàn cục.");
+      }
+
+      function isEditableTarget(target) {
+        if (!(target instanceof HTMLElement)) return false;
+        if (target.isContentEditable) return true;
+        const tagName = target.tagName;
+        if (tagName === "TEXTAREA") return true;
+        if (tagName !== "INPUT") return false;
+        const type = (target.getAttribute("type") || "text").toLowerCase();
+        return !["checkbox", "radio", "button", "submit", "reset"].includes(
+          type,
+        );
+      }
+
+      function setupKeyboardShortcuts() {
+        document.addEventListener("keydown", (event) => {
+          const key = event.key.toLowerCase();
+          const withModifier = event.ctrlKey || event.metaKey;
+          if (!withModifier) return;
+          const blackboardModal = document.getElementById("blackboard-modal");
+          const isBlackboardOpen = blackboardModal?.classList.contains("open");
+          const editableTarget = isEditableTarget(event.target);
+
+          if (key === "s") {
+            event.preventDefault();
+            saveData();
+            persistBlackboardData();
+            commitGlobalHistorySnapshot("shortcut-save");
+            return;
+          }
+
+          if (key === "z" && !event.shiftKey) {
+            if (isBlackboardOpen) {
+              event.preventDefault();
+              undoBlackboard();
+              return;
+            }
+            if (editableTarget) return;
+            event.preventDefault();
+            undoGlobalState();
+            return;
+          }
+
+          if (
+            (key === "y" && !event.shiftKey) ||
+            (key === "z" && event.shiftKey)
+          ) {
+            if (isBlackboardOpen) {
+              event.preventDefault();
+              redoBlackboard();
+              return;
+            }
+            if (editableTarget) return;
+            event.preventDefault();
+            redoGlobalState();
+          }
+        });
+      }
+
+      function setupGlobalHistoryTracking() {
+        const snapshotSignals = ["input", "change", "click"];
+        snapshotSignals.forEach((signalName) => {
+          document.addEventListener(
+            signalName,
+            () => {
+              scheduleGlobalHistorySnapshot(`event-${signalName}`);
+            },
+            true,
+          );
+        });
+      }
+
+      async function registerServiceWorker() {
+        if (!("serviceWorker" in navigator)) return;
+        try {
+          await navigator.serviceWorker.register("./sw.js");
+          console.info("[PWA] Service Worker đã đăng ký thành công.");
+        } catch (error) {
+          console.warn("[PWA] Không thể đăng ký Service Worker:", error);
+        }
       }
 
       function updatePoints(el) {
@@ -9005,8 +9229,9 @@
         applyBottomOverlayVisibility();
         applyThemeMode();
         renderAll();
-        if (config.settings.windEnabled) particleEngine.init();
+        syncWindEffectsForActiveTab();
         WeatherAdapter.init();
+        await registerServiceWorker();
 
         // Sync overlays on input
         document
@@ -9024,6 +9249,9 @@
         setupInteractiveButtonAnimations();
         setupTitleInputAnimations();
         setupTabSwipeNavigation();
+        setupKeyboardShortcuts();
+        setupGlobalHistoryTracking();
+        commitGlobalHistorySnapshot("initial-load");
 
         // Lucide icons
         lucide.createIcons();
