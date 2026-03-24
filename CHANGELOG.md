@@ -1,3 +1,9 @@
+## [1.53.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.0...v1.53.1) (2026-03-24)
+
+### Bug Fixes
+
+- **ui:** soften desk name focus highlight ([d4ea804](https://github.com/daiminhdzchimto-arch/CAP/commit/d4ea804fb9b93c0a17f86fe9bb7beb05d875d165))
+
 # [1.53.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.52.0...v1.53.0) (2026-03-24)
 
 ### Features
