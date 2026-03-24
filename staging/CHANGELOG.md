@@ -1,3 +1,9 @@
+## [1.53.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.2...v1.53.3) (2026-03-24)
+
+### Bug Fixes
+
+- **ui:** restore desk action icons visibility on left seating row ([f30d1b1](https://github.com/daiminhdzchimto-arch/CAP/commit/f30d1b1cdb06abf0c6bef88d27984b7dc92d9fa4))
+
 ## [1.53.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.1...v1.53.2) (2026-03-24)
 
 ### Bug Fixes
