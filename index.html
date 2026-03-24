@@ -1998,6 +1998,12 @@
             >Hiệu ứng: Lá &amp; gió</span
           >
         </div>
+        <div class="flex items-center gap-3 text-gray-700">
+          <i data-lucide="map-pin" class="w-4 h-4 text-rose-500"></i>
+          <span id="weather-city-text" class="font-medium text-gray-500"
+            >Chưa dùng vị trí thực</span
+          >
+        </div>
         <div class="flex items-center gap-2 mt-1 pt-2 border-t border-gray-100">
           <span
             class="w-2.5 h-2.5 rounded-full bg-gray-400 shadow-sm"
@@ -3279,13 +3285,13 @@
           this.updateUIStatus("loading", "Đang tải...");
 
           if (!this.config.useRealLocation) {
-            this.applyWeather(this.config.fallbackData, false);
+            this.applyWeather(this.config.fallbackData, false, null);
             return;
           }
 
           if (!navigator.geolocation) {
             showToast("Trình duyệt không hỗ trợ lấy vị trí!");
-            this.applyWeather(this.config.fallbackData, false);
+            this.applyWeather(this.config.fallbackData, false, null);
             return;
           }
 
@@ -3313,13 +3319,14 @@
                   effectMode: mappedEffect.mode,
                   effectLabel: mappedEffect.label,
                 };
+                const cityName = await this.resolveCityName(lat, lon);
 
-                this.applyWeather(realWeather, true);
+                this.applyWeather(realWeather, true, cityName);
                 showToast(`Đã cập nhật thời tiết thực: ${mappedEffect.short}!`);
               } catch (error) {
                 console.error("Open-Meteo Error:", error);
                 showToast("Lỗi tải thời tiết, dùng giả lập.");
-                this.applyWeather(this.config.fallbackData, false);
+                this.applyWeather(this.config.fallbackData, false, null);
               }
             },
             (error) => {
@@ -3334,12 +3341,33 @@
                 "classApp_weatherConfig",
                 JSON.stringify({ useRealLocation: false }),
               );
-              this.applyWeather(this.config.fallbackData, false);
+              this.applyWeather(this.config.fallbackData, false, null);
             },
           );
         },
 
-        applyWeather(weather, isLive) {
+        async resolveCityName(lat, lon) {
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=vi,en`,
+            );
+            if (!res.ok) return null;
+            const data = await res.json();
+            const address = data?.address || {};
+            return (
+              address.city ||
+              address.town ||
+              address.county ||
+              address.state ||
+              null
+            );
+          } catch (error) {
+            console.warn("Resolve city name failed:", error);
+            return null;
+          }
+        },
+
+        applyWeather(weather, isLive, cityName = null) {
           document.getElementById("weather-speed-text").innerText =
             `${weather.speed} m/s`;
           document.getElementById("weather-gust-text").innerText =
@@ -3352,6 +3380,7 @@
           const effectLabel = weather.effectLabel || "Hiệu ứng: Lá & gió";
           const effectMode = weather.effectMode || "leaf";
           weatherEffectText.innerText = effectLabel;
+          const weatherCityText = document.getElementById("weather-city-text");
           weatherEffectText.classList.remove(
             "weather-mode-rain",
             "weather-mode-snow",
@@ -3361,8 +3390,16 @@
           weatherEffectText.classList.add(`weather-mode-${effectMode}`);
 
           if (isLive) {
+            weatherCityText.innerText = cityName
+              ? `Thành phố: ${cityName}`
+              : "Thành phố: Vị trí hiện tại";
+            weatherCityText.classList.remove("text-gray-500");
+            weatherCityText.classList.add("text-gray-700");
             this.updateUIStatus("live", "Live (Gió thực)");
           } else {
+            weatherCityText.innerText = "Chưa dùng vị trí thực";
+            weatherCityText.classList.remove("text-gray-700");
+            weatherCityText.classList.add("text-gray-500");
             this.updateUIStatus("offline", "Mặc định (Giả lập)");
           }
 
