@@ -1,3 +1,9 @@
+# [1.46.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.45.0...v1.46.0) (2026-03-24)
+
+### Features
+
+- add QR code sharing for CAP share code ([0fdbdd8](https://github.com/daiminhdzchimto-arch/CAP/commit/0fdbdd87008df0b73536f7056b8e638f6c5243e2))
+
 # [1.45.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.44.0...v1.45.0) (2026-03-24)
 
 ### Features
