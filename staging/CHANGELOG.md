@@ -1,3 +1,9 @@
+# [1.49.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.48.0...v1.49.0) (2026-03-24)
+
+### Features
+
+- **weather:** allow selecting tree species manually ([3d89b6d](https://github.com/daiminhdzchimto-arch/CAP/commit/3d89b6dc55da1dca658a970e3c1f4544ed6cbad8))
+
 # [1.48.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.47.0...v1.48.0) (2026-03-24)
 
 ### Features

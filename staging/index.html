@@ -1104,6 +1104,31 @@
               class="flex-1 bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center"
             >
               <div class="w-full flex justify-end mb-4 items-center gap-3">
+                <select
+                  id="competition-report-period"
+                  class="border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold bg-white text-gray-700"
+                  aria-label="Chọn kỳ báo cáo thi đua"
+                  title="Chọn kỳ báo cáo"
+                >
+                  <option value="week">Cuối tuần</option>
+                  <option value="month">Cuối tháng</option>
+                </select>
+                <button
+                  onclick="exportCompetitionExcel()"
+                  class="btn-3d btn-3d-green"
+                  aria-label="Xuất báo cáo Excel"
+                  title="Xuất báo cáo Excel"
+                >
+                  <i class="fas fa-file-excel"></i>
+                </button>
+                <button
+                  onclick="exportCompetitionPdf()"
+                  class="btn-3d btn-3d-purple"
+                  aria-label="Xuất báo cáo PDF"
+                  title="Xuất báo cáo PDF"
+                >
+                  <i class="fas fa-file-pdf"></i>
+                </button>
                 <details
                   class="text-xs text-gray-600 border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-50 max-w-xl"
                 >
@@ -8287,6 +8312,214 @@
           badge.innerText = total + "đ";
           cell.appendChild(badge);
         }
+      }
+
+      function getCompetitionReportPeriod() {
+        return (
+          document.getElementById("competition-report-period")?.value || "week"
+        );
+      }
+
+      function escapeCsvCell(value) {
+        const normalized = String(value ?? "")
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n")
+          .trim();
+        return `"${normalized.replace(/"/g, '""')}"`;
+      }
+
+      function getCompetitionRowsData() {
+        const tbody = document.getElementById("competition-tbody");
+        if (!tbody) return [];
+
+        return Array.from(tbody.querySelectorAll("tr"))
+          .map((row) => {
+            const cells = row.querySelectorAll("td");
+            if (cells.length < 4) return null;
+            const name = cells[1]?.innerText?.trim() || "";
+            if (!name) return null;
+            const achievement = cells[2]?.querySelector(".editable-cell");
+            const violation = cells[3]?.querySelector(".editable-cell");
+            return {
+              stt: cells[0]?.innerText?.trim() || "",
+              name,
+              achievement: achievement?.innerText?.trim() || "",
+              violation: violation?.innerText?.trim() || "",
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function getCompetitionReportMeta() {
+        const period = getCompetitionReportPeriod();
+        const classroomTitle =
+          document.getElementById("classroom-title")?.value?.trim() ||
+          "Lớp chưa đặt tên";
+        const schoolYear =
+          document.getElementById("school-year")?.value?.trim() || "...";
+        const weekValue =
+          document.getElementById("competition-week-input")?.value?.trim() ||
+          "...";
+        const monthValue =
+          document.getElementById("competition-month-input")?.value?.trim() ||
+          "...";
+        const generatedAt = new Date().toLocaleString("vi-VN");
+        const periodLabel =
+          period === "month"
+            ? `Tháng ${monthValue}`
+            : `Tuần ${weekValue} (tháng ${monthValue})`;
+        return {
+          period,
+          periodLabel,
+          classroomTitle,
+          schoolYear,
+          generatedAt,
+          weekValue,
+          monthValue,
+        };
+      }
+
+      function exportCompetitionExcel() {
+        const rows = getCompetitionRowsData();
+        if (!rows.length) {
+          showToast("Chưa có dữ liệu thi đua để xuất Excel.");
+          return;
+        }
+
+        const meta = getCompetitionReportMeta();
+        const csvLines = [
+          escapeCsvCell("BÁO CÁO THI ĐUA"),
+          escapeCsvCell(`${meta.classroomTitle} - Năm học: ${meta.schoolYear}`),
+          escapeCsvCell(`Kỳ báo cáo: ${meta.periodLabel}`),
+          escapeCsvCell(`Xuất lúc: ${meta.generatedAt}`),
+          "",
+          [
+            "STT",
+            "Họ và tên",
+            "Thành tích",
+            "Vi phạm",
+            "Tổng điểm thành tích",
+            "Tổng điểm vi phạm",
+          ]
+            .map(escapeCsvCell)
+            .join(","),
+          ...rows.map((row) => {
+            const achievementPoints = sumNumericTokens(row.achievement);
+            const violationPoints = sumNumericTokens(row.violation);
+            return [
+              row.stt,
+              row.name,
+              row.achievement,
+              row.violation,
+              achievementPoints,
+              violationPoints,
+            ]
+              .map(escapeCsvCell)
+              .join(",");
+          }),
+        ];
+
+        const blob = new Blob(["\uFEFF" + csvLines.join("\n")], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const filePrefix = meta.period === "month" ? "thang" : "tuan";
+        link.href = url;
+        link.download = `Bao_cao_thi_dua_${filePrefix}_${generateComplexID(8)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        showToast("Đã xuất báo cáo Excel (CSV) thành công!");
+      }
+
+      function exportCompetitionPdf() {
+        const rows = getCompetitionRowsData();
+        if (!rows.length) {
+          showToast("Chưa có dữ liệu thi đua để xuất PDF.");
+          return;
+        }
+
+        const meta = getCompetitionReportMeta();
+        const reportWindow = window.open("", "_blank");
+        if (!reportWindow) {
+          showToast("Không thể mở cửa sổ in PDF. Hãy cho phép pop-up.");
+          return;
+        }
+
+        const tableRows = rows
+          .map((row) => {
+            const achievementPoints = sumNumericTokens(row.achievement);
+            const violationPoints = sumNumericTokens(row.violation);
+            return `<tr>
+              <td>${escapeHtml(row.stt)}</td>
+              <td>${escapeHtml(row.name)}</td>
+              <td>${escapeHtml(row.achievement)}</td>
+              <td>${escapeHtml(row.violation)}</td>
+              <td>${achievementPoints}</td>
+              <td>${violationPoints}</td>
+            </tr>`;
+          })
+          .join("");
+
+        reportWindow.document.write(`
+          <!doctype html>
+          <html lang="vi">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Báo cáo thi đua - ${escapeHtml(meta.periodLabel)}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; color: #111827; }
+              h1 { margin-bottom: 6px; font-size: 24px; }
+              .sub { margin: 2px 0; color: #374151; }
+              table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+              th, td { border: 1px solid #374151; padding: 8px; text-align: left; vertical-align: top; }
+              th { background: #e5e7eb; font-weight: 700; }
+              @media print {
+                body { padding: 8px; }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>BÁO CÁO THI ĐUA</h1>
+            <p class="sub"><strong>Lớp:</strong> ${escapeHtml(meta.classroomTitle)}</p>
+            <p class="sub"><strong>Năm học:</strong> ${escapeHtml(meta.schoolYear)}</p>
+            <p class="sub"><strong>Kỳ báo cáo:</strong> ${escapeHtml(meta.periodLabel)}</p>
+            <p class="sub"><strong>Thời điểm xuất:</strong> ${escapeHtml(meta.generatedAt)}</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Họ và tên</th>
+                  <th>Thành tích</th>
+                  <th>Vi phạm</th>
+                  <th>Điểm thành tích</th>
+                  <th>Điểm vi phạm</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </body>
+          </html>
+        `);
+        reportWindow.document.close();
+        reportWindow.focus();
+        reportWindow.print();
+        showToast("Đã mở cửa sổ in. Chọn 'Save as PDF' để lưu báo cáo.");
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function sumNumericTokens(text) {
+        const matches = String(text ?? "").match(/\d+/g);
+        if (!matches) return 0;
+        return matches.reduce((sum, token) => sum + Number(token), 0);
       }
 
       function openDutyModal() {
