@@ -1,3 +1,9 @@
+# [1.52.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.51.0...v1.52.0) (2026-03-24)
+
+### Features
+
+- **weather:** add city label and reverse geocoding fallback ([7ff5618](https://github.com/daiminhdzchimto-arch/CAP/commit/7ff5618570540360a3994d9017d7e2523ff35d3a))
+
 # [1.51.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.50.0...v1.51.0) (2026-03-24)
 
 ### Features
