@@ -3222,12 +3222,7 @@
               this.config.preferredRealLocation = e.target.checked;
               this.config.useRealLocation = this.computeEffectiveRealWeather();
               this.syncRealWeatherToggleState();
-              localStorage.setItem(
-                "classApp_weatherConfig",
-                JSON.stringify({
-                  useRealLocation: this.config.preferredRealLocation,
-                }),
-              );
+              this.saveWeatherConfig();
               this.fetchAndUpdate();
             });
           }
@@ -3255,6 +3250,15 @@
           toggle.title = forcedOff
             ? "Thời tiết thực tạm tắt để tiết kiệm pin."
             : "";
+        },
+
+        saveWeatherConfig() {
+          localStorage.setItem(
+            "classApp_weatherConfig",
+            JSON.stringify({
+              useRealLocation: this.config.preferredRealLocation,
+            }),
+          );
         },
 
         refreshWeatherMode() {
@@ -3337,11 +3341,8 @@
               this.config.useRealLocation = false;
               this.config.preferredRealLocation = false;
               this.syncRealWeatherToggleState();
-              localStorage.setItem(
-                "classApp_weatherConfig",
-                JSON.stringify({ useRealLocation: false }),
-              );
-              this.applyWeather(this.config.fallbackData, false, null);
+              this.saveWeatherConfig();
+              this.applyWeather(this.config.fallbackData, false);
             },
           );
         },
