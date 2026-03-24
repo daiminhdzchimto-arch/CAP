@@ -291,6 +291,63 @@
       .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
       .teacher-desk-box:hover .teacher-view-3d-btn,
       .teacher-desk-box:focus-within .teacher-view-3d-btn { opacity: 1; pointer-events: auto; }
+      .classroom-object-3d {
+          position: relative;
+          isolation: isolate;
+          transform-style: preserve-3d;
+          transform-origin: center bottom;
+          transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
+      }
+      .classroom-object-3d::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          border-radius: inherit;
+          transform: translate3d(5px, 5px, -1px);
+          pointer-events: none;
+      }
+      .classroom-object-3d::after {
+          content: '';
+          position: absolute;
+          left: 8%;
+          right: 8%;
+          bottom: -13px;
+          height: 14px;
+          z-index: -2;
+          border-radius: 9999px;
+          background: rgba(15, 23, 42, 0.36);
+          filter: blur(8px);
+          pointer-events: none;
+      }
+      .classroom-object-3d:hover {
+          filter: saturate(1.04);
+      }
+      .door-3d {
+          transform: perspective(900px) rotateX(18deg) rotateY(-20deg) translateZ(0);
+          box-shadow: 0 14px 24px rgba(15, 23, 42, 0.26);
+      }
+      .door-3d::before { background: linear-gradient(135deg, #5b2c14 0%, #3b1d0d 100%); }
+      .board-3d {
+          transform: perspective(1000px) rotateX(22deg) rotateY(0deg) translateZ(0);
+          box-shadow: 0 16px 28px rgba(15, 23, 42, 0.3);
+      }
+      .board-3d::before { background: linear-gradient(135deg, #1f2937 0%, #0b1220 100%); }
+      .desk-3d {
+          transform: perspective(1000px) rotateX(20deg) rotateY(16deg) translateZ(0);
+          box-shadow: 0 16px 28px rgba(15, 23, 42, 0.3);
+      }
+      .desk-3d::before { background: linear-gradient(135deg, #b45309 0%, #78350f 100%); }
+      .group:hover .door-3d {
+          transform: perspective(900px) rotateX(18deg) rotateY(-20deg) translateY(-3px);
+      }
+      .group:hover .board-3d {
+          transform: perspective(1000px) rotateX(22deg) rotateY(0deg) translateY(-3px);
+      }
+      .group:hover .desk-3d,
+      .teacher-desk-box:hover.desk-3d {
+          transform: perspective(1000px) rotateX(20deg) rotateY(16deg) translateY(-3px);
+      }
 
       .wood-texture {
           background-image: repeating-linear-gradient(
@@ -786,7 +843,7 @@
                 <div class="flex flex-col items-center gap-2 text-gray-500">
                   <div class="relative group cursor-pointer mt-1">
                     <div
-                      class="w-24 h-16 bg-stone-800 rounded-lg shadow-lg p-1 flex gap-0.5 relative transition-transform duration-300 group-hover:-translate-y-0.5"
+                      class="classroom-object-3d door-3d w-24 h-16 bg-stone-800 rounded-lg shadow-lg p-1 flex gap-0.5 relative"
                     >
                       <div
                         class="w-1/2 h-full bg-gradient-to-r from-orange-900 to-[#7a3b1a] rounded-sm relative wood-texture shadow-[inset_2px_0_4px_rgba(0,0,0,0.35)] overflow-hidden"
@@ -817,7 +874,7 @@
                   onclick="openBlackboardModal()"
                 >
                   <div
-                    class="w-full h-12 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-lg board-shadow border-2 border-[#334155] flex items-center justify-center relative transition-transform duration-300 group-hover:-translate-y-0.5"
+                    class="classroom-object-3d board-3d w-full h-12 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-lg board-shadow border-2 border-[#334155] flex items-center justify-center relative"
                   >
                     <div
                       class="absolute inset-1 border border-slate-600/50 rounded-sm"
@@ -838,7 +895,7 @@
 
                 <div class="flex flex-col items-center gap-2 text-gray-500">
                   <div
-                    class="teacher-desk-box w-32 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg shadow-lg relative wood-texture border border-amber-300/40 ring-2 ring-black/5 overflow-hidden"
+                    class="teacher-desk-box classroom-object-3d desk-3d w-32 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg shadow-lg relative wood-texture border border-amber-300/40 ring-2 ring-black/5 overflow-hidden"
                   >
                     <div
                       class="absolute top-2 left-2 w-8 h-6 flex flex-col items-center"
