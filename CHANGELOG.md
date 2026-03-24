@@ -1,3 +1,9 @@
+# [1.41.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.40.0...v1.41.0) (2026-03-24)
+
+### Features
+
+- **blackboard:** realtime latex preview and formula suggestions ([b7a2fd5](https://github.com/daiminhdzchimto-arch/CAP/commit/b7a2fd55bedae2f93647a6784319b107fd66594d))
+
 # [1.40.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.39.0...v1.40.0) (2026-03-24)
 
 ### Features
