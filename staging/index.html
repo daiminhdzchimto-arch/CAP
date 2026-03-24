@@ -1079,6 +1079,10 @@
                   class="flex flex-col gap-6 w-full max-w-md"
                 ></div>
               </div>
+              <div
+                id="special-desks-container"
+                class="w-full mt-5 flex flex-wrap justify-center gap-3"
+              ></div>
             </div>
           </div>
         </div>
@@ -1738,6 +1742,86 @@
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div class="pt-4 border-t">
+              <h3
+                class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest"
+              >
+                Cấu hình sơ đồ lớp
+              </h3>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="text-xs font-semibold text-gray-600"
+                  >Hàng trái
+                  <input
+                    type="number"
+                    id="layout-left-rows"
+                    min="1"
+                    max="12"
+                    class="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+                  />
+                </label>
+                <label class="text-xs font-semibold text-gray-600"
+                  >Cột trái
+                  <input
+                    type="number"
+                    id="layout-left-cols"
+                    min="1"
+                    max="8"
+                    class="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+                  />
+                </label>
+                <label class="text-xs font-semibold text-gray-600"
+                  >Hàng phải
+                  <input
+                    type="number"
+                    id="layout-right-rows"
+                    min="1"
+                    max="12"
+                    class="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+                  />
+                </label>
+                <label class="text-xs font-semibold text-gray-600"
+                  >Cột phải
+                  <input
+                    type="number"
+                    id="layout-right-cols"
+                    min="1"
+                    max="8"
+                    class="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+                  />
+                </label>
+              </div>
+              <label class="mt-3 block text-xs font-semibold text-gray-600"
+                >Hình dạng phòng
+                <select
+                  id="layout-room-shape"
+                  class="mt-1 w-full px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="rectangle">Hình chữ nhật (2 dãy)</option>
+                  <option value="u-shape">Hình chữ U</option>
+                  <option value="circle">Hình tròn</option>
+                  <option value="group">Bàn nhóm tự do</option>
+                </select>
+              </label>
+              <div class="mt-3 flex gap-2">
+                <button
+                  onclick="applyLayoutConfig()"
+                  class="flex-1 px-3 py-2 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Áp dụng sơ đồ
+                </button>
+                <button
+                  onclick="addSpecialDesk()"
+                  class="px-3 py-2 text-xs font-bold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 border border-indigo-100"
+                >
+                  + Bàn đặc biệt
+                </button>
+              </div>
+              <div
+                id="special-desks-list"
+                class="mt-3 space-y-2 max-h-36 overflow-y-auto pr-1"
+              ></div>
             </div>
 
             <div class="pt-4 border-t">
@@ -2496,7 +2580,8 @@
       // =================================================================
       // CONSTANTS & STATE
       // =================================================================
-      const ROW_COUNT = 6;
+      const DEFAULT_ROWS = 6;
+      const DEFAULT_COLS = 4;
       const DUTY_DEBT_KEY = "classApp_duty_debt";
       const VN_CHARS =
         "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
@@ -2752,6 +2837,16 @@
 
       let leftSideData = [],
         rightSideData = [];
+      const DEFAULT_LAYOUT_META = {
+        version: 2,
+        roomShape: "rectangle",
+        leftRows: DEFAULT_ROWS,
+        leftCols: DEFAULT_COLS,
+        rightRows: DEFAULT_ROWS,
+        rightCols: DEFAULT_COLS,
+      };
+      let layoutMeta = { ...DEFAULT_LAYOUT_META };
+      let specialDesks = [];
       let swapSource = null,
         dragSeatSource = null,
         dutySelection = {},
@@ -3626,9 +3721,31 @@
       // =================================================================
       // CORE UI & SEATING LOGIC
       // =================================================================
+      function clampInt(value, min, max, fallback) {
+        const parsed = parseInt(value, 10);
+        if (!Number.isFinite(parsed)) return fallback;
+        return Math.max(min, Math.min(max, parsed));
+      }
+
+      function sanitizeLayoutMeta(meta = {}) {
+        return {
+          version: 2,
+          roomShape: String(meta.roomShape || "rectangle"),
+          leftRows: clampInt(meta.leftRows, 1, 12, DEFAULT_ROWS),
+          leftCols: clampInt(meta.leftCols, 1, 8, DEFAULT_COLS),
+          rightRows: clampInt(meta.rightRows, 1, 12, DEFAULT_ROWS),
+          rightCols: clampInt(meta.rightCols, 1, 8, DEFAULT_COLS),
+        };
+      }
+
+      function getSideColumnCount(side) {
+        return side === "left" ? layoutMeta.leftCols : layoutMeta.rightCols;
+      }
+
       function renderAll() {
         renderSide("left-rows-container", leftSideData, "left");
         renderSide("right-rows-container", rightSideData, "right");
+        renderSpecialDesks();
         applyDeskSelectionState();
         updateStatusUI();
         checkAllConflicts();
@@ -3724,16 +3841,16 @@
         data.forEach((row, ri) => {
           const div = document.createElement("div");
           div.className = "flex w-full gap-2 relative row-container";
+          const totalWidth = Math.max(
+            1,
+            row.reduce(
+              (sum, seat) =>
+                sum + (Number.isFinite(seat?.width) ? seat.width : 1),
+              0,
+            ),
+          );
           row.forEach((seat, si) => {
             const cell = document.createElement("div");
-            const w =
-              seat.width === 1
-                ? "w-1/4"
-                : seat.width === 2
-                  ? "w-2/4"
-                  : seat.width === 3
-                    ? "w-3/4"
-                    : "w-full";
             const isSrc =
               swapSource &&
               swapSource.side === side &&
@@ -3742,7 +3859,9 @@
             const isFixed = fixedMembers.includes(seat.id);
             const hasConflict = seat.hasConflict;
 
-            cell.className = `${w} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged ? "merged" : ""} ${isSrc ? "swap-selected" : ""} ${isFixed ? "is-fixed" : ""} ${hasConflict ? "has-conflict" : ""}`;
+            cell.className = `desk-box min-h-16 h-auto rounded-xl relative ${seat.merged ? "merged" : ""} ${isSrc ? "swap-selected" : ""} ${isFixed ? "is-fixed" : ""} ${hasConflict ? "has-conflict" : ""}`;
+            const seatWidth = Number.isFinite(seat?.width) ? seat.width : 1;
+            cell.style.flex = `0 0 ${(seatWidth / totalWidth) * 100}%`;
             cell.dataset.side = side;
             cell.dataset.r = ri;
             cell.dataset.c = si;
@@ -3947,6 +4066,41 @@
         scheduleDeskInputsFit(c);
       }
 
+      function renderSpecialDesks() {
+        const container = document.getElementById("special-desks-container");
+        if (!container) return;
+        container.innerHTML = "";
+        specialDesks.forEach((desk) => {
+          const card = document.createElement("div");
+          card.className = `relative rounded-xl border px-3 py-2 min-w-[200px] bg-white/95 shadow-sm ${
+            desk.hasConflict ? "border-red-400" : "border-indigo-200"
+          }`;
+          const studentNames = Array.isArray(desk.students)
+            ? desk.students.filter(Boolean)
+            : splitSeatNames(desk.name || "");
+          const title = desk.name || "Bàn đặc biệt";
+          const subtitle = `${desk.type || "special"} • ${studentNames.length || desk.seats || 0} chỗ`;
+          card.innerHTML = `
+            <button type="button" class="absolute top-1 right-1 text-red-500 hover:text-red-700" data-delete-special="${desk.id}" title="Xóa bàn đặc biệt">
+              <i class="fas fa-times"></i>
+            </button>
+            <div class="text-xs font-black text-indigo-700">${title}</div>
+            <div class="text-[10px] text-gray-500 mb-1">${subtitle}</div>
+            <div class="text-xs text-gray-700 whitespace-pre-wrap">${studentNames.join(", ") || "Chưa có học sinh"}</div>
+          `;
+          const deleteBtn = card.querySelector("[data-delete-special]");
+          if (deleteBtn) {
+            deleteBtn.onclick = () => {
+              specialDesks = specialDesks.filter((item) => item.id !== desk.id);
+              refreshSpecialDesksSettingsList();
+              renderAll();
+              saveData({ notify: false, animate: false });
+            };
+          }
+          container.appendChild(card);
+        });
+      }
+
       function scheduleDeskInputsFit(container) {
         if (!container || deskInputFitQueue.has(container)) return;
 
@@ -4028,6 +4182,12 @@
         const names = [...leftSideData.flat(), ...rightSideData.flat()].flatMap(
           (seat) => getSeatEntityNames(seat),
         );
+        specialDesks.forEach((desk) => {
+          const students = Array.isArray(desk.students)
+            ? desk.students
+            : splitSeatNames(desk.name || "");
+          names.push(...students.filter(Boolean));
+        });
         return [...new Set(names)];
       }
 
@@ -6257,8 +6417,16 @@
         );
       }
       function resetLayout() {
-        leftSideData = createDefaultArray(ROW_COUNT);
-        rightSideData = createDefaultArray(ROW_COUNT);
+        layoutMeta = { ...DEFAULT_LAYOUT_META };
+        leftSideData = createDefaultArray(
+          layoutMeta.leftRows,
+          layoutMeta.leftCols,
+        );
+        rightSideData = createDefaultArray(
+          layoutMeta.rightRows,
+          layoutMeta.rightCols,
+        );
+        specialDesks = [];
         fixedMembers = [];
         conflictGraph = {};
         genderMap = {};
@@ -6272,6 +6440,7 @@
           .querySelectorAll('input[type="file"]')
           .forEach((input) => (input.value = ""));
         localStorage.removeItem("classApp_v2.5");
+        syncLayoutConfigUI();
         renderAll();
         animateActionFeedback("#classroom-area", "animate-ripple-reset", 700);
         showToast("Đã làm mới toàn bộ dữ liệu!");
@@ -6310,8 +6479,17 @@
       // CONFLICT & SIDEBAR LOGIC
       // =================================================================
       function checkAllConflicts() {
-        const allSeats = [...leftSideData.flat(), ...rightSideData.flat()];
-        allSeats.forEach((s) => (s.hasConflict = false));
+        const gridSeats = [...leftSideData.flat(), ...rightSideData.flat()];
+        const virtualSpecialSeats = specialDesks.map((desk) => ({
+          id: desk.id,
+          name: Array.isArray(desk.students)
+            ? desk.students.join(" & ")
+            : desk.name || "",
+          hasConflict: false,
+        }));
+        const allSeats = [...gridSeats, ...virtualSpecialSeats];
+        gridSeats.forEach((s) => (s.hasConflict = false));
+        specialDesks.forEach((desk) => (desk.hasConflict = false));
 
         const checkPair = (s1, s2) => {
           if (!s1.name || !s2.name) return;
@@ -6340,6 +6518,17 @@
         };
         processSide(leftSideData);
         processSide(rightSideData);
+        virtualSpecialSeats.forEach((specialSeat) => {
+          gridSeats.forEach((seat) => checkPair(specialSeat, seat));
+        });
+        for (let i = 0; i < virtualSpecialSeats.length; i++) {
+          for (let j = i + 1; j < virtualSpecialSeats.length; j++) {
+            checkPair(virtualSpecialSeats[i], virtualSpecialSeats[j]);
+          }
+        }
+        virtualSpecialSeats.forEach((seat, index) => {
+          if (seat.hasConflict) specialDesks[index].hasConflict = true;
+        });
       }
 
       function selectStudent(side, r, c) {
@@ -7883,9 +8072,123 @@
 
       function openSettingsModal() {
         document.getElementById("settings-modal").classList.add("open");
+        syncLayoutConfigUI();
       }
       function closeSettingsModal() {
         document.getElementById("settings-modal").classList.remove("open");
+      }
+
+      function refreshSpecialDesksSettingsList() {
+        const list = document.getElementById("special-desks-list");
+        if (!list) return;
+        if (!specialDesks.length) {
+          list.innerHTML =
+            '<div class="text-[11px] text-gray-500 italic">Chưa có bàn đặc biệt.</div>';
+          return;
+        }
+        list.innerHTML = "";
+        specialDesks.forEach((desk) => {
+          const row = document.createElement("div");
+          row.className =
+            "flex items-center justify-between rounded-lg border border-gray-200 px-2 py-1.5 bg-gray-50";
+          const seats = Array.isArray(desk.students)
+            ? desk.students.filter(Boolean).length
+            : Number(desk.seats) || 0;
+          row.innerHTML = `
+            <div>
+              <div class="text-xs font-semibold text-gray-700">${desk.name || "Bàn đặc biệt"}</div>
+              <div class="text-[10px] text-gray-500">${desk.type || "special"} • ${seats} chỗ</div>
+            </div>
+            <button type="button" class="text-[10px] font-bold text-red-600 hover:text-red-700" data-remove-id="${desk.id}">Xóa</button>
+          `;
+          row.querySelector("button").onclick = () => {
+            specialDesks = specialDesks.filter((item) => item.id !== desk.id);
+            refreshSpecialDesksSettingsList();
+            renderAll();
+            saveData({ notify: false, animate: false });
+          };
+          list.appendChild(row);
+        });
+      }
+
+      function syncLayoutConfigUI() {
+        document.getElementById("layout-left-rows").value = layoutMeta.leftRows;
+        document.getElementById("layout-left-cols").value = layoutMeta.leftCols;
+        document.getElementById("layout-right-rows").value =
+          layoutMeta.rightRows;
+        document.getElementById("layout-right-cols").value =
+          layoutMeta.rightCols;
+        document.getElementById("layout-room-shape").value =
+          layoutMeta.roomShape || "rectangle";
+        refreshSpecialDesksSettingsList();
+      }
+
+      function addSpecialDesk() {
+        const name = prompt("Tên bàn đặc biệt (VD: Nhóm 1):", "Nhóm 1");
+        if (name === null) return;
+        const type = (prompt("Loại bàn (group/double/free):", "group") || "")
+          .trim()
+          .toLowerCase();
+        const seats = clampInt(prompt("Số chỗ ngồi:", "4"), 1, 12, 4);
+        const studentsText =
+          prompt("Danh sách học sinh (phân tách bằng dấu phẩy):", "") || "";
+        const students = studentsText
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .slice(0, seats);
+        specialDesks.push({
+          id: generateSeatId(),
+          type: type || "group",
+          name: name.trim() || "Bàn đặc biệt",
+          seats,
+          students,
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1,
+        });
+        refreshSpecialDesksSettingsList();
+        renderAll();
+        saveData({ notify: false, animate: false });
+      }
+
+      function buildSideFromExisting(oldSide, rows, cols) {
+        const nextSide = createDefaultArray(rows, cols);
+        const oldSeats = (oldSide || []).flat();
+        const newSeats = nextSide.flat();
+        newSeats.forEach((seat, idx) => {
+          if (!oldSeats[idx]) return;
+          seat.name = oldSeats[idx].name || "";
+        });
+        return nextSide;
+      }
+
+      function applyLayoutConfig() {
+        const requestedMeta = sanitizeLayoutMeta({
+          roomShape: document.getElementById("layout-room-shape").value,
+          leftRows: document.getElementById("layout-left-rows").value,
+          leftCols: document.getElementById("layout-left-cols").value,
+          rightRows: document.getElementById("layout-right-rows").value,
+          rightCols: document.getElementById("layout-right-cols").value,
+        });
+        const oldLeft = leftSideData;
+        const oldRight = rightSideData;
+        layoutMeta = requestedMeta;
+        leftSideData = buildSideFromExisting(
+          oldLeft,
+          layoutMeta.leftRows,
+          layoutMeta.leftCols,
+        );
+        rightSideData = buildSideFromExisting(
+          oldRight,
+          layoutMeta.rightRows,
+          layoutMeta.rightCols,
+        );
+        selectedDeskKey = null;
+        renderAll();
+        saveData({ notify: false, animate: false });
+        showToast("Đã cập nhật cấu hình sơ đồ lớp.");
       }
 
       function applyClassroomViewMode() {
@@ -9208,6 +9511,8 @@
         }
         const data = {
           seating: { left: leftSideData, right: rightSideData },
+          layoutMeta,
+          specialDesks,
           fixedMembers,
           conflictGraph: Object.fromEntries(
             Object.entries(conflictGraph).map(([k, v]) => [k, Array.from(v)]),
@@ -9281,6 +9586,8 @@
         );
         const data = {
           seating: { left: leftSideData, right: rightSideData },
+          layoutMeta,
+          specialDesks,
           fixedMembers,
           conflictGraph: Object.fromEntries(
             Object.entries(conflictGraph).map(([k, v]) => [k, Array.from(v)]),
@@ -9317,15 +9624,20 @@
         reader.onload = (e) => {
           try {
             const data = JSON.parse(e.target.result);
+            const importedMeta = sanitizeLayoutMeta(data.layoutMeta || {});
             const isValidRowWidth = (side = []) =>
               Array.isArray(side) &&
               side.every((row) => {
                 if (!Array.isArray(row)) return false;
+                const expectedWidth =
+                  side === data.seating.left
+                    ? importedMeta.leftCols
+                    : importedMeta.rightCols;
                 const totalWidth = row.reduce(
                   (sum, seat) => sum + (Number(seat?.width) || 0),
                   0,
                 );
-                return totalWidth === 4;
+                return totalWidth === expectedWidth;
               });
 
             if (
@@ -9333,12 +9645,18 @@
               !isValidRowWidth(data.seating.left) ||
               !isValidRowWidth(data.seating.right)
             ) {
-              showToast("File không hợp lệ: tổng width mỗi hàng phải bằng 4!");
+              showToast(
+                "File không hợp lệ: tổng width mỗi hàng phải khớp số cột cấu hình!",
+              );
               return;
             }
 
+            layoutMeta = importedMeta;
             leftSideData = data.seating.left;
             rightSideData = data.seating.right;
+            specialDesks = Array.isArray(data.specialDesks)
+              ? data.specialDesks
+              : [];
             fixedMembers = data.fixedMembers || [];
             conflictGraph = normalizeConflictGraphEntities(
               data.conflictGraph || {},
@@ -9366,6 +9684,7 @@
               ? data.shuffleHistoryCounter
               : shuffleHistory.length;
             syncOverlays();
+            syncLayoutConfigUI();
             renderAll();
             closeShareModal();
             showToast("Đã nhập dữ liệu thành công!");
@@ -9379,13 +9698,35 @@
       function loadData() {
         const raw = localStorage.getItem("classApp_v2.5");
         if (!raw) {
-          leftSideData = createDefaultArray(ROW_COUNT);
-          rightSideData = createDefaultArray(ROW_COUNT);
+          layoutMeta = { ...DEFAULT_LAYOUT_META };
+          leftSideData = createDefaultArray(
+            layoutMeta.leftRows,
+            layoutMeta.leftCols,
+          );
+          rightSideData = createDefaultArray(
+            layoutMeta.rightRows,
+            layoutMeta.rightCols,
+          );
+          specialDesks = [];
           return;
         }
         const data = JSON.parse(raw);
-        leftSideData = data.seating.left;
-        rightSideData = data.seating.right;
+        layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+        leftSideData = normalizeImportedSide(
+          data.seating?.left,
+          [],
+          layoutMeta.leftRows,
+          layoutMeta.leftCols,
+        );
+        rightSideData = normalizeImportedSide(
+          data.seating?.right,
+          [],
+          layoutMeta.rightRows,
+          layoutMeta.rightCols,
+        );
+        specialDesks = Array.isArray(data.specialDesks)
+          ? data.specialDesks
+          : [];
         fixedMembers = data.fixedMembers || [];
         conflictGraph = normalizeConflictGraphEntities(
           data.conflictGraph || {},
@@ -9437,11 +9778,11 @@
         }
       }
 
-      function createDefaultArray(rows) {
+      function createDefaultArray(rows, cols = DEFAULT_COLS) {
         let arr = [];
         for (let i = 0; i < rows; i++) {
           let r = [];
-          for (let j = 0; j < 4; j++)
+          for (let j = 0; j < cols; j++)
             r.push({ id: generateSeatId(), name: "", width: 1, merged: false });
           arr.push(r);
         }
@@ -9507,6 +9848,8 @@
         );
         const payload = {
           s: compactState,
+          lm: layoutMeta,
+          sd: specialDesks,
           c: buildCompactConflictGraph(),
           d: { dayOffs, excludedMembers, morningOff, afternoonOff },
         };
@@ -9544,27 +9887,27 @@
         return seat;
       }
 
-      function normalizeRowWidth(row) {
+      function normalizeRowWidth(row, targetWidth = DEFAULT_COLS) {
         let totalWidth = row.reduce(
           (sum, seat) => sum + (Number.isFinite(seat.width) ? seat.width : 1),
           0,
         );
 
-        while (totalWidth < 4) {
+        while (totalWidth < targetWidth) {
           row.push({ id: generateSeatId(), name: "", width: 1, merged: false });
           totalWidth += 1;
         }
 
-        while (totalWidth > 4 && row.length > 0) {
+        while (totalWidth > targetWidth && row.length > 0) {
           const last = row[row.length - 1];
-          if ((last.width || 1) <= totalWidth - 4) {
+          if ((last.width || 1) <= totalWidth - targetWidth) {
             totalWidth -= last.width || 1;
             row.pop();
           } else {
-            const shrink = totalWidth - 4;
+            const shrink = totalWidth - targetWidth;
             last.width = Math.max(1, (last.width || 1) - shrink);
             if (last.width === 1) last.merged = false;
-            totalWidth = 4;
+            totalWidth = targetWidth;
           }
         }
 
@@ -9575,11 +9918,16 @@
         return row;
       }
 
-      function normalizeImportedSide(sidePayload, restoredFixed) {
+      function normalizeImportedSide(
+        sidePayload,
+        restoredFixed,
+        expectedRows = DEFAULT_ROWS,
+        expectedCols = DEFAULT_COLS,
+      ) {
         const sideRows = Array.isArray(sidePayload) ? sidePayload : [];
         const normalizedSide = [];
 
-        for (let ri = 0; ri < ROW_COUNT; ri++) {
+        for (let ri = 0; ri < expectedRows; ri++) {
           const sourceRow = Array.isArray(sideRows[ri]) ? sideRows[ri] : [];
           const normalizedRow = sourceRow.map((seatToken) =>
             decodeSeatToken(seatToken, restoredFixed),
@@ -9590,13 +9938,13 @@
             normalizedRow.length === 0 ||
             sourceRow.every((token) => typeof token === "string")
           ) {
-            while (normalizedRow.length < 4) {
+            while (normalizedRow.length < expectedCols) {
               normalizedRow.push(decodeSeatToken("", restoredFixed));
             }
-            normalizedRow.length = 4;
+            normalizedRow.length = expectedCols;
           }
 
-          normalizedSide.push(normalizeRowWidth(normalizedRow));
+          normalizedSide.push(normalizeRowWidth(normalizedRow, expectedCols));
         }
 
         return normalizedSide;
@@ -9628,8 +9976,20 @@
             throw new Error("Sai định dạng dữ liệu");
 
           const restoredFixed = [];
-          leftSideData = normalizeImportedSide(payload.s[0], restoredFixed);
-          rightSideData = normalizeImportedSide(payload.s[1], restoredFixed);
+          layoutMeta = sanitizeLayoutMeta(payload.lm || {});
+          leftSideData = normalizeImportedSide(
+            payload.s[0],
+            restoredFixed,
+            layoutMeta.leftRows,
+            layoutMeta.leftCols,
+          );
+          rightSideData = normalizeImportedSide(
+            payload.s[1],
+            restoredFixed,
+            layoutMeta.rightRows,
+            layoutMeta.rightCols,
+          );
+          specialDesks = Array.isArray(payload.sd) ? payload.sd : [];
           fixedMembers = restoredFixed;
 
           conflictGraph = Object.fromEntries(
@@ -9643,6 +10003,7 @@
           }
 
           saveData();
+          syncLayoutConfigUI();
           renderAll();
           return true;
         } catch (error) {
@@ -9762,8 +10123,22 @@
             const parsedOptimized = parseOptimizedShareCode(code);
             if (!parsedOptimized) {
               const data = decodeLegacyShareCode(code);
-              leftSideData = data.seating.left;
-              rightSideData = data.seating.right;
+              layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+              leftSideData = normalizeImportedSide(
+                data.seating.left,
+                [],
+                layoutMeta.leftRows,
+                layoutMeta.leftCols,
+              );
+              rightSideData = normalizeImportedSide(
+                data.seating.right,
+                [],
+                layoutMeta.rightRows,
+                layoutMeta.rightCols,
+              );
+              specialDesks = Array.isArray(data.specialDesks)
+                ? data.specialDesks
+                : [];
               fixedMembers = data.fixedMembers || [];
               conflictGraph = Object.fromEntries(
                 Object.entries(data.conflictGraph || {}).map(([k, v]) => [
@@ -9771,6 +10146,7 @@
                   new Set(v),
                 ]),
               );
+              syncLayoutConfigUI();
               saveData();
               renderAll();
             }
@@ -9954,6 +10330,7 @@
       // INITIALIZATION
       window.onload = async () => {
         loadData();
+        syncLayoutConfigUI();
         fillCurrentCompetitionPeriod();
         applyBlackboardFromShareLinkIfAvailable();
         loadBlackboardData();
