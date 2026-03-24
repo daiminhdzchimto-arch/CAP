@@ -49,6 +49,7 @@
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
     <style>
@@ -1886,9 +1887,9 @@
           <div class="space-y-6">
             <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
               <h3 class="text-sm font-bold text-purple-800 mb-2">
-                Mã Chia Sẻ (Dùng để gửi cho người khác)
+                QR Chia Sẻ (Không cần copy-paste)
               </h3>
-              <div class="flex gap-2">
+              <div class="flex gap-2 mb-3">
                 <input
                   id="share-code-input"
                   readonly
@@ -1898,9 +1899,28 @@
                 <button
                   onclick="copyShareCode()"
                   class="bg-purple-600 text-white px-4 rounded-lg font-bold text-sm hover:bg-purple-700 transition"
+                  title="Sao chép mã dự phòng"
                 >
                   <i class="fas fa-copy"></i>
                 </button>
+              </div>
+              <div class="bg-white border border-purple-200 rounded-xl p-3">
+                <div class="flex flex-col items-center gap-3">
+                  <div
+                    id="share-code-qr"
+                    class="w-[220px] h-[220px] bg-white rounded-lg flex items-center justify-center"
+                  ></div>
+                  <button
+                    onclick="downloadShareQRCode()"
+                    class="bg-purple-100 text-purple-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-purple-200 transition"
+                  >
+                    <i class="fas fa-download mr-1"></i>Tải QR
+                  </button>
+                  <p class="text-xs text-purple-700 text-center">
+                    Mở camera điện thoại để quét QR và chia sẻ nhanh dữ liệu
+                    lớp.
+                  </p>
+                </div>
               </div>
               <p
                 id="share-code-stats"
@@ -8946,6 +8966,55 @@
         return JSON.parse(LZString.decompressFromEncodedURIComponent(code));
       }
 
+      let shareQrInstance = null;
+
+      function renderShareQRCode(shareCode) {
+        const qrContainer = document.getElementById("share-code-qr");
+        if (!qrContainer) return;
+        qrContainer.innerHTML = "";
+        shareQrInstance = null;
+
+        if (
+          typeof QRCode === "undefined" ||
+          typeof QRCode.CorrectLevel === "undefined"
+        ) {
+          qrContainer.innerHTML =
+            '<p class="text-xs text-red-600 text-center px-2">Không tải được thư viện QR. Vui lòng dùng nút sao chép mã.</p>';
+          return;
+        }
+
+        try {
+          shareQrInstance = new QRCode(qrContainer, {
+            text: shareCode,
+            width: 220,
+            height: 220,
+            correctLevel: QRCode.CorrectLevel.M,
+          });
+        } catch (error) {
+          console.error("Không tạo được QR chia sẻ:", error);
+          qrContainer.innerHTML =
+            '<p class="text-xs text-red-600 text-center px-2">Không thể tạo QR cho mã này. Vui lòng dùng nút sao chép mã.</p>';
+        }
+      }
+
+      function downloadShareQRCode() {
+        const qrContainer = document.getElementById("share-code-qr");
+        if (!qrContainer) return;
+        const qrCanvas = qrContainer.querySelector("canvas");
+        const qrImage = qrContainer.querySelector("img");
+        const dataUrl = qrCanvas?.toDataURL("image/png") || qrImage?.src;
+
+        if (!dataUrl) {
+          showToast("QR chưa sẵn sàng để tải.");
+          return;
+        }
+
+        const downloadLink = document.createElement("a");
+        downloadLink.href = dataUrl;
+        downloadLink.download = `cap-share-${Date.now()}.png`;
+        downloadLink.click();
+      }
+
       function openShareModal() {
         const compactCode = generateOptimizedShareCode();
 
@@ -8973,6 +9042,7 @@
         }
 
         document.getElementById("share-code-input").value = compactCode;
+        renderShareQRCode(compactCode);
         document.getElementById("share-code-stats").innerText = ratioText;
         document.getElementById("share-modal").classList.add("open");
       }
