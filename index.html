@@ -2307,7 +2307,14 @@
               <i class="fas fa-redo"></i> Redo
             </button>
             <button
-              class="tool-btn bg-emerald-700 text-white px-3 py-1 rounded text-sm hover:bg-emerald-600 ml-auto"
+              class="tool-btn bg-sky-700 text-white px-3 py-1 rounded text-sm hover:bg-sky-600 ml-auto"
+              onclick="shareBlackboardLink()"
+              title="Tạo link chứa nội dung bảng đen hiện tại"
+            >
+              <i class="fas fa-link"></i> Chia sẻ link
+            </button>
+            <button
+              class="tool-btn bg-emerald-700 text-white px-3 py-1 rounded text-sm hover:bg-emerald-600"
               onclick="saveBlackboard()"
             >
               <i class="fas fa-save"></i> Lưu
@@ -2679,6 +2686,7 @@
       const BLACKBOARD_ZOOM_MIN = 0.5;
       const BLACKBOARD_ZOOM_MAX = 2.5;
       const BLACKBOARD_ZOOM_STEP = 0.1;
+      const BLACKBOARD_SHARE_QUERY_KEY = "bb";
       let blackboardZoomLevel = 1;
       let blackboardHistory = [];
       let blackboardHistoryIndex = -1;
@@ -6704,6 +6712,65 @@
         }
       }
 
+      function encodeBlackboardForUrl(payload) {
+        const normalized = JSON.stringify(payload || {});
+        return btoa(unescape(encodeURIComponent(normalized)));
+      }
+
+      function decodeBlackboardFromUrl(encodedValue) {
+        if (!encodedValue) return null;
+        try {
+          const decoded = decodeURIComponent(escape(atob(encodedValue)));
+          return JSON.parse(decoded);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function applyBlackboardFromShareLinkIfAvailable() {
+        const params = new URLSearchParams(window.location.search);
+        const sharedValue = params.get(BLACKBOARD_SHARE_QUERY_KEY);
+        if (!sharedValue) return;
+
+        const decodedData = decodeBlackboardFromUrl(sharedValue);
+        if (!decodedData) {
+          showToast("Link bảng đen không hợp lệ hoặc đã hỏng.");
+          return;
+        }
+
+        blackboardData = decodedData;
+        localStorage.setItem(
+          "classApp_blackboard",
+          JSON.stringify(decodedData),
+        );
+        showToast("Đã nạp nội dung bảng đen từ link chia sẻ.");
+      }
+
+      async function shareBlackboardLink() {
+        if (!blackboardFabric) {
+          showToast("Bảng đen chưa sẵn sàng để chia sẻ.");
+          return;
+        }
+
+        const serializedData = blackboardFabric.toJSON();
+        const encoded = encodeBlackboardForUrl(serializedData);
+        const shareUrl = new URL(window.location.href);
+        shareUrl.searchParams.set(BLACKBOARD_SHARE_QUERY_KEY, encoded);
+
+        if (shareUrl.href.length > 7000) {
+          showToast(
+            "Nội dung bảng quá lớn, link có thể không hoạt động ổn định.",
+          );
+        }
+
+        try {
+          await navigator.clipboard.writeText(shareUrl.href);
+          showToast("Đã copy link bảng đen vào clipboard.");
+        } catch (_) {
+          window.prompt("Copy link bảng đen:", shareUrl.href);
+        }
+      }
+
       function loadFabricLibrary() {
         if (typeof window.fabric !== "undefined") return Promise.resolve();
         if (fabricLoaderPromise) return fabricLoaderPromise;
@@ -9264,6 +9331,7 @@
       window.onload = async () => {
         loadData();
         fillCurrentCompetitionPeriod();
+        applyBlackboardFromShareLinkIfAvailable();
         loadBlackboardData();
         syncOverlays();
         const savedConfig = localStorage.getItem("classApp_config");
