@@ -1466,6 +1466,18 @@
               </div>
             </button>
           </div>
+          <div class="mt-4 border-t pt-3 px-2">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-bold text-gray-700">
+                Lịch sử sắp xếp gần đây
+              </h3>
+              <span class="text-[11px] text-gray-400">Tối đa 30 lần</span>
+            </div>
+            <div
+              id="shuffle-history-list"
+              class="space-y-2 max-h-[180px] overflow-y-auto pr-1"
+            ></div>
+          </div>
           <div class="mt-4 text-[10px] text-gray-400 italic border-t pt-3">
             * Mẹo: Chuột phải vào ô chỗ ngồi để <b>Cố định</b> học sinh (không
             bị đổi chỗ).
@@ -2658,6 +2670,9 @@
         afternoonOff = false;
       let currentSchedule = null,
         dutyDebtData = {};
+      const SHUFFLE_HISTORY_LIMIT = 30;
+      let shuffleHistory = [];
+      let shuffleHistoryCounter = 0;
       const DUTY_DAYS = ["2", "3", "4", "5", "6", "7"];
       const DUTY_ROLE_KEYS = [
         "sweep",
@@ -7390,8 +7405,106 @@
       // =================================================================
       // SHUFFLE & SETTINGS
       // =================================================================
+      function cloneSeatingSnapshot(snapshot) {
+        return JSON.parse(JSON.stringify(snapshot));
+      }
+
+      function formatShuffleHistoryDate(timestamp) {
+        return new Date(timestamp).toLocaleDateString("vi-VN");
+      }
+
+      function restoreShuffleHistory(entryId) {
+        const historyEntry = shuffleHistory.find(
+          (item) => item.id === String(entryId),
+        );
+        if (!historyEntry) {
+          showToast("Không tìm thấy bản sắp xếp đã chọn.");
+          return;
+        }
+        leftSideData = cloneSeatingSnapshot(historyEntry.seating.left);
+        rightSideData = cloneSeatingSnapshot(historyEntry.seating.right);
+        checkAllConflicts();
+        renderAll();
+        saveData({ notify: false, animate: false });
+        showToast(`Đã khôi phục: ${historyEntry.label}`);
+      }
+
+      function renderShuffleHistoryList() {
+        const container = document.getElementById("shuffle-history-list");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (!shuffleHistory.length) {
+          const emptyState = document.createElement("div");
+          emptyState.className =
+            "text-xs text-gray-400 italic border border-dashed border-gray-200 rounded-md p-2";
+          emptyState.innerText = "Chưa có lần sắp xếp nào được lưu.";
+          container.appendChild(emptyState);
+          return;
+        }
+
+        shuffleHistory
+          .slice()
+          .reverse()
+          .forEach((entry) => {
+            const row = document.createElement("div");
+            row.className =
+              "flex items-center justify-between gap-2 rounded-md border border-gray-200 px-2 py-2";
+
+            const labelWrapper = document.createElement("div");
+            labelWrapper.className = "min-w-0";
+            const label = document.createElement("div");
+            label.className = "text-xs font-semibold text-gray-700 truncate";
+            label.innerText = entry.label;
+            const sub = document.createElement("div");
+            sub.className = "text-[11px] text-gray-400 truncate";
+            sub.innerText = `Kiểu: ${entry.typeLabel}`;
+            labelWrapper.append(label, sub);
+
+            const restoreBtn = document.createElement("button");
+            restoreBtn.type = "button";
+            restoreBtn.className =
+              "text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold";
+            restoreBtn.innerText = "Khôi phục";
+            restoreBtn.addEventListener("click", () => {
+              restoreShuffleHistory(entry.id);
+            });
+
+            row.append(labelWrapper, restoreBtn);
+            container.appendChild(row);
+          });
+      }
+
+      function saveShuffleHistoryEntry(type) {
+        const typeLabels = {
+          all: "Toàn bộ lớp",
+          door: "Dãy gần cửa",
+          teacher: "Dãy gần bàn giáo viên",
+        };
+        shuffleHistoryCounter += 1;
+        const timestamp = Date.now();
+        const historyEntry = {
+          id: `${timestamp}-${Math.random().toString(16).slice(2, 8)}`,
+          timestamp,
+          label: `Sắp xếp lần ${shuffleHistoryCounter} - ${formatShuffleHistoryDate(timestamp)}`,
+          type,
+          typeLabel: typeLabels[type] || "Tùy chọn khác",
+          seating: cloneSeatingSnapshot({
+            left: leftSideData,
+            right: rightSideData,
+          }),
+        };
+        shuffleHistory.push(historyEntry);
+        if (shuffleHistory.length > SHUFFLE_HISTORY_LIMIT) {
+          shuffleHistory = shuffleHistory.slice(-SHUFFLE_HISTORY_LIMIT);
+        }
+        renderShuffleHistoryList();
+        saveData({ notify: false, animate: false });
+      }
+
       function openShuffleModal() {
         document.getElementById("shuffle-modal").classList.add("open");
+        renderShuffleHistoryList();
         animateActionFeedback(
           "#shuffle-modal .modal-content",
           "animate-pulse-highlight",
@@ -7515,6 +7628,7 @@
 
         checkAllConflicts();
         renderAll();
+        saveShuffleHistoryEntry(type);
         closeShuffleModal();
         showToast("Đã sắp xếp chỗ ngồi tối ưu!");
       }
@@ -8554,6 +8668,8 @@
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           dutySchedule: currentSchedule,
+          shuffleHistory,
+          shuffleHistoryCounter,
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
@@ -8625,6 +8741,8 @@
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           dutySchedule: currentSchedule,
+          shuffleHistory,
+          shuffleHistoryCounter,
         };
         const blob = new Blob([JSON.stringify(data)], {
           type: "application/json",
@@ -8689,6 +8807,12 @@
               afternoonOff = data.dutySettings.afternoonOff || false;
             }
             currentSchedule = data.dutySchedule || null;
+            shuffleHistory = Array.isArray(data.shuffleHistory)
+              ? data.shuffleHistory
+              : [];
+            shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+              ? data.shuffleHistoryCounter
+              : shuffleHistory.length;
             syncOverlays();
             renderAll();
             closeShareModal();
@@ -8729,6 +8853,12 @@
           afternoonOff = data.dutySettings.afternoonOff || false;
         }
         currentSchedule = data.dutySchedule || null;
+        shuffleHistory = Array.isArray(data.shuffleHistory)
+          ? data.shuffleHistory
+          : [];
+        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+          ? data.shuffleHistoryCounter
+          : shuffleHistory.length;
       }
 
       function getISOWeekNumber(date) {
