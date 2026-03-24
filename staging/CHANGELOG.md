@@ -1,3 +1,9 @@
+## [1.34.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.34.0...v1.34.1) (2026-03-24)
+
+### Bug Fixes
+
+- **ui:** restore classroom reference objects to 2d ([ec0c096](https://github.com/daiminhdzchimto-arch/CAP/commit/ec0c0969379cd1f9ab3bd45a58662dc9d47f94f8))
+
 # [1.34.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.33.0...v1.34.0) (2026-03-24)
 
 ### Features
