@@ -1,3 +1,9 @@
+# [1.38.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.37.1...v1.38.0) (2026-03-24)
+
+### Features
+
+- add duty schedule preview, quick swap, and today reminder ([2d37059](https://github.com/daiminhdzchimto-arch/CAP/commit/2d37059ffc177f3417a730f0686887ddfa4f4d12))
+
 ## [1.37.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.37.0...v1.37.1) (2026-03-24)
 
 ### Bug Fixes
