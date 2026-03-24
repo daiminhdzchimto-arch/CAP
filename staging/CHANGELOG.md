@@ -1,3 +1,9 @@
+# [1.48.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.47.0...v1.48.0) (2026-03-24)
+
+### Features
+
+- **blackboard:** add shareable board link support ([e8a6d53](https://github.com/daiminhdzchimto-arch/CAP/commit/e8a6d53ccaec0337d10ab587d667bebfa91a203f))
+
 # [1.47.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.46.1...v1.47.0) (2026-03-24)
 
 ### Features

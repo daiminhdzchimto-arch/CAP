@@ -1672,6 +1672,27 @@
                     ></div>
                   </label>
                 </div>
+                <div class="mt-3">
+                  <label
+                    for="species-select"
+                    class="block text-sm font-semibold text-gray-700 mb-2"
+                    >Loài cây mô phỏng</label
+                  >
+                  <select
+                    id="species-select"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="auto">Tự động theo múi giờ</option>
+                    <option value="flamboyant">Phượng Vĩ</option>
+                    <option value="sakura">Hoa Anh Đào</option>
+                    <option value="maple">Cây Phong</option>
+                    <option value="oak">Sồi Châu Âu</option>
+                    <option value="taiwan_almond">Bàng Đài Loan</option>
+                  </select>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Chọn theo địa phương hoặc sở thích của lớp.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -2633,32 +2654,40 @@
       ]);
 
       // --- WEATHER & SPECIES CONSTANTS ---
-      const SPECIES_DATABASE = {
-        "Asia/Ho_Chi_Minh": {
+      const SPECIES_PRESETS = {
+        flamboyant: {
           id: "VN",
           name: "Phượng Vĩ",
           particleSprite: "red_leaf",
         },
-        "Asia/Tokyo": {
+        sakura: {
           id: "JP",
           name: "Hoa Anh Đào",
           particleSprite: "pink_petal",
         },
-        "America/New_York": {
+        maple: {
           id: "US",
           name: "Cây Phong",
           particleSprite: "maple_leaf",
         },
-        "Europe/Paris": {
+        oak: {
           id: "EU",
           name: "Sồi Châu Âu",
           particleSprite: "brown_leaf",
         },
-        DEFAULT: {
+        taiwan_almond: {
           id: "DEFAULT",
           name: "Bàng Đài Loan",
           particleSprite: "green_leaf",
         },
+      };
+
+      const SPECIES_DATABASE = {
+        "Asia/Ho_Chi_Minh": "flamboyant",
+        "Asia/Tokyo": "sakura",
+        "America/New_York": "maple",
+        "Europe/Paris": "oak",
+        DEFAULT: "taiwan_almond",
       };
 
       let leftSideData = [],
@@ -3216,6 +3245,7 @@
         config: {
           useRealLocation: false,
           preferredRealLocation: false,
+          preferredSpecies: "auto",
           fallbackData: {
             speed: 2,
             deg: 180,
@@ -3236,6 +3266,8 @@
           if (savedWeatherConfig) {
             const parsedConfig = JSON.parse(savedWeatherConfig);
             this.config.preferredRealLocation = !!parsedConfig.useRealLocation;
+            this.config.preferredSpecies =
+              parsedConfig.speciesPreference || "auto";
           }
           this.config.useRealLocation = this.computeEffectiveRealWeather();
 
@@ -3248,12 +3280,18 @@
               this.config.preferredRealLocation = e.target.checked;
               this.config.useRealLocation = this.computeEffectiveRealWeather();
               this.syncRealWeatherToggleState();
-              localStorage.setItem(
-                "classApp_weatherConfig",
-                JSON.stringify({
-                  useRealLocation: this.config.preferredRealLocation,
-                }),
-              );
+              this.saveWeatherConfig();
+              this.fetchAndUpdate();
+            });
+          }
+
+          const speciesSelect = document.getElementById("species-select");
+          if (speciesSelect) {
+            speciesSelect.value = this.config.preferredSpecies || "auto";
+            speciesSelect.addEventListener("change", (e) => {
+              this.config.preferredSpecies = e.target.value;
+              this.determineSpecies();
+              this.saveWeatherConfig();
               this.fetchAndUpdate();
             });
           }
@@ -3261,6 +3299,16 @@
           this.syncRealWeatherToggleState();
           this.fetchAndUpdate();
           this.initialized = true;
+        },
+
+        saveWeatherConfig() {
+          localStorage.setItem(
+            "classApp_weatherConfig",
+            JSON.stringify({
+              useRealLocation: this.config.preferredRealLocation,
+              speciesPreference: this.config.preferredSpecies || "auto",
+            }),
+          );
         },
 
         computeEffectiveRealWeather() {
@@ -3291,12 +3339,29 @@
         },
 
         determineSpecies() {
+          const selectedSpeciesKey = this.config.preferredSpecies;
+          if (
+            selectedSpeciesKey &&
+            selectedSpeciesKey !== "auto" &&
+            SPECIES_PRESETS[selectedSpeciesKey]
+          ) {
+            this.currentSpecies = SPECIES_PRESETS[selectedSpeciesKey];
+            if (
+              typeof particleEngine !== "undefined" &&
+              particleEngine.setSpecies
+            ) {
+              particleEngine.setSpecies(this.currentSpecies);
+            }
+            return;
+          }
+
           try {
             const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            this.currentSpecies =
+            const autoSpeciesKey =
               SPECIES_DATABASE[tz] || SPECIES_DATABASE.DEFAULT;
+            this.currentSpecies = SPECIES_PRESETS[autoSpeciesKey];
           } catch (error) {
-            this.currentSpecies = SPECIES_DATABASE.DEFAULT;
+            this.currentSpecies = SPECIES_PRESETS[SPECIES_DATABASE.DEFAULT];
           }
 
           if (
@@ -3362,10 +3427,7 @@
               this.config.useRealLocation = false;
               this.config.preferredRealLocation = false;
               this.syncRealWeatherToggleState();
-              localStorage.setItem(
-                "classApp_weatherConfig",
-                JSON.stringify({ useRealLocation: false }),
-              );
+              this.saveWeatherConfig();
               this.applyWeather(this.config.fallbackData, false);
             },
           );
