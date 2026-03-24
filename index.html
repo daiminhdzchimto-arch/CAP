@@ -390,6 +390,8 @@
       .is-conflict-hidden.desk-box.has-conflict { border-color: #374151 !important; }
       .is-conflict-hidden .conflict-dot { display: none !important; }
       .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
+      .desk-box.is-dragging-seat { opacity: 0.55; transform: scale(0.98); }
+      .desk-box.drag-over-target { border-color: #0ea5e9 !important; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25); }
       .desk-box.is-fixed { border-color: var(--fixed) !important; border-width: 3px !important; background-color: rgba(139, 92, 246, 0.1) !important; }
       .desk-box.has-conflict { border-color: var(--warning) !important; }
       .fixed-badge { position: absolute; top: -8px; left: -8px; background: var(--fixed); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -2382,6 +2384,7 @@
       let leftSideData = [],
         rightSideData = [];
       let swapSource = null,
+        dragSeatSource = null,
         dutySelection = {},
         genderMap = {};
       let officerList = [],
@@ -3136,6 +3139,7 @@
             cell.dataset.r = ri;
             cell.dataset.c = si;
             cell.dataset.seatId = seat.id;
+            cell.draggable = true;
 
             if (isFixed) {
               const badge = document.createElement("div");
@@ -3155,6 +3159,7 @@
             ta.value = seat.name;
             ta.rows = 1;
             ta.wrap = "soft";
+            ta.draggable = false;
             ta.title = "Nhập tên học sinh";
             ta.oninput = (e) => {
               updateName(side, ri, si, e.target.value);
@@ -3190,6 +3195,15 @@
             ta.addEventListener("click", inputClick);
             ta.addEventListener("focus", () => selectDeskCell(side, ri, si));
             cell.addEventListener("click", click);
+            cell.addEventListener("dragstart", (e) =>
+              handleDeskDragStart(e, side, ri, si),
+            );
+            cell.addEventListener("dragover", handleDeskDragOver);
+            cell.addEventListener("dragleave", handleDeskDragLeave);
+            cell.addEventListener("drop", (e) =>
+              handleDeskDrop(e, side, ri, si),
+            );
+            cell.addEventListener("dragend", handleDeskDragEnd);
             cell.appendChild(ta);
 
             const swapBtn = createDeskActionButton({
@@ -5480,6 +5494,58 @@
           420,
         );
       }
+      function handleDeskDragStart(event, side, r, c) {
+        const seat = (side === "left" ? leftSideData : rightSideData)[r][c];
+        if (!seat || !seat.name.trim()) {
+          event.preventDefault();
+          return;
+        }
+
+        if (
+          event.target.closest(
+            '[data-action-button="true"], .merge-handle, .desk-input',
+          )
+        ) {
+          event.preventDefault();
+          return;
+        }
+
+        if (swapSource) cancelSwapMode();
+        selectDeskCell(side, r, c);
+        dragSeatSource = { side, r, c };
+        event.currentTarget.classList.add("is-dragging-seat");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", `${side}-${r}-${c}`);
+        }
+      }
+      function handleDeskDragOver(event) {
+        if (!dragSeatSource) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+        event.currentTarget.classList.add("drag-over-target");
+      }
+      function handleDeskDragLeave(event) {
+        event.currentTarget.classList.remove("drag-over-target");
+      }
+      function handleDeskDragEnd(event) {
+        event.currentTarget.classList.remove("is-dragging-seat");
+        document
+          .querySelectorAll(".desk-box.drag-over-target")
+          .forEach((cell) => cell.classList.remove("drag-over-target"));
+        dragSeatSource = null;
+      }
+      function handleDeskDrop(event, side, r, c) {
+        if (!dragSeatSource) return;
+        event.preventDefault();
+        event.currentTarget.classList.remove("drag-over-target");
+        const isSameSeat =
+          dragSeatSource.side === side &&
+          dragSeatSource.r === r &&
+          dragSeatSource.c === c;
+        if (isSameSeat) return;
+        executeSwap(side, r, c, dragSeatSource);
+      }
       function handleSwapButtonClick(event, side, r, c) {
         if (event) {
           event.preventDefault();
@@ -5504,14 +5570,16 @@
         swapSource = null;
         renderAll();
       }
-      function executeSwap(ts, tr, tc) {
-        const src = { ...swapSource };
-        const sa = swapSource.side === "left" ? leftSideData : rightSideData;
+      function executeSwap(ts, tr, tc, sourceSeat = swapSource) {
+        if (!sourceSeat) return;
+        const src = { ...sourceSeat };
+        const sa = sourceSeat.side === "left" ? leftSideData : rightSideData;
         const ta = ts === "left" ? leftSideData : rightSideData;
-        const tmp = sa[swapSource.r][swapSource.c].name;
-        sa[swapSource.r][swapSource.c].name = ta[tr][tc].name;
+        const tmp = sa[sourceSeat.r][sourceSeat.c].name;
+        sa[sourceSeat.r][sourceSeat.c].name = ta[tr][tc].name;
         ta[tr][tc].name = tmp;
         swapSource = null;
+        dragSeatSource = null;
         renderAll();
         const srcSeat = getDeskCell(src.side, src.r, src.c);
         const dstSeat = getDeskCell(ts, tr, tc);
