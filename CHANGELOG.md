@@ -1,3 +1,9 @@
+## [1.53.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.3...v1.53.4) (2026-03-24)
+
+### Bug Fixes
+
+- restore manual and autosave persistence flow ([76985ad](https://github.com/daiminhdzchimto-arch/CAP/commit/76985ad04a09ac0bc0e0900f715cf6cc8f562afb))
+
 ## [1.53.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.2...v1.53.3) (2026-03-24)
 
 ### Bug Fixes
