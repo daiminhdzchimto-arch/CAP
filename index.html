@@ -1962,6 +1962,10 @@
           <i data-lucide="leaf" class="w-4 h-4 text-green-600"></i>
           <span id="weather-species-text">Bàng Đài Loan</span>
         </div>
+        <div class="flex items-center gap-3 text-gray-700">
+          <i data-lucide="map-pin" class="w-4 h-4 text-rose-500"></i>
+          <span id="weather-location-text">Chưa xác định vị trí</span>
+        </div>
         <div class="flex items-center gap-2 mt-1 pt-2 border-t border-gray-100">
           <span
             class="w-2.5 h-2.5 rounded-full bg-gray-400 shadow-sm"
@@ -3197,8 +3201,9 @@
                   deg: data.current.wind_direction_10m || 180,
                   gust: data.current.wind_gusts_10m || 4,
                 };
+                const cityName = await this.resolveCityName(lat, lon);
 
-                this.applyWeather(realWeather, true);
+                this.applyWeather(realWeather, true, cityName);
                 showToast("Đã cập nhật gió thực tế!");
               } catch (error) {
                 console.error("Open-Meteo Error:", error);
@@ -3223,13 +3228,37 @@
           );
         },
 
-        applyWeather(weather, isLive) {
+        async resolveCityName(lat, lon) {
+          try {
+            const response = await fetch(
+              `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=vi&count=1`,
+            );
+            if (!response.ok) throw new Error("Reverse geocoding API Error");
+            const data = await response.json();
+            const place = data?.results?.[0];
+            return (
+              place?.city ||
+              place?.town ||
+              place?.village ||
+              place?.name ||
+              null
+            );
+          } catch (error) {
+            console.warn("Reverse geocoding failed:", error);
+            return null;
+          }
+        },
+
+        applyWeather(weather, isLive, cityName = null) {
           document.getElementById("weather-speed-text").innerText =
             `${weather.speed} m/s`;
           document.getElementById("weather-gust-text").innerText =
             `(Giật: ${weather.gust})`;
           document.getElementById("weather-species-text").innerText =
             this.currentSpecies.name;
+          document.getElementById("weather-location-text").innerText = isLive
+            ? cityName || "Vị trí hiện tại"
+            : "Dữ liệu giả lập";
 
           if (isLive) {
             this.updateUIStatus("live", "Live (Gió thực)");
