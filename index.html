@@ -291,6 +291,35 @@
       .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
       .teacher-desk-box:hover .teacher-view-3d-btn,
       .teacher-desk-box:focus-within .teacher-view-3d-btn { opacity: 1; pointer-events: auto; }
+      .classroom-object-25d { position: relative; isolation: isolate; }
+      .classroom-object-25d::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          border-radius: inherit;
+          transform: translate(4px, 4px);
+          pointer-events: none;
+      }
+      .classroom-object-25d::after {
+          content: '';
+          position: absolute;
+          left: 10%;
+          right: 10%;
+          bottom: -10px;
+          height: 12px;
+          z-index: -2;
+          border-radius: 9999px;
+          background: rgba(15, 23, 42, 0.32);
+          filter: blur(6px);
+          pointer-events: none;
+      }
+      .door-25d::before { background: linear-gradient(135deg, #5b2c14 0%, #3b1d0d 100%); }
+      .board-25d::before { background: linear-gradient(135deg, #1f2937 0%, #0b1220 100%); }
+      .desk-25d::before { background: linear-gradient(135deg, #b45309 0%, #78350f 100%); }
+      .door-25d,
+      .board-25d,
+      .desk-25d { box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25); }
 
       .wood-texture {
           background-image: repeating-linear-gradient(
@@ -786,7 +815,7 @@
                 <div class="flex flex-col items-center gap-2 text-gray-500">
                   <div class="relative group cursor-pointer mt-1">
                     <div
-                      class="w-24 h-16 bg-stone-800 rounded-lg shadow-lg p-1 flex gap-0.5 relative transition-transform duration-300 group-hover:-translate-y-0.5"
+                      class="classroom-object-25d door-25d w-24 h-16 bg-stone-800 rounded-lg shadow-lg p-1 flex gap-0.5 relative transition-transform duration-300 group-hover:-translate-y-0.5"
                     >
                       <div
                         class="w-1/2 h-full bg-gradient-to-r from-orange-900 to-[#7a3b1a] rounded-sm relative wood-texture shadow-[inset_2px_0_4px_rgba(0,0,0,0.35)] overflow-hidden"
@@ -817,7 +846,7 @@
                   onclick="openBlackboardModal()"
                 >
                   <div
-                    class="w-full h-12 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-lg board-shadow border-2 border-[#334155] flex items-center justify-center relative transition-transform duration-300 group-hover:-translate-y-0.5"
+                    class="classroom-object-25d board-25d w-full h-12 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-lg board-shadow border-2 border-[#334155] flex items-center justify-center relative transition-transform duration-300 group-hover:-translate-y-0.5"
                   >
                     <div
                       class="absolute inset-1 border border-slate-600/50 rounded-sm"
@@ -838,7 +867,7 @@
 
                 <div class="flex flex-col items-center gap-2 text-gray-500">
                   <div
-                    class="teacher-desk-box w-32 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg shadow-lg relative wood-texture border border-amber-300/40 ring-2 ring-black/5 overflow-hidden"
+                    class="teacher-desk-box classroom-object-25d desk-25d w-32 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg shadow-lg relative wood-texture border border-amber-300/40 ring-2 ring-black/5 overflow-hidden"
                   >
                     <div
                       class="absolute top-2 left-2 w-8 h-6 flex flex-col items-center"
