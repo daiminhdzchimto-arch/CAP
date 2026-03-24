@@ -760,21 +760,24 @@
               <button
                 onclick="openShareModal()"
                 class="icon-edge-btn p-2 text-gray-500 hover:text-purple-600 transition-colors"
-                title="Chia sẻ"
+                title="Chia sẻ dữ liệu lớp học (tạo mã để gửi cho người khác)"
+                aria-label="Chia sẻ dữ liệu lớp học"
               >
                 <i class="fas fa-share-nodes"></i>
               </button>
               <button
                 onclick="openSettingsModal()"
                 class="icon-edge-btn p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                title="Cài đặt"
+                title="Mở cài đặt hệ thống (hiệu ứng, chế độ xem, tiết kiệm pin)"
+                aria-label="Mở cài đặt hệ thống"
               >
                 <i class="fas fa-cog"></i>
               </button>
               <button
                 onclick="saveData()"
                 class="btn-3d btn-3d-blue text-sm font-bold"
-                title="Lưu"
+                title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này"
+                aria-label="Lưu dữ liệu lớp học"
               >
                 <i class="fas fa-save"></i>
               </button>
@@ -1389,7 +1392,12 @@
                 </div>
               </div>
             </button>
-            <button onclick="shuffleSeating('door')" class="shuffle-option-btn">
+            <button
+              onclick="shuffleSeating('door')"
+              class="shuffle-option-btn"
+              title="Sắp xếp dãy gần cửa (dãy bên trái)"
+              aria-label="Sắp xếp dãy gần cửa"
+            >
               <i class="fas fa-door-open text-red-500"></i>
               <div>
                 <div class="text-sm font-bold">Dãy gần cửa</div>
@@ -1401,6 +1409,8 @@
             <button
               onclick="shuffleSeating('teacher')"
               class="shuffle-option-btn"
+              title="Sắp xếp dãy gần bàn giáo viên (dãy bên phải)"
+              aria-label="Sắp xếp dãy gần bàn giáo viên"
             >
               <i class="fas fa-chalkboard-teacher text-green-500"></i>
               <div>
@@ -7626,7 +7636,7 @@
       function saveData({ notify = true, animate = true } = {}) {
         if (animate) {
           animateActionFeedback(
-            'button[title="Lưu"]',
+            'button[title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này" aria-label="Lưu dữ liệu lớp học"]',
             "animate-flash-success",
             380,
           );
