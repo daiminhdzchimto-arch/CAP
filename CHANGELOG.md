@@ -1,3 +1,9 @@
+## [1.53.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.1...v1.53.2) (2026-03-24)
+
+### Bug Fixes
+
+- remove focus outline on classroom header inputs ([a8dbfb9](https://github.com/daiminhdzchimto-arch/CAP/commit/a8dbfb99d670d393037282f71fc16ec84e554321))
+
 ## [1.53.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.0...v1.53.1) (2026-03-24)
 
 ### Bug Fixes
