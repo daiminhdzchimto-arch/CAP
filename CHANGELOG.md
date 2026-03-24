@@ -1,3 +1,9 @@
+# [1.34.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.33.0...v1.34.0) (2026-03-24)
+
+### Features
+
+- enhance classroom reference objects with 3D perspective ([5b39adb](https://github.com/daiminhdzchimto-arch/CAP/commit/5b39adb7791f67ed086e077d622050458928ce3c))
+
 # [1.33.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.32.1...v1.33.0) (2026-03-24)
 
 ### Features
