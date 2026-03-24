@@ -1043,6 +1043,7 @@
                     <div class="flex items-center gap-2">
                       <span>Tuần:</span
                       ><input
+                        id="competition-week-input"
                         type="text"
                         class="date-input"
                         placeholder="..."
@@ -1051,6 +1052,7 @@
                     <div class="flex items-center gap-2">
                       <span>Tháng:</span
                       ><input
+                        id="competition-month-input"
                         type="text"
                         class="date-input"
                         placeholder="..."
@@ -7713,6 +7715,30 @@
         }
       }
 
+      function getISOWeekNumber(date) {
+        const tempDate = new Date(
+          Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+        );
+        const dayNumber = tempDate.getUTCDay() || 7;
+        tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNumber);
+        const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+        return Math.ceil(((tempDate - yearStart) / 86400000 + 1) / 7);
+      }
+
+      function fillCurrentCompetitionPeriod() {
+        const weekInput = document.getElementById("competition-week-input");
+        const monthInput = document.getElementById("competition-month-input");
+        if (!weekInput || !monthInput) return;
+
+        const now = new Date();
+        if (!weekInput.value.trim()) {
+          weekInput.value = String(getISOWeekNumber(now));
+        }
+        if (!monthInput.value.trim()) {
+          monthInput.value = String(now.getMonth() + 1);
+        }
+      }
+
       function createDefaultArray(rows) {
         let arr = [];
         for (let i = 0; i < rows; i++) {
@@ -8180,6 +8206,7 @@
       // INITIALIZATION
       window.onload = async () => {
         loadData();
+        fillCurrentCompetitionPeriod();
         loadBlackboardData();
         syncOverlays();
         const savedConfig = localStorage.getItem("classApp_config");
