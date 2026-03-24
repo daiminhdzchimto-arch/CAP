@@ -291,16 +291,16 @@
       .view-3d-btn { position: absolute; top: 0; left: 0; margin: 4px; font-size: 0.75rem; color: #0ea5e9; cursor: pointer; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s, color 0.2s; background: rgba(255, 255, 255, 0.9); border-radius: 9999px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
       .teacher-desk-box:hover .teacher-view-3d-btn,
       .teacher-desk-box:focus-within .teacher-view-3d-btn { opacity: 1; pointer-events: auto; }
-      #classroom-reference-row { perspective: 1400px; transform-style: preserve-3d; }
+      #classroom-reference-row { perspective: none; transform-style: flat; }
       .classroom-object-25d {
           position: relative;
           isolation: isolate;
-          transform-style: preserve-3d;
-          transform: rotateX(var(--tilt-x, 14deg)) rotateY(var(--tilt-y, -10deg)) translateZ(0);
-          transition: transform 0.35s ease, box-shadow 0.35s ease;
+          transform-style: flat;
+          transform: none;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
       .classroom-object-25d:hover {
-          transform: rotateX(calc(var(--tilt-x, 14deg) - 3deg)) rotateY(calc(var(--tilt-y, -10deg) - 2deg)) translateZ(8px);
+          transform: translateY(-1px);
       }
       .classroom-object-25d::before {
           content: '';
@@ -308,23 +308,24 @@
           inset: 0;
           z-index: -1;
           border-radius: inherit;
-          transform: translate3d(7px, 8px, -8px);
+          transform: none;
           pointer-events: none;
+          opacity: 0;
       }
       .classroom-object-25d::after {
           content: '';
           position: absolute;
           left: 10%;
           right: 10%;
-          bottom: -16px;
-          height: 16px;
+          bottom: -10px;
+          height: 10px;
           z-index: -2;
           border-radius: 9999px;
-          background: rgba(15, 23, 42, 0.38);
-          filter: blur(7px);
+          background: rgba(15, 23, 42, 0.2);
+          filter: blur(5px);
           pointer-events: none;
       }
-      .classroom-object-25d > * { transform: translateZ(2px); }
+      .classroom-object-25d > * { transform: none; }
       .door-25d::before { background: linear-gradient(135deg, #5b2c14 0%, #3b1d0d 100%); }
       .board-25d::before { background: linear-gradient(135deg, #1f2937 0%, #0b1220 100%); }
       .desk-25d::before { background: linear-gradient(135deg, #b45309 0%, #78350f 100%); }
@@ -332,13 +333,13 @@
       .board-25d,
       .desk-25d {
           box-shadow:
-              0 10px 18px rgba(15, 23, 42, 0.3),
-              0 2px 0 rgba(255, 255, 255, 0.2) inset,
-              0 -3px 0 rgba(0, 0, 0, 0.22) inset;
+              0 4px 10px rgba(15, 23, 42, 0.16),
+              0 1px 0 rgba(255, 255, 255, 0.2) inset,
+              0 -1px 0 rgba(0, 0, 0, 0.15) inset;
       }
-      .door-25d { --tilt-x: 12deg; --tilt-y: -18deg; }
-      .board-25d { --tilt-x: 18deg; --tilt-y: 0deg; }
-      .desk-25d { --tilt-x: 16deg; --tilt-y: -14deg; }
+      .door-25d { --tilt-x: 0deg; --tilt-y: 0deg; }
+      .board-25d { --tilt-x: 0deg; --tilt-y: 0deg; }
+      .desk-25d { --tilt-x: 0deg; --tilt-y: 0deg; }
 
       .wood-texture {
           background-image: repeating-linear-gradient(
