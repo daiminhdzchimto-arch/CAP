@@ -423,6 +423,9 @@
       .teacher-view-3d-btn:hover { color: #0284c7; }
       .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
       #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; overflow-x: auto; overflow-y: hidden; }
+      #classroom-area.room-shape-rectangle { border-radius: 1rem; }
+      #classroom-area.room-shape-u-shape { border-radius: 1.5rem 1.5rem 2.75rem 2.75rem; clip-path: polygon(0 0, 100% 0, 100% 84%, 66% 84%, 66% 100%, 34% 100%, 34% 84%, 0 84%); }
+      #classroom-area.room-shape-l-shape { border-radius: 1rem; clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 70%, 70% 100%, 0 100%); }
       #classroom-scroll-content { min-width: 980px; width: 100%; margin: 0 auto; }
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
       .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -438,6 +441,10 @@
       .is-conflict-hidden.desk-box.has-conflict { border-color: #374151 !important; }
       .is-conflict-hidden .conflict-dot { display: none !important; }
       .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
+      .desk-box.desk-type-double { background: #e0f2fe; border-style: dashed; }
+      .desk-box.desk-type-group { background: #fef3c7; border-color: #d97706; }
+      .desk-box.desk-type-teacher-aid { background: #ede9fe; border-color: #7c3aed; }
+      .desk-type-badge { position: absolute; top: 4px; right: 4px; font-size: 9px; padding: 1px 5px; border-radius: 9999px; font-weight: 700; background: rgba(17,24,39,0.85); color: #f9fafb; z-index: 12; }
       .desk-box.is-dragging-seat { opacity: 0.55; transform: scale(0.98); }
       .desk-box.drag-over-target { border-color: #0ea5e9 !important; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25); }
       .desk-box.is-fixed { border-color: var(--fixed) !important; border-width: 3px !important; background-color: rgba(139, 92, 246, 0.1) !important; }
@@ -920,7 +927,7 @@
 
           <div
             id="classroom-area"
-            class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] relative"
+            class="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 min-h-[600px] relative room-shape-rectangle"
           >
             <div
               id="classroom-scroll-content"
@@ -1479,6 +1486,78 @@
             </button>
           </div>
           <div class="space-y-6 p-2">
+            <div>
+              <h3
+                class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest"
+              >
+                Bố cục phòng học
+              </h3>
+              <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="text-xs font-semibold text-gray-600">
+                    Số hàng / mỗi dãy
+                    <input
+                      id="layout-rows-input"
+                      type="number"
+                      min="2"
+                      max="12"
+                      class="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5"
+                    />
+                  </label>
+                  <label class="text-xs font-semibold text-gray-600">
+                    Số cột / mỗi hàng
+                    <input
+                      id="layout-cols-input"
+                      type="number"
+                      min="2"
+                      max="8"
+                      class="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5"
+                    />
+                  </label>
+                </div>
+                <label class="text-xs font-semibold text-gray-600 block">
+                  Hình dạng phòng học
+                  <select
+                    id="room-shape-select"
+                    class="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5"
+                  >
+                    <option value="rectangle">Chữ nhật</option>
+                    <option value="u-shape">Chữ U</option>
+                    <option value="l-shape">Chữ L</option>
+                  </select>
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onclick="addSpecialDeskToLayout('double')"
+                    class="px-2 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold"
+                  >
+                    + Bàn đôi
+                  </button>
+                  <button
+                    type="button"
+                    onclick="addSpecialDeskToLayout('group')"
+                    class="px-2 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold"
+                  >
+                    + Bàn nhóm
+                  </button>
+                  <button
+                    type="button"
+                    onclick="addSpecialDeskToLayout('teacher-aid')"
+                    class="px-2 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 text-xs font-semibold"
+                  >
+                    + Bàn trợ giảng
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onclick="applyLayoutConfig()"
+                  class="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-semibold"
+                >
+                  Áp dụng bố cục mới
+                </button>
+              </div>
+            </div>
             <div>
               <h3
                 class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest"
@@ -2387,7 +2466,8 @@
       // =================================================================
       // CONSTANTS & STATE
       // =================================================================
-      const ROW_COUNT = 6;
+      const DEFAULT_LAYOUT_ROWS = 6;
+      const DEFAULT_LAYOUT_COLUMNS = 4;
       const DUTY_DEBT_KEY = "classApp_duty_debt";
       const VN_CHARS =
         "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
@@ -2635,6 +2715,11 @@
 
       let leftSideData = [],
         rightSideData = [];
+      let layoutConfig = {
+        rowsPerSide: DEFAULT_LAYOUT_ROWS,
+        columnsPerRow: DEFAULT_LAYOUT_COLUMNS,
+        roomShape: "rectangle",
+      };
       let swapSource = null,
         dragSeatSource = null,
         dutySelection = {},
@@ -3433,12 +3518,53 @@
       // =================================================================
       // CORE UI & SEATING LOGIC
       // =================================================================
+      function getLayoutRows() {
+        return Math.max(
+          2,
+          Math.min(12, Number(layoutConfig.rowsPerSide) || DEFAULT_LAYOUT_ROWS),
+        );
+      }
+
+      function getLayoutColumns() {
+        return Math.max(
+          2,
+          Math.min(
+            8,
+            Number(layoutConfig.columnsPerRow) || DEFAULT_LAYOUT_COLUMNS,
+          ),
+        );
+      }
+
+      function normalizeSeatForLayout(seat = {}) {
+        return {
+          id: seat.id || generateSeatId(),
+          name: typeof seat.name === "string" ? seat.name : "",
+          width: Math.max(1, Number(seat.width) || 1),
+          merged: !!seat.merged,
+          type: seat.type || "standard",
+        };
+      }
+
+      function applyRoomShape() {
+        const area = document.getElementById("classroom-area");
+        if (!area) return;
+        area.classList.remove(
+          "room-shape-rectangle",
+          "room-shape-u-shape",
+          "room-shape-l-shape",
+        );
+        area.classList.add(
+          `room-shape-${layoutConfig.roomShape || "rectangle"}`,
+        );
+      }
+
       function renderAll() {
         renderSide("left-rows-container", leftSideData, "left");
         renderSide("right-rows-container", rightSideData, "right");
         applyDeskSelectionState();
         updateStatusUI();
         checkAllConflicts();
+        applyRoomShape();
       }
 
       const deskInputFitQueue = new WeakMap();
@@ -3533,14 +3659,7 @@
           div.className = "flex w-full gap-2 relative row-container";
           row.forEach((seat, si) => {
             const cell = document.createElement("div");
-            const w =
-              seat.width === 1
-                ? "w-1/4"
-                : seat.width === 2
-                  ? "w-2/4"
-                  : seat.width === 3
-                    ? "w-3/4"
-                    : "w-full";
+            const seatWidthPct = `${Math.min(100, (seat.width / getLayoutColumns()) * 100)}%`;
             const isSrc =
               swapSource &&
               swapSource.side === side &&
@@ -3549,7 +3668,9 @@
             const isFixed = fixedMembers.includes(seat.id);
             const hasConflict = seat.hasConflict;
 
-            cell.className = `${w} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged ? "merged" : ""} ${isSrc ? "swap-selected" : ""} ${isFixed ? "is-fixed" : ""} ${hasConflict ? "has-conflict" : ""}`;
+            cell.className = `desk-box min-h-16 h-auto rounded-xl relative desk-type-${seat.type || "standard"} ${seat.merged ? "merged" : ""} ${isSrc ? "swap-selected" : ""} ${isFixed ? "is-fixed" : ""} ${hasConflict ? "has-conflict" : ""}`;
+            cell.style.width = seatWidthPct;
+            cell.style.flex = `0 0 ${seatWidthPct}`;
             cell.dataset.side = side;
             cell.dataset.r = ri;
             cell.dataset.c = si;
@@ -3561,6 +3682,17 @@
               badge.className = "fixed-badge";
               badge.innerHTML = '<i class="fas fa-lock"></i>';
               cell.appendChild(badge);
+            }
+            if (seat.type && seat.type !== "standard") {
+              const typeBadge = document.createElement("div");
+              typeBadge.className = "desk-type-badge";
+              typeBadge.innerText =
+                seat.type === "double"
+                  ? "Đôi"
+                  : seat.type === "group"
+                    ? "Nhóm"
+                    : "Trợ giảng";
+              cell.appendChild(typeBadge);
             }
 
             if (hasConflict) {
@@ -6064,8 +6196,8 @@
         );
       }
       function resetLayout() {
-        leftSideData = createDefaultArray(ROW_COUNT);
-        rightSideData = createDefaultArray(ROW_COUNT);
+        leftSideData = createDefaultArray(getLayoutRows(), getLayoutColumns());
+        rightSideData = createDefaultArray(getLayoutRows(), getLayoutColumns());
         fixedMembers = [];
         conflictGraph = {};
         genderMap = {};
@@ -6082,6 +6214,85 @@
         renderAll();
         animateActionFeedback("#classroom-area", "animate-ripple-reset", 700);
         showToast("Đã làm mới toàn bộ dữ liệu!");
+      }
+
+      function setLayoutInputsFromState() {
+        const rowsInput = document.getElementById("layout-rows-input");
+        const colsInput = document.getElementById("layout-cols-input");
+        const shapeSelect = document.getElementById("room-shape-select");
+        if (rowsInput) rowsInput.value = String(getLayoutRows());
+        if (colsInput) colsInput.value = String(getLayoutColumns());
+        if (shapeSelect)
+          shapeSelect.value = layoutConfig.roomShape || "rectangle";
+      }
+
+      function applyLayoutConfig() {
+        const rowsInput = Number(
+          document.getElementById("layout-rows-input")?.value,
+        );
+        const colsInput = Number(
+          document.getElementById("layout-cols-input")?.value,
+        );
+        const roomShape =
+          document.getElementById("room-shape-select")?.value || "rectangle";
+        const nextRows = Math.max(
+          2,
+          Math.min(12, rowsInput || getLayoutRows()),
+        );
+        const nextCols = Math.max(
+          2,
+          Math.min(8, colsInput || getLayoutColumns()),
+        );
+        layoutConfig = {
+          rowsPerSide: nextRows,
+          columnsPerRow: nextCols,
+          roomShape,
+        };
+        const mapSide = (sideRows = []) => {
+          const mapped = [];
+          for (let ri = 0; ri < nextRows; ri += 1) {
+            const sourceRow = Array.isArray(sideRows[ri])
+              ? sideRows[ri].map(normalizeSeatForLayout)
+              : [];
+            mapped.push(normalizeRowWidth(sourceRow, nextCols));
+          }
+          return mapped;
+        };
+        leftSideData = mapSide(leftSideData);
+        rightSideData = mapSide(rightSideData);
+        setLayoutInputsFromState();
+        renderAll();
+        showToast("Đã cập nhật số hàng/cột và hình dạng phòng.");
+      }
+
+      function addSpecialDeskToLayout(type = "group") {
+        const normalizedType = ["double", "group", "teacher-aid"].includes(type)
+          ? type
+          : "group";
+        let targetRow = null;
+        let seat = null;
+        [leftSideData, rightSideData].some((sideRows) =>
+          sideRows.some((row) => {
+            const candidate = row.find(
+              (item) =>
+                !item.name.trim() && (item.type || "standard") === "standard",
+            );
+            if (!candidate) return false;
+            seat = candidate;
+            targetRow = row;
+            return true;
+          }),
+        );
+        if (!seat || !targetRow) {
+          showToast("Không còn bàn trống để chuyển thành bàn đặc biệt.");
+          return;
+        }
+        seat.type = normalizedType;
+        if (normalizedType === "double" && seat.width < 2) seat.width = 2;
+        seat.width = Math.min(seat.width, getLayoutColumns());
+        normalizeRowWidth(targetRow, getLayoutColumns());
+        renderAll();
+        showToast("Đã thêm bàn đặc biệt vào sơ đồ.");
       }
 
       function toggleFixed(id) {
@@ -6234,6 +6445,7 @@
       function renderMiniMap() {
         const grid = document.getElementById("mini-map-grid");
         grid.innerHTML = "";
+        grid.style.gridTemplateColumns = `repeat(${Math.max(2, getLayoutColumns())}, minmax(0, 1fr))`;
         const currentName =
           selectedStudentSeat.memberName || selectedStudentSeat.name;
         const conflicts = Array.from(conflictGraph[currentName] || []);
@@ -7848,6 +8060,7 @@
             morningOff: !!morningOff,
             afternoonOff: !!afternoonOff,
           },
+          layoutConfig: { ...layoutConfig },
         };
       }
 
@@ -7911,6 +8124,14 @@
           excludedMembers = [...(dutySettings.excludedMembers || [])];
           morningOff = !!dutySettings.morningOff;
           afternoonOff = !!dutySettings.afternoonOff;
+          layoutConfig = {
+            rowsPerSide:
+              snapshot.layoutConfig?.rowsPerSide || DEFAULT_LAYOUT_ROWS,
+            columnsPerRow:
+              snapshot.layoutConfig?.columnsPerRow || DEFAULT_LAYOUT_COLUMNS,
+            roomShape: snapshot.layoutConfig?.roomShape || "rectangle",
+          };
+          setLayoutInputsFromState();
           syncOverlays();
           renderAll();
           saveData({ notify: false, animate: false });
@@ -8072,14 +8293,7 @@
           d.onclick = () => toggleDutySel(side, ri);
           row.forEach((s) => {
             const sd = document.createElement("div");
-            sd.style.width =
-              s.width === 1
-                ? "25%"
-                : s.width === 2
-                  ? "50%"
-                  : s.width === 3
-                    ? "75%"
-                    : "100%";
+            sd.style.width = `${Math.min(100, (s.width / getLayoutColumns()) * 100)}%`;
             sd.className = `h-6 border border-gray-300 rounded text-[8px] flex items-center justify-center overflow-hidden select-none bg-gray-100 text-gray-500`;
             sd.innerText = s.name ? s.name.substring(0, 3) : "";
             d.appendChild(sd);
@@ -8545,6 +8759,7 @@
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           dutySchedule: currentSchedule,
+          layoutConfig,
         };
         localStorage.setItem("classApp_v2.5", JSON.stringify(data));
         syncOverlays();
@@ -8616,6 +8831,7 @@
           genderMap,
           dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
           dutySchedule: currentSchedule,
+          layoutConfig,
         };
         const blob = new Blob([JSON.stringify(data)], {
           type: "application/json",
@@ -8638,6 +8854,14 @@
         reader.onload = (e) => {
           try {
             const data = JSON.parse(e.target.result);
+            layoutConfig = {
+              rowsPerSide:
+                data?.layoutConfig?.rowsPerSide || DEFAULT_LAYOUT_ROWS,
+              columnsPerRow:
+                data?.layoutConfig?.columnsPerRow || DEFAULT_LAYOUT_COLUMNS,
+              roomShape: data?.layoutConfig?.roomShape || "rectangle",
+            };
+            const expectedColumns = getLayoutColumns();
             const isValidRowWidth = (side = []) =>
               Array.isArray(side) &&
               side.every((row) => {
@@ -8646,7 +8870,7 @@
                   (sum, seat) => sum + (Number(seat?.width) || 0),
                   0,
                 );
-                return totalWidth === 4;
+                return totalWidth === expectedColumns;
               });
 
             if (
@@ -8654,12 +8878,18 @@
               !isValidRowWidth(data.seating.left) ||
               !isValidRowWidth(data.seating.right)
             ) {
-              showToast("File không hợp lệ: tổng width mỗi hàng phải bằng 4!");
+              showToast(
+                `File không hợp lệ: tổng width mỗi hàng phải bằng ${expectedColumns}!`,
+              );
               return;
             }
 
-            leftSideData = data.seating.left;
-            rightSideData = data.seating.right;
+            leftSideData = data.seating.left.map((row) =>
+              row.map(normalizeSeatForLayout),
+            );
+            rightSideData = data.seating.right.map((row) =>
+              row.map(normalizeSeatForLayout),
+            );
             fixedMembers = data.fixedMembers || [];
             conflictGraph = normalizeConflictGraphEntities(
               data.conflictGraph || {},
@@ -8680,6 +8910,7 @@
               afternoonOff = data.dutySettings.afternoonOff || false;
             }
             currentSchedule = data.dutySchedule || null;
+            setLayoutInputsFromState();
             syncOverlays();
             renderAll();
             closeShareModal();
@@ -8694,13 +8925,44 @@
       function loadData() {
         const raw = localStorage.getItem("classApp_v2.5");
         if (!raw) {
-          leftSideData = createDefaultArray(ROW_COUNT);
-          rightSideData = createDefaultArray(ROW_COUNT);
+          leftSideData = createDefaultArray(
+            getLayoutRows(),
+            getLayoutColumns(),
+          );
+          rightSideData = createDefaultArray(
+            getLayoutRows(),
+            getLayoutColumns(),
+          );
+          setLayoutInputsFromState();
           return;
         }
         const data = JSON.parse(raw);
-        leftSideData = data.seating.left;
-        rightSideData = data.seating.right;
+        layoutConfig = {
+          rowsPerSide: data?.layoutConfig?.rowsPerSide || DEFAULT_LAYOUT_ROWS,
+          columnsPerRow:
+            data?.layoutConfig?.columnsPerRow || DEFAULT_LAYOUT_COLUMNS,
+          roomShape: data?.layoutConfig?.roomShape || "rectangle",
+        };
+        leftSideData = (data.seating.left || []).map((row) =>
+          normalizeRowWidth(
+            (row || []).map(normalizeSeatForLayout),
+            getLayoutColumns(),
+          ),
+        );
+        rightSideData = (data.seating.right || []).map((row) =>
+          normalizeRowWidth(
+            (row || []).map(normalizeSeatForLayout),
+            getLayoutColumns(),
+          ),
+        );
+        while (leftSideData.length < getLayoutRows()) {
+          leftSideData.push(...createDefaultArray(1, getLayoutColumns()));
+        }
+        while (rightSideData.length < getLayoutRows()) {
+          rightSideData.push(...createDefaultArray(1, getLayoutColumns()));
+        }
+        leftSideData = leftSideData.slice(0, getLayoutRows());
+        rightSideData = rightSideData.slice(0, getLayoutRows());
         fixedMembers = data.fixedMembers || [];
         conflictGraph = normalizeConflictGraphEntities(
           data.conflictGraph || {},
@@ -8720,6 +8982,7 @@
           afternoonOff = data.dutySettings.afternoonOff || false;
         }
         currentSchedule = data.dutySchedule || null;
+        setLayoutInputsFromState();
       }
 
       function getISOWeekNumber(date) {
@@ -8746,12 +9009,18 @@
         }
       }
 
-      function createDefaultArray(rows) {
+      function createDefaultArray(rows, columns = getLayoutColumns()) {
         let arr = [];
         for (let i = 0; i < rows; i++) {
           let r = [];
-          for (let j = 0; j < 4; j++)
-            r.push({ id: generateSeatId(), name: "", width: 1, merged: false });
+          for (let j = 0; j < columns; j++)
+            r.push({
+              id: generateSeatId(),
+              name: "",
+              width: 1,
+              merged: false,
+              type: "standard",
+            });
           arr.push(r);
         }
         return arr;
@@ -8790,9 +9059,17 @@
         const width = Number.isFinite(seat.width) ? Math.max(1, seat.width) : 1;
         const isMerged = !!seat.merged;
         const isFixed = fixedMembers.includes(seat.id);
+        const seatType = seat.type || "standard";
 
         // Token rỗng cho bàn mặc định để giữ mã ngắn nhất.
-        if (!safeName && width === 1 && !isMerged && !isFixed) return "";
+        if (
+          !safeName &&
+          width === 1 &&
+          !isMerged &&
+          !isFixed &&
+          seatType === "standard"
+        )
+          return "";
 
         // Giữ định dạng CAPX2 cũ cho trường hợp đơn giản để tương thích ngược.
         if (safeName && width === 1 && !isMerged)
@@ -8804,6 +9081,7 @@
           w: width,
           m: isMerged ? 1 : 0,
           f: isFixed ? 1 : 0,
+          t: seatType,
         };
       }
 
@@ -8818,6 +9096,11 @@
           s: compactState,
           c: buildCompactConflictGraph(),
           d: { dayOffs, excludedMembers, morningOff, afternoonOff },
+          l: {
+            r: getLayoutRows(),
+            c: getLayoutColumns(),
+            sh: layoutConfig.roomShape || "rectangle",
+          },
         };
         const rawJson = JSON.stringify(payload);
         if (hasLZStringSupport()) {
@@ -8831,6 +9114,7 @@
         let width = 1;
         let merged = false;
         let isFixed = false;
+        let type = "standard";
 
         if (typeof seatToken === "string") {
           const token = seatToken.trim();
@@ -8841,6 +9125,7 @@
           width = Number.isFinite(seatToken.w) ? Math.max(1, seatToken.w) : 1;
           merged = !!seatToken.m;
           isFixed = !!seatToken.f;
+          type = seatToken.t || "standard";
         }
 
         const seat = {
@@ -8848,32 +9133,39 @@
           name,
           width,
           merged,
+          type,
         };
         if (isFixed && name) restoredFixed.push(seat.id);
         return seat;
       }
 
-      function normalizeRowWidth(row) {
+      function normalizeRowWidth(row, targetColumns = getLayoutColumns()) {
         let totalWidth = row.reduce(
           (sum, seat) => sum + (Number.isFinite(seat.width) ? seat.width : 1),
           0,
         );
 
-        while (totalWidth < 4) {
-          row.push({ id: generateSeatId(), name: "", width: 1, merged: false });
+        while (totalWidth < targetColumns) {
+          row.push({
+            id: generateSeatId(),
+            name: "",
+            width: 1,
+            merged: false,
+            type: "standard",
+          });
           totalWidth += 1;
         }
 
-        while (totalWidth > 4 && row.length > 0) {
+        while (totalWidth > targetColumns && row.length > 0) {
           const last = row[row.length - 1];
-          if ((last.width || 1) <= totalWidth - 4) {
+          if ((last.width || 1) <= totalWidth - targetColumns) {
             totalWidth -= last.width || 1;
             row.pop();
           } else {
-            const shrink = totalWidth - 4;
+            const shrink = totalWidth - targetColumns;
             last.width = Math.max(1, (last.width || 1) - shrink);
             if (last.width === 1) last.merged = false;
-            totalWidth = 4;
+            totalWidth = targetColumns;
           }
         }
 
@@ -8887,25 +9179,27 @@
       function normalizeImportedSide(sidePayload, restoredFixed) {
         const sideRows = Array.isArray(sidePayload) ? sidePayload : [];
         const normalizedSide = [];
+        const targetRows = getLayoutRows();
+        const targetColumns = getLayoutColumns();
 
-        for (let ri = 0; ri < ROW_COUNT; ri++) {
+        for (let ri = 0; ri < targetRows; ri++) {
           const sourceRow = Array.isArray(sideRows[ri]) ? sideRows[ri] : [];
           const normalizedRow = sourceRow.map((seatToken) =>
             decodeSeatToken(seatToken, restoredFixed),
           );
 
-          // Mã CAPX2 cũ chỉ chứa tên, cần khôi phục đúng 4 cột mặc định.
+          // Mã CAPX2 cũ chỉ chứa tên, cần khôi phục đúng số cột theo layout hiện tại.
           if (
             normalizedRow.length === 0 ||
             sourceRow.every((token) => typeof token === "string")
           ) {
-            while (normalizedRow.length < 4) {
+            while (normalizedRow.length < targetColumns) {
               normalizedRow.push(decodeSeatToken("", restoredFixed));
             }
-            normalizedRow.length = 4;
+            normalizedRow.length = targetColumns;
           }
 
-          normalizedSide.push(normalizeRowWidth(normalizedRow));
+          normalizedSide.push(normalizeRowWidth(normalizedRow, targetColumns));
         }
 
         return normalizedSide;
@@ -8935,6 +9229,12 @@
           const payload = JSON.parse(decompressed);
           if (!payload || !Array.isArray(payload.s) || payload.s.length < 2)
             throw new Error("Sai định dạng dữ liệu");
+          layoutConfig = {
+            rowsPerSide: payload?.l?.r || DEFAULT_LAYOUT_ROWS,
+            columnsPerRow: payload?.l?.c || DEFAULT_LAYOUT_COLUMNS,
+            roomShape: payload?.l?.sh || "rectangle",
+          };
+          setLayoutInputsFromState();
 
           const restoredFixed = [];
           leftSideData = normalizeImportedSide(payload.s[0], restoredFixed);
