@@ -392,6 +392,17 @@
       .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
       .desk-box.is-fixed { border-color: var(--fixed) !important; border-width: 3px !important; background-color: rgba(139, 92, 246, 0.1) !important; }
       .desk-box.has-conflict { border-color: var(--warning) !important; }
+      .desk-box.special-double { background-color: #dcfce7; border-color: #15803d; }
+      .desk-box.special-group { background-color: #ffedd5; border-color: #c2410c; }
+      .special-desk-badge { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-size: 9px; padding: 1px 6px; border-radius: 9999px; background: #1f2937; color: #fff; font-weight: 700; letter-spacing: .02em; }
+      #classroom-area.shape-rectangle { border-radius: 1rem; clip-path: none; }
+      #classroom-area.shape-rounded { border-radius: 2rem; }
+      #classroom-area.shape-l-shape {
+          clip-path: polygon(0 0, 100% 0, 100% 72%, 70% 72%, 70% 100%, 0 100%);
+      }
+      #classroom-area.shape-u-shape {
+          clip-path: polygon(0 0, 100% 0, 100% 100%, 76% 100%, 76% 28%, 24% 28%, 24% 100%, 0 100%);
+      }
       .fixed-badge { position: absolute; top: -8px; left: -8px; background: var(--fixed); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
       .conflict-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--warning); border-radius: 50%; z-index: 30; }
       .desk-context-menu { position: fixed; z-index: 140; min-width: 170px; background: rgba(17, 24, 39, 0.96); color: #f9fafb; border-radius: 12px; padding: 6px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); display: none; }
@@ -812,6 +823,92 @@
               >
                 <i class="fas fa-camera"></i>
               </button>
+            </div>
+          </div>
+
+          <div
+            class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 mb-4 flex flex-wrap items-end gap-3"
+          >
+            <div>
+              <label
+                for="layout-rows-input"
+                class="block text-[11px] font-semibold text-gray-600 mb-1"
+                >Số hàng mỗi dãy</label
+              >
+              <input
+                id="layout-rows-input"
+                type="number"
+                min="2"
+                max="12"
+                value="6"
+                class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label
+                for="layout-cols-input"
+                class="block text-[11px] font-semibold text-gray-600 mb-1"
+                >Số cột mỗi hàng</label
+              >
+              <input
+                id="layout-cols-input"
+                type="number"
+                min="2"
+                max="8"
+                value="4"
+                class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
+              />
+            </div>
+            <button
+              onclick="applyLayoutDimensions()"
+              class="btn-3d btn-3d-blue text-xs font-bold self-end"
+              title="Áp dụng số hàng/cột"
+            >
+              Áp dụng lưới
+            </button>
+
+            <div class="w-px h-9 bg-gray-200 mx-1"></div>
+
+            <div>
+              <label
+                for="special-desk-type"
+                class="block text-[11px] font-semibold text-gray-600 mb-1"
+                >Bàn đặc biệt</label
+              >
+              <select
+                id="special-desk-type"
+                class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
+              >
+                <option value="normal">Bàn thường</option>
+                <option value="double">Bàn đôi</option>
+                <option value="group">Bàn nhóm</option>
+              </select>
+            </div>
+            <button
+              onclick="applySpecialDeskToSelection()"
+              class="btn-3d btn-3d-orange text-xs font-bold self-end"
+              title="Gán bàn đặc biệt cho bàn đang chọn"
+            >
+              Gán bàn đã chọn
+            </button>
+
+            <div class="w-px h-9 bg-gray-200 mx-1"></div>
+
+            <div>
+              <label
+                for="room-shape-select"
+                class="block text-[11px] font-semibold text-gray-600 mb-1"
+                >Hình dạng phòng học</label
+              >
+              <select
+                id="room-shape-select"
+                class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
+              >
+                <option value="rectangle">Chữ nhật</option>
+                <option value="rounded">Bo góc mềm</option>
+                <option value="l-shape">Chữ L</option>
+                <option value="u-shape">Chữ U</option>
+              </select>
             </div>
           </div>
 
@@ -2133,7 +2230,8 @@
       // =================================================================
       // CONSTANTS & STATE
       // =================================================================
-      const ROW_COUNT = 6;
+      const DEFAULT_ROW_COUNT = 6;
+      const DEFAULT_COL_COUNT = 4;
       const DUTY_DEBT_KEY = "classApp_duty_debt";
       const VN_CHARS =
         "a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
@@ -2381,6 +2479,11 @@
 
       let leftSideData = [],
         rightSideData = [];
+      let layoutState = {
+        rows: DEFAULT_ROW_COUNT,
+        cols: DEFAULT_COL_COUNT,
+        roomShape: "rectangle",
+      };
       let swapSource = null,
         dutySelection = {},
         genderMap = {};
@@ -3015,7 +3118,102 @@
       // =================================================================
       // CORE UI & SEATING LOGIC
       // =================================================================
+      function getLayoutRows() {
+        return Math.max(2, Number(layoutState.rows) || DEFAULT_ROW_COUNT);
+      }
+
+      function getLayoutCols() {
+        return Math.max(2, Number(layoutState.cols) || DEFAULT_COL_COUNT);
+      }
+
+      function applyRoomShape() {
+        const area = document.getElementById("classroom-area");
+        if (!area) return;
+        area.classList.remove(
+          "shape-rectangle",
+          "shape-rounded",
+          "shape-l-shape",
+          "shape-u-shape",
+        );
+        const shapeClass = `shape-${layoutState.roomShape || "rectangle"}`;
+        area.classList.add(shapeClass);
+      }
+
+      function readSelectedDeskSeat() {
+        if (!selectedDeskKey) return null;
+        const [side, row, col] = selectedDeskKey.split("-");
+        const sideData = side === "left" ? leftSideData : rightSideData;
+        const r = Number(row);
+        const c = Number(col);
+        if (!sideData?.[r]?.[c]) return null;
+        return { side, row: r, col: c, seat: sideData[r][c] };
+      }
+
+      function applySpecialDeskToSelection() {
+        const selected = readSelectedDeskSeat();
+        if (!selected) {
+          showToast("Vui lòng chọn một bàn trước khi gán loại bàn.");
+          return;
+        }
+        const type =
+          document.getElementById("special-desk-type")?.value || "normal";
+        selected.seat.specialType = type;
+        renderAll();
+        animateDeskCellById(selected.seat.id, "animate-pulse-highlight", 420);
+      }
+
+      function applyLayoutDimensions() {
+        const rowsInput = document.getElementById("layout-rows-input");
+        const colsInput = document.getElementById("layout-cols-input");
+        const nextRows = clamp(
+          Number(rowsInput?.value || getLayoutRows()),
+          2,
+          12,
+        );
+        const nextCols = clamp(
+          Number(colsInput?.value || getLayoutCols()),
+          2,
+          8,
+        );
+
+        layoutState.rows = nextRows;
+        layoutState.cols = nextCols;
+        if (rowsInput) rowsInput.value = String(nextRows);
+        if (colsInput) colsInput.value = String(nextCols);
+
+        const normalizeSideByLayout = (sideRows = []) => {
+          const normalized = [];
+          for (let ri = 0; ri < nextRows; ri += 1) {
+            const row = Array.isArray(sideRows[ri]) ? [...sideRows[ri]] : [];
+            normalized.push(normalizeRowWidth(row));
+          }
+          return normalized;
+        };
+
+        leftSideData = normalizeSideByLayout(leftSideData);
+        rightSideData = normalizeSideByLayout(rightSideData);
+        fixedMembers = fixedMembers.filter((seatId) =>
+          [...leftSideData.flat(), ...rightSideData.flat()].some(
+            (seat) => seat.id === seatId,
+          ),
+        );
+        renderAll();
+        showToast(`Đã cập nhật sơ đồ: ${nextRows} hàng × ${nextCols} cột.`);
+      }
+
+      function bindLayoutControls() {
+        const shapeSelect = document.getElementById("room-shape-select");
+        if (shapeSelect) {
+          shapeSelect.value = layoutState.roomShape || "rectangle";
+          shapeSelect.addEventListener("change", (event) => {
+            layoutState.roomShape = event.target.value;
+            applyRoomShape();
+          });
+        }
+      }
+
       function renderAll() {
+        applyRoomShape();
         renderSide("left-rows-container", leftSideData, "left");
         renderSide("right-rows-container", rightSideData, "right");
         applyDeskSelectionState();
@@ -3115,14 +3313,8 @@
           div.className = "flex w-full gap-2 relative row-container";
           row.forEach((seat, si) => {
             const cell = document.createElement("div");
-            const w =
-              seat.width === 1
-                ? "w-1/4"
-                : seat.width === 2
-                  ? "w-2/4"
-                  : seat.width === 3
-                    ? "w-3/4"
-                    : "w-full";
+            const colCount = getLayoutCols();
+            const widthPercent = `${(seat.width / colCount) * 100}%`;
             const isSrc =
               swapSource &&
               swapSource.side === side &&
@@ -3131,7 +3323,9 @@
             const isFixed = fixedMembers.includes(seat.id);
             const hasConflict = seat.hasConflict;
 
-            cell.className = `${w} desk-box min-h-16 h-auto rounded-xl relative ${seat.merged ? "merged" : ""} ${isSrc ? "swap-selected" : ""} ${isFixed ? "is-fixed" : ""} ${hasConflict ? "has-conflict" : ""}`;
+            cell.className = `desk-box min-h-16 h-auto rounded-xl relative ${seat.merged ? "merged" : ""} ${isSrc ? "swap-selected" : ""} ${isFixed ? "is-fixed" : ""} ${hasConflict ? "has-conflict" : ""} ${seat.specialType && seat.specialType !== "normal" ? `special-${seat.specialType}` : ""}`;
+            cell.style.width = widthPercent;
+            cell.style.flex = `0 0 ${widthPercent}`;
             cell.dataset.side = side;
             cell.dataset.r = ri;
             cell.dataset.c = si;
@@ -3148,6 +3342,13 @@
               const dot = document.createElement("div");
               dot.className = "conflict-dot";
               cell.appendChild(dot);
+            }
+            if (seat.specialType && seat.specialType !== "normal") {
+              const specialBadge = document.createElement("div");
+              specialBadge.className = "special-desk-badge";
+              specialBadge.textContent =
+                seat.specialType === "double" ? "Bàn đôi" : "Bàn nhóm";
+              cell.appendChild(specialBadge);
             }
 
             const ta = document.createElement("textarea");
@@ -5559,6 +5760,7 @@
           name: remainingNames,
           width: remainingWidth,
           merged: remainingWidth > 1,
+          specialType: "normal",
         });
         renderAll();
         const splitCells = [
@@ -5581,8 +5783,8 @@
         );
       }
       function resetLayout() {
-        leftSideData = createDefaultArray(ROW_COUNT);
-        rightSideData = createDefaultArray(ROW_COUNT);
+        leftSideData = createDefaultArray(getLayoutRows());
+        rightSideData = createDefaultArray(getLayoutRows());
         fixedMembers = [];
         conflictGraph = {};
         genderMap = {};
@@ -7528,6 +7730,11 @@
         }
         const data = {
           seating: { left: leftSideData, right: rightSideData },
+          layout: {
+            rows: getLayoutRows(),
+            cols: getLayoutCols(),
+            roomShape: layoutState.roomShape || "rectangle",
+          },
           fixedMembers,
           conflictGraph: Object.fromEntries(
             Object.entries(conflictGraph).map(([k, v]) => [k, Array.from(v)]),
@@ -7686,11 +7893,16 @@
       function loadData() {
         const raw = localStorage.getItem("classApp_v2.5");
         if (!raw) {
-          leftSideData = createDefaultArray(ROW_COUNT);
-          rightSideData = createDefaultArray(ROW_COUNT);
+          leftSideData = createDefaultArray(getLayoutRows());
+          rightSideData = createDefaultArray(getLayoutRows());
           return;
         }
         const data = JSON.parse(raw);
+        if (data.layout) {
+          layoutState.rows = clamp(Number(data.layout.rows || 6), 2, 12);
+          layoutState.cols = clamp(Number(data.layout.cols || 4), 2, 8);
+          layoutState.roomShape = data.layout.roomShape || "rectangle";
+        }
         leftSideData = data.seating.left;
         rightSideData = data.seating.right;
         fixedMembers = data.fixedMembers || [];
@@ -7711,14 +7923,37 @@
           morningOff = data.dutySettings.morningOff || false;
           afternoonOff = data.dutySettings.afternoonOff || false;
         }
+        const normalizeSpecialType = (seat) => ({
+          ...seat,
+          specialType:
+            seat?.specialType === "double" || seat?.specialType === "group"
+              ? seat.specialType
+              : "normal",
+        });
+        leftSideData = (leftSideData || [])
+          .slice(0, getLayoutRows())
+          .map((row) =>
+            normalizeRowWidth((row || []).map(normalizeSpecialType)),
+          );
+        rightSideData = (rightSideData || [])
+          .slice(0, getLayoutRows())
+          .map((row) =>
+            normalizeRowWidth((row || []).map(normalizeSpecialType)),
+          );
       }
 
-      function createDefaultArray(rows) {
+      function createDefaultArray(rows, cols = getLayoutCols()) {
         let arr = [];
         for (let i = 0; i < rows; i++) {
           let r = [];
-          for (let j = 0; j < 4; j++)
-            r.push({ id: generateSeatId(), name: "", width: 1, merged: false });
+          for (let j = 0; j < cols; j++)
+            r.push({
+              id: generateSeatId(),
+              name: "",
+              width: 1,
+              merged: false,
+              specialType: "normal",
+            });
           arr.push(r);
         }
         return arr;
@@ -7757,9 +7992,17 @@
         const width = Number.isFinite(seat.width) ? Math.max(1, seat.width) : 1;
         const isMerged = !!seat.merged;
         const isFixed = fixedMembers.includes(seat.id);
+        const specialType = seat.specialType || "normal";
 
         // Token rỗng cho bàn mặc định để giữ mã ngắn nhất.
-        if (!safeName && width === 1 && !isMerged && !isFixed) return "";
+        if (
+          !safeName &&
+          width === 1 &&
+          !isMerged &&
+          !isFixed &&
+          specialType === "normal"
+        )
+          return "";
 
         // Giữ định dạng CAPX2 cũ cho trường hợp đơn giản để tương thích ngược.
         if (safeName && width === 1 && !isMerged)
@@ -7771,6 +8014,7 @@
           w: width,
           m: isMerged ? 1 : 0,
           f: isFixed ? 1 : 0,
+          t: specialType !== "normal" ? specialType : undefined,
         };
       }
 
@@ -7785,6 +8029,11 @@
           s: compactState,
           c: buildCompactConflictGraph(),
           d: { dayOffs, excludedMembers, morningOff, afternoonOff },
+          l: {
+            r: getLayoutRows(),
+            c: getLayoutCols(),
+            sh: layoutState.roomShape || "rectangle",
+          },
         };
         const rawJson = JSON.stringify(payload);
         if (hasLZStringSupport()) {
@@ -7798,6 +8047,7 @@
         let width = 1;
         let merged = false;
         let isFixed = false;
+        let specialType = "normal";
 
         if (typeof seatToken === "string") {
           const token = seatToken.trim();
@@ -7808,6 +8058,10 @@
           width = Number.isFinite(seatToken.w) ? Math.max(1, seatToken.w) : 1;
           merged = !!seatToken.m;
           isFixed = !!seatToken.f;
+          specialType =
+            seatToken.t === "double" || seatToken.t === "group"
+              ? seatToken.t
+              : "normal";
         }
 
         const seat = {
@@ -7815,32 +8069,40 @@
           name,
           width,
           merged,
+          specialType,
         };
         if (isFixed && name) restoredFixed.push(seat.id);
         return seat;
       }
 
       function normalizeRowWidth(row) {
+        const maxCols = getLayoutCols();
         let totalWidth = row.reduce(
           (sum, seat) => sum + (Number.isFinite(seat.width) ? seat.width : 1),
           0,
         );
 
-        while (totalWidth < 4) {
-          row.push({ id: generateSeatId(), name: "", width: 1, merged: false });
+        while (totalWidth < maxCols) {
+          row.push({
+            id: generateSeatId(),
+            name: "",
+            width: 1,
+            merged: false,
+            specialType: "normal",
+          });
           totalWidth += 1;
         }
 
-        while (totalWidth > 4 && row.length > 0) {
+        while (totalWidth > maxCols && row.length > 0) {
           const last = row[row.length - 1];
-          if ((last.width || 1) <= totalWidth - 4) {
+          if ((last.width || 1) <= totalWidth - maxCols) {
             totalWidth -= last.width || 1;
             row.pop();
           } else {
-            const shrink = totalWidth - 4;
+            const shrink = totalWidth - maxCols;
             last.width = Math.max(1, (last.width || 1) - shrink);
             if (last.width === 1) last.merged = false;
-            totalWidth = 4;
+            totalWidth = maxCols;
           }
         }
 
@@ -7855,7 +8117,7 @@
         const sideRows = Array.isArray(sidePayload) ? sidePayload : [];
         const normalizedSide = [];
 
-        for (let ri = 0; ri < ROW_COUNT; ri++) {
+        for (let ri = 0; ri < getLayoutRows(); ri++) {
           const sourceRow = Array.isArray(sideRows[ri]) ? sideRows[ri] : [];
           const normalizedRow = sourceRow.map((seatToken) =>
             decodeSeatToken(seatToken, restoredFixed),
@@ -7866,10 +8128,10 @@
             normalizedRow.length === 0 ||
             sourceRow.every((token) => typeof token === "string")
           ) {
-            while (normalizedRow.length < 4) {
+            while (normalizedRow.length < getLayoutCols()) {
               normalizedRow.push(decodeSeatToken("", restoredFixed));
             }
-            normalizedRow.length = 4;
+            normalizedRow.length = getLayoutCols();
           }
 
           normalizedSide.push(normalizeRowWidth(normalizedRow));
@@ -7902,6 +8164,11 @@
           const payload = JSON.parse(decompressed);
           if (!payload || !Array.isArray(payload.s) || payload.s.length < 2)
             throw new Error("Sai định dạng dữ liệu");
+          if (payload.l) {
+            layoutState.rows = clamp(Number(payload.l.r || 6), 2, 12);
+            layoutState.cols = clamp(Number(payload.l.c || 4), 2, 8);
+            layoutState.roomShape = payload.l.sh || "rectangle";
+          }
 
           const restoredFixed = [];
           leftSideData = normalizeImportedSide(payload.s[0], restoredFixed);
@@ -8182,6 +8449,12 @@
         loadData();
         loadBlackboardData();
         syncOverlays();
+        const rowsInput = document.getElementById("layout-rows-input");
+        const colsInput = document.getElementById("layout-cols-input");
+        if (rowsInput) rowsInput.value = String(getLayoutRows());
+        if (colsInput) colsInput.value = String(getLayoutCols());
+        bindLayoutControls();
+        applyRoomShape();
         const savedConfig = localStorage.getItem("classApp_config");
         if (savedConfig) {
           config = JSON.parse(savedConfig);
