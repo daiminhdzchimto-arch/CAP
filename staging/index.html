@@ -2107,6 +2107,14 @@
             </button>
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="setBlackboardTool('marker', this)"
+              data-blackboard-tool="marker"
+              title="Bút highlight tô nền chữ"
+            >
+              <i class="fas fa-highlighter"></i> Highlight
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="addBlackboardText()"
             >
               <i class="fas fa-font"></i> Chữ
@@ -2171,6 +2179,24 @@
             >
               <i class="fas fa-slash"></i> Đường
             </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="addBlackboardShape('arrow')"
+            >
+              <i class="fas fa-arrow-right"></i> Mũi tên
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="addBlackboardShape('triangle')"
+            >
+              <i class="fas fa-play rotate-90"></i> Tam giác
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="addBlackboardShape('diamond')"
+            >
+              <i class="fas fa-gem"></i> Hình thoi
+            </button>
             <input
               type="color"
               id="blackboard-color"
@@ -2190,6 +2216,33 @@
             >
               Đang dùng: <i class="fas fa-pencil-alt"></i> Bút
             </span>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="zoomOutBlackboard()"
+              title="Thu nhỏ bảng đen"
+            >
+              <i class="fas fa-search-minus"></i>
+            </button>
+            <span
+              id="blackboard-zoom-status"
+              class="text-xs text-amber-100 px-2 py-1 rounded bg-stone-700"
+            >
+              Zoom: 100%
+            </span>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="zoomInBlackboard()"
+              title="Phóng to bảng đen"
+            >
+              <i class="fas fa-search-plus"></i>
+            </button>
+            <button
+              class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
+              onclick="resetBlackboardZoom()"
+              title="Đặt lại zoom 100%"
+            >
+              100%
+            </button>
             <button
               class="tool-btn bg-stone-700 text-white px-3 py-1 rounded text-sm hover:bg-stone-600"
               onclick="deleteActiveBlackboardObject()"
@@ -2577,6 +2630,10 @@
       const BLACKBOARD_BACKGROUND = "#1e293b";
       const BLACKBOARD_DEFAULT_COLOR = "#ffffff";
       const BLACKBOARD_HISTORY_LIMIT = 40;
+      const BLACKBOARD_ZOOM_MIN = 0.5;
+      const BLACKBOARD_ZOOM_MAX = 2.5;
+      const BLACKBOARD_ZOOM_STEP = 0.1;
+      let blackboardZoomLevel = 1;
       let blackboardHistory = [];
       let blackboardHistoryIndex = -1;
       let isBlackboardUndoRedoApplying = false;
@@ -6170,12 +6227,25 @@
 
       function configureBlackboardBrush() {
         if (!blackboardFabric?.freeDrawingBrush) return;
+        const selectedColor =
+          document.getElementById("blackboard-color")?.value ||
+          BLACKBOARD_DEFAULT_COLOR;
+        if (currentBlackboardTool === "eraser") {
+          blackboardFabric.freeDrawingBrush.width = 18;
+          blackboardFabric.freeDrawingBrush.color = BLACKBOARD_BACKGROUND;
+          return;
+        }
+        if (currentBlackboardTool === "marker") {
+          blackboardFabric.freeDrawingBrush.width = 20;
+          blackboardFabric.freeDrawingBrush.color = fabric.Color.fromHex(
+            selectedColor,
+          )
+            .setAlpha(0.35)
+            .toRgba();
+          return;
+        }
         blackboardFabric.freeDrawingBrush.width = 4;
-        blackboardFabric.freeDrawingBrush.color =
-          currentBlackboardTool === "eraser"
-            ? BLACKBOARD_BACKGROUND
-            : document.getElementById("blackboard-color")?.value ||
-              BLACKBOARD_DEFAULT_COLOR;
+        blackboardFabric.freeDrawingBrush.color = selectedColor;
       }
 
       function saveBlackboardHistoryState() {
@@ -6516,7 +6586,45 @@
           { cssOnly: true },
         );
         blackboardFabric.calcOffset();
+        applyBlackboardZoom(blackboardZoomLevel);
         blackboardFabric.requestRenderAll();
+      }
+
+      function updateBlackboardZoomStatus() {
+        const status = document.getElementById("blackboard-zoom-status");
+        if (!status) return;
+        status.textContent = `Zoom: ${Math.round(blackboardZoomLevel * 100)}%`;
+      }
+
+      function applyBlackboardZoom(rawZoomLevel) {
+        if (!blackboardFabric) return;
+        blackboardZoomLevel = Math.min(
+          BLACKBOARD_ZOOM_MAX,
+          Math.max(BLACKBOARD_ZOOM_MIN, rawZoomLevel || 1),
+        );
+        blackboardFabric.setViewportTransform([
+          blackboardZoomLevel,
+          0,
+          0,
+          blackboardZoomLevel,
+          0,
+          0,
+        ]);
+        blackboardFabric.requestRenderAll();
+        refreshBlackboardMirror();
+        updateBlackboardZoomStatus();
+      }
+
+      function zoomInBlackboard() {
+        applyBlackboardZoom(blackboardZoomLevel + BLACKBOARD_ZOOM_STEP);
+      }
+
+      function zoomOutBlackboard() {
+        applyBlackboardZoom(blackboardZoomLevel - BLACKBOARD_ZOOM_STEP);
+      }
+
+      function resetBlackboardZoom() {
+        applyBlackboardZoom(1);
       }
 
       function initBlackboardFabric() {
@@ -6601,6 +6709,11 @@
         }
         if (tool === "eraser") {
           status.innerHTML = 'Đang dùng: <i class="fas fa-eraser"></i> Tẩy';
+          return;
+        }
+        if (tool === "marker") {
+          status.innerHTML =
+            'Đang dùng: <i class="fas fa-highlighter"></i> Highlight';
           return;
         }
         status.innerHTML = 'Đang dùng: <i class="fas fa-pencil-alt"></i> Bút';
@@ -6805,6 +6918,49 @@
           shape = new fabric.Line([50, 50, 200, 200], {
             stroke: color,
             strokeWidth: 3,
+          });
+        } else if (type === "arrow") {
+          const arrowLine = new fabric.Line([80, 120, 250, 120], {
+            stroke: color,
+            strokeWidth: 4,
+            strokeLineCap: "round",
+            originX: "center",
+            originY: "center",
+          });
+          const arrowHead = new fabric.Triangle({
+            width: 22,
+            height: 22,
+            fill: color,
+            left: 85,
+            top: 0,
+            originX: "center",
+            originY: "center",
+            angle: 90,
+          });
+          shape = new fabric.Group([arrowLine, arrowHead], {
+            left: 150,
+            top: 150,
+          });
+        } else if (type === "triangle") {
+          shape = new fabric.Triangle({
+            width: 90,
+            height: 90,
+            left: 150,
+            top: 150,
+            fill: "transparent",
+            stroke: color,
+            strokeWidth: 3,
+          });
+        } else if (type === "diamond") {
+          shape = new fabric.Rect({
+            width: 80,
+            height: 80,
+            left: 150,
+            top: 150,
+            fill: "transparent",
+            stroke: color,
+            strokeWidth: 3,
+            angle: 45,
           });
         }
         if (!shape) return;
