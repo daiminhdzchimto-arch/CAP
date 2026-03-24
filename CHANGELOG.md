@@ -1,3 +1,9 @@
+# [1.50.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.49.0...v1.50.0) (2026-03-24)
+
+### Features
+
+- add weekly/monthly competition report export to Excel and PDF ([44739fc](https://github.com/daiminhdzchimto-arch/CAP/commit/44739fc0e3a293beca480262df1b0ceb6365ba76))
+
 # [1.49.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.48.0...v1.49.0) (2026-03-24)
 
 ### Features
