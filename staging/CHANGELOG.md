@@ -1,3 +1,9 @@
+## [1.53.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.4...v1.53.5) (2026-03-24)
+
+### Bug Fixes
+
+- improve fixed-seat text contrast in dark mode ([854736b](https://github.com/daiminhdzchimto-arch/CAP/commit/854736bc034bc3e38c5a41bbf376d9506fe3ef92))
+
 ## [1.53.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.3...v1.53.4) (2026-03-24)
 
 ### Bug Fixes

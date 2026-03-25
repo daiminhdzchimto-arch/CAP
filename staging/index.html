@@ -6470,7 +6470,7 @@
         document
           .querySelectorAll('input[type="file"]')
           .forEach((input) => (input.value = ""));
-        localStorage.removeItem("classApp_v2.5");
+        for (const key of STORAGE_WRITE_KEYS) localStorage.removeItem(key);
         syncLayoutConfigUI();
         renderAll();
         animateActionFeedback("#classroom-area", "animate-ripple-reset", 700);
@@ -9538,6 +9538,29 @@
       }
 
       let lastAutoSaveAt = 0;
+      const PRIMARY_STORAGE_KEY = "classApp_v28";
+      const LEGACY_STORAGE_KEYS = [
+        "classApp_v2.5",
+        "classApp_v27",
+        "classApp_v26",
+        "classApp_v25",
+        "classApp_v24",
+      ];
+      const STORAGE_WRITE_KEYS = [PRIMARY_STORAGE_KEY, ...LEGACY_STORAGE_KEYS];
+
+      function readStoredClassData() {
+        const keysToCheck = [...new Set(STORAGE_WRITE_KEYS)];
+        for (const key of keysToCheck) {
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          try {
+            return { data: JSON.parse(raw), key };
+          } catch (error) {
+            console.warn(`[CAP] Invalid JSON in storage key ${key}:`, error);
+          }
+        }
+        return { data: null, key: null };
+      }
 
       function saveData({ notify = true, animate = true } = {}) {
         if (animate) {
@@ -9567,7 +9590,10 @@
           shuffleHistoryCounter,
         };
         try {
-          localStorage.setItem("classApp_v2.5", JSON.stringify(data));
+          const serializedData = JSON.stringify(data);
+          for (const key of STORAGE_WRITE_KEYS) {
+            localStorage.setItem(key, serializedData);
+          }
         } catch (error) {
           console.error("[CAP] Failed to persist class data:", error);
           showToast("Không thể lưu dữ liệu lớp học (bộ nhớ trình duyệt đầy).");
@@ -9753,8 +9779,8 @@
       }
 
       function loadData() {
-        const raw = localStorage.getItem("classApp_v2.5");
-        if (!raw) {
+        const { data, key } = readStoredClassData();
+        if (!data) {
           layoutMeta = { ...DEFAULT_LAYOUT_META };
           leftSideData = createDefaultArray(
             layoutMeta.leftRows,
@@ -9767,7 +9793,6 @@
           specialDesks = [];
           return;
         }
-        const data = JSON.parse(raw);
         layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
         leftSideData = normalizeImportedSide(
           data.seating?.left,
@@ -9809,6 +9834,10 @@
         shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
           ? data.shuffleHistoryCounter
           : shuffleHistory.length;
+
+        if (key !== PRIMARY_STORAGE_KEY) {
+          saveData({ notify: false, animate: false });
+        }
       }
 
       function getISOWeekNumber(date) {
