@@ -17,6 +17,7 @@ Công cụ quản lý lớp học hiệu quả: Sắp xếp chỗ ngồi, bảng
 
 - [**Lịch sử Phát triển & Quy tắc Cố định**](./Lịch%20sử%20Phát%20triển%20và%20Quy%20tắc%20Cố%20định%20của%20Dự%20án%20CAP.md): Chi tiết từng commit, tính năng và các quy tắc bất biến **BẮT BUỘC** phải tuân thủ để bảo toàn tính năng cốt lõi.
 - [**Tham chiếu Phiên bản Cơ sở (Baseline)**](./BASELINE_REFERENCE.md): Mô tả chi tiết cấu trúc, tính năng và cơ chế của phiên bản gốc `11f86f5`.
+- [**Đề xuất Đồng bộ Đa thiết bị (Google/GitHub)**](./docs/OAUTH_SYNC_PROPOSAL.md): Lộ trình thêm đăng nhập OAuth và sao lưu/khôi phục dữ liệu giữa nhiều thiết bị.
 
 ## 🚀 Tính năng Chính
 
