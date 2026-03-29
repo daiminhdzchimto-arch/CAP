@@ -1,3 +1,9 @@
+## [1.54.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.4...v1.54.5) (2026-03-29)
+
+### Bug Fixes
+
+- move autosave timestamp to settings and remove autosave toast ([3ec04b4](https://github.com/daiminhdzchimto-arch/CAP/commit/3ec04b4b5f5659146bf4d29f1f85b00cedf8ec26))
+
 ## [1.54.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.3...v1.54.4) (2026-03-29)
 
 ### Bug Fixes
