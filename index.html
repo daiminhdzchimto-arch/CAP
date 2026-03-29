@@ -835,6 +835,11 @@
               </button>
             </div>
             <div class="flex items-center gap-3">
+              <span
+                id="save-status-indicator"
+                class="hidden text-xs font-semibold text-emerald-600"
+                aria-live="polite"
+              ></span>
               <button
                 onclick="openShareModal()"
                 class="icon-edge-btn p-2 text-gray-500 hover:text-purple-600 transition-colors"
@@ -8764,15 +8769,15 @@
       }
 
       function setupKeyboardShortcuts() {
-        document.addEventListener("keydown", (event) => {
-          const key = event.key.toLowerCase();
+        window.addEventListener("keydown", (event) => {
+          const key = (event.key || "").toLowerCase();
           const withModifier = event.ctrlKey || event.metaKey;
           if (!withModifier) return;
           const blackboardModal = document.getElementById("blackboard-modal");
           const isBlackboardOpen = blackboardModal?.classList.contains("open");
           const editableTarget = isEditableTarget(event.target);
 
-          if (key === "s") {
+          if (key === "s" || event.code === "KeyS") {
             event.preventDefault();
             handleManualSave("shortcut-save");
             return;
@@ -8803,6 +8808,19 @@
             event.preventDefault();
             redoGlobalState();
           }
+        });
+      }
+
+      function setupImmediateAutoSaveTriggers() {
+        const autoSaveEvents = ["input", "change", "blur", "drop", "paste"];
+        autoSaveEvents.forEach((eventName) => {
+          document.addEventListener(
+            eventName,
+            () => {
+              scheduleImmediateAutoSave(`event-${eventName}`);
+            },
+            true,
+          );
         });
       }
 
@@ -9551,8 +9569,11 @@
       }
 
       let lastAutoSaveAt = 0;
+      let lastAutoSaveToastAt = 0;
       let autoSaveIntervalId = null;
-      const AUTO_SAVE_INTERVAL_MS = 100;
+      let immediateAutoSaveTimer = null;
+      const AUTO_SAVE_INTERVAL_MS = 1000;
+      const AUTO_SAVE_TOAST_COOLDOWN_MS = 12000;
       const PRIMARY_STORAGE_KEY = "classApp_v28";
       const LEGACY_STORAGE_KEYS = [
         "classApp_v2.5",
@@ -9578,7 +9599,23 @@
         return { data: null, key: null };
       }
 
-      function saveData({ notify = true, animate = true } = {}) {
+      function updateSaveStatusIndicator({
+        mode = "manual",
+        timestamp = Date.now(),
+      } = {}) {
+        const indicator = document.getElementById("save-status-indicator");
+        if (!indicator) return;
+        const timeText = new Date(timestamp).toLocaleTimeString("vi-VN");
+        indicator.classList.remove("hidden");
+        indicator.innerText =
+          mode === "auto" ? `Tự động lưu ${timeText}` : `Đã lưu ${timeText}`;
+      }
+
+      function saveData({
+        notify = true,
+        animate = true,
+        mode = "manual",
+      } = {}) {
         if (animate) {
           animateActionFeedback(
             'button[title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này" aria-label="Lưu dữ liệu lớp học"]',
@@ -9616,6 +9653,7 @@
           return false;
         }
         syncOverlays();
+        updateSaveStatusIndicator({ mode });
         if (notify) showToast("Đã lưu dữ liệu thành công!");
         return true;
       }
@@ -9624,8 +9662,9 @@
         notify = true,
         animate = true,
         saveBlackboard = true,
+        mode = "manual",
       } = {}) {
-        const classDataSaved = saveData({ notify, animate });
+        const classDataSaved = saveData({ notify, animate, mode });
         if (!classDataSaved) return false;
         if (saveBlackboard) {
           persistBlackboardData({ notify: false });
@@ -9637,10 +9676,26 @@
         const now = Date.now();
         if (now - lastAutoSaveAt < AUTO_SAVE_INTERVAL_MS) return;
         lastAutoSaveAt = now;
-        saveAllData({ notify: false, animate: false, saveBlackboard: true });
+        const saved = saveAllData({
+          notify: false,
+          animate: false,
+          saveBlackboard: true,
+          mode: "auto",
+        });
+        if (saved && now - lastAutoSaveToastAt >= AUTO_SAVE_TOAST_COOLDOWN_MS) {
+          showToast("Đã tự động lưu dữ liệu.");
+          lastAutoSaveToastAt = now;
+        }
         console.debug(
           `[CAP] Auto-saved (${trigger}) at ${new Date(now).toISOString()}`,
         );
+      }
+
+      function scheduleImmediateAutoSave(trigger = "interaction") {
+        if (immediateAutoSaveTimer) window.clearTimeout(immediateAutoSaveTimer);
+        immediateAutoSaveTimer = window.setTimeout(() => {
+          autoSaveAllData(trigger);
+        }, 250);
       }
 
       function setupAutoSaveOnPageLifecycle() {
@@ -9678,7 +9733,7 @@
           window.clearInterval(autoSaveIntervalId);
         }
         autoSaveIntervalId = window.setInterval(() => {
-          autoSaveAllData("interval-100ms");
+          autoSaveAllData("interval");
         }, AUTO_SAVE_INTERVAL_MS);
       }
 
@@ -10552,6 +10607,7 @@
         updateDutyHomeAlert();
         setupAutoSaveOnPageLifecycle();
         setupContinuousAutoSave();
+        setupImmediateAutoSaveTriggers();
         setupAutoRefresh();
         void checkForAppUpdate();
         window.addEventListener("resize", () => {
