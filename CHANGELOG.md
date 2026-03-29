@@ -1,3 +1,9 @@
+## [1.54.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.0...v1.54.1) (2026-03-29)
+
+### Bug Fixes
+
+- restore autosave feedback and shortcut reliability ([8151daa](https://github.com/daiminhdzchimto-arch/CAP/commit/8151daa1c36b01679d2e31ae60c9d115ce542093))
+
 # [1.54.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.8...v1.54.0) (2026-03-29)
 
 ### Features
