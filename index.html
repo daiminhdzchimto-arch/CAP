@@ -9625,7 +9625,7 @@
       } = {}) {
         if (animate) {
           animateActionFeedback(
-            'button[title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này" aria-label="Lưu dữ liệu lớp học"]',
+            'button[aria-label="Lưu dữ liệu lớp học"]',
             "animate-flash-success",
             380,
           );
@@ -10053,10 +10053,20 @@
           isFixed = token.endsWith("*");
           name = isFixed ? token.slice(0, -1) : token;
         } else if (seatToken && typeof seatToken === "object") {
-          name = String(seatToken.n || "").trim();
-          width = Number.isFinite(seatToken.w) ? Math.max(1, seatToken.w) : 1;
-          merged = !!seatToken.m;
-          isFixed = !!seatToken.f;
+          // Hỗ trợ cả token n/w/m/f (CAPX2) và object đầy đủ name/width/merged.
+          const rawName =
+            seatToken.n !== undefined ? seatToken.n : seatToken.name;
+          const rawWidth =
+            seatToken.w !== undefined ? seatToken.w : seatToken.width;
+          const rawMerged =
+            seatToken.m !== undefined ? seatToken.m : seatToken.merged;
+          const rawFixed =
+            seatToken.f !== undefined ? seatToken.f : seatToken.fixed;
+
+          name = String(rawName || "").trim();
+          width = Number.isFinite(rawWidth) ? Math.max(1, rawWidth) : 1;
+          merged = !!rawMerged;
+          isFixed = !!rawFixed;
         }
 
         const seat = {
