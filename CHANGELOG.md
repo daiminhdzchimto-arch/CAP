@@ -1,3 +1,9 @@
+# [1.54.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.8...v1.54.0) (2026-03-29)
+
+### Features
+
+- enhance manual and continuous autosave flows ([98a1d97](https://github.com/daiminhdzchimto-arch/CAP/commit/98a1d97f82cb42c67eb8d42dc9f68045b2b29df1))
+
 ## [1.53.8](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.7...v1.53.8) (2026-03-29)
 
 ### Bug Fixes
