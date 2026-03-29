@@ -1,3 +1,9 @@
+## [1.53.7](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.6...v1.53.7) (2026-03-29)
+
+### Bug Fixes
+
+- **ui:** khôi phục nút lưu trên thanh điều hướng mobile ([f33d455](https://github.com/daiminhdzchimto-arch/CAP/commit/f33d455ec5f7ee859fc5a28d3fd54c86caa82c69))
+
 ## [1.53.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.5...v1.53.6) (2026-03-25)
 
 ### Bug Fixes
