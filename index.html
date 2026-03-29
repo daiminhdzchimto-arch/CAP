@@ -6479,7 +6479,7 @@
         document
           .querySelectorAll('input[type="file"]')
           .forEach((input) => (input.value = ""));
-        for (const key of STORAGE_WRITE_KEYS) localStorage.removeItem(key);
+        for (const key of STORAGE_READ_KEYS) localStorage.removeItem(key);
         syncLayoutConfigUI();
         renderAll();
         animateActionFeedback("#classroom-area", "animate-ripple-reset", 700);
@@ -9555,10 +9555,11 @@
         "classApp_v25",
         "classApp_v24",
       ];
-      const STORAGE_WRITE_KEYS = [PRIMARY_STORAGE_KEY, ...LEGACY_STORAGE_KEYS];
+      const STORAGE_READ_KEYS = [PRIMARY_STORAGE_KEY, ...LEGACY_STORAGE_KEYS];
+      const STORAGE_WRITE_KEYS = [PRIMARY_STORAGE_KEY];
 
       function readStoredClassData() {
-        const keysToCheck = [...new Set(STORAGE_WRITE_KEYS)];
+        const keysToCheck = [...new Set(STORAGE_READ_KEYS)];
         for (const key of keysToCheck) {
           const raw = localStorage.getItem(key);
           if (!raw) continue;
