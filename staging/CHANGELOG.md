@@ -1,3 +1,9 @@
+## [1.53.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.5...v1.53.6) (2026-03-25)
+
+### Bug Fixes
+
+- restore save recovery across recent localStorage versions ([5e41ff7](https://github.com/daiminhdzchimto-arch/CAP/commit/5e41ff7029dc400315a433b76577df1f7ee3991d))
+
 ## [1.53.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.4...v1.53.5) (2026-03-24)
 
 ### Bug Fixes
