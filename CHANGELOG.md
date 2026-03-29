@@ -1,3 +1,9 @@
+## [1.53.8](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.7...v1.53.8) (2026-03-29)
+
+### Bug Fixes
+
+- reduce localStorage writes for save reliability ([08a933d](https://github.com/daiminhdzchimto-arch/CAP/commit/08a933d9c3c2fa52ddc5ba624a9382dfc5596e09))
+
 ## [1.53.7](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.53.6...v1.53.7) (2026-03-29)
 
 ### Bug Fixes
