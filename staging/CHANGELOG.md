@@ -1,3 +1,9 @@
+## [1.54.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.2...v1.54.3) (2026-03-29)
+
+### Bug Fixes
+
+- persist seating names and desk states on quick reload ([ee60c80](https://github.com/daiminhdzchimto-arch/CAP/commit/ee60c8004caa97803f8d41b9a9383eb01e9af610))
+
 ## [1.54.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.1...v1.54.2) (2026-03-29)
 
 ### Bug Fixes
