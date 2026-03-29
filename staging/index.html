@@ -9857,6 +9857,7 @@
             syncOverlays();
             syncLayoutConfigUI();
             renderAll();
+            saveData({ notify: false, animate: false });
             closeShareModal();
             showToast("Đã nhập dữ liệu thành công!");
           } catch (err) {
