@@ -1,3 +1,9 @@
+## [1.54.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.1...v1.54.2) (2026-03-29)
+
+### Bug Fixes
+
+- persist imported classroom layout immediately ([53a9040](https://github.com/daiminhdzchimto-arch/CAP/commit/53a9040f60bce202b16948cb5cfcf1d701d65cb2))
+
 ## [1.54.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.0...v1.54.1) (2026-03-29)
 
 ### Bug Fixes
