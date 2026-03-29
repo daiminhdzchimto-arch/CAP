@@ -852,7 +852,7 @@
                 <i class="fas fa-cog"></i>
               </button>
               <button
-                onclick="saveAllData()"
+                onclick="handleManualSave('toolbar-save-button')"
                 class="btn-3d btn-3d-blue text-sm font-bold"
                 title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này"
                 aria-label="Lưu dữ liệu lớp học"
@@ -890,7 +890,7 @@
           <span>Thi đua</span>
         </button>
         <button
-          onclick="saveAllData()"
+          onclick="handleManualSave('mobile-save-button')"
           class="mobile-tab-btn flex flex-col items-center text-xs text-gray-500"
           aria-label="Lưu dữ liệu lớp học"
           title="Lưu toàn bộ dữ liệu lớp học vào trình duyệt này"
@@ -8774,8 +8774,7 @@
 
           if (key === "s") {
             event.preventDefault();
-            saveAllData();
-            commitGlobalHistorySnapshot("shortcut-save");
+            handleManualSave("shortcut-save");
             return;
           }
 
@@ -8805,6 +8804,11 @@
             redoGlobalState();
           }
         });
+      }
+
+      function handleManualSave(trigger = "manual-save") {
+        saveAllData();
+        commitGlobalHistorySnapshot(trigger);
       }
 
       function setupGlobalHistoryTracking() {
@@ -9547,6 +9551,8 @@
       }
 
       let lastAutoSaveAt = 0;
+      let autoSaveIntervalId = null;
+      const AUTO_SAVE_INTERVAL_MS = 100;
       const PRIMARY_STORAGE_KEY = "classApp_v28";
       const LEGACY_STORAGE_KEYS = [
         "classApp_v2.5",
@@ -9629,7 +9635,7 @@
 
       function autoSaveAllData(trigger = "auto") {
         const now = Date.now();
-        if (now - lastAutoSaveAt < 800) return;
+        if (now - lastAutoSaveAt < AUTO_SAVE_INTERVAL_MS) return;
         lastAutoSaveAt = now;
         saveAllData({ notify: false, animate: false, saveBlackboard: true });
         console.debug(
@@ -9657,6 +9663,23 @@
             autoSaveAllData("window-blur");
           }
         });
+
+        window.addEventListener("hashchange", () => {
+          autoSaveAllData("hashchange");
+        });
+
+        window.addEventListener("popstate", () => {
+          autoSaveAllData("popstate");
+        });
+      }
+
+      function setupContinuousAutoSave() {
+        if (autoSaveIntervalId) {
+          window.clearInterval(autoSaveIntervalId);
+        }
+        autoSaveIntervalId = window.setInterval(() => {
+          autoSaveAllData("interval-100ms");
+        }, AUTO_SAVE_INTERVAL_MS);
       }
 
       function syncOverlays() {
@@ -10528,6 +10551,7 @@
         runPostFixChecks();
         updateDutyHomeAlert();
         setupAutoSaveOnPageLifecycle();
+        setupContinuousAutoSave();
         setupAutoRefresh();
         void checkForAppUpdate();
         window.addEventListener("resize", () => {
