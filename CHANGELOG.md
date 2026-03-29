@@ -1,3 +1,9 @@
+## [1.54.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.5...v1.54.6) (2026-03-29)
+
+### Bug Fixes
+
+- restore manual save button with label and ensure autosave persistence ([e17123c](https://github.com/daiminhdzchimto-arch/CAP/commit/e17123cd21a18c66c1dd120a9ffbf0a9b2dac33a))
+
 ## [1.54.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.4...v1.54.5) (2026-03-29)
 
 ### Bug Fixes
