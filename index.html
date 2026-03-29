@@ -4164,6 +4164,7 @@
         const data = s === "left" ? leftSideData : rightSideData;
         data[r][c].name = v;
         checkAllConflicts();
+        scheduleImmediateAutoSave("seat-name-input");
         if (s === "left" && r === 0 && c === 0) {
           // Sync overlay if needed or just use global listener
           // Handled by global input listeners
@@ -6403,6 +6404,7 @@
         if (dstSeat)
           animateActionFeedback(dstSeat, "animate-pulse-highlight", 340);
         showToast("Đã hoán đổi vị trí 2 thành viên");
+        scheduleImmediateAutoSave("seat-swap");
       }
       function updateStatusUI() {
         document.getElementById("status-msg").className = swapSource
@@ -6424,6 +6426,7 @@
         const mergedCell = getDeskCell(s, r, c);
         if (mergedCell)
           animateActionFeedback(mergedCell, "animate-pulse-merge", 520);
+        scheduleImmediateAutoSave("seat-merge");
       }
       function splitCell(s, r, c) {
         const rw = (s === "left" ? leftSideData : rightSideData)[r];
@@ -6449,6 +6452,7 @@
         splitCells.forEach((cell) =>
           animateActionFeedback(cell, "animate-pulse-merge", 520),
         );
+        scheduleImmediateAutoSave("seat-split");
       }
       function rotateClass(d) {
         const logic = (a, dir) =>
@@ -6460,6 +6464,7 @@
           d === "down" ? "animate-board-down" : "animate-board-up",
           500,
         );
+        scheduleImmediateAutoSave("layout-rotate");
       }
       function resetLayout() {
         layoutMeta = { ...DEFAULT_LAYOUT_META };
@@ -6499,6 +6504,7 @@
         const pin = document.querySelector(".fixed-badge");
         if (pin) animateActionFeedback(pin, "animate-stamp", 420);
         animateDeskCellById(id, "animate-pulse-highlight", 420);
+        scheduleImmediateAutoSave("seat-fixed-toggle");
       }
 
       function clearAllFixedMembers() {
@@ -6517,6 +6523,7 @@
             cell.classList.contains("is-fixed"),
           );
           showToast("Đã bỏ ghim toàn bộ bàn ghế trên sơ đồ!");
+          scheduleImmediateAutoSave("seat-fixed-clear");
         }, 250);
       }
 
