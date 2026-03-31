@@ -1,3 +1,9 @@
+# [1.55.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.6...v1.55.0) (2026-03-31)
+
+### Features
+
+- **weather:** add OpenWeather provider abstraction ([6509e4a](https://github.com/daiminhdzchimto-arch/CAP/commit/6509e4ab2ea37c6a6c9019f156e7b84d69a0c010))
+
 ## [1.54.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.5...v1.54.6) (2026-03-29)
 
 ### Bug Fixes
