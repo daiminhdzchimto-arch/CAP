@@ -1769,6 +1769,25 @@
                 </div>
                 <div class="mt-3">
                   <label
+                    for="weather-update-profile-select"
+                    class="block text-sm font-semibold text-gray-700 mb-2"
+                    >Profile cập nhật thời tiết</label
+                  >
+                  <select
+                    id="weather-update-profile-select"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="balanced">balanced (ổn định)</option>
+                    <option value="fast">fast (nhanh)</option>
+                    <option value="ultra_fast">ultra_fast (1–2 giây)</option>
+                  </select>
+                  <p class="text-xs text-gray-500 mt-1">
+                    ultra_fast sẽ tự hạ xuống fast/balanced khi pin yếu hoặc API
+                    báo quá tải (429).
+                  </p>
+                </div>
+                <div class="mt-3">
+                  <label
                     for="species-select"
                     class="block text-sm font-semibold text-gray-700 mb-2"
                     >Loài cây mô phỏng</label
@@ -3004,6 +3023,7 @@
         settings: {
           windEnabled: true,
           intensity: 1.0,
+          weatherUpdateProfile: "balanced",
           powerSave: false,
           showFPS: false,
           teacherView: false,
@@ -3138,6 +3158,8 @@
             secondary: "#f1faee",
           };
           this.effectMode = "leaf";
+          this.targetWeather = { speed: 2, deg: 45, gust: 4 };
+          this.currentWeatherForMotion = { speed: 2, deg: 45, gust: 4 };
           this.glowPulse = 0;
           this.lastTime = 0;
           this.accumulator = 0;
@@ -3277,6 +3299,7 @@
           }
           const dt = this.accumulator;
           this.accumulator = 0;
+          this.interpolateWeather(dt);
 
           // FPS Calc
           this.frameCount++;
@@ -3362,6 +3385,16 @@
 
         setWeather(weatherData) {
           this.currentWeather = weatherData;
+          this.targetWeather = {
+            speed: weatherData.speed,
+            deg: weatherData.deg,
+            gust: weatherData.gust,
+          };
+          this.currentWeatherForMotion = {
+            speed: weatherData.speed,
+            deg: weatherData.deg,
+            gust: weatherData.gust,
+          };
           this.weather = { speed: weatherData.speed, deg: weatherData.deg };
           const radians = (weatherData.deg - 90) * (Math.PI / 180);
           this.windVector = {
@@ -3393,6 +3426,45 @@
             `[ParticleEngine] Đã nhận gió: Vector(${this.windVector.x.toFixed(2)}, ${this.windVector.y.toFixed(2)}), Giật: ${this.windGust}`,
           );
           this.syncParticleCount();
+        }
+
+        interpolateWeather(dt) {
+          if (!this.targetWeather) return;
+          const lerp = 1 - Math.exp(-Math.max(0.01, dt) / 220);
+          const normalizeAngle = (angle) => {
+            let normalized = angle % 360;
+            if (normalized < 0) normalized += 360;
+            return normalized;
+          };
+          const targetDeg = normalizeAngle(this.targetWeather.deg || 0);
+          const currentDeg = normalizeAngle(
+            this.currentWeatherForMotion?.deg ?? targetDeg,
+          );
+          let deltaDeg = targetDeg - currentDeg;
+          if (deltaDeg > 180) deltaDeg -= 360;
+          if (deltaDeg < -180) deltaDeg += 360;
+          const nextDeg = normalizeAngle(currentDeg + deltaDeg * lerp);
+          const currentSpeed = this.currentWeatherForMotion?.speed || 0;
+          const targetSpeed = this.targetWeather.speed || 0;
+          const nextSpeed = currentSpeed + (targetSpeed - currentSpeed) * lerp;
+          this.currentWeatherForMotion = {
+            speed: nextSpeed,
+            deg: nextDeg,
+            gust: this.targetWeather.gust || 0,
+          };
+          this.weather = { speed: nextSpeed, deg: nextDeg };
+          const radians = (nextDeg - 90) * (Math.PI / 180);
+          this.windVector = {
+            x: Math.cos(radians) * nextSpeed,
+            y: Math.sin(radians) * nextSpeed,
+          };
+          const speedBase = (nextSpeed || 2) * config.settings.intensity;
+          this.particles.forEach((particle) => {
+            particle.vx =
+              Math.cos((nextDeg * Math.PI) / 180) * speedBase + particle.driftX;
+            particle.vy =
+              Math.sin((nextDeg * Math.PI) / 180) * speedBase + particle.driftY;
+          });
         }
 
         setSpecies(speciesData) {
@@ -3444,10 +3516,16 @@
       particleEngine.currentSpecies = { particleSprite: "green_leaf" };
 
       const WeatherAdapter = {
+        updateProfiles: {
+          balanced: { pollMs: 15000, label: "balanced" },
+          fast: { pollMs: 5000, label: "fast" },
+          ultra_fast: { pollMs: 2000, label: "ultra_fast" },
+        },
         config: {
           useRealLocation: false,
           preferredRealLocation: false,
           preferredSpecies: "auto",
+          weatherUpdateProfile: "balanced",
           fallbackData: {
             speed: 2,
             deg: 180,
@@ -3460,6 +3538,9 @@
         },
         currentSpecies: null,
         initialized: false,
+        pollingTimer: null,
+        lastCoords: null,
+        activeProfileReason: "normal",
 
         init() {
           const savedWeatherConfig = localStorage.getItem(
@@ -3470,6 +3551,8 @@
             this.config.preferredRealLocation = !!parsedConfig.useRealLocation;
             this.config.preferredSpecies =
               parsedConfig.speciesPreference || "auto";
+            this.config.weatherUpdateProfile =
+              parsedConfig.weatherUpdateProfile || "balanced";
           }
           this.config.useRealLocation = this.computeEffectiveRealWeather();
 
@@ -3497,9 +3580,25 @@
               this.fetchAndUpdate();
             });
           }
+          const profileSelect = document.getElementById(
+            "weather-update-profile-select",
+          );
+          if (profileSelect) {
+            profileSelect.value =
+              this.config.weatherUpdateProfile || "balanced";
+            profileSelect.addEventListener("change", (e) => {
+              this.config.weatherUpdateProfile = e.target.value;
+              this.enforceProfileConstraints();
+              this.saveWeatherConfig();
+              this.fetchAndUpdate();
+              this.startPolling();
+            });
+          }
 
+          this.enforceProfileConstraints();
           this.syncRealWeatherToggleState();
           this.fetchAndUpdate();
+          this.startPolling();
           this.initialized = true;
         },
 
@@ -3509,8 +3608,59 @@
             JSON.stringify({
               useRealLocation: this.config.preferredRealLocation,
               speciesPreference: this.config.preferredSpecies || "auto",
+              weatherUpdateProfile:
+                this.config.weatherUpdateProfile || "balanced",
             }),
           );
+        },
+
+        getCurrentProfileConfig() {
+          const selected =
+            this.updateProfiles[this.config.weatherUpdateProfile] ||
+            this.updateProfiles.balanced;
+          if (batteryState.autoPowerSaveActive || config.settings.powerSave) {
+            this.activeProfileReason = "power_save";
+            return this.updateProfiles.balanced;
+          }
+          return selected;
+        },
+
+        enforceProfileConstraints() {
+          if (batteryState.autoPowerSaveActive || config.settings.powerSave) {
+            if (this.config.weatherUpdateProfile === "ultra_fast") {
+              this.config.weatherUpdateProfile = "fast";
+              this.activeProfileReason = "power_save";
+            } else if (this.config.weatherUpdateProfile === "fast") {
+              this.activeProfileReason = "power_save";
+            }
+            const profileSelect = document.getElementById(
+              "weather-update-profile-select",
+            );
+            if (profileSelect) {
+              profileSelect.value = this.config.weatherUpdateProfile;
+            }
+            this.saveWeatherConfig();
+          }
+        },
+
+        getProfileStatusLabel() {
+          const profile = this.getCurrentProfileConfig().label;
+          if (this.activeProfileReason === "rate_limit")
+            return `${profile} (hạ cấp do 429)`;
+          if (this.activeProfileReason === "power_save")
+            return `${profile} (pin thấp)`;
+          return profile;
+        },
+
+        startPolling() {
+          if (this.pollingTimer) {
+            clearInterval(this.pollingTimer);
+            this.pollingTimer = null;
+          }
+          const profileConfig = this.getCurrentProfileConfig();
+          this.pollingTimer = setInterval(() => {
+            this.fetchAndUpdate();
+          }, profileConfig.pollMs);
         },
 
         computeEffectiveRealWeather() {
@@ -3535,9 +3685,11 @@
 
         refreshWeatherMode() {
           if (!this.initialized) return;
+          this.enforceProfileConstraints();
           this.config.useRealLocation = this.computeEffectiveRealWeather();
           this.syncRealWeatherToggleState();
           this.fetchAndUpdate();
+          this.startPolling();
         },
 
         determineSpecies() {
@@ -3575,7 +3727,10 @@
         },
 
         async fetchAndUpdate() {
-          this.updateUIStatus("loading", "Đang tải...");
+          this.updateUIStatus(
+            "loading",
+            `Đang tải (${this.getProfileStatusLabel()})...`,
+          );
 
           if (!this.config.useRealLocation) {
             const citySpan = document.getElementById("weather-city-text");
@@ -3596,11 +3751,17 @@
             async (position) => {
               const lat = position.coords.latitude;
               const lon = position.coords.longitude;
+              this.lastCoords = { lat, lon };
               try {
                 const weatherRes = await fetch(
                   `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,is_day`,
                 );
-                if (!weatherRes.ok) throw new Error("API Error");
+                if (!weatherRes.ok) {
+                  if (weatherRes.status === 429) {
+                    throw new Error("API_RATE_LIMIT_429");
+                  }
+                  throw new Error("API Error");
+                }
 
                 const weatherData = await weatherRes.json();
                 const mappedEffect = this.resolveEffectMode(
@@ -3643,10 +3804,14 @@
                 const citySpan = document.getElementById("weather-city-text");
                 if (citySpan) citySpan.innerText = cityName;
 
+                this.activeProfileReason = "normal";
                 this.applyWeather(realWeather, true);
                 showToast(`Đã cập nhật thời tiết thực tại ${cityName}!`);
               } catch (error) {
                 console.error("Open-Meteo Error:", error);
+                if (error?.message === "API_RATE_LIMIT_429") {
+                  this.downgradeProfileForRateLimit();
+                }
                 showToast("Lỗi tải thời tiết, dùng giả lập.");
                 this.applyWeather(this.config.fallbackData, false);
                 const citySpan = document.getElementById("weather-city-text");
@@ -3696,9 +3861,15 @@
           weatherEffectText.classList.add(`weather-mode-${effectMode}`);
 
           if (isLive) {
-            this.updateUIStatus("live", "Live (Gió thực)");
+            this.updateUIStatus(
+              "live",
+              `Live (${this.getProfileStatusLabel()})`,
+            );
           } else {
-            this.updateUIStatus("offline", "Mặc định (Giả lập)");
+            this.updateUIStatus(
+              "offline",
+              `Mặc định (${this.getProfileStatusLabel()})`,
+            );
           }
 
           if (
@@ -3749,6 +3920,23 @@
             label: "Hiệu ứng: Lá & gió",
             short: "Gió & lá",
           };
+        },
+
+        downgradeProfileForRateLimit() {
+          if (this.config.weatherUpdateProfile === "ultra_fast") {
+            this.config.weatherUpdateProfile = "fast";
+          } else if (this.config.weatherUpdateProfile === "fast") {
+            this.config.weatherUpdateProfile = "balanced";
+          }
+          this.activeProfileReason = "rate_limit";
+          const profileSelect = document.getElementById(
+            "weather-update-profile-select",
+          );
+          if (profileSelect) {
+            profileSelect.value = this.config.weatherUpdateProfile;
+          }
+          this.saveWeatherConfig();
+          this.startPolling();
         },
 
         updateUIStatus(status, text) {
@@ -8348,6 +8536,13 @@
         ).checked;
         config.settings.darkMode =
           document.getElementById("dark-mode-toggle").checked;
+        const weatherProfileSelect = document.getElementById(
+          "weather-update-profile-select",
+        );
+        if (weatherProfileSelect) {
+          config.settings.weatherUpdateProfile =
+            weatherProfileSelect.value || "balanced";
+        }
 
         document.getElementById("wind-intensity-val").innerText =
           config.settings.intensity.toFixed(1) + "x";
@@ -10541,6 +10736,9 @@
             !!config.settings.darkMode;
           document.getElementById("wind-intensity-val").innerText =
             config.settings.intensity.toFixed(1) + "x";
+          if (!config.settings.weatherUpdateProfile) {
+            config.settings.weatherUpdateProfile = "balanced";
+          }
         }
         userPowerSavePreference =
           !!document.getElementById("power-save-toggle").checked;
