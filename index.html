@@ -635,6 +635,12 @@
       .weather-mode-rain { color: #2563eb; }
       .weather-mode-snow { color: #0ea5e9; }
       .weather-mode-sun { color: #d97706; }
+      .weather-mode-thunder { color: #7c3aed; }
+      .weather-mode-fog { color: #6b7280; }
+      .weather-mode-drizzle { color: #0284c7; }
+      .weather-mode-overcast { color: #475569; }
+      .weather-mode-night-clear { color: #1d4ed8; }
+      .weather-mode-sleet { color: #0f766e; }
       .weather-mode-leaf { color: #16a34a; }
 
       /* JELLY SWITCH */
@@ -3443,6 +3449,199 @@
       particleEngine.currentWeather = { speed: 2, deg: 180, gust: 4 };
       particleEngine.currentSpecies = { particleSprite: "green_leaf" };
 
+      const WEATHER_CODE_MAP = {
+        default: {
+          mode: "leaf",
+          label: "Hiệu ứng: Lá & gió",
+          short: "Gió & lá",
+          severity: "low",
+        },
+        0: {
+          day: {
+            mode: "sun",
+            label: "Hiệu ứng: Nắng",
+            short: "Nắng",
+            severity: "low",
+          },
+          night: {
+            mode: "night-clear",
+            label: "Hiệu ứng: Trời đêm quang",
+            short: "Đêm quang",
+            severity: "low",
+          },
+        },
+        1: {
+          day: {
+            mode: "sun",
+            label: "Hiệu ứng: Nắng nhẹ",
+            short: "Nắng nhẹ",
+            severity: "low",
+          },
+          night: {
+            mode: "night-clear",
+            label: "Hiệu ứng: Đêm ít mây",
+            short: "Đêm ít mây",
+            severity: "low",
+          },
+        },
+        2: {
+          mode: "overcast",
+          label: "Hiệu ứng: Nhiều mây",
+          short: "Nhiều mây",
+          severity: "low",
+        },
+        3: {
+          mode: "overcast",
+          label: "Hiệu ứng: U ám",
+          short: "U ám",
+          severity: "medium",
+        },
+        45: {
+          mode: "fog",
+          label: "Hiệu ứng: Sương mù",
+          short: "Sương mù",
+          severity: "medium",
+        },
+        48: {
+          mode: "fog",
+          label: "Hiệu ứng: Sương giá",
+          short: "Sương giá",
+          severity: "medium",
+        },
+        51: {
+          mode: "drizzle",
+          label: "Hiệu ứng: Mưa phùn nhẹ",
+          short: "Phùn nhẹ",
+          severity: "low",
+        },
+        53: {
+          mode: "drizzle",
+          label: "Hiệu ứng: Mưa phùn",
+          short: "Mưa phùn",
+          severity: "medium",
+        },
+        55: {
+          mode: "drizzle",
+          label: "Hiệu ứng: Mưa phùn dày",
+          short: "Phùn dày",
+          severity: "medium",
+        },
+        56: {
+          mode: "sleet",
+          label: "Hiệu ứng: Mưa phùn đóng băng",
+          short: "Phùn băng",
+          severity: "high",
+        },
+        57: {
+          mode: "sleet",
+          label: "Hiệu ứng: Mưa phùn băng mạnh",
+          short: "Phùn băng",
+          severity: "high",
+        },
+        61: {
+          mode: "rain",
+          label: "Hiệu ứng: Mưa nhẹ",
+          short: "Mưa nhẹ",
+          severity: "medium",
+        },
+        63: {
+          mode: "rain",
+          label: "Hiệu ứng: Mưa vừa",
+          short: "Mưa",
+          severity: "medium",
+        },
+        65: {
+          mode: "rain",
+          label: "Hiệu ứng: Mưa to",
+          short: "Mưa to",
+          severity: "high",
+        },
+        66: {
+          mode: "sleet",
+          label: "Hiệu ứng: Mưa đóng băng nhẹ",
+          short: "Mưa băng",
+          severity: "high",
+        },
+        67: {
+          mode: "sleet",
+          label: "Hiệu ứng: Mưa đóng băng mạnh",
+          short: "Mưa băng",
+          severity: "high",
+        },
+        71: {
+          mode: "snow",
+          label: "Hiệu ứng: Tuyết nhẹ",
+          short: "Tuyết nhẹ",
+          severity: "medium",
+        },
+        73: {
+          mode: "snow",
+          label: "Hiệu ứng: Tuyết vừa",
+          short: "Tuyết",
+          severity: "medium",
+        },
+        75: {
+          mode: "snow",
+          label: "Hiệu ứng: Tuyết dày",
+          short: "Tuyết dày",
+          severity: "high",
+        },
+        77: {
+          mode: "snow",
+          label: "Hiệu ứng: Tuyết hạt",
+          short: "Tuyết hạt",
+          severity: "medium",
+        },
+        80: {
+          mode: "rain",
+          label: "Hiệu ứng: Mưa rào nhẹ",
+          short: "Rào nhẹ",
+          severity: "medium",
+        },
+        81: {
+          mode: "rain",
+          label: "Hiệu ứng: Mưa rào",
+          short: "Mưa rào",
+          severity: "high",
+        },
+        82: {
+          mode: "rain",
+          label: "Hiệu ứng: Mưa rào rất to",
+          short: "Rào to",
+          severity: "high",
+        },
+        85: {
+          mode: "sleet",
+          label: "Hiệu ứng: Mưa tuyết nhẹ",
+          short: "Mưa tuyết",
+          severity: "high",
+        },
+        86: {
+          mode: "sleet",
+          label: "Hiệu ứng: Mưa tuyết dày",
+          short: "Mưa tuyết",
+          severity: "high",
+        },
+        95: {
+          mode: "thunder",
+          label: "Hiệu ứng: Dông",
+          short: "Dông",
+          severity: "high",
+        },
+        96: {
+          mode: "thunder",
+          label: "Hiệu ứng: Dông mưa đá nhẹ",
+          short: "Dông đá",
+          severity: "high",
+        },
+        99: {
+          mode: "thunder",
+          label: "Hiệu ứng: Dông mưa đá mạnh",
+          short: "Dông đá",
+          severity: "extreme",
+        },
+      };
+
       const WeatherAdapter = {
         config: {
           useRealLocation: false,
@@ -3456,6 +3655,8 @@
             isDay: 1,
             effectMode: "leaf",
             effectLabel: "Hiệu ứng: Lá & gió",
+            effectShort: "Gió & lá",
+            effectSeverity: "low",
           },
         },
         currentSpecies: null,
@@ -3615,6 +3816,8 @@
                   isDay: weatherData.current.is_day ?? 1,
                   effectMode: mappedEffect.mode,
                   effectLabel: mappedEffect.label,
+                  effectShort: mappedEffect.short,
+                  effectSeverity: mappedEffect.severity,
                 };
 
                 let cityName = "Không xác định";
@@ -3685,12 +3888,32 @@
             "weather-effect-text",
           );
           const effectLabel = weather.effectLabel || "Hiệu ứng: Lá & gió";
-          const effectMode = weather.effectMode || "leaf";
+          const supportedModes = new Set([
+            "rain",
+            "snow",
+            "sun",
+            "thunder",
+            "fog",
+            "drizzle",
+            "overcast",
+            "night-clear",
+            "sleet",
+            "leaf",
+          ]);
+          const effectMode = supportedModes.has(weather.effectMode)
+            ? weather.effectMode
+            : "leaf";
           weatherEffectText.innerText = effectLabel;
           weatherEffectText.classList.remove(
             "weather-mode-rain",
             "weather-mode-snow",
             "weather-mode-sun",
+            "weather-mode-thunder",
+            "weather-mode-fog",
+            "weather-mode-drizzle",
+            "weather-mode-overcast",
+            "weather-mode-night-clear",
+            "weather-mode-sleet",
             "weather-mode-leaf",
           );
           weatherEffectText.classList.add(`weather-mode-${effectMode}`);
@@ -3711,44 +3934,30 @@
         },
 
         resolveEffectMode(weatherCode, isDay) {
-          if (weatherCode >= 71 && weatherCode <= 77) {
-            return { mode: "snow", label: "Hiệu ứng: Tuyết", short: "Tuyết" };
+          const defaultMapping = WEATHER_CODE_MAP.default;
+          if (weatherCode === null || weatherCode === undefined) {
+            return defaultMapping;
           }
-          if (weatherCode >= 85 && weatherCode <= 86) {
-            return {
-              mode: "snow",
-              label: "Hiệu ứng: Mưa tuyết",
-              short: "Mưa tuyết",
-            };
+
+          const normalizedCode = Number(weatherCode);
+          if (Number.isNaN(normalizedCode)) {
+            return defaultMapping;
           }
-          if (
-            weatherCode === 51 ||
-            weatherCode === 53 ||
-            weatherCode === 55 ||
-            weatherCode === 56 ||
-            weatherCode === 57 ||
-            weatherCode === 61 ||
-            weatherCode === 63 ||
-            weatherCode === 65 ||
-            weatherCode === 66 ||
-            weatherCode === 67 ||
-            weatherCode === 80 ||
-            weatherCode === 81 ||
-            weatherCode === 82 ||
-            weatherCode === 95 ||
-            weatherCode === 96 ||
-            weatherCode === 99
-          ) {
-            return { mode: "rain", label: "Hiệu ứng: Mưa", short: "Mưa" };
+
+          const normalizedIsDay = Number(isDay) === 1;
+          const codeMapping = WEATHER_CODE_MAP[String(normalizedCode)];
+          if (!codeMapping) {
+            return defaultMapping;
           }
-          if ((weatherCode === 0 || weatherCode === 1) && Number(isDay) === 1) {
-            return { mode: "sun", label: "Hiệu ứng: Nắng", short: "Nắng" };
+
+          if (codeMapping.day || codeMapping.night) {
+            const dayNightMapping = normalizedIsDay
+              ? codeMapping.day
+              : codeMapping.night;
+            return dayNightMapping || defaultMapping;
           }
-          return {
-            mode: "leaf",
-            label: "Hiệu ứng: Lá & gió",
-            short: "Gió & lá",
-          };
+
+          return codeMapping.mode ? codeMapping : defaultMapping;
         },
 
         updateUIStatus(status, text) {
