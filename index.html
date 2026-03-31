@@ -632,10 +632,16 @@
       #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
       .weather-overlay { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; z-index: 20; }
       .weather-badge { background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); padding: 2px 6px; border-radius: 99px; font-size: 9px; font-weight: bold; display: flex; align-items: center; gap: 3px; border: 1px solid rgba(0,0,0,0.05); }
-      .weather-mode-rain { color: #2563eb; }
-      .weather-mode-snow { color: #0ea5e9; }
-      .weather-mode-sun { color: #d97706; }
-      .weather-mode-leaf { color: #16a34a; }
+      .weather-mode-rain { color: #1d4ed8; text-shadow: 0 0 8px rgba(37, 99, 235, 0.25); }
+      .weather-mode-snow { color: #0284c7; text-shadow: 0 0 8px rgba(14, 165, 233, 0.3); }
+      .weather-mode-sun { color: #b45309; text-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+      .weather-mode-thunder { color: #7c3aed; text-shadow: 0 0 10px rgba(124, 58, 237, 0.35); }
+      .weather-mode-drizzle { color: #0f766e; text-shadow: 0 0 8px rgba(20, 184, 166, 0.25); }
+      .weather-mode-fog { color: #475569; text-shadow: 0 0 6px rgba(148, 163, 184, 0.35); }
+      .weather-mode-overcast { color: #334155; text-shadow: 0 0 6px rgba(100, 116, 139, 0.3); }
+      .weather-mode-night-clear { color: #1e293b; text-shadow: 0 0 8px rgba(71, 85, 105, 0.35); }
+      .weather-mode-sleet { color: #0369a1; text-shadow: 0 0 10px rgba(56, 189, 248, 0.35); }
+      .weather-mode-leaf { color: #15803d; text-shadow: 0 0 8px rgba(22, 163, 74, 0.25); }
 
       /* JELLY SWITCH */
       .jelly-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
@@ -3687,12 +3693,11 @@
           const effectLabel = weather.effectLabel || "Hiệu ứng: Lá & gió";
           const effectMode = weather.effectMode || "leaf";
           weatherEffectText.innerText = effectLabel;
-          weatherEffectText.classList.remove(
-            "weather-mode-rain",
-            "weather-mode-snow",
-            "weather-mode-sun",
-            "weather-mode-leaf",
-          );
+          Array.from(weatherEffectText.classList).forEach((className) => {
+            if (className.startsWith("weather-mode-")) {
+              weatherEffectText.classList.remove(className);
+            }
+          });
           weatherEffectText.classList.add(`weather-mode-${effectMode}`);
 
           if (isLive) {
@@ -3711,38 +3716,135 @@
         },
 
         resolveEffectMode(weatherCode, isDay) {
-          if (weatherCode >= 71 && weatherCode <= 77) {
+          const normalizedCode = Number(weatherCode);
+          if (normalizedCode >= 200 && normalizedCode <= 299) {
+            return {
+              mode: "thunder",
+              label: "Hiệu ứng: Dông sét",
+              short: "Dông sét",
+            };
+          }
+          if (normalizedCode >= 300 && normalizedCode <= 399) {
+            return {
+              mode: "drizzle",
+              label: "Hiệu ứng: Mưa phùn",
+              short: "Mưa phùn",
+            };
+          }
+          if (normalizedCode >= 500 && normalizedCode <= 599) {
+            return { mode: "rain", label: "Hiệu ứng: Mưa", short: "Mưa" };
+          }
+          if (normalizedCode >= 600 && normalizedCode <= 699) {
+            return {
+              mode: "sleet",
+              label: "Hiệu ứng: Mưa tuyết",
+              short: "Mưa tuyết",
+            };
+          }
+          if (normalizedCode >= 700 && normalizedCode <= 799) {
+            return {
+              mode: "fog",
+              label: "Hiệu ứng: Sương mù",
+              short: "Sương mù",
+            };
+          }
+          if (normalizedCode === 800) {
+            if (Number(isDay) === 1) {
+              return { mode: "sun", label: "Hiệu ứng: Nắng", short: "Nắng" };
+            }
+            return {
+              mode: "night-clear",
+              label: "Hiệu ứng: Trời quang đêm",
+              short: "Quang đêm",
+            };
+          }
+          if (normalizedCode >= 801 && normalizedCode <= 804) {
+            return {
+              mode: "overcast",
+              label: "Hiệu ứng: Nhiều mây",
+              short: "Nhiều mây",
+            };
+          }
+          if (normalizedCode >= 71 && normalizedCode <= 77) {
             return { mode: "snow", label: "Hiệu ứng: Tuyết", short: "Tuyết" };
           }
-          if (weatherCode >= 85 && weatherCode <= 86) {
+          if (normalizedCode >= 85 && normalizedCode <= 86) {
             return {
-              mode: "snow",
+              mode: "sleet",
               label: "Hiệu ứng: Mưa tuyết",
               short: "Mưa tuyết",
             };
           }
           if (
-            weatherCode === 51 ||
-            weatherCode === 53 ||
-            weatherCode === 55 ||
-            weatherCode === 56 ||
-            weatherCode === 57 ||
-            weatherCode === 61 ||
-            weatherCode === 63 ||
-            weatherCode === 65 ||
-            weatherCode === 66 ||
-            weatherCode === 67 ||
-            weatherCode === 80 ||
-            weatherCode === 81 ||
-            weatherCode === 82 ||
-            weatherCode === 95 ||
-            weatherCode === 96 ||
-            weatherCode === 99
+            normalizedCode === 51 ||
+            normalizedCode === 53 ||
+            normalizedCode === 55 ||
+            normalizedCode === 56 ||
+            normalizedCode === 57 ||
+            normalizedCode === 61 ||
+            normalizedCode === 63 ||
+            normalizedCode === 65 ||
+            normalizedCode === 66 ||
+            normalizedCode === 67 ||
+            normalizedCode === 80 ||
+            normalizedCode === 81 ||
+            normalizedCode === 82
           ) {
             return { mode: "rain", label: "Hiệu ứng: Mưa", short: "Mưa" };
           }
-          if ((weatherCode === 0 || weatherCode === 1) && Number(isDay) === 1) {
+          if (
+            normalizedCode === 95 ||
+            normalizedCode === 96 ||
+            normalizedCode === 99
+          ) {
+            return {
+              mode: "thunder",
+              label: "Hiệu ứng: Dông sét",
+              short: "Dông sét",
+            };
+          }
+          if (normalizedCode === 45 || normalizedCode === 48) {
+            return {
+              mode: "fog",
+              label: "Hiệu ứng: Sương mù",
+              short: "Sương mù",
+            };
+          }
+          if (
+            (normalizedCode === 2 || normalizedCode === 3) &&
+            Number(isDay) === 1
+          ) {
+            return {
+              mode: "overcast",
+              label: "Hiệu ứng: Nhiều mây",
+              short: "Nhiều mây",
+            };
+          }
+          if (
+            (normalizedCode === 2 || normalizedCode === 3) &&
+            Number(isDay) !== 1
+          ) {
+            return {
+              mode: "overcast",
+              label: "Hiệu ứng: Nhiều mây đêm",
+              short: "Mây đêm",
+            };
+          }
+          if (
+            (normalizedCode === 0 || normalizedCode === 1) &&
+            Number(isDay) === 1
+          ) {
             return { mode: "sun", label: "Hiệu ứng: Nắng", short: "Nắng" };
+          }
+          if (
+            (normalizedCode === 0 || normalizedCode === 1) &&
+            Number(isDay) !== 1
+          ) {
+            return {
+              mode: "night-clear",
+              label: "Hiệu ứng: Trời quang đêm",
+              short: "Quang đêm",
+            };
           }
           return {
             mode: "leaf",
