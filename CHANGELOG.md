@@ -1,3 +1,9 @@
+# [1.56.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.55.0...v1.56.0) (2026-03-31)
+
+### Features
+
+- integrate real-time weather with visual effects and location detection ([d4dc046](https://github.com/daiminhdzchimto-arch/CAP/commit/d4dc04638d7a7ba3fcbd16ca5eb547003d5dbf1f))
+
 # [1.55.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.54.6...v1.55.0) (2026-03-31)
 
 ### Features
