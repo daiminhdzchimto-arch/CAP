@@ -3460,6 +3460,14 @@
         },
         currentSpecies: null,
         initialized: false,
+        liveLoopTimer: null,
+        geoWatchId: null,
+        positionDebounceTimer: null,
+        latestCoords: null,
+        lastAppliedWeather: null,
+        lastAppliedIsLive: null,
+        isFetching: false,
+        liveLoopDebounceMs: 7000,
 
         init() {
           const savedWeatherConfig = localStorage.getItem(
@@ -3483,7 +3491,8 @@
               this.config.useRealLocation = this.computeEffectiveRealWeather();
               this.syncRealWeatherToggleState();
               this.saveWeatherConfig();
-              this.fetchAndUpdate();
+              this.fetchAndUpdate({ force: true });
+              this.startLiveLoop();
             });
           }
 
@@ -3494,12 +3503,13 @@
               this.config.preferredSpecies = e.target.value;
               this.determineSpecies();
               this.saveWeatherConfig();
-              this.fetchAndUpdate();
+              this.fetchAndUpdate({ force: true });
             });
           }
 
           this.syncRealWeatherToggleState();
-          this.fetchAndUpdate();
+          this.fetchAndUpdate({ silent: true, force: true });
+          this.startLiveLoop();
           this.initialized = true;
         },
 
@@ -3537,7 +3547,100 @@
           if (!this.initialized) return;
           this.config.useRealLocation = this.computeEffectiveRealWeather();
           this.syncRealWeatherToggleState();
-          this.fetchAndUpdate();
+          this.fetchAndUpdate({ silent: true, force: true });
+          this.startLiveLoop();
+        },
+
+        startLiveLoop() {
+          this.stopLiveLoop();
+          const runLoop = async () => {
+            await this.fetchAndUpdate({ silent: true });
+            const delay = this.getAdaptivePollDelayMs();
+            this.liveLoopTimer = window.setTimeout(runLoop, delay);
+          };
+          void runLoop();
+          this.startPositionWatch();
+        },
+
+        stopLiveLoop() {
+          if (this.liveLoopTimer) {
+            clearTimeout(this.liveLoopTimer);
+            this.liveLoopTimer = null;
+          }
+          this.stopPositionWatch();
+        },
+
+        getAdaptivePollDelayMs() {
+          const isVisible = document.visibilityState === "visible";
+          const preferFastPolling =
+            isVisible &&
+            this.config.useRealLocation &&
+            !config.settings.powerSave &&
+            !batteryState.autoPowerSaveActive;
+          if (preferFastPolling) return Math.floor(2000 + Math.random() * 3000);
+          return Math.floor(15000 + Math.random() * 15000);
+        },
+
+        startPositionWatch() {
+          if (this.geoWatchId !== null || !navigator.geolocation) return;
+          this.geoWatchId = navigator.geolocation.watchPosition(
+            (position) => {
+              this.latestCoords = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              };
+              if (this.positionDebounceTimer) {
+                clearTimeout(this.positionDebounceTimer);
+              }
+              this.positionDebounceTimer = window.setTimeout(() => {
+                this.fetchAndUpdate({ silent: true });
+              }, this.liveLoopDebounceMs);
+            },
+            () => {},
+            {
+              enableHighAccuracy: false,
+              maximumAge: 120000,
+              timeout: 10000,
+            },
+          );
+        },
+
+        stopPositionWatch() {
+          if (this.geoWatchId !== null && navigator.geolocation) {
+            navigator.geolocation.clearWatch(this.geoWatchId);
+            this.geoWatchId = null;
+          }
+          if (this.positionDebounceTimer) {
+            clearTimeout(this.positionDebounceTimer);
+            this.positionDebounceTimer = null;
+          }
+        },
+
+        hasMeaningfulChange(prevWeather, nextWeather) {
+          if (!prevWeather || !nextWeather) return true;
+          if (prevWeather.weatherCode !== nextWeather.weatherCode) return true;
+          if (
+            Math.abs((nextWeather.speed || 0) - (prevWeather.speed || 0)) >= 0.5
+          )
+            return true;
+          const prevDeg = Number(prevWeather.deg) || 0;
+          const nextDeg = Number(nextWeather.deg) || 0;
+          const angularDiff = Math.abs(((nextDeg - prevDeg + 540) % 360) - 180);
+          return angularDiff >= 15;
+        },
+
+        maybeApplyWeather(weather, isLive, options = {}) {
+          const forceApply = !!options.force;
+          const liveStateChanged = this.lastAppliedIsLive !== isLive;
+          const meaningful = this.hasMeaningfulChange(
+            this.lastAppliedWeather,
+            weather,
+          );
+          if (!forceApply && !liveStateChanged && !meaningful) return false;
+          this.applyWeather(weather, isLive);
+          this.lastAppliedWeather = { ...weather };
+          this.lastAppliedIsLive = isLive;
+          return true;
         },
 
         determineSpecies() {
@@ -3574,13 +3677,19 @@
           }
         },
 
-        async fetchAndUpdate() {
+        async fetchAndUpdate(options = {}) {
+          if (this.isFetching) return;
+          this.isFetching = true;
+          const { silent = false, force = false } = options;
           this.updateUIStatus("loading", "Đang tải...");
 
           if (!this.config.useRealLocation) {
             const citySpan = document.getElementById("weather-city-text");
             if (citySpan) citySpan.innerText = "Giả lập";
-            this.applyWeather(this.config.fallbackData, false);
+            this.maybeApplyWeather(this.config.fallbackData, false, {
+              force: true,
+            });
+            this.isFetching = false;
             return;
           }
 
@@ -3588,83 +3697,112 @@
             showToast("Trình duyệt không hỗ trợ lấy vị trí!");
             const citySpan = document.getElementById("weather-city-text");
             if (citySpan) citySpan.innerText = "Không xác định";
-            this.applyWeather(this.config.fallbackData, false);
+            this.maybeApplyWeather(this.config.fallbackData, false, {
+              force: true,
+            });
+            this.isFetching = false;
+            return;
+          }
+
+          const handlePosition = async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            this.latestCoords = { latitude: lat, longitude: lon };
+            try {
+              const weatherRes = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,is_day`,
+              );
+              if (!weatherRes.ok) throw new Error("API Error");
+
+              const weatherData = await weatherRes.json();
+              const mappedEffect = this.resolveEffectMode(
+                weatherData.current.weather_code,
+                weatherData.current.is_day,
+              );
+              const realWeather = {
+                speed: weatherData.current.wind_speed_10m || 2,
+                deg: weatherData.current.wind_direction_10m || 180,
+                gust: weatherData.current.wind_gusts_10m || 4,
+                weatherCode: weatherData.current.weather_code ?? 1,
+                isDay: weatherData.current.is_day ?? 1,
+                effectMode: mappedEffect.mode,
+                effectLabel: mappedEffect.label,
+              };
+
+              let cityName = "Không xác định";
+              try {
+                const geoRes = await fetch(
+                  `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+                  {
+                    headers: {
+                      Accept: "application/json",
+                    },
+                  },
+                );
+                if (geoRes.ok) {
+                  const geoData = await geoRes.json();
+                  cityName =
+                    geoData.address?.city ||
+                    geoData.address?.town ||
+                    geoData.address?.village ||
+                    geoData.address?.county ||
+                    "Khu vực";
+                }
+              } catch (geoError) {
+                console.warn("Reverse geocoding failed:", geoError);
+              }
+
+              const citySpan = document.getElementById("weather-city-text");
+              if (citySpan) citySpan.innerText = cityName;
+
+              const applied = this.maybeApplyWeather(realWeather, true, {
+                force,
+              });
+              if (applied && !silent) {
+                showToast(`Đã cập nhật thời tiết thực tại ${cityName}!`);
+              }
+            } catch (error) {
+              console.error("Open-Meteo Error:", error);
+              if (!silent) showToast("Lỗi tải thời tiết, dùng giả lập.");
+              this.maybeApplyWeather(this.config.fallbackData, false, {
+                force: true,
+              });
+              const citySpan = document.getElementById("weather-city-text");
+              if (citySpan) citySpan.innerText = "Không xác định";
+            } finally {
+              this.isFetching = false;
+            }
+          };
+
+          if (this.latestCoords?.latitude && this.latestCoords?.longitude) {
+            await handlePosition({
+              coords: {
+                latitude: this.latestCoords.latitude,
+                longitude: this.latestCoords.longitude,
+              },
+            });
             return;
           }
 
           navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const lat = position.coords.latitude;
-              const lon = position.coords.longitude;
-              try {
-                const weatherRes = await fetch(
-                  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,is_day`,
-                );
-                if (!weatherRes.ok) throw new Error("API Error");
-
-                const weatherData = await weatherRes.json();
-                const mappedEffect = this.resolveEffectMode(
-                  weatherData.current.weather_code,
-                  weatherData.current.is_day,
-                );
-                const realWeather = {
-                  speed: weatherData.current.wind_speed_10m || 2,
-                  deg: weatherData.current.wind_direction_10m || 180,
-                  gust: weatherData.current.wind_gusts_10m || 4,
-                  weatherCode: weatherData.current.weather_code ?? 1,
-                  isDay: weatherData.current.is_day ?? 1,
-                  effectMode: mappedEffect.mode,
-                  effectLabel: mappedEffect.label,
-                };
-
-                let cityName = "Không xác định";
-                try {
-                  const geoRes = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
-                    {
-                      headers: {
-                        Accept: "application/json",
-                      },
-                    },
-                  );
-                  if (geoRes.ok) {
-                    const geoData = await geoRes.json();
-                    cityName =
-                      geoData.address?.city ||
-                      geoData.address?.town ||
-                      geoData.address?.village ||
-                      geoData.address?.county ||
-                      "Khu vực";
-                  }
-                } catch (geoError) {
-                  console.warn("Reverse geocoding failed:", geoError);
-                }
-
-                const citySpan = document.getElementById("weather-city-text");
-                if (citySpan) citySpan.innerText = cityName;
-
-                this.applyWeather(realWeather, true);
-                showToast(`Đã cập nhật thời tiết thực tại ${cityName}!`);
-              } catch (error) {
-                console.error("Open-Meteo Error:", error);
-                showToast("Lỗi tải thời tiết, dùng giả lập.");
-                this.applyWeather(this.config.fallbackData, false);
-                const citySpan = document.getElementById("weather-city-text");
-                if (citySpan) citySpan.innerText = "Không xác định";
-              }
+            (position) => {
+              void handlePosition(position);
             },
             (error) => {
               console.warn("Geolocation denied/error:", error);
-              showToast("Không có quyền vị trí, dùng giả lập.");
+              if (!silent) showToast("Không có quyền vị trí, dùng giả lập.");
               const toggle = document.getElementById("real-weather-toggle");
               if (toggle) toggle.checked = false;
               this.config.useRealLocation = false;
               this.config.preferredRealLocation = false;
               this.syncRealWeatherToggleState();
               this.saveWeatherConfig();
-              this.applyWeather(this.config.fallbackData, false);
+              this.maybeApplyWeather(this.config.fallbackData, false, {
+                force: true,
+              });
               const citySpan = document.getElementById("weather-city-text");
               if (citySpan) citySpan.innerText = "Không xác định";
+              this.isFetching = false;
             },
           );
         },
