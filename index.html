@@ -3448,6 +3448,7 @@
           useRealLocation: false,
           preferredRealLocation: false,
           preferredSpecies: "auto",
+          lightningPollCooldownMs: 5 * 60 * 1000,
           fallbackData: {
             speed: 2,
             deg: 180,
@@ -3460,6 +3461,8 @@
         },
         currentSpecies: null,
         initialized: false,
+        lastLightningCheckAt: 0,
+        cachedLightningAlert: null,
 
         init() {
           const savedWeatherConfig = localStorage.getItem(
@@ -3597,25 +3600,10 @@
               const lat = position.coords.latitude;
               const lon = position.coords.longitude;
               try {
-                const weatherRes = await fetch(
-                  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,is_day`,
+                const liveWeather = await this.fetchLiveWeatherWithFallback(
+                  lat,
+                  lon,
                 );
-                if (!weatherRes.ok) throw new Error("API Error");
-
-                const weatherData = await weatherRes.json();
-                const mappedEffect = this.resolveEffectMode(
-                  weatherData.current.weather_code,
-                  weatherData.current.is_day,
-                );
-                const realWeather = {
-                  speed: weatherData.current.wind_speed_10m || 2,
-                  deg: weatherData.current.wind_direction_10m || 180,
-                  gust: weatherData.current.wind_gusts_10m || 4,
-                  weatherCode: weatherData.current.weather_code ?? 1,
-                  isDay: weatherData.current.is_day ?? 1,
-                  effectMode: mappedEffect.mode,
-                  effectLabel: mappedEffect.label,
-                };
 
                 let cityName = "Không xác định";
                 try {
@@ -3643,10 +3631,15 @@
                 const citySpan = document.getElementById("weather-city-text");
                 if (citySpan) citySpan.innerText = cityName;
 
-                this.applyWeather(realWeather, true);
+                this.applyWeather(liveWeather.weather, true);
                 showToast(`Đã cập nhật thời tiết thực tại ${cityName}!`);
+                if (liveWeather.weather.lightningAlert) {
+                  showToast(
+                    "Cảnh báo giông sét gần khu vực của bạn. Hạn chế hoạt động ngoài trời!",
+                  );
+                }
               } catch (error) {
-                console.error("Open-Meteo Error:", error);
+                console.error("Live weather fallback chain failed:", error);
                 showToast("Lỗi tải thời tiết, dùng giả lập.");
                 this.applyWeather(this.config.fallbackData, false);
                 const citySpan = document.getElementById("weather-city-text");
@@ -3667,6 +3660,246 @@
               if (citySpan) citySpan.innerText = "Không xác định";
             },
           );
+        },
+
+        async fetchLiveWeatherWithFallback(lat, lon) {
+          const weatherApiConfig = this.getWeatherApiConfig();
+          const providers = [
+            {
+              name: "OpenWeather",
+              fn: () =>
+                this.fetchOpenWeatherCurrent(lat, lon, weatherApiConfig),
+            },
+            {
+              name: "AccuWeather",
+              fn: () =>
+                this.fetchAccuWeatherCurrent(lat, lon, weatherApiConfig),
+            },
+            {
+              name: "Simulated",
+              fn: () =>
+                Promise.resolve({
+                  ...this.config.fallbackData,
+                  source: "Simulated",
+                }),
+            },
+          ];
+
+          let lastError = null;
+          for (const provider of providers) {
+            try {
+              const weather = await provider.fn();
+              return { provider: provider.name, weather };
+            } catch (providerError) {
+              lastError = providerError;
+              console.warn(
+                `[WeatherAdapter] ${provider.name} failed, moving to next provider:`,
+                providerError,
+              );
+            }
+          }
+          throw lastError || new Error("No weather provider available");
+        },
+
+        getWeatherApiConfig() {
+          let localConfig = {};
+          try {
+            localConfig = JSON.parse(
+              localStorage.getItem("classApp_weatherApi") || "{}",
+            );
+          } catch (error) {
+            console.warn("Failed to parse classApp_weatherApi config", error);
+          }
+
+          const runtimeConfig =
+            typeof window !== "undefined" ? window.CAP_WEATHER_API || {} : {};
+
+          return {
+            openWeatherKey:
+              runtimeConfig.openWeatherKey || localConfig.openWeatherKey || "",
+            accuWeatherKey:
+              runtimeConfig.accuWeatherKey || localConfig.accuWeatherKey || "",
+          };
+        },
+
+        async fetchOpenWeatherCurrent(lat, lon, apiConfig) {
+          if (!apiConfig.openWeatherKey) {
+            throw new Error("OpenWeather API key is missing");
+          }
+          const weatherRes = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiConfig.openWeatherKey}&units=metric`,
+          );
+          if (!weatherRes.ok) {
+            throw new Error(`OpenWeather error: ${weatherRes.status}`);
+          }
+          const weatherData = await weatherRes.json();
+          const mappedEffect = this.resolveEffectModeFromOpenWeather(
+            weatherData.weather?.[0]?.id,
+            weatherData.sys?.sunrise,
+            weatherData.sys?.sunset,
+          );
+          return {
+            speed: weatherData.wind?.speed || 2,
+            deg: weatherData.wind?.deg || 180,
+            gust: weatherData.wind?.gust || weatherData.wind?.speed || 4,
+            weatherCode: weatherData.weather?.[0]?.id ?? 800,
+            isDay: mappedEffect.isDay,
+            effectMode: mappedEffect.mode,
+            effectLabel: mappedEffect.label,
+            source: "OpenWeather",
+          };
+        },
+
+        async fetchAccuWeatherCurrent(lat, lon, apiConfig) {
+          if (!apiConfig.accuWeatherKey) {
+            throw new Error("AccuWeather API key is missing");
+          }
+          const locationKey = await this.fetchAccuWeatherLocationKey(
+            lat,
+            lon,
+            apiConfig.accuWeatherKey,
+          );
+          const currentRes = await fetch(
+            `https://dataservice.accuweather.com/currentconditions/v1/${locationKey}?apikey=${apiConfig.accuWeatherKey}&details=true`,
+          );
+          if (!currentRes.ok) {
+            throw new Error(
+              `AccuWeather currentconditions error: ${currentRes.status}`,
+            );
+          }
+          const currentData = await currentRes.json();
+          const current = currentData?.[0];
+          if (!current) throw new Error("AccuWeather currentconditions empty");
+
+          const minuteNowcast = await this.fetchAccuWeatherMinuteNowcast(
+            locationKey,
+            apiConfig.accuWeatherKey,
+          );
+          let lightningAlert = false;
+          try {
+            lightningAlert = await this.fetchAccuWeatherLightningAlert(
+              locationKey,
+              apiConfig.accuWeatherKey,
+            );
+          } catch (lightningError) {
+            console.warn(
+              "[WeatherAdapter] Lightning endpoint unavailable for current plan:",
+              lightningError,
+            );
+          }
+
+          const mappedEffect = this.resolveEffectModeFromAccuWeather(
+            current.WeatherIcon,
+            current.IsDayTime,
+          );
+
+          const baseWind = current.Wind?.Speed?.Metric?.Value || 2;
+          const nowcastBoost = minuteNowcast?.windBoost || 0;
+          return {
+            speed: Math.max(0, baseWind + nowcastBoost),
+            deg: current.Wind?.Direction?.Degrees || 180,
+            gust: current.WindGust?.Speed?.Metric?.Value || baseWind + 2,
+            weatherCode: current.WeatherIcon ?? 1,
+            isDay: current.IsDayTime ? 1 : 0,
+            effectMode: mappedEffect.mode,
+            effectLabel: mappedEffect.label,
+            lightningAlert,
+            source: "AccuWeather",
+          };
+        },
+
+        async fetchAccuWeatherLocationKey(lat, lon, accuWeatherKey) {
+          const locationRes = await fetch(
+            `https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=${accuWeatherKey}&q=${lat},${lon}`,
+          );
+          if (!locationRes.ok) {
+            throw new Error(
+              `AccuWeather location lookup error: ${locationRes.status}`,
+            );
+          }
+          const locationData = await locationRes.json();
+          const locationKey = locationData?.Key;
+          if (!locationKey)
+            throw new Error("AccuWeather location key unavailable");
+          return locationKey;
+        },
+
+        async fetchAccuWeatherMinuteNowcast(locationKey, accuWeatherKey) {
+          const minuteRes = await fetch(
+            `https://dataservice.accuweather.com/forecasts/v1/minute/${locationKey}?apikey=${accuWeatherKey}&details=true`,
+          );
+          if (!minuteRes.ok) {
+            throw new Error(
+              `AccuWeather minute nowcast error: ${minuteRes.status}`,
+            );
+          }
+          const minuteData = await minuteRes.json();
+          const summaries = minuteData?.Summaries || [];
+          const hasRainSignal = summaries.some((entry) => {
+            const phrase = String(entry?.Phrase || "").toLowerCase();
+            return phrase.includes("rain") || phrase.includes("shower");
+          });
+          return { windBoost: hasRainSignal ? 0.6 : 0 };
+        },
+
+        async fetchAccuWeatherLightningAlert(locationKey, accuWeatherKey) {
+          const now = Date.now();
+          if (
+            this.cachedLightningAlert !== null &&
+            now - this.lastLightningCheckAt <
+              this.config.lightningPollCooldownMs
+          ) {
+            return this.cachedLightningAlert;
+          }
+
+          const lightningRes = await fetch(
+            `https://dataservice.accuweather.com/forecasts/v1/minute/${locationKey}/lightning?apikey=${accuWeatherKey}`,
+          );
+          if (!lightningRes.ok) {
+            throw new Error(
+              `AccuWeather lightning check error: ${lightningRes.status}`,
+            );
+          }
+          const lightningData = await lightningRes.json();
+          const hasLightning =
+            lightningData?.HasLightning === true ||
+            lightningData?.HasLightningNearby === true ||
+            lightningData?.Summary?.Type === "Lightning";
+          const alert = !!hasLightning;
+          this.lastLightningCheckAt = now;
+          this.cachedLightningAlert = alert;
+          return alert;
+        },
+
+        resolveEffectModeFromOpenWeather(weatherId, sunriseEpoch, sunsetEpoch) {
+          const category = Math.floor((weatherId || 800) / 100);
+          const nowEpoch = Math.floor(Date.now() / 1000);
+          const isDay =
+            sunriseEpoch && sunsetEpoch
+              ? nowEpoch >= sunriseEpoch && nowEpoch <= sunsetEpoch
+              : true;
+
+          if (category === 6)
+            return { mode: "snow", label: "Hiệu ứng: Tuyết", isDay };
+          if (category === 2 || category === 3 || category === 5)
+            return { mode: "rain", label: "Hiệu ứng: Mưa", isDay };
+          if (weatherId === 800 && isDay)
+            return { mode: "sun", label: "Hiệu ứng: Nắng", isDay };
+          return { mode: "leaf", label: "Hiệu ứng: Lá & gió", isDay };
+        },
+
+        resolveEffectModeFromAccuWeather(weatherIcon, isDayTime) {
+          const code = Number(weatherIcon || 1);
+          if ([19, 20, 21, 22, 23, 24, 25, 29].includes(code)) {
+            return { mode: "snow", label: "Hiệu ứng: Tuyết" };
+          }
+          if ([12, 13, 14, 15, 16, 17, 18, 26].includes(code)) {
+            return { mode: "rain", label: "Hiệu ứng: Mưa" };
+          }
+          if ([1, 2, 3, 4, 5].includes(code) && !!isDayTime) {
+            return { mode: "sun", label: "Hiệu ứng: Nắng" };
+          }
+          return { mode: "leaf", label: "Hiệu ứng: Lá & gió" };
         },
 
         applyWeather(weather, isLive) {
@@ -3696,7 +3929,8 @@
           weatherEffectText.classList.add(`weather-mode-${effectMode}`);
 
           if (isLive) {
-            this.updateUIStatus("live", "Live (Gió thực)");
+            const sourceLabel = weather.source ? ` - ${weather.source}` : "";
+            this.updateUIStatus("live", `Live (Gió thực${sourceLabel})`);
           } else {
             this.updateUIStatus("offline", "Mặc định (Giả lập)");
           }
