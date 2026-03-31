@@ -3460,6 +3460,16 @@
         },
         currentSpecies: null,
         initialized: false,
+        lastWeatherSnapshot: null,
+        lastUpdateAt: 0,
+        pollTimerId: null,
+        watchId: null,
+        locationDebounceTimerId: null,
+        lastCoords: null,
+        visibilityHandler: null,
+        onlineHandler: null,
+        focusHandler: null,
+        unloadHandler: null,
 
         init() {
           const savedWeatherConfig = localStorage.getItem(
@@ -3483,7 +3493,7 @@
               this.config.useRealLocation = this.computeEffectiveRealWeather();
               this.syncRealWeatherToggleState();
               this.saveWeatherConfig();
-              this.fetchAndUpdate();
+              this.startLiveUpdates();
             });
           }
 
@@ -3499,7 +3509,7 @@
           }
 
           this.syncRealWeatherToggleState();
-          this.fetchAndUpdate();
+          this.startLiveUpdates();
           this.initialized = true;
         },
 
@@ -3537,7 +3547,114 @@
           if (!this.initialized) return;
           this.config.useRealLocation = this.computeEffectiveRealWeather();
           this.syncRealWeatherToggleState();
+          this.startLiveUpdates();
+        },
+
+        getDynamicPollInterval() {
+          const isHidden = document.visibilityState === "hidden";
+          const isPowerSave =
+            !!batteryState.autoPowerSaveActive || !!config.settings.powerSave;
+          return isHidden || isPowerSave ? 120000 : 60000;
+        },
+
+        scheduleNextPoll() {
+          if (this.pollTimerId) {
+            clearTimeout(this.pollTimerId);
+            this.pollTimerId = null;
+          }
+          this.pollTimerId = setTimeout(() => {
+            this.fetchAndUpdate();
+          }, this.getDynamicPollInterval());
+        },
+
+        startLiveUpdates() {
+          this.stopLiveUpdates();
           this.fetchAndUpdate();
+
+          this.visibilityHandler = () => {
+            this.scheduleNextPoll();
+            if (document.visibilityState === "visible") this.fetchAndUpdate();
+          };
+          this.onlineHandler = () => this.fetchAndUpdate();
+          this.focusHandler = () => this.fetchAndUpdate();
+          this.unloadHandler = () => this.stopLiveUpdates();
+
+          document.addEventListener(
+            "visibilitychange",
+            this.visibilityHandler,
+            false,
+          );
+          window.addEventListener("online", this.onlineHandler, false);
+          window.addEventListener("focus", this.focusHandler, false);
+          window.addEventListener("beforeunload", this.unloadHandler, false);
+          window.addEventListener("pagehide", this.unloadHandler, false);
+
+          if (this.config.useRealLocation && navigator.geolocation) {
+            this.watchId = navigator.geolocation.watchPosition(
+              (position) => {
+                this.lastCoords = {
+                  lat: position.coords.latitude,
+                  lon: position.coords.longitude,
+                };
+                if (this.locationDebounceTimerId) {
+                  clearTimeout(this.locationDebounceTimerId);
+                }
+                this.locationDebounceTimerId = setTimeout(() => {
+                  this.fetchAndUpdate();
+                }, 15000);
+              },
+              () => {},
+              {
+                enableHighAccuracy: false,
+                maximumAge: 10000,
+                timeout: 15000,
+              },
+            );
+          }
+        },
+
+        stopLiveUpdates() {
+          if (this.pollTimerId) {
+            clearTimeout(this.pollTimerId);
+            this.pollTimerId = null;
+          }
+          if (this.locationDebounceTimerId) {
+            clearTimeout(this.locationDebounceTimerId);
+            this.locationDebounceTimerId = null;
+          }
+          if (
+            this.watchId !== null &&
+            navigator.geolocation &&
+            navigator.geolocation.clearWatch
+          ) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+          }
+          if (this.visibilityHandler) {
+            document.removeEventListener(
+              "visibilitychange",
+              this.visibilityHandler,
+              false,
+            );
+            this.visibilityHandler = null;
+          }
+          if (this.onlineHandler) {
+            window.removeEventListener("online", this.onlineHandler, false);
+            this.onlineHandler = null;
+          }
+          if (this.focusHandler) {
+            window.removeEventListener("focus", this.focusHandler, false);
+            this.focusHandler = null;
+          }
+          if (this.unloadHandler) {
+            window.removeEventListener(
+              "beforeunload",
+              this.unloadHandler,
+              false,
+            );
+            window.removeEventListener("pagehide", this.unloadHandler, false);
+            this.unloadHandler = null;
+          }
         },
 
         determineSpecies() {
@@ -3554,6 +3671,11 @@
             ) {
               particleEngine.setSpecies(this.currentSpecies);
             }
+            const weatherSpeciesText = document.getElementById(
+              "weather-species-text",
+            );
+            if (weatherSpeciesText)
+              weatherSpeciesText.innerText = this.currentSpecies.name;
             return;
           }
 
@@ -3572,6 +3694,25 @@
           ) {
             particleEngine.setSpecies(this.currentSpecies);
           }
+          const weatherSpeciesText = document.getElementById(
+            "weather-species-text",
+          );
+          if (weatherSpeciesText)
+            weatherSpeciesText.innerText = this.currentSpecies.name;
+        },
+
+        hasMeaningfulChange(prev, next) {
+          if (!prev || !next) return true;
+          const speedDelta = Math.abs((next.speed || 0) - (prev.speed || 0));
+          const directionDeltaRaw = Math.abs((next.deg || 0) - (prev.deg || 0));
+          const directionDelta = Math.min(
+            directionDeltaRaw,
+            360 - directionDeltaRaw,
+          );
+          const weatherCodeChanged = prev.weatherCode !== next.weatherCode;
+          return (
+            speedDelta >= 0.8 || directionDelta >= 20 || weatherCodeChanged
+          );
         },
 
         async fetchAndUpdate() {
@@ -3581,6 +3722,9 @@
             const citySpan = document.getElementById("weather-city-text");
             if (citySpan) citySpan.innerText = "Giả lập";
             this.applyWeather(this.config.fallbackData, false);
+            this.lastWeatherSnapshot = null;
+            this.lastUpdateAt = Date.now();
+            this.scheduleNextPoll();
             return;
           }
 
@@ -3589,6 +3733,7 @@
             const citySpan = document.getElementById("weather-city-text");
             if (citySpan) citySpan.innerText = "Không xác định";
             this.applyWeather(this.config.fallbackData, false);
+            this.scheduleNextPoll();
             return;
           }
 
@@ -3643,14 +3788,26 @@
                 const citySpan = document.getElementById("weather-city-text");
                 if (citySpan) citySpan.innerText = cityName;
 
-                this.applyWeather(realWeather, true);
-                showToast(`Đã cập nhật thời tiết thực tại ${cityName}!`);
+                const meaningfulChange = this.hasMeaningfulChange(
+                  this.lastWeatherSnapshot,
+                  realWeather,
+                );
+                if (meaningfulChange) {
+                  this.applyWeather(realWeather, true);
+                  showToast(`Đã cập nhật thời tiết thực tại ${cityName}!`);
+                  this.lastWeatherSnapshot = realWeather;
+                } else {
+                  this.updateUIStatus("live", "Live (Gió thực)");
+                }
+                this.lastUpdateAt = Date.now();
               } catch (error) {
                 console.error("Open-Meteo Error:", error);
                 showToast("Lỗi tải thời tiết, dùng giả lập.");
                 this.applyWeather(this.config.fallbackData, false);
                 const citySpan = document.getElementById("weather-city-text");
                 if (citySpan) citySpan.innerText = "Không xác định";
+              } finally {
+                this.scheduleNextPoll();
               }
             },
             (error) => {
@@ -3665,6 +3822,7 @@
               this.applyWeather(this.config.fallbackData, false);
               const citySpan = document.getElementById("weather-city-text");
               if (citySpan) citySpan.innerText = "Không xác định";
+              this.scheduleNextPoll();
             },
           );
         },
