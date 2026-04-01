@@ -8574,24 +8574,70 @@
       }
 
       function generateTable() {
-        const input = document.getElementById("student-list-input").value;
-        const names = input
+        let input = document.getElementById("student-list-input").value.trim();
+        let names = input
           .split("\n")
           .map((n) => n.trim())
-          .filter((n) => n !== "")
-          .sort((a, b) => {
-            const getLastName = (n) => n.split(" ").pop();
-            return getLastName(a).localeCompare(getLastName(b), "vi");
+          .filter((n) => n !== "");
+
+        if (names.length === 0) {
+          const allNames = [];
+          [leftSideData, rightSideData].forEach((side) => {
+            side.forEach((row) => {
+              row.forEach((seat) => {
+                if (seat.name && seat.name.trim()) {
+                  allNames.push(seat.name.trim());
+                }
+              });
+            });
           });
-        const tbody = document.getElementById("competition-tbody");
-        tbody.innerHTML = "";
+          names = allNames;
+        }
+
         if (!names.length) {
+          const tbody = document.getElementById("competition-tbody");
           tbody.innerHTML =
             '<tr><td colspan="4" class="text-center py-12 text-gray-400 italic">Chưa có dữ liệu.</td></tr>';
           return;
         }
 
-        names.forEach((n, i) => {
+        // Handle duplicate names with suffixes (A, B, C...)
+        const nameCounts = {};
+        const processedNames = names.map((name) => {
+          if (!nameCounts[name]) {
+            nameCounts[name] = { count: 0, current: 0 };
+          }
+          nameCounts[name].count++;
+          return name;
+        });
+
+        const finalNames = processedNames.map((name) => {
+          if (nameCounts[name].count > 1) {
+            const suffix = String.fromCharCode(65 + nameCounts[name].current); // 65 is 'A'
+            nameCounts[name].current++;
+            return `${name} (${suffix})`;
+          }
+          return name;
+        });
+
+        // Sort by Vietnamese name
+        finalNames.sort((a, b) => {
+          const getParts = (name) => {
+            const parts = name.trim().split(/\s+/);
+            const last = parts.pop() || "";
+            const rest = parts.join(" ");
+            return { last, rest };
+          };
+          const pA = getParts(a);
+          const pB = getParts(b);
+          const cmpLast = pA.last.localeCompare(pB.last, "vi");
+          if (cmpLast !== 0) return cmpLast;
+          return pA.rest.localeCompare(pB.rest, "vi");
+        });
+
+        const tbody = document.getElementById("competition-tbody");
+        tbody.innerHTML = "";
+        finalNames.forEach((n, i) => {
           const tr = document.createElement("tr");
 
           const indexTd = document.createElement("td");
