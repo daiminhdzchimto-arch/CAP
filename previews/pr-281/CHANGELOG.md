@@ -1,3 +1,9 @@
+## [1.58.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.0...v1.58.1) (2026-04-01)
+
+### Bug Fixes
+
+- resolve weather widget conflict and sync issues ([a8ac09c](https://github.com/daiminhdzchimto-arch/CAP/commit/a8ac09c67f375bdc8a557f1603ea611d3b73f333))
+
 # [1.58.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.57.1...v1.58.0) (2026-04-01)
 
 ### Features
