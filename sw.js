@@ -1,7 +1,8 @@
-const CACHE_VERSION = "cap-pwa-v2";
+const CACHE_VERSION = "cap-pwa-v3-2026-04-01";
 const CORE_ASSETS = [
   "./",
   "./index.html",
+  "./version.json",
   "./manifest.webmanifest",
   "./favicon.ico",
   "./robots.txt",
