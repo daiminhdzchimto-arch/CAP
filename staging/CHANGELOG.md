@@ -1,3 +1,13 @@
+## [1.58.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.1...v1.58.2) (2026-04-01)
+
+### Bug Fixes
+
+- sửa đường dẫn favicon cho GitHub Pages và refresh cache pwa ([7753bca](https://github.com/daiminhdzchimto-arch/CAP/commit/7753bca09a2ec93b94132870f043d6951f824596))
+
+### Performance Improvements
+
+- giảm tài nguyên bên thứ ba để qua lighthouse budget ([dfdee84](https://github.com/daiminhdzchimto-arch/CAP/commit/dfdee84b4e46e46894c2815866b4d40a88c5fff6))
+
 ## [1.58.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.0...v1.58.1) (2026-04-01)
 
 ### Bug Fixes
