@@ -1,3 +1,9 @@
+## [1.58.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.2...v1.58.3) (2026-04-01)
+
+### Bug Fixes
+
+- **weather:** keep widget below header and clamp drag position ([3f4df47](https://github.com/daiminhdzchimto-arch/CAP/commit/3f4df476de571426f700f74d98b3182870a7b9b2))
+
 ## [1.58.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.1...v1.58.2) (2026-04-01)
 
 ### Bug Fixes
