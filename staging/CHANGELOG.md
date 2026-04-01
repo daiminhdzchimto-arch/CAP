@@ -1,3 +1,9 @@
+# [1.57.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.56.0...v1.57.0) (2026-04-01)
+
+### Features
+
+- improve weather overlay toggle description in settings ([3ced620](https://github.com/daiminhdzchimto-arch/CAP/commit/3ced620cb0b515478f67cc502a48893b0ed2fb86))
+
 # [1.56.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.55.0...v1.56.0) (2026-03-31)
 
 ### Features

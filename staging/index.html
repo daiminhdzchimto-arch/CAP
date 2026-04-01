@@ -8339,8 +8339,12 @@
 
       function applyBottomOverlayVisibility() {
         const overlay = document.getElementById("weather-info-overlay");
+        const widget = document.getElementById("weather-widget");
         if (!overlay) return;
         overlay.classList.toggle("hidden", !config.settings.showBottomOverlay);
+        if (widget) {
+          widget.style.display = config.settings.showBottomOverlay ? "block" : "none";
+        }
       }
 
       function applyThemeMode() {
