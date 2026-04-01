@@ -18,7 +18,7 @@
     />
     <meta name="author" content="CAP - Classroom Management System" />
     <meta name="robots" content="index, follow" />
-    <meta name="app-version" content="2026-03-22-01" />
+    <meta name="app-version" content="2026-04-01-01" />
     <meta property="og:title" content="Quản Lý Lớp Học - Công Cụ Miễn Phí" />
     <meta
       property="og:description"
@@ -35,7 +35,8 @@
       name="twitter:description"
       content="Quản lý lớp học hiệu quả - Sắp xếp chỗ ngồi, bảng thi đua, phân công trực nhật."
     />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <link rel="apple-touch-icon" href="./favicon.ico" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="theme-color" content="#2563eb" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -1707,7 +1708,8 @@
                         Hiển thị cửa sổ thời tiết
                       </div>
                       <div class="text-[10px] text-gray-500">
-                        Bật/tắt bảng thông tin thời tiết ở góc dưới bên phải màn hình
+                        Bật/tắt bảng thông tin thời tiết ở góc dưới bên phải màn
+                        hình
                       </div>
                     </div>
                   </div>
@@ -1900,9 +1902,7 @@
         </div>
       </div>
 
-      
-
-    <div id="duty-modal" class="modal-overlay" data-close-modal="true">
+      <div id="duty-modal" class="modal-overlay" data-close-modal="true">
         <div class="modal-content max-h-[90vh] overflow-y-auto">
           <div class="flex justify-between items-center border-b pb-3 mb-4">
             <h2 class="text-xl font-bold text-blue-800">
@@ -9678,7 +9678,7 @@
             });
             let reduction = Math.floor(goodCount / 2) * 2;
             if (reduction > 0) {
-                if (totalHeavyPoints >= reduction) { totalHeavyPoints -= reduction; reduction = 0; } 
+                if (totalHeavyPoints >= reduction) { totalHeavyPoints -= reduction; reduction = 0; }
                 else { reduction -= totalHeavyPoints; totalHeavyPoints = 0; if (totalLightPoints >= reduction) totalLightPoints -= reduction; else totalLightPoints = 0; }
             }
             return { name, heavyPts: totalHeavyPoints, lightPts: totalLightPoints, totalPts: totalHeavyPoints + totalLightPoints };
@@ -9732,36 +9732,36 @@
             let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
             if(Object.keys(map).length===0) {d = getWorkersFromSelection('area'); map = d.map; max = d.max;}
             if(Object.keys(map).length===0) { [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { if(!map[i]) map[i] = []; r.forEach(s => { if(s.name && !officers.includes(s.name)) map[i].push(s.name); }); })); }
-            
+
             let allPool = Object.values(map).flat();
-            let cleaners = allPool.slice(0, 2); 
-            let dailyPool = allPool.filter(n => !cleaners.includes(n)); 
+            let cleaners = allPool.slice(0, 2);
+            let dailyPool = allPool.filter(n => !cleaners.includes(n));
 
             const days = ['2', '3', '4', '5', '6', '7']; let schedule = {}; let curRow = 0;
             const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
 
-            const getW = (n, currentDayTasks) => { 
-                let w=[]; let a=0; 
-                while(w.length<n && a<15){ 
-                    let p=map[curRow]||[]; 
+            const getW = (n, currentDayTasks) => {
+                let w=[]; let a=0;
+                while(w.length<n && a<15){
+                    let p=map[curRow]||[];
                     let availableP = p.filter(name => {
                         let load = 0; Object.values(currentDayTasks).forEach(arr => {if(Array.isArray(arr) && arr.includes(name)) load++;});
-                        return load < 2 && !cleaners.includes(name); 
+                        return load < 2 && !cleaners.includes(name);
                     });
                     if(availableP.length) {
                         let take = Math.min(n-w.length, availableP.length);
                         w = w.concat(availableP.slice(0, take));
                     }
-                    if(w.length<n) curRow=(curRow+1)%(max+1); else break; 
-                    a++; 
-                } 
-                return w; 
+                    if(w.length<n) curRow=(curRow+1)%(max+1); else break;
+                    a++;
+                }
+                return w;
             };
-            
+
             days.forEach((day, i) => {
                 curRow = i % (max+1);
                 let t = {sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:""};
-                if(day==='2'){ 
+                if(day==='2'){
                     let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n));
                     t.chair = males.slice(0, 4);
                 }
@@ -9790,7 +9790,7 @@
             let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
             let fullPool = Object.values(classM).flat();
 
-            let cleaners = fullPool.slice(0, 2); 
+            let cleaners = fullPool.slice(0, 2);
             let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
             let chairTeam = males.slice(0,4);
             let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
@@ -9806,13 +9806,13 @@
                     return load < 2 && !cleaners.includes(n);
                 };
                 const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
-                
+
                 let k=0;
                 while(k<4 && hQ.length > 0) {
                     let idx = hQ.findIndex(n => canArea(n));
-                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break; 
+                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break;
                 }
-                
+
                 if(mode !== 'penalty' && k<4) {
                     let tries = 0; curAreaR = i % (areaMax+1);
                     while(k<4 && tries<10) {
@@ -9892,7 +9892,7 @@
         }
 
         // --- RENDER ---
-        
+
         function renderDutyTable(data) {
             const tbody = document.getElementById('duty-tbody'); tbody.innerHTML = '';
             if(!data) return;
@@ -10014,36 +10014,36 @@
             let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
             if(Object.keys(map).length===0) {d = getWorkersFromSelection('area'); map = d.map; max = d.max;}
             if(Object.keys(map).length===0) { [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { if(!map[i]) map[i] = []; r.forEach(s => { if(s.name && !officers.includes(s.name)) map[i].push(s.name); }); })); }
-            
+
             let allPool = Object.values(map).flat();
-            let cleaners = allPool.slice(0, 2); 
-            let dailyPool = allPool.filter(n => !cleaners.includes(n)); 
+            let cleaners = allPool.slice(0, 2);
+            let dailyPool = allPool.filter(n => !cleaners.includes(n));
 
             const days = ['2', '3', '4', '5', '6', '7']; let schedule = {}; let curRow = 0;
             const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
 
-            const getW = (n, currentDayTasks) => { 
-                let w=[]; let a=0; 
-                while(w.length<n && a<15){ 
-                    let p=map[curRow]||[]; 
+            const getW = (n, currentDayTasks) => {
+                let w=[]; let a=0;
+                while(w.length<n && a<15){
+                    let p=map[curRow]||[];
                     let availableP = p.filter(name => {
                         let load = 0; Object.values(currentDayTasks).forEach(arr => {if(Array.isArray(arr) && arr.includes(name)) load++;});
-                        return load < 2 && !cleaners.includes(name); 
+                        return load < 2 && !cleaners.includes(name);
                     });
                     if(availableP.length) {
                         let take = Math.min(n-w.length, availableP.length);
                         w = w.concat(availableP.slice(0, take));
                     }
-                    if(w.length<n) curRow=(curRow+1)%(max+1); else break; 
-                    a++; 
-                } 
-                return w; 
+                    if(w.length<n) curRow=(curRow+1)%(max+1); else break;
+                    a++;
+                }
+                return w;
             };
-            
+
             days.forEach((day, i) => {
                 curRow = i % (max+1);
                 let t = {sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:""};
-                if(day==='2'){ 
+                if(day==='2'){
                     let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n));
                     t.chair = males.slice(0, 4);
                 }
@@ -10072,7 +10072,7 @@
             let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
             let fullPool = Object.values(classM).flat();
 
-            let cleaners = fullPool.slice(0, 2); 
+            let cleaners = fullPool.slice(0, 2);
             let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
             let chairTeam = males.slice(0,4);
             let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
@@ -10088,13 +10088,13 @@
                     return load < 2 && !cleaners.includes(n);
                 };
                 const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
-                
+
                 let k=0;
                 while(k<4 && hQ.length > 0) {
                     let idx = hQ.findIndex(n => canArea(n));
-                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break; 
+                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break;
                 }
-                
+
                 if(mode !== 'penalty' && k<4) {
                     let tries = 0; curAreaR = i % (areaMax+1);
                     while(k<4 && tries<10) {
