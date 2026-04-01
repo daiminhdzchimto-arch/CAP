@@ -133,6 +133,19 @@ const WeatherModule = (() => {
     
     updateWidgetTheme();
     
+    // Initial visibility check based on config
+    try {
+      const savedConfig = localStorage.getItem("classApp_config");
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        if (config.settings && config.settings.showBottomOverlay === false) {
+          widget.style.display = "none";
+        }
+      }
+    } catch (e) {
+      console.error("[Weather] Error reading config for widget visibility:", e);
+    }
+    
     // Listen for dark mode changes
     const observer = new MutationObserver(updateWidgetTheme);
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
