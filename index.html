@@ -2194,8 +2194,6 @@
 
       <div id="toast">Đã lưu dữ liệu thành công!</div>
 
-
-
       <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-black">
         <div id="seat-3d-canvas" class="absolute inset-0"></div>
         <div id="seat-3d-crosshair"></div>
@@ -11353,6 +11351,346 @@
           clearDeskSelection();
         }
       });
+
+      // Restored advanced duty features (day-off, exclusions, debt, badge)
+      const DUTY_DEBT_STORAGE_KEY = "classApp_dutyDebt_v1";
+
+      function loadDutyDebtData() {
+        try {
+          dutyDebtData = JSON.parse(localStorage.getItem(DUTY_DEBT_STORAGE_KEY) || "{}") || {};
+        } catch (_) {
+          dutyDebtData = {};
+        }
+      }
+
+      function persistDutyDebtData() {
+        localStorage.setItem(DUTY_DEBT_STORAGE_KEY, JSON.stringify(dutyDebtData || {}));
+      }
+
+      function getStudentDutyDebt(name) {
+        return Math.max(0, Number(dutyDebtData?.[name] || 0));
+      }
+
+      function reduceDutyDebt(name, count = 1) {
+        const next = Math.max(0, getStudentDutyDebt(name) - Math.max(0, Number(count) || 0));
+        if (next <= 0) delete dutyDebtData[name];
+        else dutyDebtData[name] = next;
+        persistDutyDebtData();
+      }
+
+      function updateCompetitionCell(cell) {
+        if (!cell) return;
+        cell.querySelectorAll(".points-badge").forEach((b) => b.remove());
+        let t = expandText((cell.innerText || "").replace(/\[\d+đ\]/g, "")).trim();
+        cell.innerText = t;
+        const pts = calculateFaultPoints(t);
+        if (pts > 0) {
+          const badge = document.createElement("span");
+          badge.className = "points-badge";
+          badge.innerText = `${pts}đ`;
+          cell.appendChild(badge);
+        }
+      }
+
+      function updateDutyDebtFromViolations() {
+        const rows = Array.from(document.querySelectorAll("#competition-tbody tr"));
+        rows.forEach((tr) => {
+          const name = tr.children?.[1]?.innerText?.trim();
+          const viol = (tr.children?.[3]?.innerText || "").toLowerCase();
+          if (!name || !viol) return;
+          const m = viol.match(/(không trực|bỏ trực|bỏ trực|trốn trực|truc nhat muon|trực nhật muộn|trực nhật bẩn)/g);
+          if (!m || !m.length) return;
+          dutyDebtData[name] = getStudentDutyDebt(name) + m.length;
+        });
+        persistDutyDebtData();
+      }
+
+      function collectStudentsFromSeating() {
+        const names = [];
+        [leftSideData, rightSideData].forEach((side) =>
+          side.forEach((row) =>
+            row.forEach((seat) => names.push(...getSeatEntityNames(seat))),
+          ),
+        );
+        return [...new Set(names.map((n) => n.trim()).filter(Boolean))];
+      }
+
+      function generateTable() {
+        const input = document.getElementById("student-list-input");
+        const tb = document.getElementById("competition-tbody");
+        let list = input.value.split("\n").map((x) => x.trim()).filter(Boolean);
+        if (!list.length) {
+          list = collectStudentsFromSeating();
+          input.value = list.join("\n");
+        }
+        if (!list.length) {
+          alert("Nhập danh sách hoặc điền tên học sinh trong sơ đồ lớp.");
+          return;
+        }
+        list = sortVietnameseNames(list);
+        tb.innerHTML = "";
+        list.forEach((n, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td class="text-center font-semibold text-gray-600">${i + 1}</td><td class="pl-4 font-medium text-gray-800">${n}</td>`;
+          const tdA = document.createElement("td");
+          const dA = document.createElement("div");
+          dA.className = "editable-cell";
+          dA.contentEditable = true;
+          dA.onclick = () => openInputModal(dA, "ach");
+          dA.addEventListener("blur", function () {
+            this.innerText = expandText(this.innerText || "");
+          });
+          tdA.appendChild(dA);
+          tr.appendChild(tdA);
+          const tdV = document.createElement("td");
+          const dV = document.createElement("div");
+          dV.className = "editable-cell";
+          dV.contentEditable = true;
+          dV.onclick = () => openInputModal(dV, "viol");
+          dV.addEventListener("blur", function () {
+            updateCompetitionCell(this);
+            updateDutyDebtFromViolations();
+          });
+          tdV.appendChild(dV);
+          tr.appendChild(tdV);
+          tb.appendChild(tr);
+        });
+        updateDutyDebtFromViolations();
+      }
+
+      function getStudentsFromSelection(type) {
+        const excludedSet = new Set((excludedMembers || []).map((n) => normalizeNameToken(n)));
+        const list = [];
+        const extract = (data, side) => {
+          data.forEach((row, i) => {
+            if (dutySelection[`${side}-${i}`] !== type) return;
+            row.forEach((seat) => {
+              getSeatEntityNames(seat).forEach((n) => {
+                if (!excludedSet.has(normalizeNameToken(n))) list.push(n);
+              });
+            });
+          });
+        };
+        extract(leftSideData, "left");
+        extract(rightSideData, "right");
+        return [...new Set(list)];
+      }
+
+      function getWorkersFromSelection(type) {
+        const excludedSet = new Set((excludedMembers || []).map((n) => normalizeNameToken(n)));
+        const rowsMap = {};
+        let maxRow = 0;
+        const process = (data, side) => {
+          data.forEach((row, idx) => {
+            if (!rowsMap[idx]) rowsMap[idx] = [];
+            if (dutySelection[`${side}-${idx}`] === type) {
+              row.forEach((seat) => {
+                getSeatEntityNames(seat).forEach((n) => {
+                  if (!excludedSet.has(normalizeNameToken(n))) rowsMap[idx].push(n);
+                });
+              });
+            }
+            if (idx > maxRow) maxRow = idx;
+          });
+        };
+        process(leftSideData, "left");
+        process(rightSideData, "right");
+        Object.keys(rowsMap).forEach((k) => (rowsMap[k] = [...new Set(rowsMap[k])]));
+        return { map: rowsMap, max: maxRow };
+      }
+
+      function toggleDayOffMode() {
+        dayOffMode = !dayOffMode;
+        renderDutyTable(currentSchedule);
+      }
+
+      function calculateAdvancedDutySchedule() {
+        const rows = Array.from(document.querySelectorAll("#competition-tbody tr"));
+        if (!rows.length || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) {
+          alert("Bảng thi đua trống!");
+          return null;
+        }
+        const students = rows.map((tr) => getStatsFromRow(tr)).filter((s) => s.name);
+        const totalClassPoints = students.reduce((sum, s) => sum + s.totalPts, 0);
+        const officers = [
+          document.getElementById("role-monitor").value.trim(),
+          document.getElementById("role-secretary").value.trim(),
+          document.getElementById("role-vice").value.trim(),
+        ].filter(Boolean);
+        const xkMembers = (document.getElementById("role-xungkich-list").value || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const xkBusyDays = Array.from(document.querySelectorAll(".xk-day:checked")).map((cb) => cb.value);
+        const allDays = ["2", "3", "4", "5", "6", "7"];
+        const activeDays = allDays.filter((d) => !(dayOffs || []).includes(d));
+        if (!activeDays.length) {
+          alert("Bạn đã chọn nghỉ tất cả các ngày từ Thứ 2 đến Thứ 7.");
+          return null;
+        }
+        if (totalClassPoints <= 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, "hybrid", activeDays);
+        return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, "penalty", activeDays);
+      }
+
+      function calculatePenaltyLogic(students, officers, xk, xkDays, mode, activeDays = ["2", "3", "4", "5", "6", "7"]) {
+        const hQ = [];
+        const lQ = [];
+        const debtQ = [];
+        students.forEach((s) => {
+          if (officers.includes(s.name)) return;
+          for (let i = 0; i < s.heavyPts; i++) hQ.push(s.name);
+          for (let i = 0; i < s.lightPts; i++) lQ.push(s.name);
+          for (let i = 0; i < getStudentDutyDebt(s.name); i++) debtQ.push(s.name);
+        });
+        let areaD = getWorkersFromSelection("area");
+        let areaM = areaD.map;
+        let areaMax = areaD.max;
+        if (!Object.keys(areaM).length) {
+          areaD = getWorkersFromSelection("class");
+          areaM = areaD.map;
+          areaMax = areaD.max;
+        }
+        const classD = getWorkersFromSelection("class");
+        const classM = classD.map;
+        const classMax = classD.max;
+        const fullPool = Object.values(classM).flat();
+        const cleaners = fullPool.slice(0, 2);
+        const males = fullPool.filter((n) => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
+        const chairTeam = males.slice(0, 4);
+        const doorTeam = fullPool.filter((n) => !chairTeam.includes(n) && !cleaners.includes(n)).slice(0, 3);
+        const dMap = { "2": doorTeam[0], "3": doorTeam[0], "4": doorTeam[1], "5": doorTeam[1], "6": doorTeam[2], "7": doorTeam[2] };
+        const schedule = {};
+        const allDays = ["2", "3", "4", "5", "6", "7"];
+        allDays.forEach((d, i) => {
+          if (!activeDays.includes(d)) {
+            schedule[d] = { isOff: true };
+            return;
+          }
+          const idx = activeDays.indexOf(d);
+          const t = { sweep: [], trash: [], towel: [], area: [], door: [dMap[d]], chair: d === "2" ? chairTeam : [], monitorClass: "", monitorArea: "" };
+          const canWork = (n) => {
+            const load = Object.values(t).reduce((acc, arr) => (Array.isArray(arr) && arr.includes(n) ? acc + 1 : acc), 0);
+            return load < 2 && !cleaners.includes(n);
+          };
+          const canArea = (n) => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
+          const pull = (queue, filter) => {
+            const found = queue.findIndex((n) => filter(n));
+            if (found < 0) return null;
+            const val = queue[found];
+            queue.splice(found, 1);
+            return val;
+          };
+          while (t.area.length < 4) {
+            const picked = pull(debtQ, canArea) || pull(hQ, canArea);
+            if (!picked) break;
+            t.area.push(picked);
+            reduceDutyDebt(picked, 1);
+          }
+          if (mode !== "penalty" && t.area.length < 4) {
+            let tries = 0;
+            let curAreaR = idx % (areaMax + 1 || 1);
+            while (t.area.length < 4 && tries < 12) {
+              const candidates = (areaM[curAreaR] || []).filter((n) => !officers.includes(n) && canWork(n) && !t.area.includes(n));
+              if (candidates.length) t.area.push(...candidates.slice(0, 4 - t.area.length));
+              curAreaR = (curAreaR + 1) % (areaMax + 1 || 1);
+              tries += 1;
+            }
+          }
+          const fillTask = (key, count, fallbackQ) => {
+            while (t[key].length < count) {
+              const picked = pull(debtQ, canWork) || pull(fallbackQ, canWork);
+              if (!picked) break;
+              t[key].push(picked);
+              reduceDutyDebt(picked, 1);
+            }
+            if (t[key].length < count) {
+              let tries = 0;
+              let curClassR = idx % (classMax + 1 || 1);
+              while (t[key].length < count && tries < 12) {
+                const candidates = (classM[curClassR] || []).filter((n) => !officers.includes(n) && canWork(n) && !t[key].includes(n));
+                if (candidates.length) t[key].push(...candidates.slice(0, count - t[key].length));
+                curClassR = (curClassR + 1) % (classMax + 1 || 1);
+                tries += 1;
+              }
+            }
+          };
+          fillTask("trash", 1, lQ);
+          fillTask("sweep", 2, lQ);
+          fillTask("towel", 1, hQ);
+          t.monitorClass = officers[idx % (officers.length || 1)] || "";
+          t.monitorArea = officers[(idx + 1) % (officers.length || 1)] || "";
+          schedule[d] = t;
+        });
+        persistDutyDebtData();
+        return { schedule, cleaners, mode };
+      }
+
+      function renderDutyTable(data) {
+        const tbody = document.getElementById("duty-tbody");
+        tbody.innerHTML = "";
+        if (!data) return;
+        const { schedule, cleaners = [] } = data;
+        ["2", "3", "4", "5", "6", "7"].forEach((day) => {
+          const t = schedule?.[day];
+          if (!t) return;
+          if (t.isOff) {
+            if (!dayOffMode) return;
+            const offRow = document.createElement("tr");
+            offRow.className = "day-off";
+            offRow.innerHTML = `<td class="font-bold bg-gray-50">${day} (Nghỉ)</td><td colspan="8" class="text-center italic">Không học</td>`;
+            tbody.appendChild(offRow);
+            return;
+          }
+          const tr = document.createElement("tr");
+          tr.setAttribute("data-duty-day", day);
+          tr.innerHTML += `<td class="font-bold bg-gray-50">${day}</td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.sweep || []).join(", ")}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.trash || []).join(", ")}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.towel || []).join(", ")}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.area || []).join(", ")}</div></td>`;
+          if (["2", "4", "6"].includes(day)) tr.innerHTML += `<td rowspan="2"><div class="editable-cell" contenteditable="true">${(t.door || [])[0] || ""}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorClass || ""}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorArea || ""}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.chair || []).join(", ")}</div></td>`;
+          tbody.appendChild(tr);
+        });
+        document.getElementById("duty-footer-class-list").innerText = cleaners.join(", ");
+        updateDutyHomeAlert();
+      }
+
+      function showDutyDebtModal() {
+        const rows = Object.entries(dutyDebtData || {}).sort((a, b) => b[1] - a[1]);
+        const current = rows.length ? rows.map(([n, c]) => `${n}: ${c}`).join("\n") : "(chưa có nợ trực)";
+        const input = prompt(`Quản lý nợ trực (định dạng: Tên=+1, Tên=-1, Tên=0 để xóa)\nHiện tại:\n${current}\n\nNhập thay đổi:`);
+        if (!input || !input.trim()) return;
+        input.split(",").map((x) => x.trim()).filter(Boolean).forEach((entry) => {
+          const [name, deltaRaw] = entry.split("=");
+          const n = (name || "").trim();
+          if (!n) return;
+          const delta = Number((deltaRaw || "").trim());
+          if (!Number.isFinite(delta)) return;
+          if (delta === 0) delete dutyDebtData[n];
+          else dutyDebtData[n] = Math.max(0, getStudentDutyDebt(n) + delta);
+          if (dutyDebtData[n] <= 0) delete dutyDebtData[n];
+        });
+        persistDutyDebtData();
+        showToast("Đã cập nhật nợ trực nhật.");
+      }
+
+      function addDutyDebtManagementUI() {
+        const toolbar = document.querySelector("#tab-seating .flex.items-center.gap-2:last-child");
+        if (!toolbar || document.getElementById("duty-debt-btn")) return;
+        const btn = document.createElement("button");
+        btn.id = "duty-debt-btn";
+        btn.className = "btn-3d btn-3d-purple text-sm font-bold";
+        btn.title = "Quản lý nợ trực";
+        btn.innerHTML = '<i class="fas fa-receipt"></i> Nợ trực';
+        btn.onclick = showDutyDebtModal;
+        toolbar.insertBefore(btn, toolbar.lastElementChild);
+      }
+
+      loadDutyDebtData();
+      addDutyDebtManagementUI();
     </script>
     <script src="./scripts/weather.js"></script>
   </body>
