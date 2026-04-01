@@ -29,7 +29,11 @@ const WeatherModule = (() => {
     particles: [],
     isRaining: false,
     isSnowing: false,
-    lastUpdate: 0
+    lastUpdate: 0,
+    isDragging: false,
+    dragOffsetX: 0,
+    dragOffsetY: 0,
+    isWidgetVisible: true
   };
 
   /**
@@ -118,8 +122,15 @@ const WeatherModule = (() => {
         z-index: 1000;
         min-width: 200px;
         backdrop-filter: blur(10px);
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: box-shadow 0.2s ease;
       `;
       document.body.appendChild(widget);
+      
+      // Add drag and toggle functionality
+      setupWidgetDragAndToggle(widget);
     }
     
     // Add dark mode support
@@ -149,6 +160,157 @@ const WeatherModule = (() => {
     // Listen for dark mode changes
     const observer = new MutationObserver(updateWidgetTheme);
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  /**
+   * Setup drag and drop functionality for weather widget
+   */
+  function setupWidgetDragAndToggle(widget) {
+    // Create header for dragging
+    const header = document.createElement('div');
+    header.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    `;
+    
+    // Title
+    const title = document.createElement('div');
+    title.style.cssText = `
+      font-weight: 600;
+      font-size: 12px;
+      opacity: 0.7;
+      flex: 1;
+    `;
+    title.textContent = 'Thời tiết';
+    
+    // Toggle button
+    const toggleBtn = document.createElement('button');
+    toggleBtn.style.cssText = `
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      color: inherit;
+    `;
+    toggleBtn.innerHTML = '<i class="lucide lucide-chevron-down"></i>';
+    toggleBtn.title = 'Ẩn/Hiện chi tiết';
+    
+    // Content container
+    const contentContainer = document.createElement('div');
+    contentContainer.id = 'weather-content';
+    contentContainer.style.cssText = `
+      display: block;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      max-height: 500px;
+      opacity: 1;
+      overflow: hidden;
+    `;
+    
+    // Move existing content into contentContainer
+    const existingContent = widget.innerHTML;
+    contentContainer.innerHTML = existingContent;
+    
+    // Clear widget and rebuild structure
+    widget.innerHTML = '';
+    header.appendChild(title);
+    header.appendChild(toggleBtn);
+    widget.appendChild(header);
+    widget.appendChild(contentContainer);
+    
+    // Toggle functionality
+    let isExpanded = true;
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        contentContainer.style.maxHeight = '500px';
+        contentContainer.style.opacity = '1';
+        toggleBtn.innerHTML = '<i class="lucide lucide-chevron-down"></i>';
+      } else {
+        contentContainer.style.maxHeight = '0';
+        contentContainer.style.opacity = '0';
+        toggleBtn.innerHTML = '<i class="lucide lucide-chevron-up"></i>';
+      }
+    });
+    
+    // Drag functionality
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+    
+    header.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = widget.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+      widget.style.cursor = 'grabbing';
+      header.style.cursor = 'grabbing';
+      widget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      const newLeft = startLeft + deltaX;
+      const newTop = startTop + deltaY;
+      
+      // Constrain to viewport
+      const maxLeft = window.innerWidth - widget.offsetWidth;
+      const maxTop = window.innerHeight - widget.offsetHeight;
+      
+      widget.style.position = 'fixed';
+      widget.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+      widget.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+      widget.style.right = 'auto';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        widget.style.cursor = 'grab';
+        header.style.cursor = 'grab';
+        widget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+        
+        // Save position to localStorage
+        const rect = widget.getBoundingClientRect();
+        localStorage.setItem('weather-widget-position', JSON.stringify({
+          left: rect.left,
+          top: rect.top
+        }));
+      }
+    });
+    
+    // Restore saved position
+    try {
+      const savedPosition = localStorage.getItem('weather-widget-position');
+      if (savedPosition) {
+        const pos = JSON.parse(savedPosition);
+        widget.style.position = 'fixed';
+        widget.style.left = pos.left + 'px';
+        widget.style.top = pos.top + 'px';
+        widget.style.right = 'auto';
+      }
+    } catch (e) {
+      console.error('[Weather] Error restoring widget position:', e);
+    }
   }
 
   /**
