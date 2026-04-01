@@ -1,3 +1,9 @@
+## [1.58.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.3...v1.58.4) (2026-04-01)
+
+### Bug Fixes
+
+- restore advanced duty scheduling and debt management features ([790ec5c](https://github.com/daiminhdzchimto-arch/CAP/commit/790ec5c034acf4212ba74d2685c44e7c49412af0))
+
 ## [1.58.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.2...v1.58.3) (2026-04-01)
 
 ### Bug Fixes
