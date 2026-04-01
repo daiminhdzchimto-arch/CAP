@@ -1,3 +1,9 @@
+## [1.57.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.57.0...v1.57.1) (2026-04-01)
+
+### Bug Fixes
+
+- hide/show both weather overlay and widget in settings ([5dac901](https://github.com/daiminhdzchimto-arch/CAP/commit/5dac90159ef0a0d9dc5459c46b803f538b16104e))
+
 # [1.57.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.56.0...v1.57.0) (2026-04-01)
 
 ### Features
