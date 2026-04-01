@@ -1,3 +1,9 @@
+# [1.58.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.57.1...v1.58.0) (2026-04-01)
+
+### Features
+
+- add drag-and-drop and toggle functionality to weather widget ([a1ddb48](https://github.com/daiminhdzchimto-arch/CAP/commit/a1ddb48a3dbe17ca453768554077f4db2234040a))
+
 ## [1.57.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.57.0...v1.57.1) (2026-04-01)
 
 ### Bug Fixes
