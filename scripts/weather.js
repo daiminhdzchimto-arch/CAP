@@ -33,7 +33,8 @@ const WeatherModule = (() => {
     isDragging: false,
     dragOffsetX: 0,
     dragOffsetY: 0,
-    isWidgetVisible: true
+    isWidgetVisible: true,
+    widgetInitialized: false
   };
 
   /**
@@ -131,6 +132,7 @@ const WeatherModule = (() => {
       
       // Add drag and toggle functionality
       setupWidgetDragAndToggle(widget);
+      state.widgetInitialized = true;
     }
     
     // Add dark mode support
@@ -216,9 +218,14 @@ const WeatherModule = (() => {
       overflow: hidden;
     `;
     
-    // Move existing content into contentContainer
-    const existingContent = widget.innerHTML;
-    contentContainer.innerHTML = existingContent;
+    // Initialize with placeholder content
+    contentContainer.innerHTML = `
+      <div style="font-size: 12px; line-height: 1.6; opacity: 0.8;">
+        <div><strong>Trạng thái:</strong> Đang tải...</div>
+        <div><strong>Độ ẩm:</strong> --</div>
+        <div><strong>Gió:</strong> -- km/h</div>
+      </div>
+    `;
     
     // Clear widget and rebuild structure
     widget.innerHTML = '';
@@ -416,20 +423,24 @@ const WeatherModule = (() => {
     // Get weather icon
     const iconClass = getWeatherIconClass(weather.weather[0].main);
     
-    widget.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-        <i class="${iconClass}" style="font-size: 24px;"></i>
-        <div>
-          <div style="font-size: 18px; font-weight: 600;">${temp}°C</div>
-          <div style="font-size: 12px; opacity: 0.7;">${location}</div>
+    // Find content container
+    const contentContainer = widget.querySelector('#weather-content');
+    if (contentContainer) {
+      contentContainer.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+          <i class="${iconClass}" style="font-size: 24px;"></i>
+          <div>
+            <div style="font-size: 18px; font-weight: 600;">${temp}°C</div>
+            <div style="font-size: 12px; opacity: 0.7;">${location}</div>
+          </div>
         </div>
-      </div>
-      <div style="font-size: 12px; line-height: 1.6; opacity: 0.8;">
-        <div><strong>Trạng thái:</strong> ${description}</div>
-        <div><strong>Độ ẩm:</strong> ${humidity}%</div>
-        <div><strong>Gió:</strong> ${windSpeed} km/h</div>
-      </div>
-    `;
+        <div style="font-size: 12px; line-height: 1.6; opacity: 0.8;">
+          <div><strong>Trạng thái:</strong> ${description}</div>
+          <div><strong>Độ ẩm:</strong> ${humidity}%</div>
+          <div><strong>Gió:</strong> ${windSpeed} km/h</div>
+        </div>
+      `;
+    }
   }
 
   /**
@@ -700,29 +711,15 @@ const WeatherModule = (() => {
             height: 100%;
             pointer-events: none;
             z-index: 3;
-            background: rgba(255, 255, 255, 0.3);
-            animation: lightning-flash 0.2s ease-out;
+            background: rgba(255, 255, 255, 0.8);
+            animation: lightning-flash 0.1s ease-out;
           `;
-          
-          // Add animation
-          if (!document.querySelector('style[data-lightning]')) {
-            const style = document.createElement('style');
-            style.setAttribute('data-lightning', 'true');
-            style.textContent = `
-              @keyframes lightning-flash {
-                0% { opacity: 1; }
-                100% { opacity: 0; }
-              }
-            `;
-            document.head.appendChild(style);
-          }
-          
           document.body.appendChild(flash);
           
-          setTimeout(() => flash.remove(), 200);
+          setTimeout(() => flash.remove(), 100);
         }
         
-        addLightning(); // Recursive call for next flash
+        addLightning();
       }, delay);
     };
     
@@ -730,30 +727,25 @@ const WeatherModule = (() => {
   }
 
   /**
-   * Start clear sky effect
+   * Start clear weather effect
    */
   function startClearEffect() {
-    // Remove all overlays
-    removeOverlays();
-    
-    // Optional: Add subtle sun glow effect
-    let sunGlow = document.getElementById('sun-glow');
-    if (!sunGlow) {
-      sunGlow = document.createElement('div');
-      sunGlow.id = 'sun-glow';
-      sunGlow.style.cssText = `
+    // Add sun glow effect
+    let glow = document.getElementById('sun-glow');
+    if (!glow) {
+      glow = document.createElement('div');
+      glow.id = 'sun-glow';
+      glow.style.cssText = `
         position: fixed;
-        top: 20px;
-        right: 20px;
-        width: 80px;
-        height: 80px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         pointer-events: none;
-        z-index: 0;
-        background: radial-gradient(circle, rgba(255, 200, 0, 0.1) 0%, rgba(255, 200, 0, 0) 100%);
-        border-radius: 50%;
-        filter: blur(20px);
+        z-index: 1;
+        background: radial-gradient(ellipse at top right, rgba(255, 200, 100, 0.1) 0%, rgba(255, 200, 100, 0) 50%);
       `;
-      document.body.appendChild(sunGlow);
+      document.body.appendChild(glow);
     }
   }
 
@@ -761,24 +753,22 @@ const WeatherModule = (() => {
    * Start cloud effect
    */
   function startCloudEffect() {
-    removeOverlays();
-    
-    // Add subtle cloud overlay
-    let cloudOverlay = document.getElementById('cloud-overlay');
-    if (!cloudOverlay) {
-      cloudOverlay = document.createElement('div');
-      cloudOverlay.id = 'cloud-overlay';
-      cloudOverlay.style.cssText = `
+    // Add cloud overlay
+    let overlay = document.getElementById('cloud-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'cloud-overlay';
+      overlay.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 2;
-        background: radial-gradient(ellipse at center, rgba(150, 150, 150, 0) 0%, rgba(150, 150, 150, 0.03) 100%);
+        z-index: 1;
+        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.05) 100%);
       `;
-      document.body.appendChild(cloudOverlay);
+      document.body.appendChild(overlay);
     }
   }
 
@@ -786,8 +776,6 @@ const WeatherModule = (() => {
    * Start fog effect
    */
   function startFogEffect() {
-    removeOverlays();
-    
     // Add fog overlay
     let fogOverlay = document.getElementById('fog-overlay');
     if (!fogOverlay) {
