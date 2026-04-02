@@ -1,3 +1,9 @@
+## [1.58.14](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.13...v1.58.14) (2026-04-02)
+
+### Reverts
+
+- Revert "Merge pull request [#288](https://github.com/daiminhdzchimto-arch/CAP/issues/288) from daiminhdzchimto-arch/codex/restore-specified-features-in-version-2.4.2" ([8e613c9](https://github.com/daiminhdzchimto-arch/CAP/commit/8e613c9b70a1aacc2ff94159086ecff013145698))
+
 ## [1.58.13](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.12...v1.58.13) (2026-04-02)
 
 ### Bug Fixes
