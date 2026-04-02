@@ -499,7 +499,7 @@
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
       .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
       .classroom-info-header p { font-size: 1.1rem; font-weight: 700; color: #4b5563; margin: 2px 0 0 0; }
-      .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; display: flex; align-items: center; justify-content: center; min-height: 48px; }
+      .desk-box { background: #e0f2fe; border: 2px solid #374151; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s; display: flex; align-items: center; justify-content: center; min-height: 48px; position: relative; z-index: 10; }
       #classroom-area.teacher-view #classroom-reference-row { flex-direction: row; }
       #classroom-area.teacher-view #seating-layout-row { flex-direction: row-reverse; }
       #classroom-area.teacher-view #left-rows-container,
@@ -509,7 +509,7 @@
       .is-fixed-hidden.desk-box.is-fixed { border-width: 2px !important; border-color: #374151 !important; background-color: #e0f2fe !important; }
       .is-conflict-hidden.desk-box.has-conflict { border-color: #374151 !important; }
       .is-conflict-hidden .conflict-dot { display: none !important; }
-      .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 50; }
+      .desk-box.swap-selected { background-color: #fef08a !important; border-color: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); animation: pulse-ring 1.5s infinite; z-index: 60 !important; }
       .desk-box.is-dragging-seat { opacity: 0.55; transform: scale(0.98); }
       .desk-box.drag-over-target { border-color: #0ea5e9 !important; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25); }
       .desk-box.is-fixed { border-color: var(--fixed) !important; border-width: 3px !important; background-color: rgba(139, 92, 246, 0.1) !important; }
