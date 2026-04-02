@@ -122,7 +122,7 @@ const WeatherModule = (() => {
         padding: 12px 16px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif;
-        z-index: 1000;
+        z-index: 30;
         min-width: 200px;
         backdrop-filter: blur(10px);
       `;
