@@ -540,11 +540,33 @@
       .duty-preview-table th { background: #dbeafe; font-weight: 700; color: #1e3a8a; }
       .duty-preview-table td { background: #fff; color: #1f2937; }
       .points-badge { font-size: 0.7rem; font-weight: bold; color: white; background-color: #ef4444; padding: 1px 4px; border-radius: 4px; margin-left: 4px; display: inline-block; white-space: nowrap; }
+      .tag-btn {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.35rem 0.6rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #374151;
+        cursor: pointer;
+      }
+      .tag-btn.selected {
+        background: #dbeafe;
+        border-color: #60a5fa;
+        color: #1d4ed8;
+      }
+      .tag-section-title {
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #374151;
+        margin-bottom: 0.35rem;
+      }
       .day-off { background-color: #f3f4f6 !important; color: #9ca3af; font-style: italic; }
       .day-off .editable-cell { cursor: not-allowed; background-color: #f3f4f6 !important; color: #9ca3af; }
       .member-excluded { text-decoration: line-through; color: #9ca3af; opacity: 0.6; }
 
-      /* MODAL */
+      #input-modal .modal-content { width: 500px; }
+        /* MODAL */
       .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(4px); }
       .modal-overlay.open { opacity: 1; pointer-events: all; }
       .modal-content { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s; max-height: min(95vh, 900px); overflow-y: auto; }
@@ -2081,6 +2103,76 @@
               title="Xác nhận và tạo lịch"
             >
               <i class="fas fa-check-circle"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="input-modal" class="modal-overlay" data-close-modal="true">
+        <div
+          class="modal-content w-[760px] max-w-[95vw] max-h-[90vh] overflow-y-auto"
+        >
+          <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h2 id="modal-title" class="text-xl font-bold text-blue-800">
+              Nhập Chi Tiết
+            </h2>
+            <button
+              onclick="closeInputModal()"
+              class="modal-close-btn"
+              aria-label="Đóng modal nhập chi tiết"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <div class="space-y-3 mb-4">
+            <div>
+              <div class="text-xs font-bold text-gray-500 mb-1">Chọn thứ</div>
+              <div id="modal-days" class="flex flex-wrap gap-2">
+                <button class="tag-btn" onclick="selectModalTime('day', 'T2')">
+                  T2
+                </button>
+                <button class="tag-btn" onclick="selectModalTime('day', 'T3')">
+                  T3
+                </button>
+                <button class="tag-btn" onclick="selectModalTime('day', 'T4')">
+                  T4
+                </button>
+                <button class="tag-btn" onclick="selectModalTime('day', 'T5')">
+                  T5
+                </button>
+                <button class="tag-btn" onclick="selectModalTime('day', 'T6')">
+                  T6
+                </button>
+                <button class="tag-btn" onclick="selectModalTime('day', 'T7')">
+                  T7
+                </button>
+              </div>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-gray-500 mb-1">Chọn buổi</div>
+              <div id="modal-sessions" class="flex flex-wrap gap-2">
+                <button
+                  class="tag-btn"
+                  onclick="selectModalTime('session', 'Sáng')"
+                >
+                  Sáng
+                </button>
+                <button
+                  class="tag-btn"
+                  onclick="selectModalTime('session', 'Chiều')"
+                >
+                  Chiều
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="modal-content-area"></div>
+          <div class="flex justify-end mt-4">
+            <button
+              onclick="saveInputModal()"
+              class="btn-3d btn-3d-green text-sm font-bold"
+            >
+              Thêm vào ô
             </button>
           </div>
         </div>
@@ -3866,6 +3958,84 @@
 
       function getSideColumnCount(side) {
         return side === "left" ? layoutMeta.leftCols : layoutMeta.rightCols;
+      }
+
+      let currentCell = null;
+      let currentModalType = "ach";
+      let modalState = { day: "T2", session: "Sáng" };
+
+      function openInputModal(cell, type) {
+        currentCell = cell;
+        currentModalType = type;
+        modalState = { day: "T2", session: "Sáng" };
+
+        const modalTitle = document.getElementById("modal-title");
+        const container = document.getElementById("modal-content-area");
+        if (!modalTitle || !container) return;
+
+        modalTitle.innerText =
+          type === "ach" ? "Nhập Thành Tích" : "Nhập Vi Phạm";
+        container.innerHTML = "";
+
+        if (type === "ach") {
+          container.innerHTML = `<div class="tag-section-title">Điểm số</div><div class="flex gap-2 flex-wrap mb-3">${[10,9,8,7,6,5,4,3,2,1,0].map((n) => `<span class="tag-btn" onclick="addToInput('${n}đ')">${n}</span>`).join("")}</div><div class="tag-section-title">Môn học</div><div class="flex gap-2 flex-wrap">${["Toán","Văn","Anh","Lý","Hóa","Sinh","Sử","Địa","GDCD","Tin","CN","TD"].map((s) => `<span class="tag-btn" onclick="addToInput('${s}')">${s}</span>`).join("")}</div><div class="mt-3"><input type="text" id="manual-input" class="w-full p-2 border rounded" placeholder="Hoặc nhập tự do..."></div>`;
+        } else {
+          container.innerHTML = `<div class="overflow-y-auto max-h-[300px] pr-2"><div class="tag-section-title text-red-600 border-b pb-1 mb-2">1. Vắng & Muộn (Lỗi Nặng - 2đ)</div><div class="flex gap-2 flex-wrap mb-4"><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vắng 15p đầu giờ (kp)')">Vắng 15p đầu giờ (kp)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vắng cả buổi (kp)')">Vắng cả buổi (kp)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vắng 1 tiết (kp)')">Vắng 1 tiết (kp)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Đi học muộn (kp)')">Đi học muộn (kp)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Nghỉ học (kp)')">Nghỉ học (kp)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Bỏ tiết')">Bỏ tiết</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Không thực hiện 15p')">Không thực hiện 15p</span></div><div class="tag-section-title text-red-600 border-b pb-1 mb-2">2. Sổ Đầu Bài (SĐB - Lỗi Nặng - 2đ)</div><div class="flex gap-2 flex-wrap mb-4"><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Điểm kém <5 (SĐB)')">Điểm kém &lt;5 (SĐB)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Mất trật tự (SĐB)')">Mất trật tự (SĐB)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Ngủ trong giờ (SĐB)')">Ngủ trong giờ (SĐB)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Thiếu bài tập (SĐB)')">Thiếu bài tập (SĐB)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Lỗi VP khác (SĐB)')">Lỗi VP khác (SĐB)</span></div><div class="tag-section-title text-red-600 border-b pb-1 mb-2">3. Sổ Cờ Đỏ (SCĐ - Lỗi Nặng - 2đ)</div><div class="flex gap-2 flex-wrap mb-4"><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Không đồng phục (SCĐ)')">Không đồng phục (SCĐ)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Không đi giày (SCĐ)')">Không đi giày (SCĐ)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vệ sinh bẩn (SCĐ)')">Vệ sinh bẩn (SCĐ)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Đi muộn (SCĐ)')">Đi muộn (SCĐ)</span></div><div class="tag-section-title text-red-600 border-b pb-1 mb-2">4. Kỷ Luật Chung (Lỗi Nặng - 2đ)</div><div class="flex gap-2 flex-wrap mb-4"><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Đánh nhau')">Đánh nhau</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Quay cóp')">Quay cóp</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Hút thuốc')">Hút thuốc</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vi phạm ATGT (CA)')">Vi phạm ATGT (CA)</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Vô lễ')">Vô lễ</span><span class="tag-btn hover:bg-red-50 hover:text-red-600" onclick="addToInput('Phá hoại tài sản')">Phá hoại tài sản</span></div><div class="tag-section-title text-orange-500 border-b pb-1 mb-2">5. Lỗi Nhẹ (1đ)</div><div class="flex gap-2 flex-wrap"><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Mất trật tự (ST)')">Mất trật tự (ST)</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Chưa vệ sinh (ST)')">Chưa vệ sinh (ST)</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Không chép bài')">Không chép bài</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Trực nhật muộn/bẩn (ST)')">Trực nhật muộn/bẩn (ST)</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Sử dụng ĐT trong giờ')">Sử dụng ĐT trong giờ</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Nói tục')">Nói tục</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Vứt rác bừa bãi')">Vứt rác bừa bãi</span><span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('Viết vẽ bậy')">Viết vẽ bậy</span></div><div class="mt-2 text-sm text-gray-600 font-bold">Lỗi: GV Nhắc Nhở (Chọn Môn):</div><div class="flex gap-1 flex-wrap mt-1">${["Toán","Văn","Anh","Lý","Hóa","Sinh","Sử","Địa","GDCD","Tin","CN","TD"].map((s) => `<span class="tag-btn hover:bg-orange-50 hover:text-orange-600" onclick="addToInput('GV nhắc (${s})')">${s}</span>`).join("")}</div></div><div class="mt-3"><input type="text" id="manual-input" class="w-full p-2 border rounded" placeholder="Hoặc nhập tự do..."></div>`;
+        }
+
+        selectModalTime("day", "T2");
+        selectModalTime("session", "Sáng");
+        document.getElementById("input-modal")?.classList.add("open");
+      }
+
+      function closeInputModal() {
+        document.getElementById("input-modal")?.classList.remove("open");
+      }
+
+      function selectModalTime(type, val) {
+        modalState[type] = val;
+        const group =
+          type === "day"
+            ? document.getElementById("modal-days")
+            : document.getElementById("modal-sessions");
+        if (!group) return;
+        Array.from(group.children).forEach((btn) => {
+          btn.classList.toggle("selected", btn.innerText.trim() === val);
+        });
+      }
+
+      function addToInput(val) {
+        const input = document.getElementById("manual-input");
+        if (!input) return;
+        const current = input.value.trim();
+        if (currentModalType === "ach") {
+          input.value = val.includes("đ")
+            ? `${val}${current ? ` ${current}` : ""}`
+            : `${current}${current ? " " : ""}${val}`;
+        } else {
+          input.value = current ? `${current}, ${val}` : val;
+        }
+      }
+
+      function saveInputModal() {
+        const input = document.getElementById("manual-input");
+        if (!currentCell || !input) return;
+        const val = input.value.trim();
+        if (!val) {
+          closeInputModal();
+          return;
+        }
+        const prefix = `[${modalState.day}-${modalState.session}] `;
+        const previous = currentCell.innerText
+          .replace(/\[\d+đ\]/g, "")
+          .trim();
+        const combined = previous
+          ? `${previous}, ${prefix}${val}`
+          : `${prefix}${val}`;
+        currentCell.innerText = combined;
+        if (currentModalType === "viol") updateCompetitionCell(currentCell);
+        else currentCell.innerText = expandText(currentCell.innerText || "");
+        closeInputModal();
       }
 
       function renderAll() {
@@ -9536,24 +9706,294 @@
         renderDutyTable(currentSchedule);
       }
 
-      function renderDutyTable(data = currentSchedule) {
-        const tbody = document.getElementById("duty-tbody");
-        tbody.innerHTML = "";
-        const schedule = data?.days?.length ? data : buildDutySchedule([]);
-        schedule.days.forEach((dayData, index) => {
-          const tr = document.createElement("tr");
-          tr.dataset.dutyDay = dayData.day;
-          tr.innerHTML = `<td class="text-xl">${dayData.day}</td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
-                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>`;
-          tbody.appendChild(tr);
-        });
+      // --- SCORING & PARSING ---
+        function getStatsFromRow(tr) {
+            const name = tr.children[1].innerText.trim();
+            const achText = tr.children[2].innerText.trim();
+            const violText = tr.children[3].innerText.trim();
+            const goodMatches = achText.match(GOOD_MARK_PATTERN);
+            const goodCount = goodMatches ? goodMatches.length : 0;
+            const faults = violText.split(/,|\n/).map(s=>s.trim()).filter(s=>s);
+            let totalHeavyPoints = 0; let totalLightPoints = 0;
+            faults.forEach(f => {
+                const isHeavy = HEAVY_FAULT_PATTERNS.some(p => p.test(f));
+                if(isHeavy) totalHeavyPoints += 2;
+                else { const isLight = LIGHT_FAULT_PATTERNS.some(p => p.test(f)); if(isLight) totalLightPoints += 1; }
+            });
+            let reduction = Math.floor(goodCount / 2) * 2;
+            if (reduction > 0) {
+                if (totalHeavyPoints >= reduction) { totalHeavyPoints -= reduction; reduction = 0; }
+                else { reduction -= totalHeavyPoints; totalHeavyPoints = 0; if (totalLightPoints >= reduction) totalLightPoints -= reduction; else totalLightPoints = 0; }
+            }
+            return { name, heavyPts: totalHeavyPoints, lightPts: totalLightPoints, totalPts: totalHeavyPoints + totalLightPoints };
+        }
+
+        // --- ROW/WORKER UTILS ---
+        function getStudentsFromSelection(type) {
+            let list = [];
+            const extract = (data, side) => {
+                data.forEach((row, i) => { if (dutySelection[`${side}-${i}`] === type) row.forEach(s => { if(s.name&&s.name.trim()) list.push(s.name.trim()); }); });
+            };
+            extract(leftSideData, 'left'); extract(rightSideData, 'right');
+            return list;
+        }
+        function getWorkersFromSelection(type) {
+            let rowsMap = {}; let maxRow = 0;
+            const process = (data, side) => {
+                data.forEach((row, idx) => {
+                    if(!rowsMap[idx]) rowsMap[idx] = [];
+                    const key = `${side}-${idx}`;
+                    if(dutySelection[key] === type) { row.forEach(s => { if(s.name && s.name.trim()) rowsMap[idx].push(s.name.trim()); }); }
+                    if(idx > maxRow) maxRow = idx;
+                });
+            };
+            process(leftSideData, 'left'); process(rightSideData, 'right');
+            return { map: rowsMap, max: maxRow };
+        }
+
+        function calculateAdvancedDutySchedule() {
+            const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
+            if(rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) { alert("Bảng thi đua trống!"); return null; }
+            let students = rows.map(tr => getStatsFromRow(tr)).filter(s => s.name);
+            let totalClassPoints = students.reduce((sum, s) => sum + s.totalPts, 0);
+
+            const monitor = document.getElementById('role-monitor').value.trim();
+            const secretary = document.getElementById('role-secretary').value.trim();
+            const vice = document.getElementById('role-vice').value.trim();
+            const officers = [monitor, secretary, vice].filter(n => n !== "");
+            const xkStr = document.getElementById('role-xungkich-list').value;
+            const xkMembers = xkStr.split(',').map(s=>s.trim()).filter(s=>s!=="");
+            const xkBusyDays = Array.from(document.querySelectorAll('.xk-day:checked')).map(cb => cb.value);
+
+            if (totalClassPoints === 0) return calculateZeroFaultSchedule(officers);
+            else if (totalClassPoints < 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid');
+            else if (totalClassPoints === 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid');
+            else if (totalClassPoints < 36) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty');
+            else return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty');
+        }
+
+        function calculateZeroFaultSchedule(officers) {
+            let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
+            if(Object.keys(map).length===0) {d = getWorkersFromSelection('area'); map = d.map; max = d.max;}
+            if(Object.keys(map).length===0) { [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { if(!map[i]) map[i] = []; r.forEach(s => { if(s.name && !officers.includes(s.name)) map[i].push(s.name); }); })); }
+
+            let allPool = Object.values(map).flat();
+            let cleaners = allPool.slice(0, 2);
+            let dailyPool = allPool.filter(n => !cleaners.includes(n));
+
+            const days = ['2', '3', '4', '5', '6', '7']; let schedule = {}; let curRow = 0;
+            const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
+
+            const getW = (n, currentDayTasks) => {
+                let w=[]; let a=0;
+                while(w.length<n && a<15){
+                    let p=map[curRow]||[];
+                    let availableP = p.filter(name => {
+                        let load = 0; Object.values(currentDayTasks).forEach(arr => {if(Array.isArray(arr) && arr.includes(name)) load++;});
+                        return load < 2 && !cleaners.includes(name);
+                    });
+                    if(availableP.length) {
+                        let take = Math.min(n-w.length, availableP.length);
+                        w = w.concat(availableP.slice(0, take));
+                    }
+                    if(w.length<n) curRow=(curRow+1)%(max+1); else break;
+                    a++;
+                }
+                return w;
+            };
+
+            days.forEach((day, i) => {
+                curRow = i % (max+1);
+                let t = {sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:""};
+                if(day==='2'){
+                    let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n));
+                    t.chair = males.slice(0, 4);
+                }
+                let areaW = getW(4, t); t.area = areaW;
+                let sweepW = getW(2, t); t.sweep = sweepW;
+                let towelW = getW(1, t); t.towel = towelW;
+                let trashW = getW(1, t); t.trash = trashW;
+                let doorW = getW(1, t); t.door = doorW;
+                t.monitorClass = offSch[day].c; t.monitorArea = offSch[day].a;
+                schedule[day] = t;
+            });
+            return { schedule, cleaners: cleaners, mode: 'zero' };
+        }
+
+        function calculatePenaltyLogic(students, officers, xk, xkDays, mode) {
+            let hQ = [], lQ = [];
+            students.forEach(s => {
+                if(officers.includes(s.name)) return;
+                for(let i=0; i<s.heavyPts; i++) hQ.push(s.name);
+                for(let i=0; i<s.lightPts; i++) lQ.push(s.name);
+            });
+            hQ.sort(() => Math.random() - 0.5); lQ.sort(() => Math.random() - 0.5);
+
+            let areaD = getWorkersFromSelection('area'); let areaM = areaD.map; let areaMax = areaD.max;
+            if(!Object.keys(areaM).length) { areaD=getWorkersFromSelection('class'); areaM=areaD.map; areaMax=areaD.max; }
+            let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
+            let fullPool = Object.values(classM).flat();
+
+            let cleaners = fullPool.slice(0, 2);
+            let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
+            let chairTeam = males.slice(0,4);
+            let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
+            const dMap = {'2':doorTeam[0],'3':doorTeam[0],'4':doorTeam[1],'5':doorTeam[1],'6':doorTeam[2],'7':doorTeam[2]};
+            const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
+
+            let schedule = {}; let curAreaR = 0, curClassR = 0;
+
+            ['2','3','4','5','6','7'].forEach((d, i) => {
+                let t = {sweep:[], trash:[], towel:[], area:[], door:[dMap[d]], chair: d==='2'?chairTeam:[]};
+                const canWork = (n) => {
+                    let load = 0; Object.values(t).forEach(arr => { if(Array.isArray(arr) && arr.includes(n)) load++; });
+                    return load < 2 && !cleaners.includes(n);
+                };
+                const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
+
+                let k=0;
+                while(k<4 && hQ.length > 0) {
+                    let idx = hQ.findIndex(n => canArea(n));
+                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break;
+                }
+
+                if(mode !== 'penalty' && k<4) {
+                    let tries = 0; curAreaR = i % (areaMax+1);
+                    while(k<4 && tries<10) {
+                        let pool = areaM[curAreaR]||[];
+                        let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t.area.includes(n));
+                        let take = Math.min(4-k, candidates.length);
+                        t.area = t.area.concat(candidates.slice(0, take));
+                        k += take; if(k<4) curAreaR = (curAreaR+1)%(areaMax+1); tries++;
+                    }
+                }
+
+                const fillClassTask = (type, count, queue) => {
+                    let c = 0;
+                    while(c < count && queue.length > 0) {
+                        let idx = queue.findIndex(n => canWork(n));
+                        if(idx>-1) { t[type].push(queue[idx]); queue.splice(idx,1); c++; } else break;
+                    }
+                    if(c < count) {
+                        curClassR = i % (classMax+1); let tries = 0;
+                        while(c < count && tries < 10) {
+                            let pool = classM[curClassR]||[];
+                            let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t[type].includes(n));
+                            let take = Math.min(count-c, candidates.length);
+                            t[type] = t[type].concat(candidates.slice(0, take));
+                            c += take; if(c < count) curClassR = (curClassR+1)%(classMax+1); tries++;
+                        }
+                    }
+                };
+                fillClassTask('trash', 1, lQ);
+                fillClassTask('sweep', 2, lQ);
+                fillClassTask('towel', 1, hQ);
+                t.monitorClass = offSch[d].c; t.monitorArea = offSch[d].a;
+                schedule[d] = t;
+            });
+            return { schedule, cleaners: cleaners, mode: mode };
+        }
+
+        // --- TEST SCENARIOS ---
+        function loadScenario(type) {
+            resetLayout();
+            let pool = [...SAMPLE_NAMES].sort(() => Math.random() - 0.5);
+            let count = 0;
+            leftSideData.forEach(r => r.forEach(s => {if(count<pool.length) s.name = pool[count++];}));
+            rightSideData.forEach(r => r.forEach(s => {if(count<pool.length) s.name = pool[count++];}));
+            renderAll();
+
+            document.getElementById('role-monitor').value = "Nguyễn Văn An";
+            document.getElementById('role-secretary').value = "Trần Thị Bích";
+            document.getElementById('role-vice').value = "Lê Văn Cường";
+
+            const xk1 = pool[25], xk2 = pool[26];
+            document.getElementById('role-xungkich-list').value = `${xk1}, ${xk2}`;
+            document.querySelectorAll('.xk-day').forEach(c => c.checked = false);
+            document.querySelector('.xk-day[value="2"]').checked = true;
+            document.querySelector('.xk-day[value="5"]').checked = true;
+
+            let list = pool.slice(0, 30); document.getElementById('student-list-input').value = list.join('\n');
+            generateTable();
+
+            setTimeout(() => {
+                const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
+                if (type === 'offset') {
+                    rows[0].children[2].querySelector('div').innerText = "2 điểm 10 (T2)";
+                    rows[0].children[3].querySelector('div').innerText = "Vắng kp (T3)";
+                }
+                else if (type === 'low') { for(let i=0; i<5; i++) rows[i].children[3].querySelector('div').innerText = "mtt (T2)"; }
+                else if (type === 'medium') { for(let i=0; i<6; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T3)"; }
+                else if (type === 'high') { for(let i=0; i<10; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T4)"; }
+                else if (type === 'full') { for(let i=0; i<20; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T5)"; }
+
+                rows.forEach(r => {
+                    r.children[2].querySelector('div').dispatchEvent(new Event('blur'));
+                    r.children[3].querySelector('div').dispatchEvent(new Event('blur'));
+                });
+                alert("Đã nạp dữ liệu mẫu: " + type.toUpperCase());
+            }, 500);
+        }
+
+        // --- RENDER ---
+
+        function renderDutyTable(data) {
+            const tbody = document.getElementById('duty-tbody'); tbody.innerHTML = '';
+            if(!data) return;
+            const { schedule, cleaners } = data;
+            const days = ['2', '3', '4', '5', '6', '7'];
+            days.forEach(day => {
+                const tr = document.createElement('tr');
+                const t = schedule[day];
+                tr.innerHTML += `<td class="font-bold bg-gray-50">${day}</td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.sweep||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.trash||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.towel||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.area||[]).join(', ')}</div></td>`;
+                if (['2', '4', '6'].includes(day)) tr.innerHTML += `<td rowspan="2"><div class="editable-cell" contenteditable="true">${(t.door||[])[0]||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorClass||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorArea||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.chair||[]).join(', ')}</div></td>`;
+                tbody.appendChild(tr);
+            });
+            const footerSpan = document.getElementById('duty-footer-class-list');
+            footerSpan.innerText = cleaners.join(', ');
+        }
+
+        function renderSide(cid, data, side) {
+            const c = document.getElementById(cid); c.innerHTML='';
+            data.forEach((row, ri) => {
+                const div = document.createElement('div'); div.className='flex w-full gap-2 relative row-container';
+                row.forEach((seat, si) => {
+                    const cell = document.createElement('div');
+                    const w = seat.width===1?'w-1/4':(seat.width===2?'w-2/4':(seat.width===3?'w-3/4':'w-full'));
+                    const isSrc = swapSource && swapSource.side===side && swapSource.r===ri && swapSource.c===si;
+                    cell.className = `${w} desk-box h-16 rounded relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''}`;
+                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
+                    ta.oninput=e=>updateName(side,ri,si,e.target.value);
+                    const start=e=>{if(swapSource&&!isSrc)return; longPressTimer=setTimeout(()=>{e.preventDefault();activateSwapMode(side,ri,si)},500)};
+                    const cancel=()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}};
+                    const click=e=>{if(swapSource){if(isSrc)cancelSwapMode();else{e.preventDefault();executeSwap(side,ri,si)}}};
+                    ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
+                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
+                    cell.appendChild(ta);
+                    if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
+                    if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s)}
+                    div.appendChild(cell);
+                });
+                c.appendChild(div);
+            });
+        }
+
+        function openDutyModal() { document.getElementById('duty-modal').classList.add('open'); renderMiniMap('mini-map-left', leftSideData, 'left'); renderMiniMap('mini-map-right', rightSideData, 'right'); renderGenderList(); }
+        function closeDutyModal() { document.getElementById('duty-modal').classList.remove('open'); }
+        function renderMiniMap(cid, data, side) { const c = document.getElementById(cid); c.innerHTML=''; data.forEach((row, ri) => { const k = `${side}-${ri}`; const sel = dutySelection[k]; const d = document.createElement('div'); let cls = "mini-row flex gap-1 relative "; if(sel==='class') cls+="duty-selected-class"; else if(sel==='area') cls+="duty-selected-area"; else cls+="bg-white border-gray-200"; d.className = cls; d.onclick=()=>toggleDutySel(side,ri); row.forEach(s=>{ const sd=document.createElement('div'); sd.style.width=s.width===1?'25%':(s.width===2?'50%':(s.width===3?'75%':'100%')); sd.className="h-6 bg-gray-100 border border-gray-300 rounded text-[10px] flex items-center justify-center overflow-hidden text-gray-500 select-none"; sd.innerText=s.name?s.name.substring(0,4)+'..':''; d.appendChild(sd); }); c.appendChild(d); }); }
+        function toggleDutySel(s,r){ const k=`${s}-${r}`; const c=dutySelection[k]; if(!c)dutySelection[k]='class'; else if(c==='class')dutySelection[k]='area'; else delete dutySelection[k]; renderMiniMap('mini-map-left',leftSideData,'left'); renderMiniMap('mini-map-right',rightSideData,'right'); renderGenderList(); }
+        function renderGenderList() { const c=document.getElementById('gender-list-container'); c.innerHTML=''; let s=getStudentsFromSelection('class').concat(getStudentsFromSelection('area')); s=[...new Set(s)]; if(!s.length){c.innerHTML='<div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div>';return;} s.forEach(n=>{const d=document.createElement('div');d.className='gender-item';const m=isMaleName(n);const l=document.createElement('span');l.className=`gender-label ${m?'is-male':'is-female'}`;l.innerHTML=m?'<i class="fas fa-mars"></i> Nam':'<i class="fas fa-venus"></i> Nữ';l.onclick=()=>{genderMap[n]=!m;renderGenderList();};d.innerHTML=`<span>${n}</span>`;d.appendChild(l);c.appendChild(d);}); }
+        function confirmDutyAssignment() { closeDutyModal(); document.getElementById('view-competition-main').classList.add('hidden'); document.getElementById('view-duty-schedule').classList.remove('hidden'); renderDutyTable(calculateAdvancedDutySchedule()); }
+        function backToCompetition() { document.getElementById('view-duty-schedule').classList.add('hidden'); document.getElementById('view-competition-main').classList.remove('hidden'); }
+        function generateTable() { const inp=document.getElementById('student-list-input').value; const tb=document.getElementById('competition-tbody'); let l=inp.split('\n').filter(x=>x.trim()); if(!l.length){alert("Nhập danh sách!");return;} l=sortVietnameseNames(l); tb.innerHTML=''; l.forEach((n,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="text-center font-semibold text-gray-600">${i+1}</td><td class="pl-4 font-medium text-gray-800">${n.trim()}</td>`;const tdA=document.createElement('td');const dA=document.createElement('div');dA.className="editable-cell";dA.contentEditable=true;dA.onclick=()=>openInputModal(dA,'ach');dA.addEventListener('blur',function(){this.innerText=expandText(this.innerText);});tdA.appendChild(dA);tr.appendChild(tdA);const tdV=document.createElement('td');const dV=document.createElement('div');dV.className="editable-cell";dV.contentEditable=true;dV.onclick=()=>openInputModal(dV,'viol');dV.addEventListener('blur',function(){let t=this.innerText;t=expandText(t);t=t.replace(/\[\d+đ\]/g,'').trim();const s=calculateFaultPoints(t);this.innerText=t;if(s>0){/*No badge*/}});tdV.appendChild(dV);tr.appendChild(tdV);tb.appendChild(tr);}); }
+        function switchTab(id) { document.querySelectorAll('button[id^="btn-tab-"]').forEach(b=>b.className="px-4 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all"); document.getElementById(`btn-tab-${id}`).className="px-4 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm"; document.querySelectorAll('.tab-content').forEach(c=>{c.classList.remove('active');setTimeout(()=>{if(!c.classList.contains('active'))c.style.display='none'},300)}); const t=document.getElementById(`tab-${id}`); t.style.display='block'; requestAnimationFrame(()=>t.classList.add('active')); });
         tbody.querySelectorAll(".editable-cell").forEach((cell) => {
           cell.addEventListener("input", updateDutyHomeAlert);
         });
@@ -9593,7 +10033,249 @@
         return result;
       }
 
-      function downloadImage(id, pre) {
+      function calculateAdvancedDutySchedule() {
+            const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
+            if(rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes("Chưa có"))) { alert("Bảng thi đua trống!"); return null; }
+            let students = rows.map(tr => getStatsFromRow(tr)).filter(s => s.name);
+            let totalClassPoints = students.reduce((sum, s) => sum + s.totalPts, 0);
+
+            const monitor = document.getElementById('role-monitor').value.trim();
+            const secretary = document.getElementById('role-secretary').value.trim();
+            const vice = document.getElementById('role-vice').value.trim();
+            const officers = [monitor, secretary, vice].filter(n => n !== "");
+            const xkStr = document.getElementById('role-xungkich-list').value;
+            const xkMembers = xkStr.split(',').map(s=>s.trim()).filter(s=>s!=="");
+            const xkBusyDays = Array.from(document.querySelectorAll('.xk-day:checked')).map(cb => cb.value);
+
+            if (totalClassPoints === 0) return calculateZeroFaultSchedule(officers);
+            else if (totalClassPoints < 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid');
+            else if (totalClassPoints === 12) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'hybrid');
+            else if (totalClassPoints < 36) return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty');
+            else return calculatePenaltyLogic(students, officers, xkMembers, xkBusyDays, 'penalty');
+        }
+
+        function calculateZeroFaultSchedule(officers) {
+            let d = getWorkersFromSelection('class'); let map = d.map; let max = d.max;
+            if(Object.keys(map).length===0) {d = getWorkersFromSelection('area'); map = d.map; max = d.max;}
+            if(Object.keys(map).length===0) { [leftSideData, rightSideData].forEach(d => d.forEach((r,i) => { if(!map[i]) map[i] = []; r.forEach(s => { if(s.name && !officers.includes(s.name)) map[i].push(s.name); }); })); }
+
+            let allPool = Object.values(map).flat();
+            let cleaners = allPool.slice(0, 2);
+            let dailyPool = allPool.filter(n => !cleaners.includes(n));
+
+            const days = ['2', '3', '4', '5', '6', '7']; let schedule = {}; let curRow = 0;
+            const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
+
+            const getW = (n, currentDayTasks) => {
+                let w=[]; let a=0;
+                while(w.length<n && a<15){
+                    let p=map[curRow]||[];
+                    let availableP = p.filter(name => {
+                        let load = 0; Object.values(currentDayTasks).forEach(arr => {if(Array.isArray(arr) && arr.includes(name)) load++;});
+                        return load < 2 && !cleaners.includes(name);
+                    });
+                    if(availableP.length) {
+                        let take = Math.min(n-w.length, availableP.length);
+                        w = w.concat(availableP.slice(0, take));
+                    }
+                    if(w.length<n) curRow=(curRow+1)%(max+1); else break;
+                    a++;
+                }
+                return w;
+            };
+
+            days.forEach((day, i) => {
+                curRow = i % (max+1);
+                let t = {sweep:[], trash:[], towel:[], area:[], door:[], chair:[], monitorClass:"", monitorArea:""};
+                if(day==='2'){
+                    let males = dailyPool.filter(n=>isMaleName(n) && !officers.includes(n));
+                    t.chair = males.slice(0, 4);
+                }
+                let areaW = getW(4, t); t.area = areaW;
+                let sweepW = getW(2, t); t.sweep = sweepW;
+                let towelW = getW(1, t); t.towel = towelW;
+                let trashW = getW(1, t); t.trash = trashW;
+                let doorW = getW(1, t); t.door = doorW;
+                t.monitorClass = offSch[day].c; t.monitorArea = offSch[day].a;
+                schedule[day] = t;
+            });
+            return { schedule, cleaners: cleaners, mode: 'zero' };
+        }
+
+        function calculatePenaltyLogic(students, officers, xk, xkDays, mode) {
+            let hQ = [], lQ = [];
+            students.forEach(s => {
+                if(officers.includes(s.name)) return;
+                for(let i=0; i<s.heavyPts; i++) hQ.push(s.name);
+                for(let i=0; i<s.lightPts; i++) lQ.push(s.name);
+            });
+            hQ.sort(() => Math.random() - 0.5); lQ.sort(() => Math.random() - 0.5);
+
+            let areaD = getWorkersFromSelection('area'); let areaM = areaD.map; let areaMax = areaD.max;
+            if(!Object.keys(areaM).length) { areaD=getWorkersFromSelection('class'); areaM=areaD.map; areaMax=areaD.max; }
+            let classD = getWorkersFromSelection('class'); let classM = classD.map; let classMax = classD.max;
+            let fullPool = Object.values(classM).flat();
+
+            let cleaners = fullPool.slice(0, 2);
+            let males = fullPool.filter(n => isMaleName(n) && !officers.includes(n) && !cleaners.includes(n));
+            let chairTeam = males.slice(0,4);
+            let doorTeam = fullPool.filter(n=>!chairTeam.includes(n) && !cleaners.includes(n)).slice(0,3);
+            const dMap = {'2':doorTeam[0],'3':doorTeam[0],'4':doorTeam[1],'5':doorTeam[1],'6':doorTeam[2],'7':doorTeam[2]};
+            const offSch = {'2':{c:officers[0],a:officers[1]}, '3':{c:officers[2],a:officers[0]}, '4':{c:officers[1],a:officers[2]}, '5':{c:officers[0],a:officers[1]}, '6':{c:officers[2],a:officers[0]}, '7':{c:officers[1],a:officers[2]}};
+
+            let schedule = {}; let curAreaR = 0, curClassR = 0;
+
+            ['2','3','4','5','6','7'].forEach((d, i) => {
+                let t = {sweep:[], trash:[], towel:[], area:[], door:[dMap[d]], chair: d==='2'?chairTeam:[]};
+                const canWork = (n) => {
+                    let load = 0; Object.values(t).forEach(arr => { if(Array.isArray(arr) && arr.includes(n)) load++; });
+                    return load < 2 && !cleaners.includes(n);
+                };
+                const canArea = n => !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
+
+                let k=0;
+                while(k<4 && hQ.length > 0) {
+                    let idx = hQ.findIndex(n => canArea(n));
+                    if(idx>-1) { t.area.push(hQ[idx]); hQ.splice(idx,1); k++; } else break;
+                }
+
+                if(mode !== 'penalty' && k<4) {
+                    let tries = 0; curAreaR = i % (areaMax+1);
+                    while(k<4 && tries<10) {
+                        let pool = areaM[curAreaR]||[];
+                        let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t.area.includes(n));
+                        let take = Math.min(4-k, candidates.length);
+                        t.area = t.area.concat(candidates.slice(0, take));
+                        k += take; if(k<4) curAreaR = (curAreaR+1)%(areaMax+1); tries++;
+                    }
+                }
+
+                const fillClassTask = (type, count, queue) => {
+                    let c = 0;
+                    while(c < count && queue.length > 0) {
+                        let idx = queue.findIndex(n => canWork(n));
+                        if(idx>-1) { t[type].push(queue[idx]); queue.splice(idx,1); c++; } else break;
+                    }
+                    if(c < count) {
+                        curClassR = i % (classMax+1); let tries = 0;
+                        while(c < count && tries < 10) {
+                            let pool = classM[curClassR]||[];
+                            let candidates = pool.filter(n => !officers.includes(n) && canWork(n) && !t[type].includes(n));
+                            let take = Math.min(count-c, candidates.length);
+                            t[type] = t[type].concat(candidates.slice(0, take));
+                            c += take; if(c < count) curClassR = (curClassR+1)%(classMax+1); tries++;
+                        }
+                    }
+                };
+                fillClassTask('trash', 1, lQ);
+                fillClassTask('sweep', 2, lQ);
+                fillClassTask('towel', 1, hQ);
+                t.monitorClass = offSch[d].c; t.monitorArea = offSch[d].a;
+                schedule[d] = t;
+            });
+            return { schedule, cleaners: cleaners, mode: mode };
+        }
+
+        // --- TEST SCENARIOS ---
+        function loadScenario(type) {
+            resetLayout();
+            let pool = [...SAMPLE_NAMES].sort(() => Math.random() - 0.5);
+            let count = 0;
+            leftSideData.forEach(r => r.forEach(s => {if(count<pool.length) s.name = pool[count++];}));
+            rightSideData.forEach(r => r.forEach(s => {if(count<pool.length) s.name = pool[count++];}));
+            renderAll();
+
+            document.getElementById('role-monitor').value = "Nguyễn Văn An";
+            document.getElementById('role-secretary').value = "Trần Thị Bích";
+            document.getElementById('role-vice').value = "Lê Văn Cường";
+
+            const xk1 = pool[25], xk2 = pool[26];
+            document.getElementById('role-xungkich-list').value = `${xk1}, ${xk2}`;
+            document.querySelectorAll('.xk-day').forEach(c => c.checked = false);
+            document.querySelector('.xk-day[value="2"]').checked = true;
+            document.querySelector('.xk-day[value="5"]').checked = true;
+
+            let list = pool.slice(0, 30); document.getElementById('student-list-input').value = list.join('\n');
+            generateTable();
+
+            setTimeout(() => {
+                const rows = Array.from(document.querySelectorAll('#competition-tbody tr'));
+                if (type === 'offset') {
+                    rows[0].children[2].querySelector('div').innerText = "2 điểm 10 (T2)";
+                    rows[0].children[3].querySelector('div').innerText = "Vắng kp (T3)";
+                }
+                else if (type === 'low') { for(let i=0; i<5; i++) rows[i].children[3].querySelector('div').innerText = "mtt (T2)"; }
+                else if (type === 'medium') { for(let i=0; i<6; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T3)"; }
+                else if (type === 'high') { for(let i=0; i<10; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T4)"; }
+                else if (type === 'full') { for(let i=0; i<20; i++) rows[i].children[3].querySelector('div').innerText = "vắng kp (T5)"; }
+
+                rows.forEach(r => {
+                    r.children[2].querySelector('div').dispatchEvent(new Event('blur'));
+                    r.children[3].querySelector('div').dispatchEvent(new Event('blur'));
+                });
+                alert("Đã nạp dữ liệu mẫu: " + type.toUpperCase());
+            }, 500);
+        }
+
+        // --- RENDER ---
+        function renderDutyTable(data) {
+            const tbody = document.getElementById('duty-tbody'); tbody.innerHTML = '';
+            if(!data) return;
+            const { schedule, cleaners } = data;
+            const days = ['2', '3', '4', '5', '6', '7'];
+            days.forEach(day => {
+                const tr = document.createElement('tr');
+                const t = schedule[day];
+                tr.innerHTML += `<td class="font-bold bg-gray-50">${day}</td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.sweep||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.trash||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.towel||[]).join(', ')}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.area||[]).join(', ')}</div></td>`;
+                if (['2', '4', '6'].includes(day)) tr.innerHTML += `<td rowspan="2"><div class="editable-cell" contenteditable="true">${(t.door||[])[0]||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorClass||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorArea||""}</div></td>`;
+                tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.chair||[]).join(', ')}</div></td>`;
+                tbody.appendChild(tr);
+            });
+            const footerSpan = document.getElementById('duty-footer-class-list');
+            footerSpan.innerText = cleaners.join(', ');
+        }
+
+        function renderSide(cid, data, side) {
+            const c = document.getElementById(cid); c.innerHTML='';
+            data.forEach((row, ri) => {
+                const div = document.createElement('div'); div.className='flex w-full gap-2 relative row-container';
+                row.forEach((seat, si) => {
+                    const cell = document.createElement('div');
+                    const w = seat.width===1?'w-1/4':(seat.width===2?'w-2/4':(seat.width===3?'w-3/4':'w-full'));
+                    const isSrc = swapSource && swapSource.side===side && swapSource.r===ri && swapSource.c===si;
+                    cell.className = `${w} desk-box h-16 rounded relative ${seat.merged?'merged':''} ${isSrc?'swap-selected':''}`;
+                    const ta = document.createElement('textarea'); ta.className='desk-input'; ta.value=seat.name;
+                    ta.oninput=e=>updateName(side,ri,si,e.target.value);
+                    const start=e=>{if(swapSource&&!isSrc)return; longPressTimer=setTimeout(()=>{e.preventDefault();activateSwapMode(side,ri,si)},500)};
+                    const cancel=()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}};
+                    const click=e=>{if(swapSource){if(isSrc)cancelSwapMode();else{e.preventDefault();executeSwap(side,ri,si)}}};
+                    ta.addEventListener('mousedown',start); ta.addEventListener('touchstart',start); ta.addEventListener('mouseup',cancel);
+                    ta.addEventListener('mouseleave',cancel); ta.addEventListener('touchend',cancel); ta.addEventListener('click',click);
+                    cell.appendChild(ta);
+                    if(si<row.length-1){const h=document.createElement('div');h.className='merge-handle';h.innerHTML='<i class="fas fa-link"></i>';h.onclick=()=>toggleMerge(side,ri,si);cell.appendChild(h)}
+                    if(seat.width>1){const s=document.createElement('div');s.className='split-btn';s.innerHTML='<i class="fas fa-unlink"></i>';s.onclick=e=>{e.stopPropagation();splitCell(side,ri,si)};cell.appendChild(s)}
+                    div.appendChild(cell);
+                });
+                c.appendChild(div);
+            });
+        }
+
+        function openDutyModal() { document.getElementById('duty-modal').classList.add('open'); renderMiniMap('mini-map-left', leftSideData, 'left'); renderMiniMap('mini-map-right', rightSideData, 'right'); renderGenderList(); }
+        function closeDutyModal() { document.getElementById('duty-modal').classList.remove('open'); }
+        function renderMiniMap(cid, data, side) { const c = document.getElementById(cid); c.innerHTML=''; data.forEach((row, ri) => { const k = `${side}-${ri}`; const sel = dutySelection[k]; const d = document.createElement('div'); let cls = "mini-row flex gap-1 relative "; if(sel==='class') cls+="duty-selected-class"; else if(sel==='area') cls+="duty-selected-area"; else cls+="bg-white border-gray-200"; d.className = cls; d.onclick=()=>toggleDutySel(side,ri); row.forEach(s=>{ const sd=document.createElement('div'); sd.style.width=s.width===1?'25%':(s.width===2?'50%':(s.width===3?'75%':'100%')); sd.className="h-6 bg-gray-100 border border-gray-300 rounded text-[10px] flex items-center justify-center overflow-hidden text-gray-500 select-none"; sd.innerText=s.name?s.name.substring(0,4)+'..':''; d.appendChild(sd); }); c.appendChild(d); }); }
+        function toggleDutySel(s,r){ const k=`${s}-${r}`; const c=dutySelection[k]; if(!c)dutySelection[k]='class'; else if(c==='class')dutySelection[k]='area'; else delete dutySelection[k]; renderMiniMap('mini-map-left',leftSideData,'left'); renderMiniMap('mini-map-right',rightSideData,'right'); renderGenderList(); }
+        function renderGenderList() { const c=document.getElementById('gender-list-container'); c.innerHTML=''; let s=getStudentsFromSelection('class').concat(getStudentsFromSelection('area')); s=[...new Set(s)]; if(!s.length){c.innerHTML='<div class="text-center text-gray-400 py-4">Chọn dãy trực nhật để hiện danh sách.</div>';return;} s.forEach(n=>{const d=document.createElement('div');d.className='gender-item';const m=isMaleName(n);const l=document.createElement('span');l.className=`gender-label ${m?'is-male':'is-female'}`;l.innerHTML=m?'<i class="fas fa-mars"></i> Nam':'<i class="fas fa-venus"></i> Nữ';l.onclick=()=>{genderMap[n]=!m;renderGenderList();};d.innerHTML=`<span>${n}</span>`;d.appendChild(l);c.appendChild(d);}); }
+        function confirmDutyAssignment() { closeDutyModal(); document.getElementById('view-competition-main').classList.add('hidden'); document.getElementById('view-duty-schedule').classList.remove('hidden'); renderDutyTable(calculateAdvancedDutySchedule()); }
+        function backToCompetition() { document.getElementById('view-duty-schedule').classList.add('hidden'); document.getElementById('view-competition-main').classList.remove('hidden'); }
+        function generateTable() { const inp=document.getElementById('student-list-input').value; const tb=document.getElementById('competition-tbody'); let l=inp.split('\n').filter(x=>x.trim()); if(!l.length){alert("Nhập danh sách!");return;} l=sortVietnameseNames(l); tb.innerHTML=''; l.forEach((n,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="text-center font-semibold text-gray-600">${i+1}</td><td class="pl-4 font-medium text-gray-800">${n.trim()}</td>`;const tdA=document.createElement('td');const dA=document.createElement('div');dA.className="editable-cell";dA.contentEditable=true;dA.onclick=()=>openInputModal(dA,'ach');dA.addEventListener('blur',function(){this.innerText=expandText(this.innerText);});tdA.appendChild(dA);tr.appendChild(tdA);const tdV=document.createElement('td');const dV=document.createElement('div');dV.className="editable-cell";dV.contentEditable=true;dV.onclick=()=>openInputModal(dV,'viol');dV.addEventListener('blur',function(){let t=this.innerText;t=expandText(t);t=t.replace(/\[\d+đ\]/g,'').trim();const s=calculateFaultPoints(t);this.innerText=t;if(s>0){/*No badge*/}});tdV.appendChild(dV);tr.appendChild(tdV);tb.appendChild(tr);}); }
+        function switchTab(id) { document.querySelectorAll('button[id^="btn-tab-"]').forEach(b=>b.className="px-4 py-2 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 transition-all"); document.getElementById(`btn-tab-${id}`).className="px-4 py-2 rounded-md text-sm font-semibold transition-all bg-white text-blue-600 shadow-sm"; document.querySelectorAll('.tab-content').forEach(c=>{c.classList.remove('active');setTimeout(()=>{if(!c.classList.contains('active'))c.style.display='none'},300)}); const t=document.getElementById(`tab-${id}`); t.style.display='block'; requestAnimationFrame(()=>t.classList.add('active')); }
+        function downloadImage(id, pre) {
         animateActionFeedback("#" + id, "animate-flash-success", 380);
         const flash = document.getElementById("camera-flash");
         if (flash) animateActionFeedback(flash, "animate-camera-flash", 620);
@@ -10758,6 +11440,455 @@
           clearDeskSelection();
         }
       });
+
+      // Restored advanced duty features (day-off, exclusions, debt, badge)
+      const DUTY_DEBT_STORAGE_KEY = "classApp_dutyDebt_v1";
+
+      function loadDutyDebtData() {
+        try {
+          dutyDebtData =
+            JSON.parse(localStorage.getItem(DUTY_DEBT_STORAGE_KEY) || "{}") ||
+            {};
+        } catch (_) {
+          dutyDebtData = {};
+        }
+      }
+
+      function persistDutyDebtData() {
+        localStorage.setItem(
+          DUTY_DEBT_STORAGE_KEY,
+          JSON.stringify(dutyDebtData || {}),
+        );
+      }
+
+      function getStudentDutyDebt(name) {
+        return Math.max(0, Number(dutyDebtData?.[name] || 0));
+      }
+
+      function reduceDutyDebt(name, count = 1) {
+        const next = Math.max(
+          0,
+          getStudentDutyDebt(name) - Math.max(0, Number(count) || 0),
+        );
+        if (next <= 0) delete dutyDebtData[name];
+        else dutyDebtData[name] = next;
+        persistDutyDebtData();
+      }
+
+      function updateCompetitionCell(cell) {
+        if (!cell) return;
+        cell.querySelectorAll(".points-badge").forEach((b) => b.remove());
+        let t = expandText(
+          (cell.innerText || "").replace(/\[\d+đ\]/g, ""),
+        ).trim();
+        cell.innerText = t;
+        const pts = calculateFaultPoints(t);
+        if (pts > 0) {
+          const badge = document.createElement("span");
+          badge.className = "points-badge";
+          badge.innerText = `${pts}đ`;
+          cell.appendChild(badge);
+        }
+      }
+
+      function updateDutyDebtFromViolations() {
+        const rows = Array.from(
+          document.querySelectorAll("#competition-tbody tr"),
+        );
+        rows.forEach((tr) => {
+          const name = tr.children?.[1]?.innerText?.trim();
+          const viol = (tr.children?.[3]?.innerText || "").toLowerCase();
+          if (!name || !viol) return;
+          const m = viol.match(
+            /(không trực|bỏ trực|bỏ trực|trốn trực|truc nhat muon|trực nhật muộn|trực nhật bẩn)/g,
+          );
+          if (!m || !m.length) return;
+          dutyDebtData[name] = getStudentDutyDebt(name) + m.length;
+        });
+        persistDutyDebtData();
+      }
+
+      function collectStudentsFromSeating() {
+        const names = [];
+        [leftSideData, rightSideData].forEach((side) =>
+          side.forEach((row) =>
+            row.forEach((seat) => names.push(...getSeatEntityNames(seat))),
+          ),
+        );
+        return [...new Set(names.map((n) => n.trim()).filter(Boolean))];
+      }
+
+      function generateTable() {
+        const input = document.getElementById("student-list-input");
+        const tb = document.getElementById("competition-tbody");
+        let list = input.value
+          .split("\n")
+          .map((x) => x.trim())
+          .filter(Boolean);
+        if (!list.length) {
+          list = collectStudentsFromSeating();
+          input.value = list.join("\n");
+        }
+        if (!list.length) {
+          alert("Nhập danh sách hoặc điền tên học sinh trong sơ đồ lớp.");
+          return;
+        }
+        list = sortVietnameseNames(list);
+        tb.innerHTML = "";
+        list.forEach((n, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td class="text-center font-semibold text-gray-600">${i + 1}</td><td class="pl-4 font-medium text-gray-800">${n}</td>`;
+          const tdA = document.createElement("td");
+          const dA = document.createElement("div");
+          dA.className = "editable-cell";
+          dA.contentEditable = true;
+          dA.onclick = () => openInputModal(dA, "ach");
+          dA.addEventListener("blur", function () {
+            this.innerText = expandText(this.innerText || "");
+          });
+          tdA.appendChild(dA);
+          tr.appendChild(tdA);
+          const tdV = document.createElement("td");
+          const dV = document.createElement("div");
+          dV.className = "editable-cell";
+          dV.contentEditable = true;
+          dV.onclick = () => openInputModal(dV, "viol");
+          dV.addEventListener("blur", function () {
+            updateCompetitionCell(this);
+            updateDutyDebtFromViolations();
+          });
+          tdV.appendChild(dV);
+          tr.appendChild(tdV);
+          tb.appendChild(tr);
+        });
+        updateDutyDebtFromViolations();
+      }
+
+      function getStudentsFromSelection(type) {
+        const excludedSet = new Set(
+          (excludedMembers || []).map((n) => normalizeNameToken(n)),
+        );
+        const list = [];
+        const extract = (data, side) => {
+          data.forEach((row, i) => {
+            if (dutySelection[`${side}-${i}`] !== type) return;
+            row.forEach((seat) => {
+              getSeatEntityNames(seat).forEach((n) => {
+                if (!excludedSet.has(normalizeNameToken(n))) list.push(n);
+              });
+            });
+          });
+        };
+        extract(leftSideData, "left");
+        extract(rightSideData, "right");
+        return [...new Set(list)];
+      }
+
+      function getWorkersFromSelection(type) {
+        const excludedSet = new Set(
+          (excludedMembers || []).map((n) => normalizeNameToken(n)),
+        );
+        const rowsMap = {};
+        let maxRow = 0;
+        const process = (data, side) => {
+          data.forEach((row, idx) => {
+            if (!rowsMap[idx]) rowsMap[idx] = [];
+            if (dutySelection[`${side}-${idx}`] === type) {
+              row.forEach((seat) => {
+                getSeatEntityNames(seat).forEach((n) => {
+                  if (!excludedSet.has(normalizeNameToken(n)))
+                    rowsMap[idx].push(n);
+                });
+              });
+            }
+            if (idx > maxRow) maxRow = idx;
+          });
+        };
+        process(leftSideData, "left");
+        process(rightSideData, "right");
+        Object.keys(rowsMap).forEach(
+          (k) => (rowsMap[k] = [...new Set(rowsMap[k])]),
+        );
+        return { map: rowsMap, max: maxRow };
+      }
+
+      function toggleDayOffMode() {
+        dayOffMode = !dayOffMode;
+        renderDutyTable(currentSchedule);
+      }
+
+      function calculateAdvancedDutySchedule() {
+        const rows = Array.from(
+          document.querySelectorAll("#competition-tbody tr"),
+        );
+        if (
+          !rows.length ||
+          (rows.length === 1 && rows[0].innerText.includes("Chưa có"))
+        ) {
+          alert("Bảng thi đua trống!");
+          return null;
+        }
+        const students = rows
+          .map((tr) => getStatsFromRow(tr))
+          .filter((s) => s.name);
+        const totalClassPoints = students.reduce(
+          (sum, s) => sum + s.totalPts,
+          0,
+        );
+        const officers = [
+          document.getElementById("role-monitor").value.trim(),
+          document.getElementById("role-secretary").value.trim(),
+          document.getElementById("role-vice").value.trim(),
+        ].filter(Boolean);
+        const xkMembers = (
+          document.getElementById("role-xungkich-list").value || ""
+        )
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const xkBusyDays = Array.from(
+          document.querySelectorAll(".xk-day:checked"),
+        ).map((cb) => cb.value);
+        const allDays = ["2", "3", "4", "5", "6", "7"];
+        const activeDays = allDays.filter((d) => !(dayOffs || []).includes(d));
+        if (!activeDays.length) {
+          alert("Bạn đã chọn nghỉ tất cả các ngày từ Thứ 2 đến Thứ 7.");
+          return null;
+        }
+        if (totalClassPoints <= 12)
+          return calculatePenaltyLogic(
+            students,
+            officers,
+            xkMembers,
+            xkBusyDays,
+            "hybrid",
+            activeDays,
+          );
+        return calculatePenaltyLogic(
+          students,
+          officers,
+          xkMembers,
+          xkBusyDays,
+          "penalty",
+          activeDays,
+        );
+      }
+
+      function calculatePenaltyLogic(
+        students,
+        officers,
+        xk,
+        xkDays,
+        mode,
+        activeDays = ["2", "3", "4", "5", "6", "7"],
+      ) {
+        const hQ = [];
+        const lQ = [];
+        const debtQ = [];
+        students.forEach((s) => {
+          if (officers.includes(s.name)) return;
+          for (let i = 0; i < s.heavyPts; i++) hQ.push(s.name);
+          for (let i = 0; i < s.lightPts; i++) lQ.push(s.name);
+          for (let i = 0; i < getStudentDutyDebt(s.name); i++)
+            debtQ.push(s.name);
+        });
+        let areaD = getWorkersFromSelection("area");
+        let areaM = areaD.map;
+        let areaMax = areaD.max;
+        if (!Object.keys(areaM).length) {
+          areaD = getWorkersFromSelection("class");
+          areaM = areaD.map;
+          areaMax = areaD.max;
+        }
+        const classD = getWorkersFromSelection("class");
+        const classM = classD.map;
+        const classMax = classD.max;
+        const fullPool = Object.values(classM).flat();
+        const cleaners = fullPool.slice(0, 2);
+        const males = fullPool.filter(
+          (n) =>
+            isMaleName(n) && !officers.includes(n) && !cleaners.includes(n),
+        );
+        const chairTeam = males.slice(0, 4);
+        const doorTeam = fullPool
+          .filter((n) => !chairTeam.includes(n) && !cleaners.includes(n))
+          .slice(0, 3);
+        const dMap = {
+          2: doorTeam[0],
+          3: doorTeam[0],
+          4: doorTeam[1],
+          5: doorTeam[1],
+          6: doorTeam[2],
+          7: doorTeam[2],
+        };
+        const schedule = {};
+        const allDays = ["2", "3", "4", "5", "6", "7"];
+        allDays.forEach((d, i) => {
+          if (!activeDays.includes(d)) {
+            schedule[d] = { isOff: true };
+            return;
+          }
+          const idx = activeDays.indexOf(d);
+          const t = {
+            sweep: [],
+            trash: [],
+            towel: [],
+            area: [],
+            door: [dMap[d]],
+            chair: d === "2" ? chairTeam : [],
+            monitorClass: "",
+            monitorArea: "",
+          };
+          const canWork = (n) => {
+            const load = Object.values(t).reduce(
+              (acc, arr) =>
+                Array.isArray(arr) && arr.includes(n) ? acc + 1 : acc,
+              0,
+            );
+            return load < 2 && !cleaners.includes(n);
+          };
+          const canArea = (n) =>
+            !(xk.includes(n) && xkDays.includes(d)) && canWork(n);
+          const pull = (queue, filter) => {
+            const found = queue.findIndex((n) => filter(n));
+            if (found < 0) return null;
+            const val = queue[found];
+            queue.splice(found, 1);
+            return val;
+          };
+          while (t.area.length < 4) {
+            const picked = pull(debtQ, canArea) || pull(hQ, canArea);
+            if (!picked) break;
+            t.area.push(picked);
+            reduceDutyDebt(picked, 1);
+          }
+          if (mode !== "penalty" && t.area.length < 4) {
+            let tries = 0;
+            let curAreaR = idx % (areaMax + 1 || 1);
+            while (t.area.length < 4 && tries < 12) {
+              const candidates = (areaM[curAreaR] || []).filter(
+                (n) =>
+                  !officers.includes(n) && canWork(n) && !t.area.includes(n),
+              );
+              if (candidates.length)
+                t.area.push(...candidates.slice(0, 4 - t.area.length));
+              curAreaR = (curAreaR + 1) % (areaMax + 1 || 1);
+              tries += 1;
+            }
+          }
+          const fillTask = (key, count, fallbackQ) => {
+            while (t[key].length < count) {
+              const picked = pull(debtQ, canWork) || pull(fallbackQ, canWork);
+              if (!picked) break;
+              t[key].push(picked);
+              reduceDutyDebt(picked, 1);
+            }
+            if (t[key].length < count) {
+              let tries = 0;
+              let curClassR = idx % (classMax + 1 || 1);
+              while (t[key].length < count && tries < 12) {
+                const candidates = (classM[curClassR] || []).filter(
+                  (n) =>
+                    !officers.includes(n) && canWork(n) && !t[key].includes(n),
+                );
+                if (candidates.length)
+                  t[key].push(...candidates.slice(0, count - t[key].length));
+                curClassR = (curClassR + 1) % (classMax + 1 || 1);
+                tries += 1;
+              }
+            }
+          };
+          fillTask("trash", 1, lQ);
+          fillTask("sweep", 2, lQ);
+          fillTask("towel", 1, hQ);
+          t.monitorClass = officers[idx % (officers.length || 1)] || "";
+          t.monitorArea = officers[(idx + 1) % (officers.length || 1)] || "";
+          schedule[d] = t;
+        });
+        persistDutyDebtData();
+        return { schedule, cleaners, mode };
+      }
+
+      function renderDutyTable(data) {
+        const tbody = document.getElementById("duty-tbody");
+        tbody.innerHTML = "";
+        if (!data) return;
+        const { schedule, cleaners = [] } = data;
+        ["2", "3", "4", "5", "6", "7"].forEach((day) => {
+          const t = schedule?.[day];
+          if (!t) return;
+          if (t.isOff) {
+            if (!dayOffMode) return;
+            const offRow = document.createElement("tr");
+            offRow.className = "day-off";
+            offRow.innerHTML = `<td class="font-bold bg-gray-50">${day} (Nghỉ)</td><td colspan="8" class="text-center italic">Không học</td>`;
+            tbody.appendChild(offRow);
+            return;
+          }
+          const tr = document.createElement("tr");
+          tr.setAttribute("data-duty-day", day);
+          tr.innerHTML += `<td class="font-bold bg-gray-50">${day}</td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.sweep || []).join(", ")}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.trash || []).join(", ")}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.towel || []).join(", ")}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.area || []).join(", ")}</div></td>`;
+          if (["2", "4", "6"].includes(day))
+            tr.innerHTML += `<td rowspan="2"><div class="editable-cell" contenteditable="true">${(t.door || [])[0] || ""}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorClass || ""}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${t.monitorArea || ""}</div></td>`;
+          tr.innerHTML += `<td><div class="editable-cell" contenteditable="true">${(t.chair || []).join(", ")}</div></td>`;
+          tbody.appendChild(tr);
+        });
+        document.getElementById("duty-footer-class-list").innerText =
+          cleaners.join(", ");
+        updateDutyHomeAlert();
+      }
+
+      function showDutyDebtModal() {
+        const rows = Object.entries(dutyDebtData || {}).sort(
+          (a, b) => b[1] - a[1],
+        );
+        const current = rows.length
+          ? rows.map(([n, c]) => `${n}: ${c}`).join("\n")
+          : "(chưa có nợ trực)";
+        const input = prompt(
+          `Quản lý nợ trực (định dạng: Tên=+1, Tên=-1, Tên=0 để xóa)\nHiện tại:\n${current}\n\nNhập thay đổi:`,
+        );
+        if (!input || !input.trim()) return;
+        input
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean)
+          .forEach((entry) => {
+            const [name, deltaRaw] = entry.split("=");
+            const n = (name || "").trim();
+            if (!n) return;
+            const delta = Number((deltaRaw || "").trim());
+            if (!Number.isFinite(delta)) return;
+            if (delta === 0) delete dutyDebtData[n];
+            else dutyDebtData[n] = Math.max(0, getStudentDutyDebt(n) + delta);
+            if (dutyDebtData[n] <= 0) delete dutyDebtData[n];
+          });
+        persistDutyDebtData();
+        showToast("Đã cập nhật nợ trực nhật.");
+      }
+
+      function addDutyDebtManagementUI() {
+        const toolbar = document.querySelector(
+          "#tab-seating .flex.items-center.gap-2:last-child",
+        );
+        if (!toolbar || document.getElementById("duty-debt-btn")) return;
+        const btn = document.createElement("button");
+        btn.id = "duty-debt-btn";
+        btn.className = "btn-3d btn-3d-purple text-sm font-bold";
+        btn.title = "Quản lý nợ trực";
+        btn.innerHTML = '<i class="fas fa-receipt"></i> Nợ trực';
+        btn.onclick = showDutyDebtModal;
+        toolbar.insertBefore(btn, toolbar.lastElementChild);
+      }
+
+      loadDutyDebtData();
+      addDutyDebtManagementUI();
     </script>
     <script src="./scripts/weather.js"></script>
   </body>

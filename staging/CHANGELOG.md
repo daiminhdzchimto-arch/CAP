@@ -1,3 +1,9 @@
+## [1.58.10](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.9...v1.58.10) (2026-04-02)
+
+### Bug Fixes
+
+- reduce third-party requests for lighthouse budget ([5880b18](https://github.com/daiminhdzchimto-arch/CAP/commit/5880b18f916e3e2075dd9fe039af4bf89e8c6633))
+
 # [1.57.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.56.0...v1.57.0) (2026-04-01)
 
 ### Features
