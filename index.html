@@ -480,6 +480,20 @@
       .teacher-view-3d-btn:hover { color: #0284c7; }
       .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
       #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; overflow-x: auto; overflow-y: hidden; }
+      #app-content-layer {
+          position: relative;
+          z-index: 10;
+      }
+      #app-content-layer #classroom-area,
+      #app-content-layer .tab-content {
+          position: relative;
+          z-index: 11;
+      }
+      @media (max-width: 768px) {
+          #app-content-layer {
+              padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+          }
+      }
       #classroom-scroll-content { min-width: 980px; width: 100%; margin: 0 auto; }
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
       .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -898,7 +912,10 @@
         </button>
       </div>
 
-      <div class="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
+      <div
+        id="app-content-layer"
+        class="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6"
+      >
         <div
           id="duty-home-alert"
           class="duty-home-alert hidden mb-4 rounded-xl px-4 py-3 text-sm text-blue-900 font-semibold flex items-center gap-2"
