@@ -1,3 +1,9 @@
+## [1.58.7](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.6...v1.58.7) (2026-04-02)
+
+### Bug Fixes
+
+- resolve UI obstruction by adjusting z-index and opacity of weather overlays and widget ([0a9a3e8](https://github.com/daiminhdzchimto-arch/CAP/commit/0a9a3e8f78c54e89edb6f1c1ce021eb0c0a9d97c))
+
 ## [1.58.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.5...v1.58.6) (2026-04-02)
 
 ### Bug Fixes
