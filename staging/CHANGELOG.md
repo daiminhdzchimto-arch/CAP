@@ -1,3 +1,9 @@
+## [1.59.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.0...v1.59.1) (2026-04-02)
+
+### Bug Fixes
+
+- **weather:** reduce overlay intensity and lower z-index ([1843888](https://github.com/daiminhdzchimto-arch/CAP/commit/184388863c1e7ea740a92043b99b9118bad117d1))
+
 # [1.59.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.14...v1.59.0) (2026-04-02)
 
 ### Features
