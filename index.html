@@ -652,9 +652,13 @@
       .weather-mode-sun { color: #d97706; }
       .weather-mode-leaf { color: #16a34a; }
       body.dark-mode #weather-info-overlay {
-          background: rgba(15, 23, 42, 0.92);
-          border-color: #334155;
-          box-shadow: 0 8px 22px rgba(2, 6, 23, 0.5);
+          background: rgba(15, 23, 42, 0.7);
+          backdrop-filter: blur(12px);
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+      body.dark-mode #weather-info-overlay:hover {
+          background: rgba(15, 23, 42, 0.8);
       }
       body.dark-mode #weather-info-overlay .text-gray-800 {
           color: #f8fafc !important;
@@ -2237,7 +2241,7 @@
       <!-- Thời tiết Overlay -->
       <div
         id="weather-info-overlay"
-        class="fixed bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg text-sm flex flex-col gap-2 z-50 border border-gray-200 transition-all duration-300"
+        class="fixed bottom-4 right-4 bg-white/70 backdrop-blur-md p-3 rounded-xl shadow-lg text-sm flex flex-col gap-2 z-[100] border border-white/20 transition-all duration-300 hover:bg-white/80 cursor-grab active:cursor-grabbing select-none touch-none"
       >
         <div class="flex items-center gap-3 font-semibold text-gray-800">
           <i data-lucide="wind" class="w-4 h-4 text-blue-500"></i>
@@ -8416,7 +8420,14 @@
       function applyWeatherOverlayPosition() {
         const overlay = document.getElementById("weather-info-overlay");
         const savedPosition = config.settings.weatherOverlayPosition;
-        if (!overlay || !savedPosition) return;
+        if (!overlay) return;
+        if (!savedPosition) {
+          overlay.style.left = "auto";
+          overlay.style.top = "auto";
+          overlay.style.right = `${WEATHER_OVERLAY_MARGIN_PX}px`;
+          overlay.style.bottom = `${WEATHER_OVERLAY_MARGIN_PX}px`;
+          return;
+        }
         const clampedPosition = clampWeatherOverlayPosition(
           savedPosition,
           overlay,
@@ -8472,10 +8483,12 @@
           overlay.style.top = `${nextPosition.y}px`;
           overlay.style.right = "auto";
           overlay.style.bottom = "auto";
+          overlay.style.transition = "none";
         });
 
         overlay.addEventListener("pointerup", (event) => {
           if (!dragState || event.pointerId !== dragState.pointerId) return;
+          overlay.style.transition = "all 0.3s ease";
           persistOverlayPosition();
           stopDragging();
         });
