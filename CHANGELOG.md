@@ -1,3 +1,9 @@
+## [1.58.11](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.10...v1.58.11) (2026-04-02)
+
+### Bug Fixes
+
+- restore input modal and stabilize duty feature regressions ([93b6f3a](https://github.com/daiminhdzchimto-arch/CAP/commit/93b6f3abfd6be37e3a282d777be0cd1b4dae0e55))
+
 ## [1.58.10](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.9...v1.58.10) (2026-04-02)
 
 ### Bug Fixes
