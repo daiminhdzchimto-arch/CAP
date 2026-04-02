@@ -73,6 +73,7 @@
           color: #e5e7eb;
       }
       body.dark-mode .bg-white,
+      body.dark-mode .bg-white\/90,
       body.dark-mode .bg-white\/95 {
           background-color: #111827 !important;
       }
@@ -480,6 +481,20 @@
       .teacher-view-3d-btn:hover { color: #0284c7; }
       .swap-seat-btn:hover, .desk-box.swap-selected .swap-seat-btn { color: #ffffff; background: #d97706; }
       #classroom-area { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; position: relative; overflow-x: auto; overflow-y: hidden; }
+      #app-content-layer {
+          position: relative;
+          z-index: 10;
+      }
+      #app-content-layer #classroom-area,
+      #app-content-layer .tab-content {
+          position: relative;
+          z-index: 11;
+      }
+      @media (max-width: 768px) {
+          #app-content-layer {
+              padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+          }
+      }
       #classroom-scroll-content { min-width: 980px; width: 100%; margin: 0 auto; }
       .classroom-info-header { text-align: center; margin-bottom: 10px; z-index: 10; width: 100%; }
       .classroom-info-header h2 { font-size: 2.2rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2; }
@@ -656,6 +671,28 @@
       .weather-mode-snow { color: #0ea5e9; }
       .weather-mode-sun { color: #d97706; }
       .weather-mode-leaf { color: #16a34a; }
+      body.dark-mode #weather-info-overlay {
+          background: rgba(15, 23, 42, 0.92);
+          border-color: #334155;
+          box-shadow: 0 8px 22px rgba(2, 6, 23, 0.5);
+      }
+      body.dark-mode #weather-info-overlay .text-gray-800 {
+          color: #f8fafc !important;
+      }
+      body.dark-mode #weather-info-overlay .text-gray-700 {
+          color: #e2e8f0 !important;
+      }
+      body.dark-mode #weather-info-overlay .text-gray-500,
+      body.dark-mode #weather-info-overlay .text-gray-400 {
+          color: #cbd5e1 !important;
+      }
+      body.dark-mode #weather-info-overlay .border-gray-100 {
+          border-color: #334155 !important;
+      }
+      body.dark-mode #weather-info-overlay .weather-mode-rain { color: #60a5fa; }
+      body.dark-mode #weather-info-overlay .weather-mode-snow { color: #67e8f9; }
+      body.dark-mode #weather-info-overlay .weather-mode-sun { color: #fbbf24; }
+      body.dark-mode #weather-info-overlay .weather-mode-leaf { color: #4ade80; }
 
       /* JELLY SWITCH */
       .jelly-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
@@ -920,7 +957,10 @@
         </button>
       </div>
 
-      <div class="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
+      <div
+        id="app-content-layer"
+        class="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6"
+      >
         <div
           id="duty-home-alert"
           class="duty-home-alert hidden mb-4 rounded-xl px-4 py-3 text-sm text-blue-900 font-semibold flex items-center gap-2"
