@@ -1,3 +1,9 @@
+## [1.59.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.1...v1.59.2) (2026-04-02)
+
+### Bug Fixes
+
+- remove external font request to satisfy lighthouse budget ([75dc403](https://github.com/daiminhdzchimto-arch/CAP/commit/75dc4033439596604218045be2820b16a4413025))
+
 ## [1.59.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.0...v1.59.1) (2026-04-02)
 
 ### Bug Fixes
