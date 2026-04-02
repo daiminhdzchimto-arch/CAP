@@ -1,3 +1,10 @@
+## [1.58.12](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.11...v1.58.12) (2026-04-02)
+
+### Bug Fixes
+
+- improve dark mode contrast for weather overlay text ([3842c43](https://github.com/daiminhdzchimto-arch/CAP/commit/3842c43ebc07fa3dba4c74b06ad58743b2bacc82))
+- **weather:** reduce overlay intensity and prioritize classroom visibility ([01ef2c9](https://github.com/daiminhdzchimto-arch/CAP/commit/01ef2c97a94803a87fcf8acb78d0fa91132c7cf2))
+
 ## [1.58.11](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.10...v1.58.11) (2026-04-02)
 
 ### Bug Fixes
