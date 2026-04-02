@@ -1,3 +1,9 @@
+## [1.58.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.5...v1.58.6) (2026-04-02)
+
+### Bug Fixes
+
+- improve weather widget contrast in dark mode ([e96e27f](https://github.com/daiminhdzchimto-arch/CAP/commit/e96e27f1af3719efd2f199ff9d8c3ed13d93c2e7))
+
 ## [1.58.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.4...v1.58.5) (2026-04-01)
 
 ### Bug Fixes
