@@ -1,4 +1,4 @@
-const CACHE_VERSION = "cap-pwa-v3-2026-04-02";
+const CACHE_VERSION = "cap-pwa-v4-2026-04-02";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const CORE_ASSETS = [
   "./robots.txt",
   "./sitemap.xml",
   "./sitemap-index.xml",
+  "./scripts/weather.js",
   "./assets/models/phong-hoc-phong-phu.glb",
   "./assets/images/duty-calendar.svg",
   "./assets/images/competition-trophy.svg",
@@ -21,9 +22,28 @@ const CORE_ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(CORE_ASSETS)),
+    (async () => {
+      const cache = await caches.open(CACHE_VERSION);
+      await Promise.allSettled(
+        CORE_ASSETS.map(async (asset) => {
+          try {
+            const response = await fetch(asset, { cache: "no-store" });
+            if (response.ok) {
+              await cache.put(asset, response);
+            } else {
+              console.warn(
+                `[SW] Bỏ qua tài nguyên lõi (HTTP ${response.status}):`,
+                asset,
+              );
+            }
+          } catch (error) {
+            console.warn("[SW] Không thể pre-cache tài nguyên:", asset, error);
+          }
+        }),
+      );
+      await self.skipWaiting();
+    })(),
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -67,7 +87,8 @@ self.addEventListener("fetch", (event) => {
         .catch(async () => {
           return (
             (await caches.match(event.request)) ||
-            (await caches.match("./index.html"))
+            (await caches.match("./index.html")) ||
+            (await caches.match("./"))
           );
         }),
     );

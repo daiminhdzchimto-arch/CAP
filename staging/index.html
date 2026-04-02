@@ -9032,7 +9032,7 @@
       async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
         try {
-          await navigator.serviceWorker.register("./sw.js");
+          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
           console.info("[PWA] Service Worker đã đăng ký thành công.");
         } catch (error) {
           console.warn("[PWA] Không thể đăng ký Service Worker:", error);
