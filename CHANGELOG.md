@@ -1,3 +1,9 @@
+# [1.60.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.3...v1.60.0) (2026-04-02)
+
+### Features
+
+- improve weather overlay - fix layer z-index, add drag-and-drop, and increase transparency ([d180e30](https://github.com/daiminhdzchimto-arch/CAP/commit/d180e30d4209057e7e08b26de9404366d7ddf9ba))
+
 ## [1.59.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.2...v1.59.3) (2026-04-02)
 
 ### Bug Fixes
