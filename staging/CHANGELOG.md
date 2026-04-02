@@ -1,3 +1,9 @@
+## [1.58.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.4...v1.58.5) (2026-04-01)
+
+### Bug Fixes
+
+- add version endpoint and refresh service worker cache ([cfabc83](https://github.com/daiminhdzchimto-arch/CAP/commit/cfabc83be4482b92384147e24da6744bb167c379))
+
 ## [1.58.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.3...v1.58.4) (2026-04-01)
 
 ### Bug Fixes

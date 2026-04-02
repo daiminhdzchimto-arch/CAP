@@ -145,9 +145,21 @@ const WeatherModule = (() => {
     const updateWidgetTheme = () => {
       const isDarkMode = document.body.classList.contains("dark-mode");
       widget.style.background = isDarkMode
-        ? "rgba(17, 24, 39, 0.95)"
+        ? "rgba(31, 41, 55, 0.95)"
         : "rgba(255, 255, 255, 0.95)";
-      widget.style.color = isDarkMode ? "#e5e7eb" : "#1f2937";
+      widget.style.color = isDarkMode ? "#f9fafb" : "#1f2937";
+      widget.style.borderColor = isDarkMode
+        ? "rgba(75, 85, 99, 0.5)"
+        : "rgba(229, 231, 235, 0.5)";
+      widget.style.borderWidth = "1px";
+      widget.style.borderStyle = "solid";
+
+      const header = widget.querySelector("div:first-child");
+      if (header) {
+        header.style.borderBottomColor = isDarkMode
+          ? "rgba(255, 255, 255, 0.1)"
+          : "rgba(0, 0, 0, 0.1)";
+      }
     };
 
     updateWidgetTheme();
@@ -471,18 +483,22 @@ const WeatherModule = (() => {
     // Find content container
     const contentContainer = widget.querySelector("#weather-content");
     if (contentContainer) {
+      const isDarkMode = document.body.classList.contains("dark-mode");
+      const secondaryColor = isDarkMode ? "#d1d5db" : "#4b5563";
+      const primaryColor = isDarkMode ? "#f9fafb" : "#111827";
+
       contentContainer.innerHTML = `
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-          <i class="${iconClass}" style="font-size: 24px;"></i>
+          <i class="${iconClass}" style="font-size: 24px; color: ${primaryColor};"></i>
           <div>
-            <div style="font-size: 18px; font-weight: 600;">${temp}°C</div>
-            <div style="font-size: 12px; opacity: 0.7;">${location}</div>
+            <div style="font-size: 18px; font-weight: 600; color: ${primaryColor};">${temp}°C</div>
+            <div style="font-size: 12px; color: ${secondaryColor};">${location}</div>
           </div>
         </div>
-        <div style="font-size: 12px; line-height: 1.6; opacity: 0.8;">
-          <div><strong>Trạng thái:</strong> ${description}</div>
-          <div><strong>Độ ẩm:</strong> ${humidity}%</div>
-          <div><strong>Gió:</strong> ${windSpeed} km/h</div>
+        <div style="font-size: 12px; line-height: 1.6; color: ${secondaryColor};">
+          <div><strong style="color: ${primaryColor};">Trạng thái:</strong> ${description}</div>
+          <div><strong style="color: ${primaryColor};">Độ ẩm:</strong> ${humidity}%</div>
+          <div><strong style="color: ${primaryColor};">Gió:</strong> ${windSpeed} km/h</div>
         </div>
       `;
     }
