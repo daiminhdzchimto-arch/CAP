@@ -1,3 +1,9 @@
+# [1.59.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.14...v1.59.0) (2026-04-02)
+
+### Features
+
+- **weather:** enable draggable weather widget position ([6f151de](https://github.com/daiminhdzchimto-arch/CAP/commit/6f151de8d0878e79c927060fa0d9392edbc674e9))
+
 ## [1.58.14](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.13...v1.58.14) (2026-04-02)
 
 ### Reverts

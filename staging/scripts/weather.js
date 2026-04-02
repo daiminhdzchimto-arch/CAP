@@ -19,7 +19,7 @@ const WeatherModule = (() => {
     UPDATE_INTERVAL: 600000, // 10 minutes
     CANVAS_ID: "weather-effects-canvas",
     WIDGET_ID: "weather-widget",
-    EFFECTS_Z_INDEX: 4,
+    EFFECTS_Z_INDEX: 1,
   };
 
   // State
@@ -81,7 +81,7 @@ const WeatherModule = (() => {
         height: 100%;
         pointer-events: none;
         z-index: ${CONFIG.EFFECTS_Z_INDEX};
-        opacity: 0.45;
+        opacity: 0.35;
         background: transparent;
       `;
       document.body.insertBefore(canvas, document.body.firstChild);
@@ -439,7 +439,8 @@ const WeatherModule = (() => {
         height: 100%;
         pointer-events: none;
         z-index: ${CONFIG.EFFECTS_Z_INDEX};
-        background: radial-gradient(ellipse at center, rgba(100, 150, 200, 0) 0%, rgba(100, 150, 200, 0.025) 100%);
+        background: radial-gradient(ellipse at center, rgba(100, 150, 200, 0) 0%, rgba(100, 150, 200, 0.012) 100%);
+        opacity: 0.35;
       `;
       document.body.appendChild(overlay);
     }
@@ -636,8 +637,8 @@ const WeatherModule = (() => {
         height: 100%;
         pointer-events: none;
         z-index: ${CONFIG.EFFECTS_Z_INDEX};
-        background: radial-gradient(ellipse at center, rgba(150, 150, 150, 0) 0%, rgba(150, 150, 150, 0.018) 100%);
-        opacity: 0.55;
+        background: radial-gradient(ellipse at center, rgba(150, 150, 150, 0) 0%, rgba(150, 150, 150, 0.012) 100%);
+        opacity: 0.35;
       `;
       document.body.appendChild(cloudOverlay);
     }
@@ -662,9 +663,9 @@ const WeatherModule = (() => {
         height: 100%;
         pointer-events: none;
         z-index: ${CONFIG.EFFECTS_Z_INDEX};
-        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.06) 100%);
-        backdrop-filter: blur(0.8px);
-        opacity: 0.45;
+        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.03) 100%);
+        backdrop-filter: blur(0.35px);
+        opacity: 0.38;
       `;
       document.body.appendChild(fogOverlay);
     }
