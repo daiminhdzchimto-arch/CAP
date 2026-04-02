@@ -656,6 +656,12 @@
       .weather-mode-snow { color: #0ea5e9; }
       .weather-mode-sun { color: #d97706; }
       .weather-mode-leaf { color: #16a34a; }
+      .weather-badge-pulse-once { animation: weather-badge-pulse-once 0.55s ease-out 1; }
+      @keyframes weather-badge-pulse-once {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35); }
+        45% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+      }
 
       /* JELLY SWITCH */
       .jelly-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
@@ -2321,6 +2327,11 @@
             >Chế độ giả lập</span
           >
         </div>
+        <div class="text-xs text-gray-500 flex flex-col gap-0.5">
+          <span id="weather-updated-at-text">Cập nhật: chưa có</span>
+          <span id="weather-provider-text">Nguồn: --</span>
+          <span id="weather-delta-text">Δ: --</span>
+        </div>
       </div>
 
       <div id="seat-3d-viewer" class="hidden fixed inset-0 z-[80] bg-black">
@@ -3553,6 +3564,10 @@
         },
         currentSpecies: null,
         initialized: false,
+        lastUpdatedAt: null,
+        relativeTimeTicker: null,
+        lastAppliedWeather: null,
+        simulationReason: "manual",
 
         init() {
           const savedWeatherConfig = localStorage.getItem(
@@ -3607,11 +3622,18 @@
         },
 
         computeEffectiveRealWeather() {
-          return (
+          const effective =
             this.config.preferredRealLocation &&
             !batteryState.autoPowerSaveActive &&
-            !config.settings.powerSave
-          );
+            !config.settings.powerSave;
+          if (
+            this.config.preferredRealLocation &&
+            !effective &&
+            (batteryState.autoPowerSaveActive || config.settings.powerSave)
+          ) {
+            this.simulationReason = "power_save";
+          }
+          return effective;
         },
 
         syncRealWeatherToggleState() {
@@ -3744,6 +3766,13 @@
           if (!this.config.useRealLocation) {
             const citySpan = document.getElementById("weather-city-text");
             if (citySpan) citySpan.innerText = "Giả lập";
+            if (batteryState.autoPowerSaveActive || config.settings.powerSave) {
+              this.simulationReason = "power_save";
+            } else if (this.config.preferredRealLocation) {
+              this.simulationReason = "manual";
+            } else {
+              this.simulationReason = "manual";
+            }
             this.applyWeather(this.config.fallbackData, false);
             return;
           }
@@ -3752,6 +3781,7 @@
             showToast("Trình duyệt không hỗ trợ lấy vị trí!");
             const citySpan = document.getElementById("weather-city-text");
             if (citySpan) citySpan.innerText = "Không xác định";
+            this.simulationReason = "no_geolocation";
             this.applyWeather(this.config.fallbackData, false);
             return;
           }
@@ -3810,6 +3840,7 @@
               } catch (error) {
                 console.error("Weather provider error:", error);
                 showToast("Lỗi tải thời tiết, dùng giả lập.");
+                this.simulationReason = "api_fail";
                 this.applyWeather(this.config.fallbackData, false);
                 const citySpan = document.getElementById("weather-city-text");
                 if (citySpan) citySpan.innerText = "Không xác định";
@@ -3824,6 +3855,7 @@
               this.config.preferredRealLocation = false;
               this.syncRealWeatherToggleState();
               this.saveWeatherConfig();
+              this.simulationReason = "no_permission";
               this.applyWeather(this.config.fallbackData, false);
               const citySpan = document.getElementById("weather-city-text");
               if (citySpan) citySpan.innerText = "Không xác định";
@@ -3857,10 +3889,13 @@
           );
           weatherEffectText.classList.add(`weather-mode-${effectMode}`);
 
+          this.updateWeatherMeta(weather, isLive);
+
           if (isLive) {
             this.updateUIStatus("live", "Live (Gió thực)");
           } else {
-            this.updateUIStatus("offline", "Mặc định (Giả lập)");
+            const reasonText = this.getSimulationReasonText();
+            this.updateUIStatus("offline", `Simulated mode (${reasonText})`);
           }
 
           if (
@@ -3870,6 +3905,84 @@
             particleEngine.setEffectMode(effectMode);
             particleEngine.setWeather(weather);
           }
+        },
+
+        getSimulationReasonText() {
+          const map = {
+            no_permission: "không quyền vị trí",
+            power_save: "power save",
+            api_fail: "API fail",
+            no_geolocation: "trình duyệt không hỗ trợ vị trí",
+            manual: "đang dùng dữ liệu mặc định",
+          };
+          return map[this.simulationReason] || "đang dùng dữ liệu mặc định";
+        },
+
+        formatRelativeTime(timestamp) {
+          const diffSeconds = Math.max(
+            0,
+            Math.floor((Date.now() - timestamp) / 1000),
+          );
+          if (diffSeconds < 2) return "vừa xong";
+          return `${diffSeconds}s trước`;
+        },
+
+        refreshRelativeTimestampText() {
+          const updatedAtText = document.getElementById(
+            "weather-updated-at-text",
+          );
+          if (!updatedAtText || !this.lastUpdatedAt) return;
+          updatedAtText.innerText = `Cập nhật: ${this.formatRelativeTime(this.lastUpdatedAt)}`;
+        },
+
+        updateWeatherMeta(weather, isLive) {
+          const providerText = document.getElementById("weather-provider-text");
+          const deltaText = document.getElementById("weather-delta-text");
+          const statusContainer = document.getElementById(
+            "weather-info-overlay",
+          );
+          const previous = this.lastAppliedWeather;
+          const speedDelta = previous
+            ? (Number(weather.speed) || 0) - (Number(previous.speed) || 0)
+            : 0;
+          const gustDelta = previous
+            ? (Number(weather.gust) || 0) - (Number(previous.gust) || 0)
+            : 0;
+
+          if (providerText) {
+            providerText.innerText = isLive
+              ? "Nguồn: Open-Meteo + GPS"
+              : `Nguồn: Simulated mode (${this.getSimulationReasonText()})`;
+          }
+          if (deltaText) {
+            deltaText.innerText = previous
+              ? `Δ: ${speedDelta >= 0 ? "+" : ""}${speedDelta.toFixed(1)} m/s · Giật ${gustDelta >= 0 ? "+" : ""}${gustDelta.toFixed(1)}`
+              : "Δ: lần cập nhật đầu";
+          }
+
+          const exceedsThreshold =
+            previous &&
+            (Math.abs(speedDelta) >= 1.5 ||
+              Math.abs(gustDelta) >= 2 ||
+              previous.effectMode !== weather.effectMode);
+          if (statusContainer && exceedsThreshold) {
+            statusContainer.classList.remove("weather-badge-pulse-once");
+            void statusContainer.offsetWidth;
+            statusContainer.classList.add("weather-badge-pulse-once");
+          }
+
+          this.lastAppliedWeather = {
+            speed: Number(weather.speed) || 0,
+            gust: Number(weather.gust) || 0,
+            effectMode: weather.effectMode || "leaf",
+          };
+          this.lastUpdatedAt = Date.now();
+          this.refreshRelativeTimestampText();
+
+          if (this.relativeTimeTicker) clearInterval(this.relativeTimeTicker);
+          this.relativeTimeTicker = setInterval(() => {
+            this.refreshRelativeTimestampText();
+          }, 1000);
         },
 
         resolveEffectMode(weatherCode, isDay) {
