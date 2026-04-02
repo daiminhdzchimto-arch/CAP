@@ -1,3 +1,9 @@
+## [1.58.8](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.7...v1.58.8) (2026-04-02)
+
+### Bug Fixes
+
+- optimize orientation lock overlay and update app version ([a10f072](https://github.com/daiminhdzchimto-arch/CAP/commit/a10f072e67766f572dc4550987a4f12b1dc9363d))
+
 ## [1.58.7](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.6...v1.58.7) (2026-04-02)
 
 ### Bug Fixes
