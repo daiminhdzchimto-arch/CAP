@@ -1,3 +1,9 @@
+## [1.58.9](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.8...v1.58.9) (2026-04-02)
+
+### Bug Fixes
+
+- **pwa:** harden service worker asset loading ([0c0a64b](https://github.com/daiminhdzchimto-arch/CAP/commit/0c0a64b5edb680a64915bb002231db2f8e7a2da8))
+
 ## [1.58.8](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.7...v1.58.8) (2026-04-02)
 
 ### Bug Fixes
