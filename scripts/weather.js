@@ -32,11 +32,6 @@ const WeatherModule = (() => {
     isRaining: false,
     isSnowing: false,
     lastUpdate: 0,
-    isDragging: false,
-    dragOffsetX: 0,
-    dragOffsetY: 0,
-    isWidgetVisible: true,
-    widgetInitialized: false,
   };
 
   /**
@@ -86,7 +81,6 @@ const WeatherModule = (() => {
         pointer-events: none;
         z-index: 1;
         background: transparent;
-        opacity: 0.6;
       `;
       document.body.insertBefore(canvas, document.body.firstChild);
     }
@@ -117,53 +111,29 @@ const WeatherModule = (() => {
     if (!widget) {
       widget = document.createElement("div");
       widget.id = CONFIG.WIDGET_ID;
-      const defaultTop = getSafeWidgetTopOffset();
       widget.style.cssText = `
         position: fixed;
-        top: ${defaultTop}px;
+        top: 20px;
         right: 20px;
         background: rgba(255, 255, 255, 0.95);
         border-radius: 12px;
         padding: 12px 16px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif;
-        z-index: 30;
+        z-index: 1000;
         min-width: 200px;
         backdrop-filter: blur(10px);
-        opacity: 0.6;
-        transition: opacity 0.3s, box-shadow 0.2s ease;
-        cursor: grab;
-        user-select: none;
-        -webkit-user-select: none;
       `;
-      widget.addEventListener('mouseenter', () => { widget.style.opacity = '1'; });
-      widget.addEventListener('mouseleave', () => { widget.style.opacity = '0.6'; });
       document.body.appendChild(widget);
-
-      // Add drag and toggle functionality
-      setupWidgetDragAndToggle(widget);
-      state.widgetInitialized = true;
     }
 
     // Add dark mode support
     const updateWidgetTheme = () => {
       const isDarkMode = document.body.classList.contains("dark-mode");
       widget.style.background = isDarkMode
-        ? "rgba(31, 41, 55, 0.95)"
+        ? "rgba(17, 24, 39, 0.95)"
         : "rgba(255, 255, 255, 0.95)";
-      widget.style.color = isDarkMode ? "#f9fafb" : "#1f2937";
-      widget.style.borderColor = isDarkMode
-        ? "rgba(75, 85, 99, 0.5)"
-        : "rgba(229, 231, 235, 0.5)";
-      widget.style.borderWidth = "1px";
-      widget.style.borderStyle = "solid";
-
-      const header = widget.querySelector("div:first-child");
-      if (header) {
-        header.style.borderBottomColor = isDarkMode
-          ? "rgba(255, 255, 255, 0.1)"
-          : "rgba(0, 0, 0, 0.1)";
-      }
+      widget.style.color = isDarkMode ? "#e5e7eb" : "#1f2937";
     };
 
     updateWidgetTheme();
@@ -187,191 +157,6 @@ const WeatherModule = (() => {
       attributes: true,
       attributeFilter: ["class"],
     });
-  }
-
-  /**
-   * Setup drag and drop functionality for weather widget
-   */
-  function setupWidgetDragAndToggle(widget) {
-    const clampWidgetPosition = (left, top) => {
-      const margin = 8;
-      const maxLeft = Math.max(
-        margin,
-        window.innerWidth - widget.offsetWidth - margin,
-      );
-      const maxTop = Math.max(
-        getSafeWidgetTopOffset(),
-        window.innerHeight - widget.offsetHeight - margin,
-      );
-      const minTop = Math.min(getSafeWidgetTopOffset(), maxTop);
-      return {
-        left: Math.max(margin, Math.min(left, maxLeft)),
-        top: Math.max(minTop, Math.min(top, maxTop)),
-      };
-    };
-
-    // Create header for dragging
-    const header = document.createElement("div");
-    header.style.cssText = `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      cursor: grab;
-      user-select: none;
-      -webkit-user-select: none;
-    `;
-
-    // Title
-    const title = document.createElement("div");
-    title.style.cssText = `
-      font-weight: 600;
-      font-size: 12px;
-      opacity: 0.7;
-      flex: 1;
-    `;
-    title.textContent = "Thời tiết";
-
-    // Toggle button
-    const toggleBtn = document.createElement("button");
-    toggleBtn.style.cssText = `
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      padding: 0 4px;
-      opacity: 0.6;
-      transition: opacity 0.2s ease;
-      color: inherit;
-    `;
-    toggleBtn.innerHTML = '<i class="lucide lucide-chevron-down"></i>';
-    toggleBtn.title = "Ẩn/Hiện chi tiết";
-
-    // Content container
-    const contentContainer = document.createElement("div");
-    contentContainer.id = "weather-content";
-    contentContainer.style.cssText = `
-      display: block;
-      transition: max-height 0.3s ease, opacity 0.3s ease;
-      max-height: 500px;
-      opacity: 1;
-      overflow: hidden;
-    `;
-
-    // Initialize with placeholder content
-    contentContainer.innerHTML = `
-      <div style="font-size: 12px; line-height: 1.6; opacity: 0.8;">
-        <div><strong>Trạng thái:</strong> Đang tải...</div>
-        <div><strong>Độ ẩm:</strong> --</div>
-        <div><strong>Gió:</strong> -- km/h</div>
-      </div>
-    `;
-
-    // Clear widget and rebuild structure
-    widget.innerHTML = "";
-    header.appendChild(title);
-    header.appendChild(toggleBtn);
-    widget.appendChild(header);
-    widget.appendChild(contentContainer);
-
-    // Toggle functionality
-    let isExpanded = true;
-    toggleBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      isExpanded = !isExpanded;
-      if (isExpanded) {
-        contentContainer.style.maxHeight = "500px";
-        contentContainer.style.opacity = "1";
-        toggleBtn.innerHTML = '<i class="lucide lucide-chevron-down"></i>';
-      } else {
-        contentContainer.style.maxHeight = "0";
-        contentContainer.style.opacity = "0";
-        toggleBtn.innerHTML = '<i class="lucide lucide-chevron-up"></i>';
-      }
-    });
-
-    // Drag functionality
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startTop = 0;
-
-    header.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      const rect = widget.getBoundingClientRect();
-      startLeft = rect.left;
-      startTop = rect.top;
-      widget.style.cursor = "grabbing";
-      header.style.cursor = "grabbing";
-      widget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.2)";
-      e.preventDefault();
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (!isDragging) return;
-
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-
-      const newLeft = startLeft + deltaX;
-      const newTop = startTop + deltaY;
-
-      // Constrain to viewport
-      const clampedPosition = clampWidgetPosition(newLeft, newTop);
-
-      widget.style.position = "fixed";
-      widget.style.left = clampedPosition.left + "px";
-      widget.style.top = clampedPosition.top + "px";
-      widget.style.right = "auto";
-    });
-
-    document.addEventListener("mouseup", () => {
-      if (isDragging) {
-        isDragging = false;
-        widget.style.cursor = "grab";
-        header.style.cursor = "grab";
-        widget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
-
-        // Save position to localStorage
-        const rect = widget.getBoundingClientRect();
-        localStorage.setItem(
-          "weather-widget-position",
-          JSON.stringify({
-            left: rect.left,
-            top: rect.top,
-          }),
-        );
-      }
-    });
-
-    // Restore saved position
-    try {
-      const savedPosition = localStorage.getItem("weather-widget-position");
-      if (savedPosition) {
-        const pos = JSON.parse(savedPosition);
-        const clampedPosition = clampWidgetPosition(
-          Number(pos.left) || 0,
-          Number(pos.top) || getSafeWidgetTopOffset(),
-        );
-        widget.style.position = "fixed";
-        widget.style.left = clampedPosition.left + "px";
-        widget.style.top = clampedPosition.top + "px";
-        widget.style.right = "auto";
-      }
-    } catch (e) {
-      console.error("[Weather] Error restoring widget position:", e);
-    }
-  }
-
-  function getSafeWidgetTopOffset() {
-    const nav = document.querySelector("nav");
-    const navHeight = nav ? Math.ceil(nav.getBoundingClientRect().height) : 64;
-    return navHeight + 8;
   }
 
   /**
@@ -484,28 +269,20 @@ const WeatherModule = (() => {
     // Get weather icon
     const iconClass = getWeatherIconClass(weather.weather[0].main);
 
-    // Find content container
-    const contentContainer = widget.querySelector("#weather-content");
-    if (contentContainer) {
-      const isDarkMode = document.body.classList.contains("dark-mode");
-      const secondaryColor = isDarkMode ? "#d1d5db" : "#4b5563";
-      const primaryColor = isDarkMode ? "#f9fafb" : "#111827";
-
-      contentContainer.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-          <i class="${iconClass}" style="font-size: 24px; color: ${primaryColor};"></i>
-          <div>
-            <div style="font-size: 18px; font-weight: 600; color: ${primaryColor};">${temp}°C</div>
-            <div style="font-size: 12px; color: ${secondaryColor};">${location}</div>
-          </div>
+    widget.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <i class="${iconClass}" style="font-size: 24px;"></i>
+        <div>
+          <div style="font-size: 18px; font-weight: 600;">${temp}°C</div>
+          <div style="font-size: 12px; opacity: 0.7;">${location}</div>
         </div>
-        <div style="font-size: 12px; line-height: 1.6; color: ${secondaryColor};">
-          <div><strong style="color: ${primaryColor};">Trạng thái:</strong> ${description}</div>
-          <div><strong style="color: ${primaryColor};">Độ ẩm:</strong> ${humidity}%</div>
-          <div><strong style="color: ${primaryColor};">Gió:</strong> ${windSpeed} km/h</div>
-        </div>
-      `;
-    }
+      </div>
+      <div style="font-size: 12px; line-height: 1.6; opacity: 0.8;">
+        <div><strong>Trạng thái:</strong> ${description}</div>
+        <div><strong>Độ ẩm:</strong> ${humidity}%</div>
+        <div><strong>Gió:</strong> ${windSpeed} km/h</div>
+      </div>
+    `;
   }
 
   /**
@@ -659,9 +436,8 @@ const WeatherModule = (() => {
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 1;
-        background: radial-gradient(ellipse at center, rgba(150, 150, 150, 0) 0%, rgba(150, 150, 150, 0.02) 100%);
-        opacity: 0.3;
+        z-index: 2;
+        background: radial-gradient(ellipse at center, rgba(100, 150, 200, 0) 0%, rgba(100, 150, 200, 0.05) 100%);
       `;
       document.body.appendChild(overlay);
     }
@@ -743,9 +519,8 @@ const WeatherModule = (() => {
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 1;
-        background: radial-gradient(ellipse at center, rgba(200, 220, 255, 0) 0%, rgba(200, 220, 255, 0.05) 100%);
-        opacity: 0.4;
+        z-index: 2;
+        background: radial-gradient(ellipse at center, rgba(200, 220, 255, 0) 0%, rgba(200, 220, 255, 0.1) 100%);
       `;
       document.body.appendChild(overlay);
     }
@@ -782,15 +557,29 @@ const WeatherModule = (() => {
             height: 100%;
             pointer-events: none;
             z-index: 3;
-            background: rgba(255, 255, 255, 0.8);
-            animation: lightning-flash 0.1s ease-out;
+            background: rgba(255, 255, 255, 0.3);
+            animation: lightning-flash 0.2s ease-out;
           `;
+
+          // Add animation
+          if (!document.querySelector("style[data-lightning]")) {
+            const style = document.createElement("style");
+            style.setAttribute("data-lightning", "true");
+            style.textContent = `
+              @keyframes lightning-flash {
+                0% { opacity: 1; }
+                100% { opacity: 0; }
+              }
+            `;
+            document.head.appendChild(style);
+          }
+
           document.body.appendChild(flash);
 
-          setTimeout(() => flash.remove(), 100);
+          setTimeout(() => flash.remove(), 200);
         }
 
-        addLightning();
+        addLightning(); // Recursive call for next flash
       }, delay);
     };
 
@@ -798,25 +587,30 @@ const WeatherModule = (() => {
   }
 
   /**
-   * Start clear weather effect
+   * Start clear sky effect
    */
   function startClearEffect() {
-    // Add sun glow effect
-    let glow = document.getElementById("sun-glow");
-    if (!glow) {
-      glow = document.createElement("div");
-      glow.id = "sun-glow";
-      glow.style.cssText = `
+    // Remove all overlays
+    removeOverlays();
+
+    // Optional: Add subtle sun glow effect
+    let sunGlow = document.getElementById("sun-glow");
+    if (!sunGlow) {
+      sunGlow = document.createElement("div");
+      sunGlow.id = "sun-glow";
+      sunGlow.style.cssText = `
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 20px;
+        right: 20px;
+        width: 80px;
+        height: 80px;
         pointer-events: none;
-        z-index: 1;
-        background: radial-gradient(ellipse at top right, rgba(255, 200, 100, 0.1) 0%, rgba(255, 200, 100, 0) 50%);
+        z-index: 0;
+        background: radial-gradient(circle, rgba(255, 200, 0, 0.1) 0%, rgba(255, 200, 0, 0) 100%);
+        border-radius: 50%;
+        filter: blur(20px);
       `;
-      document.body.appendChild(glow);
+      document.body.appendChild(sunGlow);
     }
   }
 
@@ -824,22 +618,24 @@ const WeatherModule = (() => {
    * Start cloud effect
    */
   function startCloudEffect() {
-    // Add cloud overlay
-    let overlay = document.getElementById("cloud-overlay");
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.id = "cloud-overlay";
-      overlay.style.cssText = `
+    removeOverlays();
+
+    // Add subtle cloud overlay
+    let cloudOverlay = document.getElementById("cloud-overlay");
+    if (!cloudOverlay) {
+      cloudOverlay = document.createElement("div");
+      cloudOverlay.id = "cloud-overlay";
+      cloudOverlay.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 1;
-        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.05) 100%);
+        z-index: 2;
+        background: radial-gradient(ellipse at center, rgba(150, 150, 150, 0) 0%, rgba(150, 150, 150, 0.03) 100%);
       `;
-      document.body.appendChild(overlay);
+      document.body.appendChild(cloudOverlay);
     }
   }
 
@@ -847,6 +643,8 @@ const WeatherModule = (() => {
    * Start fog effect
    */
   function startFogEffect() {
+    removeOverlays();
+
     // Add fog overlay
     let fogOverlay = document.getElementById("fog-overlay");
     if (!fogOverlay) {
@@ -859,10 +657,9 @@ const WeatherModule = (() => {
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 1;
-        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.08) 100%);
-        backdrop-filter: blur(1px);
-        opacity: 0.4;
+        z-index: 2;
+        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.15) 100%);
+        backdrop-filter: blur(2px);
       `;
       document.body.appendChild(fogOverlay);
     }
