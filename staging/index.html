@@ -18,7 +18,7 @@
     />
     <meta name="author" content="CAP - Classroom Management System" />
     <meta name="robots" content="index, follow" />
-    <meta name="app-version" content="2026-03-22-01" />
+    <meta name="app-version" content="2026-04-02-01" />
     <meta property="og:title" content="Quản Lý Lớp Học - Công Cụ Miễn Phí" />
     <meta
       property="og:description"
@@ -3630,7 +3630,7 @@
                 }
                 const endpoint =
                   `https://api.openweathermap.org/data/2.5/weather?lat=${lat}` +
-                  `&lon=${lon}&appid=${apiKey}&units=metric`;
+                  `&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`;
                 const response = await fetch(endpoint);
                 if (!response.ok) throw new Error("OpenWeather API Error");
 
@@ -3732,10 +3732,11 @@
                 let cityName = "Không xác định";
                 try {
                   const geoRes = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1&accept-language=vi`,
                     {
                       headers: {
                         Accept: "application/json",
+                        "Accept-Language": "vi-VN,vi;q=0.9",
                       },
                     },
                   );
@@ -3745,7 +3746,9 @@
                       geoData.address?.city ||
                       geoData.address?.town ||
                       geoData.address?.village ||
+                      geoData.address?.municipality ||
                       geoData.address?.county ||
+                      geoData.address?.state ||
                       "Khu vực";
                   }
                 } catch (geoError) {
