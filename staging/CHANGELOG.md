@@ -1,3 +1,10 @@
+## [1.58.13](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.12...v1.58.13) (2026-04-02)
+
+### Bug Fixes
+
+- **ui:** raise desk z-index and swap highlight layering ([f9d4466](https://github.com/daiminhdzchimto-arch/CAP/commit/f9d4466b8e0759f2ddf26d7dd1cca4102e1c90c7))
+- **weather:** lower widget z-index to 30 ([c60a44b](https://github.com/daiminhdzchimto-arch/CAP/commit/c60a44beed8048775b3f87fe4187875431adb247))
+
 ## [1.58.12](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.58.11...v1.58.12) (2026-04-02)
 
 ### Bug Fixes
