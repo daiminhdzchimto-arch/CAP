@@ -1,0 +1,19 @@
+{
+  "name": "CAP Classroom Management",
+  "short_name": "CAP Classroom",
+  "description": "Quản lý lớp học: sơ đồ lớp, thi đua, trực nhật - dùng offline như app.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2563eb",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
