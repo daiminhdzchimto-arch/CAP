@@ -1,3 +1,9 @@
+## [1.59.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.2...v1.59.3) (2026-04-02)
+
+### Bug Fixes
+
+- **weather:** fix Vietnamese city name display by adding lang=vi to API and updating reverse geocoding ([64c639f](https://github.com/daiminhdzchimto-arch/CAP/commit/64c639f1b7cc905fff056cc8cfb712fa07257d98))
+
 ## [1.59.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.1...v1.59.2) (2026-04-02)
 
 ### Bug Fixes
