@@ -1,4 +1,4 @@
-const CACHE_VERSION = "cap-pwa-v1";
+const CACHE_VERSION = "cap-pwa-v1.1";
 const CORE_ASSETS = [
   "./",
   "./index.html",
