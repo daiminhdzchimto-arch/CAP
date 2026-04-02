@@ -86,6 +86,7 @@ const WeatherModule = (() => {
         pointer-events: none;
         z-index: 1;
         background: transparent;
+        opacity: 0.6;
       `;
       document.body.insertBefore(canvas, document.body.firstChild);
     }
@@ -126,14 +127,17 @@ const WeatherModule = (() => {
         padding: 12px 16px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         font-family: 'Noto Sans Vietnamese', 'Inter', sans-serif;
-        z-index: 1000;
+        z-index: 30;
         min-width: 200px;
         backdrop-filter: blur(10px);
+        opacity: 0.6;
+        transition: opacity 0.3s, box-shadow 0.2s ease;
         cursor: grab;
         user-select: none;
         -webkit-user-select: none;
-        transition: box-shadow 0.2s ease;
       `;
+      widget.addEventListener('mouseenter', () => { widget.style.opacity = '1'; });
+      widget.addEventListener('mouseleave', () => { widget.style.opacity = '0.6'; });
       document.body.appendChild(widget);
 
       // Add drag and toggle functionality
@@ -655,8 +659,9 @@ const WeatherModule = (() => {
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 2;
-        background: radial-gradient(ellipse at center, rgba(100, 150, 200, 0) 0%, rgba(100, 150, 200, 0.05) 100%);
+        z-index: 1;
+        background: radial-gradient(ellipse at center, rgba(150, 150, 150, 0) 0%, rgba(150, 150, 150, 0.02) 100%);
+        opacity: 0.3;
       `;
       document.body.appendChild(overlay);
     }
@@ -738,8 +743,9 @@ const WeatherModule = (() => {
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 2;
-        background: radial-gradient(ellipse at center, rgba(200, 220, 255, 0) 0%, rgba(200, 220, 255, 0.1) 100%);
+        z-index: 1;
+        background: radial-gradient(ellipse at center, rgba(200, 220, 255, 0) 0%, rgba(200, 220, 255, 0.05) 100%);
+        opacity: 0.4;
       `;
       document.body.appendChild(overlay);
     }
@@ -853,9 +859,10 @@ const WeatherModule = (() => {
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 2;
-        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.15) 100%);
-        backdrop-filter: blur(2px);
+        z-index: 1;
+        background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0) 0%, rgba(200, 200, 200, 0.08) 100%);
+        backdrop-filter: blur(1px);
+        opacity: 0.4;
       `;
       document.body.appendChild(fogOverlay);
     }
