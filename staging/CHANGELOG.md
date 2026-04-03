@@ -1,3 +1,9 @@
+# [1.71.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.2...v1.71.0) (2026-04-03)
+
+### Features
+
+- **routing:** dùng hash path phân cấp cho các phần liên quan ([b0c9efd](https://github.com/daiminhdzchimto-arch/CAP/commit/b0c9efd07d06611524de617912fa424646c34921))
+
 ## [1.70.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.1...v1.70.2) (2026-04-03)
 
 ### Bug Fixes
