@@ -9925,7 +9925,7 @@
           
           const dayLabel = dayData.isDayOff ? `<span class="text-red-600 font-bold"><i class="fas fa-ban mr-1"></i>T${dayData.day}</span>` : `T${dayData.day}`;
           
-          tr.innerHTML = `<td class="text-xl font-bold">${dayLabel}</td>
+          tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">${dayLabel}</td>
                     <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.sweep || ""}</div></td>
                     <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.trash || ""}</div></td>
                     <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.board || ""}</div></td>
@@ -9960,6 +9960,41 @@
 
       function toggleDayOffMode() {
         dayOffMode = !dayOffMode;
+        if (dayOffMode) {
+          showToast("Chế độ Ngày nghỉ: Bật (Click vào Thứ để đánh dấu)");
+        } else {
+          showToast("Chế độ Ngày nghỉ: Tắt");
+        }
+        renderDutyTable(currentSchedule);
+      }
+
+      function handleDutyDayClick(day) {
+        if (!dayOffMode) return;
+        
+        if (dayOffs.includes(day)) {
+          dayOffs = dayOffs.filter(d => d !== day);
+        } else {
+          dayOffs.push(day);
+        }
+        
+        // Cập nhật lại schedule
+        if (currentSchedule && currentSchedule.days) {
+          currentSchedule.days.forEach(d => {
+            if (d.day === day) {
+              d.isDayOff = dayOffs.includes(day);
+              // Nếu chuyển thành ngày nghỉ, xóa nội dung cũ
+              if (d.isDayOff) {
+                DUTY_ROLE_KEYS.forEach(role => d.roles[role] = "Nghỉ");
+              } else {
+                // Nếu bỏ ngày nghỉ, có thể để trống hoặc giữ nguyên "Nghỉ" để người dùng tự sửa
+                // Ở đây ta giữ nguyên để tránh mất dữ liệu nếu lỡ tay
+              }
+            }
+          });
+        }
+        
+        renderDutyTable(currentSchedule);
+        saveData(); // Lưu trạng thái mới
       }
 
       // =================================================================
