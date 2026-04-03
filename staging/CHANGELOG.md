@@ -1,3 +1,9 @@
+# [1.69.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.4...v1.69.0) (2026-04-03)
+
+### Features
+
+- auto-update app version per commit ([97cf575](https://github.com/daiminhdzchimto-arch/CAP/commit/97cf575eee6f2e1fa8eb52ff19f849ef468b6718))
+
 ## [1.68.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.3...v1.68.4) (2026-04-03)
 
 ### Bug Fixes
