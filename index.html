@@ -3040,6 +3040,14 @@
         "monitorClass",
         "monitorArea",
       ];
+
+      // --- New Constants for Duty Algorithm ---
+      const HEAVY_FAULT_PATTERNS = [
+        /vắng/i, /muộn/i, /kp/i, /không phép/i, /sđb/i, /scđ/i, /cờ đỏ/i, /đánh nhau/i, /quay cóp/i, /điện thoại/i, /đt/i, /nói tục/i
+      ];
+      const LIGHT_FAULT_PATTERNS = [
+        /mtt/i, /mặt tối tối/i, /vs bẩn/i, /vệ sinh bẩn/i, /nhắc nhở/i, /không chép bài/i, /ăn trong giờ/i, /nhuộm tóc/i
+      ];
       let selectedStudentSeat = null,
         isEditMode = false;
       let selectedDeskKey = null;
@@ -9770,10 +9778,128 @@
         showToast(`Đã đổi lịch nhanh giữa ${firstName} và ${secondName}.`);
       }
 
+      function expandText(text) {
+        if (!text) return "";
+        const mapping = {
+          "kp": "không phép",
+          "ko phép": "không phép",
+          "sđb": "sổ đầu bài",
+          "scđ": "sổ cờ đỏ",
+          "vs": "vệ sinh",
+          "mtt": "mặt tối tối",
+          "đt": "điện thoại"
+        };
+        let expanded = text;
+        Object.keys(mapping).forEach(key => {
+          const regex = new RegExp(`\\b${key}\\b`, 'gi');
+          expanded = expanded.replace(regex, mapping[key]);
+        });
+        return expanded;
+      }
+
+      function calculateFaultPoints(text) {
+        if (!text) return 0;
+        const expanded = expandText(text);
+        const parts = expanded.split(/[,;\n]/).map(p => p.trim()).filter(Boolean);
+        let points = 0;
+        parts.forEach(part => {
+          let matched = false;
+          HEAVY_FAULT_PATTERNS.forEach(pattern => {
+            if (pattern.test(part)) {
+              points += 2;
+              matched = true;
+            }
+          });
+          if (!matched) {
+            LIGHT_FAULT_PATTERNS.forEach(pattern => {
+              if (pattern.test(part)) {
+                points += 1;
+              }
+            });
+          }
+        });
+        return points;
+      }
+
+      function getStatsFromRow(tr) {
+        const cells = tr.querySelectorAll("td");
+        if (cells.length < 4) return null;
+        const name = cells[1].innerText.trim();
+        const achievementText = cells[2].innerText.trim();
+        const violationText = cells[3].innerText.trim();
+
+        // Tính điểm tốt (8-10đ)
+        const achMatches = achievementText.match(/\d+/g) || [];
+        const goodPoints = achMatches.filter(p => parseInt(p) >= 8).length;
+
+        // Tính điểm lỗi
+        let faultPoints = calculateFaultPoints(violationText);
+
+        // Bù trừ: 2 điểm tốt trừ 1 lỗi (ưu tiên lỗi nặng trước)
+        const deductible = Math.floor(goodPoints / 2);
+        const actualFaults = Math.max(0, faultPoints - deductible);
+
+        return { name, actualFaults, faultPoints };
+      }
+
+      function calculateAdvancedDutySchedule() {
+        // Bước 1: Thu thập điểm lỗi
+        const tbody = document.getElementById("competition-tbody");
+        if (!tbody) return buildDutySchedule(collectEligibleDutyStudents());
+        
+        const rows = tbody.querySelectorAll("tr");
+        const studentsData = [];
+        rows.forEach(tr => {
+          const stats = getStatsFromRow(tr);
+          if (stats) studentsData.push(stats);
+        });
+
+        // Bước 2: Tính tổng điểm lỗi
+        const totalFaults = studentsData.reduce((sum, s) => sum + s.actualFaults, 0);
+
+        // Bước 3: Xác định chế độ
+        let mode = 'normal';
+        if (totalFaults === 0) mode = 'zero';
+        else if (totalFaults <= 12) mode = 'hybrid';
+        else mode = 'penalty';
+
+        // Lấy danh sách học sinh từ dãy được chọn
+        const eligibleStudents = collectEligibleDutyStudents();
+        
+        // Hàng đợi lỗi
+        const heavyQ = studentsData.filter(s => s.actualFaults >= 2).sort((a, b) => b.actualFaults - a.actualFaults).map(s => s.name);
+        const lightQ = studentsData.filter(s => s.actualFaults > 0 && s.actualFaults < 2).map(s => s.name);
+
+        const days = DUTY_DAYS.map((day, dIdx) => {
+          const roles = {};
+          const isDayOff = dayOffs.includes(day);
+
+          if (isDayOff) {
+            DUTY_ROLE_KEYS.forEach(k => roles[k] = "Nghỉ");
+          } else {
+            DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
+              let assigned = "";
+              if (mode === 'penalty' || mode === 'hybrid') {
+                if (heavyQ.length > 0) assigned = heavyQ.shift();
+                else if (lightQ.length > 0) assigned = lightQ.shift();
+              }
+              
+              if (!assigned) {
+                assigned = eligibleStudents[(dIdx * DUTY_ROLE_KEYS.length + rIdx) % eligibleStudents.length] || "Trống";
+              }
+              roles[roleKey] = assigned;
+            });
+          }
+          return { day, roles, isDayOff };
+        });
+
+        const cleaners = studentsData.filter(s => s.actualFaults >= 4).map(s => s.name);
+        return { days, cleaners, mode };
+      }
+
       function confirmDutyAssignment() {
         saveDutySettings();
-        const students = collectEligibleDutyStudents();
-        currentSchedule = buildDutySchedule(students);
+        currentSchedule = calculateAdvancedDutySchedule();
         closeDutyModal();
         document
           .getElementById("view-competition-main")
@@ -9810,6 +9936,15 @@
                     <td><div class="editable-cell" contenteditable="true"></div></td>`;
           tbody.appendChild(tr);
         });
+
+        // Update cleaners list in footer if available
+        if (data.cleaners && data.cleaners.length > 0) {
+          const footerCells = document.querySelectorAll("#duty-board tfoot .footer-editable");
+          if (footerCells.length > 0) {
+            footerCells[0].innerText = data.cleaners.join(", ");
+          }
+        }
+
         tbody.querySelectorAll(".editable-cell").forEach((cell) => {
           cell.addEventListener("input", updateDutyHomeAlert);
         });
