@@ -1,3 +1,9 @@
+## [1.68.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.2...v1.68.3) (2026-04-03)
+
+### Bug Fixes
+
+- **ui:** remove duty action text labels and keep icons only ([266e26b](https://github.com/daiminhdzchimto-arch/CAP/commit/266e26b6bc3bf25718ad4297c3b7c619485f66dd))
+
 ## [1.68.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.1...v1.68.2) (2026-04-03)
 
 ### Bug Fixes
