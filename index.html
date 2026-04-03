@@ -90,8 +90,13 @@
       body.dark-mode .text-gray-500,
       body.dark-mode .text-gray-600,
       body.dark-mode .text-gray-700,
-      body.dark-mode .text-gray-800 {
+      body.dark-mode .text-gray-800,
+      body.dark-mode .text-gray-900,
+      body.dark-mode .text-slate-700 {
           color: #d1d5db !important;
+      }
+      body.dark-mode .text-gray-900 {
+          color: #f3f4f6 !important;
       }
       body.dark-mode .modal-content {
           background: #111827;
@@ -127,6 +132,58 @@
       body.dark-mode input::placeholder,
       body.dark-mode textarea::placeholder {
           color: #9ca3af;
+      }
+      body.dark-mode .comp-table,
+      body.dark-mode .duty-table {
+          background: #0f172a;
+          color: #e5e7eb;
+      }
+      body.dark-mode .comp-table td,
+      body.dark-mode .duty-table td {
+          border-color: #475569;
+      }
+      body.dark-mode .duty-table th {
+          background: #1e293b;
+          color: #f8fafc;
+          border-color: #64748b;
+      }
+      body.dark-mode .header-input,
+      body.dark-mode .header-date-input,
+      body.dark-mode .date-input,
+      body.dark-mode .footer-editable,
+      body.dark-mode .spider-web-line,
+      body.dark-mode .duty-note-outside,
+      body.dark-mode .role-section label {
+          color: #e2e8f0;
+      }
+      body.dark-mode .header-input,
+      body.dark-mode .header-date-input,
+      body.dark-mode .date-input {
+          border-bottom-color: #94a3b8;
+      }
+      body.dark-mode .footer-editable:focus {
+          background-color: rgba(30, 64, 175, 0.2);
+      }
+      body.dark-mode .editable-cell:hover {
+          background-color: rgba(56, 189, 248, 0.18);
+      }
+      body.dark-mode .day-off,
+      body.dark-mode .day-off .editable-cell {
+          background-color: #1e293b !important;
+          color: #94a3b8;
+      }
+      body.dark-mode .duty-preview-table th {
+          background: #1e3a8a;
+          color: #e0f2fe;
+      }
+      body.dark-mode .duty-preview-table td {
+          background: #0f172a;
+          color: #e2e8f0;
+          border-color: #475569;
+      }
+      body.dark-mode .shuffle-option-btn:hover,
+      body.dark-mode .mini-row:hover {
+          background-color: #1f2937;
       }
       button,
       label.cursor-pointer {
