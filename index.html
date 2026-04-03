@@ -11175,6 +11175,7 @@
         document.getElementById("student-list-input").value =
           data.studentList || "";
         const competitionData = data.compData || {};
+        restoreCompetitionDataToRows(competitionData);
         genderMap = data.genderMap || {};
         if (data.dutySettings) {
           dayOffs = data.dutySettings.dayOffs || [];
@@ -11193,9 +11194,6 @@
         if (key !== PRIMARY_STORAGE_KEY) {
           saveData({ notify: false, animate: false });
         }
-
-        // Khôi phục dữ liệu bảng thi đua
-        restoreCompetitionDataToRows(competitionData);
       }
 
       function getISOWeekNumber(date) {
