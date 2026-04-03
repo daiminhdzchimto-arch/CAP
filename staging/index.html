@@ -1982,10 +1982,15 @@
                   >Phiên bản ứng dụng</span
                 >
                 <span
+                  id="app-version-badge"
                   class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md"
                   >v2.5.0-FINAL</span
                 >
               </div>
+              <p
+                id="app-version-meta"
+                class="mt-2 text-[11px] text-gray-500 font-semibold tracking-wide"
+              ></p>
               <button
                 onclick="clearAllData()"
                 class="w-full mt-4 p-3 text-red-500 text-xs font-bold hover:bg-red-50 rounded-xl transition flex items-center justify-center gap-2"
@@ -3400,6 +3405,72 @@
           .querySelector("meta[name='app-version']")
           ?.getAttribute("content") ?? "";
       let currentDeployCommit = "";
+
+      function setVersionBadgeText(versionLabel, metadataLabel = "") {
+        const versionBadge = document.getElementById("app-version-badge");
+        if (versionBadge && versionLabel)
+          versionBadge.textContent = versionLabel;
+
+        const versionMeta = document.getElementById("app-version-meta");
+        if (versionMeta) versionMeta.textContent = metadataLabel;
+      }
+
+      function formatVersionDate(dateInput) {
+        if (!dateInput) return "";
+        const parsedDate = new Date(dateInput);
+        if (Number.isNaN(parsedDate.getTime())) return "";
+        return new Intl.DateTimeFormat("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          timeZone: "UTC",
+        }).format(parsedDate);
+      }
+
+      function applyRuntimeVersion(versionPayload = {}) {
+        const normalizedSequence = Number(versionPayload?.versionSequence);
+        const versionSequence = Number.isFinite(normalizedSequence)
+          ? Math.max(1, Math.floor(normalizedSequence))
+          : null;
+        const shortCommit =
+          typeof versionPayload?.shortCommit === "string"
+            ? versionPayload.shortCommit.trim()
+            : "";
+        const displayVersion =
+          typeof versionPayload?.displayVersion === "string"
+            ? versionPayload.displayVersion.trim()
+            : "";
+        const versionLabel =
+          displayVersion ||
+          (versionSequence
+            ? `v2.5.${versionSequence.toString().padStart(4, "0")}-${shortCommit || "LOCAL"}`
+            : `v2.5.0-${shortCommit || "LOCAL"}`);
+
+        const firstVersionDate = formatVersionDate(
+          versionPayload?.firstVersionDate,
+        );
+        const versionMetaParts = [];
+        if (versionSequence)
+          versionMetaParts.push(`Bản cập nhật #${versionSequence}`);
+        if (firstVersionDate)
+          versionMetaParts.push(`Theo dõi từ ${firstVersionDate} (UTC)`);
+
+        setVersionBadgeText(versionLabel, versionMetaParts.join(" • "));
+      }
+
+      async function syncRuntimeVersionBadge() {
+        try {
+          const response = await fetch(
+            `${APP_VERSION_ENDPOINT.toString()}?_appVersionBadge=${Date.now()}`,
+            { cache: "no-store" },
+          );
+          if (!response.ok) return;
+          const payload = await response.json();
+          applyRuntimeVersion(payload);
+        } catch (error) {
+          console.warn("Unable to sync version badge:", error);
+        }
+      }
 
       function animateActionFeedback(
         selector,
@@ -11723,6 +11794,7 @@
         applyBlackboardFromShareLinkIfAvailable();
         loadBlackboardData();
         syncOverlays();
+        await syncRuntimeVersionBadge();
         const savedConfig = localStorage.getItem("classApp_config");
         if (savedConfig) {
           config = JSON.parse(savedConfig);
