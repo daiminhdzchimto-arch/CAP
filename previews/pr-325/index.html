@@ -10968,6 +10968,21 @@
             const clonedArea = clonedDocument.getElementById(id);
             if (!clonedArea) return;
 
+            if (id === "classroom-area") {
+              clonedArea.querySelectorAll(".desk-box").forEach((deskCell) => {
+                deskCell.style.backgroundColor = "#d5e5f2";
+                deskCell.style.borderColor = "#475569";
+                deskCell.style.boxShadow = "2px 2px 0 rgba(0, 0, 0, 0.12)";
+              });
+
+              clonedArea
+                .querySelectorAll(".desk-input")
+                .forEach((deskInput) => {
+                  deskInput.style.color = "#1f2937";
+                  deskInput.style.backgroundColor = "transparent";
+                });
+            }
+
             clonedArea.querySelectorAll(".desk-input").forEach((input) => {
               const textLayer = clonedDocument.createElement("div");
 
