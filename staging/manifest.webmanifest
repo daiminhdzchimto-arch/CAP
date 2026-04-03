@@ -1,6 +1,6 @@
 {
-  "name": "CAP Classroom Management",
-  "short_name": "CAP Classroom",
+  "name": "CAP",
+  "short_name": "CAP",
   "description": "Quản lý lớp học: sơ đồ lớp, thi đua, trực nhật - dùng offline như app.",
   "start_url": "./index.html",
   "scope": "./",

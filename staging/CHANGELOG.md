@@ -1,3 +1,9 @@
+# [1.74.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.73.0...v1.74.0) (2026-04-03)
+
+### Features
+
+- enhance animations for rotate, flip and sort operations ([b501391](https://github.com/daiminhdzchimto-arch/CAP/commit/b501391763e2954a2c5dbb3d658ede0411522227))
+
 # [1.73.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.72.1...v1.73.0) (2026-04-03)
 
 ### Features
