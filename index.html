@@ -1363,6 +1363,55 @@
                     <i class="fas fa-calendar-times mr-1"></i>
                     <span id="day-off-btn-text">Hiện Ngày Nghỉ</span>
                   </button>
+                  <details class="relative">
+                    <summary
+                      class="btn-3d btn-3d-purple duty-action-btn list-none cursor-pointer"
+                      aria-label="Mẫu kịch bản"
+                      title="Mẫu kịch bản"
+                    >
+                      <i class="fas fa-layer-group mr-1"></i> Mẫu
+                    </summary>
+                    <div
+                      class="absolute right-0 top-12 z-30 min-w-[210px] rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
+                    >
+                      <button
+                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                        onclick="loadScenario('balanced_week')"
+                      >
+                        Mẫu 1 - Tuần cân bằng
+                      </button>
+                      <button
+                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                        onclick="loadScenario('zero_fault')"
+                      >
+                        Mẫu 2 - Không vi phạm
+                      </button>
+                      <button
+                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                        onclick="loadScenario('penalty_peak')"
+                      >
+                        Mẫu 3 - Vi phạm cao
+                      </button>
+                      <button
+                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                        onclick="loadScenario('hybrid_mix')"
+                      >
+                        Mẫu 4 - Kết hợp
+                      </button>
+                      <button
+                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                        onclick="loadScenario('monitor_focus')"
+                      >
+                        Mẫu 5 - Tập trung cán sự
+                      </button>
+                      <button
+                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
+                        onclick="loadScenario('holiday_week')"
+                      >
+                        Mẫu 6 - Có ngày nghỉ
+                      </button>
+                    </div>
+                  </details>
                   <button
                     onclick="downloadImage('duty-board', 'Lich_truc_nhat')"
                     class="btn-3d btn-3d-blue duty-action-btn"
@@ -2381,21 +2430,65 @@
             <h3 class="font-bold text-gray-700 mb-3">Chọn Thời Gian</h3>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-2">Thứ</label>
+                <label class="block text-sm font-semibold text-gray-600 mb-2"
+                  >Thứ</label
+                >
                 <div class="flex flex-wrap gap-2">
-                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="2">T2</button>
-                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="3">T3</button>
-                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="4">T4</button>
-                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="5">T5</button>
-                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="6">T6</button>
-                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="7">T7</button>
+                  <button
+                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
+                    data-day="2"
+                  >
+                    T2
+                  </button>
+                  <button
+                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
+                    data-day="3"
+                  >
+                    T3
+                  </button>
+                  <button
+                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
+                    data-day="4"
+                  >
+                    T4
+                  </button>
+                  <button
+                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
+                    data-day="5"
+                  >
+                    T5
+                  </button>
+                  <button
+                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
+                    data-day="6"
+                  >
+                    T6
+                  </button>
+                  <button
+                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
+                    data-day="7"
+                  >
+                    T7
+                  </button>
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-2">Buổi</label>
+                <label class="block text-sm font-semibold text-gray-600 mb-2"
+                  >Buổi</label
+                >
                 <div class="flex gap-2">
-                  <button class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium" data-session="morning">Sáng</button>
-                  <button class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium" data-session="afternoon">Chiều</button>
+                  <button
+                    class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium"
+                    data-session="morning"
+                  >
+                    Sáng
+                  </button>
+                  <button
+                    class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium"
+                    data-session="afternoon"
+                  >
+                    Chiều
+                  </button>
                 </div>
               </div>
             </div>
@@ -2406,7 +2499,9 @@
 
           <!-- Ô nhập tay -->
           <div class="mb-6">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Nội Dung</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-2"
+              >Nội Dung</label
+            >
             <textarea
               id="input-modal-textarea"
               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -2432,7 +2527,6 @@
           </div>
         </div>
       </div>
-
 
       <!-- MODAL BẢNG ĐEN -->
       <div id="blackboard-modal" class="modal-overlay" data-close-modal="true">
@@ -3041,13 +3135,140 @@
         "monitorClass",
         "monitorArea",
       ];
+      const DUTY_DEBT_SCHEMA_VERSION = 1;
+      const DUTY_SCENARIO_PRESETS = {
+        balanced_week: {
+          title: "Mẫu 1 - Tuần cân bằng",
+          students: [
+            "Nguyễn An",
+            "Trần Bình",
+            "Lê Chi",
+            "Phạm Dũng",
+            "Vũ Hạnh",
+            "Đỗ Khang",
+            "Bùi Linh",
+            "Mai Nam",
+          ],
+          violations: {
+            "Nguyễn An": "Muộn",
+            "Phạm Dũng": "VS bẩn",
+            "Mai Nam": "Nhắc nhở",
+          },
+          achievements: { "Lê Chi": "9 Toán", "Bùi Linh": "10 Văn" },
+          dayOffs: [],
+        },
+        zero_fault: {
+          title: "Mẫu 2 - Không vi phạm",
+          students: [
+            "Đinh Anh",
+            "Cao Bảo",
+            "Tạ Châu",
+            "Hoàng Đức",
+            "Trịnh Giang",
+            "Lý Hương",
+          ],
+          violations: {},
+          achievements: { "Đinh Anh": "10 Toán", "Cao Bảo": "9 Anh" },
+          dayOffs: [],
+        },
+        penalty_peak: {
+          title: "Mẫu 3 - Vi phạm cao",
+          students: [
+            "Hà Long",
+            "Ngô Minh",
+            "Trần Ngọc",
+            "Lưu Phúc",
+            "Đặng Quân",
+            "Đỗ Sơn",
+            "Phan Trang",
+            "Võ Uy",
+          ],
+          violations: {
+            "Hà Long": "Vắng không phép, ĐT",
+            "Ngô Minh": "SĐB, SCĐ",
+            "Trần Ngọc": "Đánh nhau",
+            "Lưu Phúc": "Muộn, VS bẩn",
+          },
+          achievements: {},
+          dayOffs: [],
+        },
+        hybrid_mix: {
+          title: "Mẫu 4 - Kết hợp",
+          students: [
+            "Nguyễn Vy",
+            "Đặng Xuân",
+            "Bùi Yến",
+            "Phạm Đức",
+            "Trần Khôi",
+            "Lê My",
+            "Vũ Nhi",
+            "Đào Quỳnh",
+          ],
+          violations: {
+            "Phạm Đức": "Muộn",
+            "Trần Khôi": "VS bẩn",
+            "Lê My": "Nhắc nhở",
+          },
+          achievements: { "Nguyễn Vy": "10 Văn", "Bùi Yến": "9 Toán" },
+          dayOffs: ["7"],
+        },
+        monitor_focus: {
+          title: "Mẫu 5 - Tập trung cán sự",
+          students: [
+            "Lâm Anh",
+            "Phùng Bình",
+            "Quách Cường",
+            "Đoàn Duyên",
+            "Trịnh Em",
+            "Tống Phát",
+          ],
+          violations: { "Quách Cường": "Muộn" },
+          achievements: { "Lâm Anh": "10 Lý", "Phùng Bình": "10 Hóa" },
+          dayOffs: [],
+          excludedMembers: ["Lâm Anh"],
+        },
+        holiday_week: {
+          title: "Mẫu 6 - Có ngày nghỉ",
+          students: [
+            "Khánh",
+            "Lan",
+            "Minh",
+            "Ngân",
+            "Phong",
+            "Quỳnh",
+            "Trang",
+            "Việt",
+          ],
+          violations: { Phong: "VS bẩn", Việt: "Muộn" },
+          achievements: { Khánh: "9 Toán", Lan: "10 Văn" },
+          dayOffs: ["3", "5"],
+        },
+      };
 
       // --- New Constants for Duty Algorithm ---
       const HEAVY_FAULT_PATTERNS = [
-        /vắng/i, /muộn/i, /kp/i, /không phép/i, /sđb/i, /scđ/i, /cờ đỏ/i, /đánh nhau/i, /quay cóp/i, /điện thoại/i, /đt/i, /nói tục/i
+        /vắng/i,
+        /muộn/i,
+        /kp/i,
+        /không phép/i,
+        /sđb/i,
+        /scđ/i,
+        /cờ đỏ/i,
+        /đánh nhau/i,
+        /quay cóp/i,
+        /điện thoại/i,
+        /đt/i,
+        /nói tục/i,
       ];
       const LIGHT_FAULT_PATTERNS = [
-        /mtt/i, /mặt tối tối/i, /vs bẩn/i, /vệ sinh bẩn/i, /nhắc nhở/i, /không chép bài/i, /ăn trong giờ/i, /nhuộm tóc/i
+        /mtt/i,
+        /mặt tối tối/i,
+        /vs bẩn/i,
+        /vệ sinh bẩn/i,
+        /nhắc nhở/i,
+        /không chép bài/i,
+        /ăn trong giờ/i,
+        /nhuộm tóc/i,
       ];
       let selectedStudentSeat = null,
         isEditMode = false;
@@ -8814,7 +9035,7 @@
 
       function generateTable() {
         let input = document.getElementById("student-list-input").value.trim();
-        
+
         // Nếu textarea trống, tự động lấy danh sách tên từ sơ đồ
         if (!input) {
           const allNames = getAllStudentNames();
@@ -8829,7 +9050,7 @@
           // Cập nhật textarea để người dùng thấy danh sách đã được lấy
           document.getElementById("student-list-input").value = input;
         }
-        
+
         const names = input
           .split("\n")
           .map((n) => n.trim())
@@ -8861,16 +9082,24 @@
           const point1Input = document.createElement("div");
           point1Input.className = "editable-cell";
           point1Input.contentEditable = "true";
-          point1Input.addEventListener("blur", () => updatePoints(point1Input, "achievement"));
-          point1Input.addEventListener("click", () => openInputModal(point1Input, "achievement", n));
+          point1Input.addEventListener("blur", () =>
+            updatePoints(point1Input, "achievement"),
+          );
+          point1Input.addEventListener("click", () =>
+            openInputModal(point1Input, "achievement", n),
+          );
           point1Td.appendChild(point1Input);
 
           const point2Td = document.createElement("td");
           const point2Input = document.createElement("div");
           point2Input.className = "editable-cell";
           point2Input.contentEditable = "true";
-          point2Input.addEventListener("blur", () => updatePoints(point2Input, "violation"));
-          point2Input.addEventListener("click", () => openInputModal(point2Input, "violation", n));
+          point2Input.addEventListener("blur", () =>
+            updatePoints(point2Input, "violation"),
+          );
+          point2Input.addEventListener("click", () =>
+            openInputModal(point2Input, "violation", n),
+          );
           point2Td.appendChild(point2Input);
 
           tr.appendChild(indexTd);
@@ -9207,7 +9436,7 @@
         const cell = el.parentElement;
         // Xóa tất cả badge cũ trong ô (bao gồm cả badge điểm lỗi)
         cell.querySelectorAll(".points-badge").forEach((b) => b.remove());
-        
+
         if (type === "achievement") {
           const matches = text.match(/\d+/g);
           if (matches) {
@@ -9373,7 +9602,7 @@
               <td>${violationPoints}</td>
             </tr>`;
           })
-          .join("");
+          .join("\n");
 
         reportWindow.document.write(`
           <!doctype html>
@@ -9646,6 +9875,216 @@
         return true;
       }
 
+      function normalizeDutyDebtItem(name, raw = {}) {
+        const debt = Math.max(0, Number(raw.debt) || 0);
+        return {
+          name: String(name || raw.name || "").trim(),
+          debt,
+          updatedAt: Number(raw.updatedAt) || Date.now(),
+          lastReason: String(raw.lastReason || "").trim(),
+        };
+      }
+
+      function loadDutyDebtData() {
+        try {
+          const parsed = JSON.parse(
+            localStorage.getItem(DUTY_DEBT_KEY) || "{}",
+          );
+          const sourceItems =
+            parsed?.items && typeof parsed.items === "object"
+              ? parsed.items
+              : parsed;
+          const normalizedItems = {};
+          Object.entries(sourceItems || {}).forEach(([name, raw]) => {
+            const item = normalizeDutyDebtItem(name, raw);
+            if (item.name && item.debt > 0) normalizedItems[item.name] = item;
+          });
+          dutyDebtData = normalizedItems;
+          persistDutyDebtData();
+        } catch (_) {
+          dutyDebtData = {};
+        }
+      }
+
+      function persistDutyDebtData() {
+        const payload = {
+          version: DUTY_DEBT_SCHEMA_VERSION,
+          updatedAt: Date.now(),
+          items: dutyDebtData,
+        };
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(payload));
+      }
+
+      function renderDutyDebtRows() {
+        const tbody = document.getElementById("duty-debt-tbody");
+        if (!tbody) return;
+        const rows = Object.values(dutyDebtData).sort(
+          (a, b) => b.debt - a.debt || a.name.localeCompare(b.name, "vi"),
+        );
+        tbody.innerHTML = "";
+        if (!rows.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" class="px-3 py-4 text-center text-gray-400 text-xs italic">Chưa có nợ trực nhật.</td></tr>';
+          return;
+        }
+        rows.forEach((item) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td class="border px-2 py-1 text-sm">${item.name}</td>
+            <td class="border px-2 py-1 text-center font-bold">${item.debt}</td>
+            <td class="border px-2 py-1 text-[11px] text-gray-500">${item.lastReason || "-"}</td>
+            <td class="border px-2 py-1 text-center">
+              <button class="text-xs px-2 py-1 rounded bg-green-100 hover:bg-green-200" onclick="reduceDutyDebt('${item.name.replace(/'/g, "\'")}')">-1</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function addDutyDebtManagementUI() {
+        const actionWrap = document.querySelector(
+          "#view-duty-schedule .w-full.flex.justify-between.mb-6 .flex.gap-3",
+        );
+        if (actionWrap && !document.getElementById("open-duty-debt-btn")) {
+          const btn = document.createElement("button");
+          btn.id = "open-duty-debt-btn";
+          btn.className = "btn-3d btn-3d-orange duty-action-btn";
+          btn.title = "Quản lý nợ trực nhật";
+          btn.setAttribute("aria-label", "Quản lý nợ trực nhật");
+          btn.innerHTML = '<i class="fas fa-wallet mr-1"></i> Nợ trực nhật';
+          btn.onclick = showDutyDebtModal;
+          actionWrap.prepend(btn);
+        }
+
+        if (document.getElementById("duty-debt-modal")) return;
+        const modal = document.createElement("div");
+        modal.id = "duty-debt-modal";
+        modal.className = "modal-overlay";
+        modal.innerHTML = `<div class="modal-content max-w-3xl">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-bold text-gray-700"><i class="fas fa-wallet mr-2 text-orange-500"></i>Quản lý nợ trực nhật</h3>
+            <button class="text-gray-500 hover:text-red-500" onclick="document.getElementById('duty-debt-modal').classList.remove('open')"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="grid gap-3 md:grid-cols-[1fr_auto_auto_auto] mb-3">
+            <input id="duty-debt-name" class="border rounded px-3 py-2 text-sm" placeholder="Tên học sinh" />
+            <input id="duty-debt-amount" type="number" min="1" value="1" class="border rounded px-3 py-2 text-sm w-24" />
+            <input id="duty-debt-reason" class="border rounded px-3 py-2 text-sm" placeholder="Lý do" />
+            <button class="px-3 py-2 rounded bg-orange-500 text-white text-sm" onclick="addManualDebt()">Thêm nợ</button>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <button class="px-3 py-2 rounded bg-blue-600 text-white text-sm" onclick="updateDutyDebtFromViolations()">Cập nhật từ vi phạm</button>
+            <button class="px-3 py-2 rounded bg-gray-100 text-sm" onclick="renderDutyDebtRows()">Làm mới</button>
+          </div>
+          <div class="max-h-[50vh] overflow-auto">
+            <table class="w-full border-collapse text-xs">
+              <thead><tr><th class="border px-2 py-1">Học sinh</th><th class="border px-2 py-1">Nợ</th><th class="border px-2 py-1">Lý do</th><th class="border px-2 py-1">Giảm</th></tr></thead>
+              <tbody id="duty-debt-tbody"></tbody>
+            </table>
+          </div>
+        </div>`;
+        document.body.appendChild(modal);
+      }
+
+      function showDutyDebtModal() {
+        addDutyDebtManagementUI();
+        renderDutyDebtRows();
+        document.getElementById("duty-debt-modal")?.classList.add("open");
+      }
+
+      function addOrUpdateDebt(name, delta = 0, reason = "") {
+        const key = String(name || "").trim();
+        if (!key) return;
+        const current = normalizeDutyDebtItem(
+          key,
+          dutyDebtData[key] || { name: key, debt: 0 },
+        );
+        current.debt = Math.max(0, current.debt + delta);
+        current.updatedAt = Date.now();
+        if (reason) current.lastReason = reason;
+        if (current.debt <= 0) delete dutyDebtData[key];
+        else dutyDebtData[key] = current;
+      }
+
+      function updateDutyDebtFromViolations() {
+        const tbody = document.getElementById("competition-tbody");
+        if (!tbody) return;
+        tbody.querySelectorAll("tr").forEach((tr) => {
+          const stats = getStatsFromRow(tr);
+          if (!stats || !stats.name || stats.actualFaults <= 0) return;
+          addOrUpdateDebt(
+            stats.name,
+            stats.actualFaults,
+            "Tự động từ vi phạm thi đua",
+          );
+        });
+        persistDutyDebtData();
+        renderDutyDebtRows();
+        showToast("Đã cập nhật nợ trực nhật từ vi phạm.");
+      }
+
+      function reduceDutyDebt(name, amount = 1) {
+        addOrUpdateDebt(
+          name,
+          -Math.max(1, Number(amount) || 1),
+          "Giảm nợ sau phân công",
+        );
+        persistDutyDebtData();
+        renderDutyDebtRows();
+      }
+
+      function addManualDebt() {
+        const nameInput = document.getElementById("duty-debt-name");
+        const amountInput = document.getElementById("duty-debt-amount");
+        const reasonInput = document.getElementById("duty-debt-reason");
+        const name = (nameInput?.value || "").trim();
+        const amount = Math.max(1, Number(amountInput?.value) || 1);
+        const reason = (reasonInput?.value || "").trim() || "Thêm tay";
+        if (!name) {
+          showToast("Vui lòng nhập tên học sinh.");
+          return;
+        }
+        addOrUpdateDebt(name, amount, reason);
+        persistDutyDebtData();
+        renderDutyDebtRows();
+        nameInput.value = "";
+        reasonInput.value = "";
+      }
+
+      function loadScenario(scenarioId) {
+        const preset = DUTY_SCENARIO_PRESETS[scenarioId];
+        if (!preset) {
+          showToast("Không tìm thấy mẫu kịch bản.");
+          return;
+        }
+        document.getElementById("student-list-input").value = (
+          preset.students || []
+        ).join("\n");
+        generateTable();
+        const rows = document.querySelectorAll("#competition-tbody tr");
+        rows.forEach((tr) => {
+          const name = tr?.cells?.[1]?.innerText?.trim();
+          const editableCells = tr.querySelectorAll(".editable-cell");
+          if (editableCells.length < 2 || !name) return;
+          editableCells[0].innerText = preset.achievements?.[name] || "";
+          editableCells[1].innerText = preset.violations?.[name] || "";
+          updatePoints(editableCells[0], "achievement");
+          updatePoints(editableCells[1], "violation");
+        });
+
+        dayOffs = [...(preset.dayOffs || [])];
+        excludedMembers = [...(preset.excludedMembers || [])];
+        dutySelection = {};
+        [leftSideData, rightSideData].forEach((side, sideIndex) => {
+          side.forEach((_, rowIndex) => {
+            dutySelection[`${sideIndex === 0 ? "left" : "right"}-${rowIndex}`] =
+              "class";
+          });
+        });
+
+        currentSchedule = calculateAdvancedDutySchedule();
+        renderDutyTable(currentSchedule);
+        saveData({ notify: false, animate: false });
+        showToast(`Đã nạp ${preset.title}.`);
+      }
+
       function saveDutySettings() {
         dayOffs = Array.from(
           document.querySelectorAll(".day-off-check:checked"),
@@ -9690,10 +10129,10 @@
           students.length > 0 ? students : ["(chưa có)", "(chưa có)"];
         const days = DUTY_DAYS.map((day, dayIndex) => {
           const roles = {};
-          
+
           // Kiểm tra xem ngày này có phải là ngày nghỉ không
           const isDayOff = dayOffs && dayOffs.includes(day);
-          
+
           if (isDayOff) {
             // Nếu là ngày nghỉ, gán "Nghỉ" cho tất cả các nhiệm vụ
             DUTY_ROLE_KEYS.forEach((roleKey) => {
@@ -9702,10 +10141,11 @@
           } else {
             // Nếu không phải ngày nghỉ, phân công xoay vòng như bình thường
             DUTY_ROLE_KEYS.forEach((roleKey, roleIndex) => {
-              roles[roleKey] = safeList[(dayIndex + roleIndex) % safeList.length];
+              roles[roleKey] =
+                safeList[(dayIndex + roleIndex) % safeList.length];
             });
           }
-          
+
           return { day, roles, isDayOff };
         });
         return { days };
@@ -9721,7 +10161,9 @@
           if (dayData.isDayOff) {
             row.classList.add("bg-gray-100", "opacity-60");
           }
-          const dayLabel = dayData.isDayOff ? `<strong><i class="fas fa-ban text-red-500 mr-1"></i>T${dayData.day}</strong>` : `<strong>T${dayData.day}</strong>`;
+          const dayLabel = dayData.isDayOff
+            ? `<strong><i class="fas fa-ban text-red-500 mr-1"></i>T${dayData.day}</strong>`
+            : `<strong>T${dayData.day}</strong>`;
           row.innerHTML = `
             <td>${dayLabel}</td>
             <td>${dayData.roles.sweep || ""}</td>
@@ -9810,17 +10252,17 @@
       function expandText(text) {
         if (!text) return "";
         const mapping = {
-          "kp": "không phép",
+          kp: "không phép",
           "ko phép": "không phép",
-          "sđb": "sổ đầu bài",
-          "scđ": "sổ cờ đỏ",
-          "vs": "vệ sinh",
-          "mtt": "mặt tối tối",
-          "đt": "điện thoại"
+          sđb: "sổ đầu bài",
+          scđ: "sổ cờ đỏ",
+          vs: "vệ sinh",
+          mtt: "mặt tối tối",
+          đt: "điện thoại",
         };
         let expanded = text;
-        Object.keys(mapping).forEach(key => {
-          const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        Object.keys(mapping).forEach((key) => {
+          const regex = new RegExp(`\\b${key}\\b`, "gi");
           expanded = expanded.replace(regex, mapping[key]);
         });
         return expanded;
@@ -9829,18 +10271,21 @@
       function calculateFaultPoints(text) {
         if (!text) return 0;
         const expanded = expandText(text);
-        const parts = expanded.split(/[,;\n]/).map(p => p.trim()).filter(Boolean);
+        const parts = expanded
+          .split(/[,;\n]/)
+          .map((p) => p.trim())
+          .filter(Boolean);
         let points = 0;
-        parts.forEach(part => {
+        parts.forEach((part) => {
           let matched = false;
-          HEAVY_FAULT_PATTERNS.forEach(pattern => {
+          HEAVY_FAULT_PATTERNS.forEach((pattern) => {
             if (pattern.test(part)) {
               points += 2;
               matched = true;
             }
           });
           if (!matched) {
-            LIGHT_FAULT_PATTERNS.forEach(pattern => {
+            LIGHT_FAULT_PATTERNS.forEach((pattern) => {
               if (pattern.test(part)) {
                 points += 1;
               }
@@ -9859,7 +10304,7 @@
 
         // Tính điểm tốt (8-10đ)
         const achMatches = achievementText.match(/\d+/g) || [];
-        const goodPoints = achMatches.filter(p => parseInt(p) >= 8).length;
+        const goodPoints = achMatches.filter((p) => parseInt(p) >= 8).length;
 
         // Tính điểm lỗi
         let faultPoints = calculateFaultPoints(violationText);
@@ -9871,63 +10316,122 @@
         return { name, actualFaults, faultPoints };
       }
 
+      function calculatePenaltyLogic(
+        studentsData,
+        eligibleStudents,
+        mode = "penalty",
+      ) {
+        const eligibleSet = new Set(
+          (eligibleStudents || []).map((name) => normalizeNameToken(name)),
+        );
+        const debtQ = Object.values(dutyDebtData || {})
+          .filter(
+            (item) =>
+              item?.debt > 0 && eligibleSet.has(normalizeNameToken(item.name)),
+          )
+          .sort((a, b) => b.debt - a.debt)
+          .map((item) => item.name);
+        const heavyQ = studentsData
+          .filter(
+            (s) =>
+              s.actualFaults >= 2 &&
+              eligibleSet.has(normalizeNameToken(s.name)),
+          )
+          .sort((a, b) => b.actualFaults - a.actualFaults)
+          .map((s) => s.name);
+        const lightQ = studentsData
+          .filter(
+            (s) =>
+              s.actualFaults > 0 &&
+              s.actualFaults < 2 &&
+              eligibleSet.has(normalizeNameToken(s.name)),
+          )
+          .map((s) => s.name);
+
+        const assignedCount = {};
+        const pickFromQueue = () => {
+          const queues =
+            mode === "hybrid"
+              ? [debtQ, heavyQ, lightQ]
+              : [debtQ, heavyQ, lightQ];
+          for (const q of queues) {
+            while (q.length) {
+              const candidate = q.shift();
+              const norm = normalizeNameToken(candidate);
+              if (!eligibleSet.has(norm)) continue;
+              assignedCount[norm] = (assignedCount[norm] || 0) + 1;
+              return candidate;
+            }
+          }
+          return "";
+        };
+
+        return { pickFromQueue };
+      }
+
+      function calculateZeroFaultSchedule(eligibleStudents) {
+        const fallback = eligibleStudents?.length
+          ? eligibleStudents
+          : collectEligibleDutyStudents();
+        return buildDutySchedule(fallback);
+      }
+
       function calculateAdvancedDutySchedule() {
-        // Bước 1: Thu thập điểm lỗi
         const tbody = document.getElementById("competition-tbody");
-        if (!tbody) return buildDutySchedule(collectEligibleDutyStudents());
-        
-        const rows = tbody.querySelectorAll("tr");
+        const eligibleStudents = collectEligibleDutyStudents();
+        if (!tbody || !eligibleStudents.length)
+          return buildDutySchedule(eligibleStudents);
+
         const studentsData = [];
-        rows.forEach(tr => {
+        tbody.querySelectorAll("tr").forEach((tr) => {
           const stats = getStatsFromRow(tr);
           if (stats) studentsData.push(stats);
         });
 
-        // Bước 2: Tính tổng điểm lỗi
-        const totalFaults = studentsData.reduce((sum, s) => sum + s.actualFaults, 0);
+        const totalFaults = studentsData.reduce(
+          (sum, s) => sum + s.actualFaults,
+          0,
+        );
+        if (totalFaults === 0) {
+          const zeroSchedule = calculateZeroFaultSchedule(eligibleStudents);
+          return { ...zeroSchedule, mode: "zero", cleaners: [] };
+        }
 
-        // Bước 3: Xác định chế độ
-        let mode = 'normal';
-        if (totalFaults === 0) mode = 'zero';
-        else if (totalFaults <= 12) mode = 'hybrid';
-        else mode = 'penalty';
-
-        // Lấy danh sách học sinh từ dãy được chọn
-        const eligibleStudents = collectEligibleDutyStudents();
-        
-        // Hàng đợi lỗi
-        const heavyQ = studentsData.filter(s => s.actualFaults >= 2).sort((a, b) => b.actualFaults - a.actualFaults).map(s => s.name);
-        const lightQ = studentsData.filter(s => s.actualFaults > 0 && s.actualFaults < 2).map(s => s.name);
+        const mode = totalFaults <= 12 ? "hybrid" : "penalty";
+        const { pickFromQueue } = calculatePenaltyLogic(
+          studentsData,
+          eligibleStudents,
+          mode,
+        );
 
         const days = DUTY_DAYS.map((day, dIdx) => {
           const roles = {};
           const isDayOff = dayOffs.includes(day);
-
           if (isDayOff) {
-            DUTY_ROLE_KEYS.forEach(k => roles[k] = "Nghỉ");
-          } else {
-            DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
-              let assigned = "";
-              if (mode === 'penalty' || mode === 'hybrid') {
-                if (heavyQ.length > 0) assigned = heavyQ.shift();
-                else if (lightQ.length > 0) assigned = lightQ.shift();
-              }
-              
-              if (!assigned) {
-                assigned = eligibleStudents[(dIdx * DUTY_ROLE_KEYS.length + rIdx) % eligibleStudents.length] || "Trống";
-              }
-              roles[roleKey] = assigned;
-            });
+            DUTY_ROLE_KEYS.forEach((key) => (roles[key] = "Nghỉ"));
+            return { day, roles, isDayOff };
           }
+          DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
+            const prioritized = pickFromQueue();
+            roles[roleKey] =
+              prioritized ||
+              eligibleStudents[
+                (dIdx * DUTY_ROLE_KEYS.length + rIdx) % eligibleStudents.length
+              ] ||
+              "Trống";
+          });
           return { day, roles, isDayOff };
         });
 
-        const cleaners = studentsData.filter(s => s.actualFaults >= 4).map(s => s.name);
+        const cleaners = studentsData
+          .filter((s) => s.actualFaults >= 4)
+          .map((s) => s.name);
         return { days, cleaners, mode };
       }
 
       function confirmDutyAssignment() {
         saveDutySettings();
+        updateDutyDebtFromViolations();
         currentSchedule = calculateAdvancedDutySchedule();
         closeDutyModal();
         document
@@ -9937,6 +10441,15 @@
           .getElementById("view-duty-schedule")
           .classList.remove("hidden");
         renderDutyTable(currentSchedule);
+        const assignedNames = new Set();
+        currentSchedule?.days?.forEach((dayData) => {
+          if (dayData?.isDayOff) return;
+          Object.values(dayData.roles || {}).forEach((name) => {
+            if (name && name !== "Nghỉ" && name !== "Trống")
+              assignedNames.add(name);
+          });
+        });
+        assignedNames.forEach((name) => reduceDutyDebt(name, 1));
       }
 
       function renderDutyTable(data = currentSchedule) {
@@ -9948,7 +10461,7 @@
 
           const tr = document.createElement("tr");
           tr.dataset.dutyDay = dayData.day;
-          
+
           if (dayData.isDayOff) {
             tr.classList.add("day-off", "bg-gray-100", "opacity-60");
             tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">
@@ -9974,7 +10487,9 @@
 
         // Update cleaners list in footer if available
         if (data.cleaners && data.cleaners.length > 0) {
-          const footerCells = document.querySelectorAll("#duty-board tfoot .footer-editable");
+          const footerCells = document.querySelectorAll(
+            "#duty-board tfoot .footer-editable",
+          );
           if (footerCells.length > 0) {
             footerCells[0].innerText = data.cleaners.join(", ");
           }
@@ -10008,21 +10523,21 @@
 
       function handleDutyDayClick(day) {
         if (!dayOffMode) return;
-        
+
         if (dayOffs.includes(day)) {
-          dayOffs = dayOffs.filter(d => d !== day);
+          dayOffs = dayOffs.filter((d) => d !== day);
         } else {
           dayOffs.push(day);
         }
-        
+
         // Cập nhật lại schedule
         if (currentSchedule && currentSchedule.days) {
-          currentSchedule.days.forEach(d => {
+          currentSchedule.days.forEach((d) => {
             if (d.day === day) {
               d.isDayOff = dayOffs.includes(day);
               // Nếu chuyển thành ngày nghỉ, xóa nội dung cũ
               if (d.isDayOff) {
-                DUTY_ROLE_KEYS.forEach(role => d.roles[role] = "Nghỉ");
+                DUTY_ROLE_KEYS.forEach((role) => (d.roles[role] = "Nghỉ"));
               } else {
                 // Nếu bỏ ngày nghỉ, có thể để trống hoặc giữ nguyên "Nghỉ" để người dùng tự sửa
                 // Ở đây ta giữ nguyên để tránh mất dữ liệu nếu lỡ tay
@@ -10030,7 +10545,7 @@
             }
           });
         }
-        
+
         renderDutyTable(currentSchedule);
         saveData(); // Lưu trạng thái mới
       }
@@ -10340,6 +10855,94 @@
         showToast("Đã xuất file thành công!");
       }
 
+      function applyImportedData(data) {
+        if (!data) throw new Error("Dữ liệu rỗng");
+        const importedMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+        const restoredFixed = [];
+        const left = normalizeImportedSide(
+          data.seating?.left,
+          restoredFixed,
+          importedMeta.leftRows,
+          importedMeta.leftCols,
+        );
+        const right = normalizeImportedSide(
+          data.seating?.right,
+          restoredFixed,
+          importedMeta.rightRows,
+          importedMeta.rightCols,
+        );
+
+        layoutMeta = importedMeta;
+        leftSideData = left;
+        rightSideData = right;
+        specialDesks = Array.isArray(data.specialDesks)
+          ? data.specialDesks
+          : [];
+        fixedMembers =
+          data.fixedMembers && data.fixedMembers.length
+            ? data.fixedMembers
+            : restoredFixed;
+        conflictGraph = normalizeConflictGraphEntities(
+          data.conflictGraph || {},
+        );
+
+        if (data.titles) {
+          document.getElementById("classroom-title").value =
+            data.titles.classroomTitle || "";
+          document.getElementById("school-year").value =
+            data.titles.schoolYear || "";
+        }
+        document.getElementById("student-list-input").value =
+          data.studentList || "";
+        genderMap = data.genderMap || {};
+        if (data.dutySettings) {
+          dayOffs = data.dutySettings.dayOffs || [];
+          excludedMembers = data.dutySettings.excludedMembers || [];
+          morningOff = data.dutySettings.morningOff || false;
+          afternoonOff = data.dutySettings.afternoonOff || false;
+        }
+        currentSchedule = data.dutySchedule || null;
+        shuffleHistory = Array.isArray(data.shuffleHistory)
+          ? data.shuffleHistory
+          : [];
+        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+          ? data.shuffleHistoryCounter
+          : shuffleHistory.length;
+
+        syncOverlays();
+        syncLayoutConfigUI();
+        renderAll();
+        saveData({ notify: false, animate: false });
+      }
+
+      function parseOptimizedShareCodeData(shortCode) {
+        const usesFallbackCodec = shortCode.startsWith(
+          SHARE_CODE_FALLBACK_PREFIX,
+        );
+        const rawCode = usesFallbackCodec
+          ? shortCode.slice(SHARE_CODE_FALLBACK_PREFIX.length)
+          : shortCode.startsWith(SHARE_CODE_PREFIX)
+            ? shortCode.slice(SHARE_CODE_PREFIX.length)
+            : shortCode;
+        const decompressed = usesFallbackCodec
+          ? decodeBase64Utf8(rawCode)
+          : hasLZStringSupport()
+            ? LZString.decompressFromBase64(rawCode)
+            : null;
+        if (!decompressed) throw new Error("Mã không hợp lệ hoặc bị hỏng");
+        const payload = JSON.parse(decompressed);
+        if (!payload || !Array.isArray(payload.s) || payload.s.length < 2)
+          throw new Error("Sai định dạng dữ liệu");
+        return {
+          seating: { left: payload.s[0], right: payload.s[1] },
+          layoutMeta: payload.lm || {},
+          specialDesks: Array.isArray(payload.sd) ? payload.sd : [],
+          conflictGraph: payload.c || {},
+          dutySettings: payload.d || {},
+          fixedMembers: [],
+        };
+      }
+
       function importFromFile(input) {
         const file = input.files[0];
         if (!file) return;
@@ -10347,72 +10950,10 @@
         reader.onload = (e) => {
           try {
             const data = JSON.parse(e.target.result);
-            const importedMeta = sanitizeLayoutMeta(data.layoutMeta || {});
-            const isValidRowWidth = (side = []) =>
-              Array.isArray(side) &&
-              side.every((row) => {
-                if (!Array.isArray(row)) return false;
-                const expectedWidth =
-                  side === data.seating.left
-                    ? importedMeta.leftCols
-                    : importedMeta.rightCols;
-                const totalWidth = row.reduce(
-                  (sum, seat) => sum + (Number(seat?.width) || 0),
-                  0,
-                );
-                return totalWidth === expectedWidth;
-              });
-
-            if (
-              !data?.seating ||
-              !isValidRowWidth(data.seating.left) ||
-              !isValidRowWidth(data.seating.right)
-            ) {
-              showToast(
-                "File không hợp lệ: tổng width mỗi hàng phải khớp số cột cấu hình!",
-              );
-              return;
-            }
-
-            layoutMeta = importedMeta;
-            leftSideData = data.seating.left;
-            rightSideData = data.seating.right;
-            specialDesks = Array.isArray(data.specialDesks)
-              ? data.specialDesks
-              : [];
-            fixedMembers = data.fixedMembers || [];
-            conflictGraph = normalizeConflictGraphEntities(
-              data.conflictGraph || {},
-            );
-            if (data.titles) {
-              document.getElementById("classroom-title").value =
-                data.titles.classroomTitle;
-              document.getElementById("school-year").value =
-                data.titles.schoolYear;
-            }
-            document.getElementById("student-list-input").value =
-              data.studentList || "";
-            genderMap = data.genderMap || {};
-            if (data.dutySettings) {
-              dayOffs = data.dutySettings.dayOffs || [];
-              excludedMembers = data.dutySettings.excludedMembers || [];
-              morningOff = data.dutySettings.morningOff || false;
-              afternoonOff = data.dutySettings.afternoonOff || false;
-            }
-            currentSchedule = data.dutySchedule || null;
-            shuffleHistory = Array.isArray(data.shuffleHistory)
-              ? data.shuffleHistory
-              : [];
-            shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
-              ? data.shuffleHistoryCounter
-              : shuffleHistory.length;
-            syncOverlays();
-            syncLayoutConfigUI();
-            renderAll();
-            saveData({ notify: false, animate: false });
+            applyImportedData(data);
             closeShareModal();
             showToast("Đã nhập dữ liệu thành công!");
-          } catch (err) {
+          } catch (_) {
             showToast("File không hợp lệ!");
           }
         };
@@ -10429,7 +10970,7 @@
           data = res.data;
           key = res.key;
         }
-        
+
         if (!data) {
           layoutMeta = { ...DEFAULT_LAYOUT_META };
           leftSideData = createDefaultArray(
@@ -10719,56 +11260,8 @@
       // ==========================================
       function parseOptimizedShareCode(shortCode) {
         try {
-          const usesFallbackCodec = shortCode.startsWith(
-            SHARE_CODE_FALLBACK_PREFIX,
-          );
-          const rawCode = usesFallbackCodec
-            ? shortCode.slice(SHARE_CODE_FALLBACK_PREFIX.length)
-            : shortCode.startsWith(SHARE_CODE_PREFIX)
-              ? shortCode.slice(SHARE_CODE_PREFIX.length)
-              : shortCode;
-
-          const decompressed = usesFallbackCodec
-            ? decodeBase64Utf8(rawCode)
-            : hasLZStringSupport()
-              ? LZString.decompressFromBase64(rawCode)
-              : null;
-          if (!decompressed) throw new Error("Mã không hợp lệ hoặc bị hỏng");
-
-          const payload = JSON.parse(decompressed);
-          if (!payload || !Array.isArray(payload.s) || payload.s.length < 2)
-            throw new Error("Sai định dạng dữ liệu");
-
-          const restoredFixed = [];
-          layoutMeta = sanitizeLayoutMeta(payload.lm || {});
-          leftSideData = normalizeImportedSide(
-            payload.s[0],
-            restoredFixed,
-            layoutMeta.leftRows,
-            layoutMeta.leftCols,
-          );
-          rightSideData = normalizeImportedSide(
-            payload.s[1],
-            restoredFixed,
-            layoutMeta.rightRows,
-            layoutMeta.rightCols,
-          );
-          specialDesks = Array.isArray(payload.sd) ? payload.sd : [];
-          fixedMembers = restoredFixed;
-
-          conflictGraph = Object.fromEntries(
-            Object.entries(payload.c || {}).map(([k, v]) => [k, new Set(v)]),
-          );
-          if (payload.d) {
-            dayOffs = payload.d.dayOffs || [];
-            excludedMembers = payload.d.excludedMembers || [];
-            morningOff = payload.d.morningOff || false;
-            afternoonOff = payload.d.afternoonOff || false;
-          }
-
-          saveData();
-          syncLayoutConfigUI();
-          renderAll();
+          const parsedData = parseOptimizedShareCodeData(shortCode);
+          applyImportedData(parsedData);
           return true;
         } catch (error) {
           console.error("Lỗi Import:", error);
@@ -10877,47 +11370,23 @@
       function importFromCode() {
         const code = document.getElementById("import-code-input").value.trim();
         try {
+          let importedData = null;
           if (
             code.startsWith(SHARE_CODE_PREFIX) ||
             code.startsWith(SHARE_CODE_FALLBACK_PREFIX)
           ) {
-            if (!parseOptimizedShareCode(code))
-              throw new Error("Mã không hợp lệ!");
+            importedData = parseOptimizedShareCodeData(code);
           } else {
-            const parsedOptimized = parseOptimizedShareCode(code);
-            if (!parsedOptimized) {
-              const data = decodeLegacyShareCode(code);
-              layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
-              leftSideData = normalizeImportedSide(
-                data.seating.left,
-                [],
-                layoutMeta.leftRows,
-                layoutMeta.leftCols,
-              );
-              rightSideData = normalizeImportedSide(
-                data.seating.right,
-                [],
-                layoutMeta.rightRows,
-                layoutMeta.rightCols,
-              );
-              specialDesks = Array.isArray(data.specialDesks)
-                ? data.specialDesks
-                : [];
-              fixedMembers = data.fixedMembers || [];
-              conflictGraph = Object.fromEntries(
-                Object.entries(data.conflictGraph || {}).map(([k, v]) => [
-                  k,
-                  new Set(v),
-                ]),
-              );
-              syncLayoutConfigUI();
-              saveData();
-              renderAll();
+            try {
+              importedData = parseOptimizedShareCodeData(code);
+            } catch (_) {
+              importedData = decodeLegacyShareCode(code);
             }
           }
+          applyImportedData(importedData);
           closeShareModal();
           showToast("Đã nhập dữ liệu thành công!");
-        } catch (e) {
+        } catch (_) {
           showToast("Mã không hợp lệ!");
         }
       }
@@ -11205,6 +11674,8 @@
         }
         await applyMobileLandscapeMode();
         runPostFixChecks();
+        loadDutyDebtData();
+        addDutyDebtManagementUI();
         updateDutyHomeAlert();
         setupAutoSaveOnPageLifecycle();
         setupContinuousAutoSave();
@@ -11266,23 +11737,49 @@
         type: null,
         studentName: null,
         selectedDay: null,
-        selectedSession: null
+        selectedSession: null,
       };
 
       // Achievement tags (điểm số và môn học)
       const ACHIEVEMENT_TAGS = {
-        scores: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1', '0'],
-        subjects: ['Toán', 'Văn', 'Anh', 'Lý', 'Hóa', 'Sinh', 'Sử', 'Địa', 'GDCD', 'Tin', 'Thể dục', 'Âm nhạc', 'Mỹ thuật']
+        scores: ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1", "0"],
+        subjects: [
+          "Toán",
+          "Văn",
+          "Anh",
+          "Lý",
+          "Hóa",
+          "Sinh",
+          "Sử",
+          "Địa",
+          "GDCD",
+          "Tin",
+          "Thể dục",
+          "Âm nhạc",
+          "Mỹ thuật",
+        ],
       };
 
       // Violation tags (các nhóm lỗi)
       const VIOLATION_TAGS = {
-        'Vắng & Muộn': ['Vắng', 'Muộn', 'Kp (không phép)', 'Cơm chiều'],
-        'Sổ Đầu Bài': ['SĐB', 'Quên sổ', 'Không làm bài'],
-        'Sổ Cờ Đỏ': ['SCĐ', 'Cờ đỏ'],
-        'Kỷ Luật Chung': ['Đánh nhau', 'Quay cóp', 'Ăn trong giờ', 'Nhuộm tóc', 'ĐT (dùng điện thoại)', 'Nói tục'],
-        'Lỗi Nhẹ': ['MTT (mặt tối tối)', 'VS bẩn (vệ sinh bẩn)', 'Nhắc nhở', 'Không chép bài'],
-        'GV Nhắc Nhở': ['GV nhắc nhở']
+        "Vắng & Muộn": ["Vắng", "Muộn", "Kp (không phép)", "Cơm chiều"],
+        "Sổ Đầu Bài": ["SĐB", "Quên sổ", "Không làm bài"],
+        "Sổ Cờ Đỏ": ["SCĐ", "Cờ đỏ"],
+        "Kỷ Luật Chung": [
+          "Đánh nhau",
+          "Quay cóp",
+          "Ăn trong giờ",
+          "Nhuộm tóc",
+          "ĐT (dùng điện thoại)",
+          "Nói tục",
+        ],
+        "Lỗi Nhẹ": [
+          "MTT (mặt tối tối)",
+          "VS bẩn (vệ sinh bẩn)",
+          "Nhắc nhở",
+          "Không chép bài",
+        ],
+        "GV Nhắc Nhở": ["GV nhắc nhở"],
       };
 
       function openInputModal(cell, type, studentName) {
@@ -11293,60 +11790,73 @@
         inputModalState.selectedSession = null;
 
         // Update title
-        const title = type === 'achievement' ? 'Nhập Thành Tích' : 'Nhập Vi Phạm';
-        document.getElementById('input-modal-title').innerHTML = 
-          (type === 'achievement' ? '<i class="fas fa-star mr-2"></i>' : '<i class="fas fa-exclamation-triangle mr-2"></i>') + title;
+        const title =
+          type === "achievement" ? "Nhập Thành Tích" : "Nhập Vi Phạm";
+        document.getElementById("input-modal-title").innerHTML =
+          (type === "achievement"
+            ? '<i class="fas fa-star mr-2"></i>'
+            : '<i class="fas fa-exclamation-triangle mr-2"></i>') + title;
 
         // Clear previous state
-        document.querySelectorAll('.day-btn, .session-btn').forEach(btn => btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500'));
-        document.getElementById('input-modal-textarea').value = '';
+        document
+          .querySelectorAll(".day-btn, .session-btn")
+          .forEach((btn) =>
+            btn.classList.remove(
+              "bg-blue-500",
+              "text-white",
+              "border-blue-500",
+            ),
+          );
+        document.getElementById("input-modal-textarea").value = "";
 
         // Render content based on type
         renderInputModalContent(type);
 
         // Open modal
-        document.getElementById('input-modal').classList.add('open');
+        document.getElementById("input-modal").classList.add("open");
       }
 
       function renderInputModalContent(type) {
-        const contentDiv = document.getElementById('input-modal-content');
-        contentDiv.innerHTML = '';
+        const contentDiv = document.getElementById("input-modal-content");
+        contentDiv.innerHTML = "";
 
-        if (type === 'achievement') {
+        if (type === "achievement") {
           // Render achievement content
           let html = '<div class="mb-4">';
-          
+
           // Điểm số
           html += '<div class="mb-4">';
-          html += '<h4 class="text-sm font-semibold text-gray-700 mb-2">Điểm Số</h4>';
+          html +=
+            '<h4 class="text-sm font-semibold text-gray-700 mb-2">Điểm Số</h4>';
           html += '<div class="flex flex-wrap gap-2">';
-          ACHIEVEMENT_TAGS.scores.forEach(score => {
+          ACHIEVEMENT_TAGS.scores.forEach((score) => {
             html += `<button class="score-tag px-3 py-2 rounded border border-gray-300 hover:bg-green-100 text-sm font-medium" data-score="${score}">${score}</button>`;
           });
-          html += '</div></div>';
+          html += "</div></div>";
 
           // Môn học
-          html += '<div>';
-          html += '<h4 class="text-sm font-semibold text-gray-700 mb-2">Môn Học</h4>';
+          html += "<div>";
+          html +=
+            '<h4 class="text-sm font-semibold text-gray-700 mb-2">Môn Học</h4>';
           html += '<div class="flex flex-wrap gap-2">';
-          ACHIEVEMENT_TAGS.subjects.forEach(subject => {
+          ACHIEVEMENT_TAGS.subjects.forEach((subject) => {
             html += `<button class="subject-tag px-3 py-2 rounded border border-gray-300 hover:bg-purple-100 text-sm font-medium" data-subject="${subject}">${subject}</button>`;
           });
-          html += '</div></div>';
-          
-          html += '</div>';
+          html += "</div></div>";
+
+          html += "</div>";
           contentDiv.innerHTML = html;
 
           // Add event listeners for achievement tags
-          contentDiv.querySelectorAll('.score-tag').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+          contentDiv.querySelectorAll(".score-tag").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
               e.preventDefault();
               addToTextarea(btn.dataset.score);
             });
           });
 
-          contentDiv.querySelectorAll('.subject-tag').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+          contentDiv.querySelectorAll(".subject-tag").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
               e.preventDefault();
               addToTextarea(btn.dataset.subject);
             });
@@ -11354,23 +11864,23 @@
         } else {
           // Render violation content
           let html = '<div class="mb-4">';
-          
+
           Object.entries(VIOLATION_TAGS).forEach(([group, tags]) => {
             html += `<div class="mb-4">`;
             html += `<h4 class="text-sm font-semibold text-gray-700 mb-2">${group}</h4>`;
             html += `<div class="flex flex-wrap gap-2">`;
-            tags.forEach(tag => {
+            tags.forEach((tag) => {
               html += `<button class="violation-tag px-3 py-2 rounded border border-gray-300 hover:bg-red-100 text-sm font-medium" data-tag="${tag}">${tag}</button>`;
             });
             html += `</div></div>`;
           });
-          
-          html += '</div>';
+
+          html += "</div>";
           contentDiv.innerHTML = html;
 
           // Add event listeners for violation tags
-          contentDiv.querySelectorAll('.violation-tag').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+          contentDiv.querySelectorAll(".violation-tag").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
               e.preventDefault();
               addToTextarea(btn.dataset.tag);
             });
@@ -11379,88 +11889,105 @@
       }
 
       function addToTextarea(text) {
-        const textarea = document.getElementById('input-modal-textarea');
+        const textarea = document.getElementById("input-modal-textarea");
         const currentText = textarea.value.trim();
-        
+
         if (currentText) {
-          textarea.value = currentText + ', ' + text;
+          textarea.value = currentText + ", " + text;
         } else {
           textarea.value = text;
         }
-        
+
         textarea.focus();
       }
 
       function closeInputModal() {
-        document.getElementById('input-modal').classList.remove('open');
+        document.getElementById("input-modal").classList.remove("open");
         inputModalState = {
           cell: null,
           type: null,
           studentName: null,
           selectedDay: null,
-          selectedSession: null
+          selectedSession: null,
         };
       }
 
       function saveInputModal() {
-        const textarea = document.getElementById('input-modal-textarea');
+        const textarea = document.getElementById("input-modal-textarea");
         const content = textarea.value.trim();
 
         if (!content) {
-          showToast('Vui lòng nhập nội dung');
+          showToast("Vui lòng nhập nội dung");
           return;
         }
 
         if (!inputModalState.selectedDay || !inputModalState.selectedSession) {
-          showToast('Vui lòng chọn thứ và buổi');
+          showToast("Vui lòng chọn thứ và buổi");
           return;
         }
 
         // Format: [T2-Sáng] content
-        const dayLabel = 'T' + inputModalState.selectedDay;
-        const sessionLabel = inputModalState.selectedSession === 'morning' ? 'Sáng' : 'Chiều';
+        const dayLabel = "T" + inputModalState.selectedDay;
+        const sessionLabel =
+          inputModalState.selectedSession === "morning" ? "Sáng" : "Chiều";
         const formattedContent = `[${dayLabel}-${sessionLabel}] ${content}`;
 
         // Add to cell
         if (inputModalState.cell) {
           const currentText = inputModalState.cell.innerText.trim();
           if (currentText) {
-            inputModalState.cell.innerText = currentText + '\n' + formattedContent;
+            inputModalState.cell.innerText =
+              currentText + "\n" + formattedContent;
           } else {
             inputModalState.cell.innerText = formattedContent;
           }
-          
+
           // Trigger blur event to update points
-          inputModalState.cell.dispatchEvent(new Event('blur'));
+          inputModalState.cell.dispatchEvent(new Event("blur"));
         }
 
         closeInputModal();
-        showToast('Đã thêm vào ô');
+        showToast("Đã thêm vào ô");
       }
 
       // Add event listeners for day and session buttons
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener("DOMContentLoaded", function () {
         // Day buttons
-        document.addEventListener('click', function(e) {
-          if (e.target.classList.contains('day-btn')) {
-            document.querySelectorAll('.day-btn').forEach(btn => {
-              btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+        document.addEventListener("click", function (e) {
+          if (e.target.classList.contains("day-btn")) {
+            document.querySelectorAll(".day-btn").forEach((btn) => {
+              btn.classList.remove(
+                "bg-blue-500",
+                "text-white",
+                "border-blue-500",
+              );
             });
-            e.target.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+            e.target.classList.add(
+              "bg-blue-500",
+              "text-white",
+              "border-blue-500",
+            );
             inputModalState.selectedDay = e.target.dataset.day;
           }
 
           // Session buttons
-          if (e.target.classList.contains('session-btn')) {
-            document.querySelectorAll('.session-btn').forEach(btn => {
-              btn.classList.remove('bg-orange-500', 'text-white', 'border-orange-500');
+          if (e.target.classList.contains("session-btn")) {
+            document.querySelectorAll(".session-btn").forEach((btn) => {
+              btn.classList.remove(
+                "bg-orange-500",
+                "text-white",
+                "border-orange-500",
+              );
             });
-            e.target.classList.add('bg-orange-500', 'text-white', 'border-orange-500');
+            e.target.classList.add(
+              "bg-orange-500",
+              "text-white",
+              "border-orange-500",
+            );
             inputModalState.selectedSession = e.target.dataset.session;
           }
         });
       });
-
     </script>
     <script src="./scripts/weather.js"></script>
   </body>

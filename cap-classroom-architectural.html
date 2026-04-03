@@ -138,8 +138,23 @@
             ARCHITECTURAL LAYOUT ENGINE
           </p>
         </div>
-        <div class="mono text-xs text-slate-400">
-          Desktop viewport optimized
+        <div class="flex items-center gap-2">
+          <select
+            id="arch-scenario-select"
+            class="tech-border bg-[#090D14] px-2 py-1 mono text-[11px] text-slate-300"
+            onchange="loadScenario(this.value)"
+          >
+            <option value="">Mẫu bố cục</option>
+            <option value="balanced_week">Mẫu 1</option>
+            <option value="zero_fault">Mẫu 2</option>
+            <option value="penalty_peak">Mẫu 3</option>
+            <option value="hybrid_mix">Mẫu 4</option>
+            <option value="monitor_focus">Mẫu 5</option>
+            <option value="holiday_week">Mẫu 6</option>
+          </select>
+          <div class="mono text-xs text-slate-400">
+            Desktop viewport optimized
+          </div>
         </div>
       </header>
 
@@ -467,6 +482,119 @@
 
       let selectedFurniture = null;
 
+      const DUTY_DEBT_KEY = "classApp_duty_debt";
+      let dutyDebtData = {};
+      const DUTY_SCENARIO_PRESETS = {
+        balanced_week: { items: ["Student Desk", "Teacher Desk", "Door"] },
+        zero_fault: { items: ["Student Desk", "Whiteboard"] },
+        penalty_peak: {
+          items: ["Student Desk", "Student Desk", "Door", "Whiteboard"],
+        },
+        hybrid_mix: { items: ["Teacher Desk", "Student Desk", "Window"] },
+        monitor_focus: { items: ["Teacher Desk", "Door", "Whiteboard"] },
+        holiday_week: { items: ["Student Desk", "Window", "Window"] },
+      };
+
+      function addDutyDebtManagementUI() {
+        if (document.getElementById("arch-duty-debt-btn")) return;
+        const exportScreen = document.getElementById("export");
+        if (!exportScreen) return;
+        const btn = document.createElement("button");
+        btn.id = "arch-duty-debt-btn";
+        btn.className = "tech-border mono mt-3 bg-[#161C24] px-3 py-2 text-xs";
+        btn.textContent = "Debt Manager";
+        btn.onclick = showDutyDebtModal;
+        exportScreen.querySelector(".grid-paper")?.after(btn);
+      }
+
+      function showDutyDebtModal() {
+        const name = prompt("Tên học sinh cần thêm/giảm nợ:", "");
+        if (!name) return;
+        const delta = Number(prompt("Nhập số nợ (+/-):", "1")) || 0;
+        if (delta >= 0) addManualDebt(name, delta, "Architectural manual");
+        else reduceDutyDebt(name, Math.abs(delta));
+      }
+
+      function updateDutyDebtFromViolations() {
+        // Architectural demo does not have competition table; keep API stable.
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+      }
+
+      function reduceDutyDebt(name, amount = 1) {
+        const key = String(name || "").trim();
+        if (!key) return;
+        dutyDebtData[key] = Math.max(
+          0,
+          (Number(dutyDebtData[key]) || 0) - Math.max(1, Number(amount) || 1),
+        );
+        if (dutyDebtData[key] <= 0) delete dutyDebtData[key];
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+      }
+
+      function addManualDebt(name, amount = 1) {
+        const key = String(name || "").trim();
+        if (!key) return;
+        dutyDebtData[key] =
+          (Number(dutyDebtData[key]) || 0) + Math.max(1, Number(amount) || 1);
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+      }
+
+      function calculatePenaltyLogic(items = []) {
+        return items.slice().reverse();
+      }
+
+      function calculateZeroFaultSchedule(items = []) {
+        return items.slice();
+      }
+
+      function applyImportedData(data) {
+        if (!data || !Array.isArray(data.furniture)) return;
+        canvas.querySelectorAll(".furniture").forEach((item) => item.remove());
+        data.furniture.forEach((entry) => {
+          const node = document.createElement("button");
+          node.className = "furniture";
+          node.textContent = entry.label || "Item";
+          canvas.appendChild(node);
+          node.addEventListener("click", () => selectFurniture(node));
+          selectFurniture(node);
+          setFurniturePosition(
+            Number(entry.x) || 0,
+            Number(entry.y) || 0,
+            Number(entry.r) || 0,
+          );
+        });
+      }
+
+      function importFromCode() {
+        const raw = prompt("Paste JSON import data:", "");
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        applyImportedData(data);
+      }
+
+      function importFromFile(input) {
+        const file = input?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) =>
+          applyImportedData(JSON.parse(e.target.result || "{}"));
+        reader.readAsText(file);
+      }
+
+      function loadScenario(scenarioId) {
+        const scenario = DUTY_SCENARIO_PRESETS[scenarioId];
+        if (!scenario) return;
+        const data = {
+          furniture: scenario.items.map((label, idx) => ({
+            label,
+            x: 40 + (idx % 4) * 100,
+            y: 60 + Math.floor(idx / 4) * 80,
+            r: 0,
+          })),
+        };
+        applyImportedData(data);
+      }
+
       function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
       }
@@ -558,6 +686,8 @@
         const mappedY = (y / (rect.height - 12)) * (canvasRect.height - 56);
         setFurniturePosition(mappedX, mappedY, Number(inputR.value));
       });
+
+      addDutyDebtManagementUI();
 
       deleteButton.addEventListener("click", () => {
         if (!selectedFurniture) return;
