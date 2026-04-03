@@ -11018,7 +11018,8 @@
         showToast("Đã xuất file thành công!");
       }
 
-      function applyImportedData(data) {
+      function applyImportedData(data, options = {}) {
+        const { save = true, render = true } = options;
         if (!data) throw new Error("Dữ liệu rỗng");
         const importedMeta = sanitizeLayoutMeta(data.layoutMeta || {});
         const restoredFixed = [];
@@ -11057,6 +11058,7 @@
         }
         document.getElementById("student-list-input").value =
           data.studentList || "";
+        const competitionData = data.compData || {};
         genderMap = data.genderMap || {};
         if (data.dutySettings) {
           dayOffs = data.dutySettings.dayOffs || [];
@@ -11074,8 +11076,22 @@
 
         syncOverlays();
         syncLayoutConfigUI();
-        renderAll();
-        saveData({ notify: false, animate: false });
+        if (render) renderAll();
+        if (save) saveData({ notify: false, animate: false });
+        return {
+          layoutMeta: importedMeta,
+          seating: { left, right },
+          specialDesks,
+          fixedMembers,
+          conflictGraph,
+          studentList: data.studentList || "",
+          genderMap,
+          dutySettings: { dayOffs, excludedMembers, morningOff, afternoonOff },
+          dutySchedule: currentSchedule,
+          shuffleHistory,
+          shuffleHistoryCounter,
+          compData: competitionData,
+        };
       }
 
       function parseOptimizedShareCodeData(shortCode) {
@@ -11147,53 +11163,11 @@
           specialDesks = [];
           return;
         }
-        layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
-        leftSideData = normalizeImportedSide(
-          data.seating?.left,
-          [],
-          layoutMeta.leftRows,
-          layoutMeta.leftCols,
-        );
-        rightSideData = normalizeImportedSide(
-          data.seating?.right,
-          [],
-          layoutMeta.rightRows,
-          layoutMeta.rightCols,
-        );
-        specialDesks = Array.isArray(data.specialDesks)
-          ? data.specialDesks
-          : [];
-        fixedMembers = data.fixedMembers || [];
-        conflictGraph = normalizeConflictGraphEntities(
-          data.conflictGraph || {},
-        );
-        if (data.titles) {
-          document.getElementById("classroom-title").value =
-            data.titles.classroomTitle;
-          document.getElementById("school-year").value = data.titles.schoolYear;
-        }
-        document.getElementById("student-list-input").value =
-          data.studentList || "";
-        const competitionData = data.compData || {};
-        restoreCompetitionDataToRows(competitionData);
-        genderMap = data.genderMap || {};
-        if (data.dutySettings) {
-          dayOffs = data.dutySettings.dayOffs || [];
-          excludedMembers = data.dutySettings.excludedMembers || [];
-          morningOff = data.dutySettings.morningOff || false;
-          afternoonOff = data.dutySettings.afternoonOff || false;
-        }
-        currentSchedule = data.dutySchedule || null;
-        shuffleHistory = Array.isArray(data.shuffleHistory)
-          ? data.shuffleHistory
-          : [];
-        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
-          ? data.shuffleHistoryCounter
-          : shuffleHistory.length;
-
-        if (key !== PRIMARY_STORAGE_KEY) {
-          saveData({ notify: false, animate: false });
-        }
+        const normalized = applyImportedData(data, {
+          save: key !== PRIMARY_STORAGE_KEY,
+          render: false,
+        });
+        restoreCompetitionDataToRows(normalized.compData);
       }
 
       function getISOWeekNumber(date) {
