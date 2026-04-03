@@ -18,7 +18,7 @@
     />
     <meta name="author" content="CAP - Classroom Management System" />
     <meta name="robots" content="index, follow" />
-    <meta name="app-version" content="2026-04-02-01" />
+    <meta name="app-version" content="2026-04-03-01" />
     <meta property="og:title" content="Quản Lý Lớp Học - Công Cụ Miễn Phí" />
     <meta
       property="og:description"
@@ -1360,7 +1360,8 @@
                     aria-label="Bật/tắt ngày nghỉ"
                     title="Bật/tắt ngày nghỉ"
                   >
-                    <i class="fas fa-calendar-times"></i>
+                    <i class="fas fa-calendar-times mr-1"></i>
+                    <span id="day-off-btn-text">Hiện Ngày Nghỉ</span>
                   </button>
                   <button
                     onclick="downloadImage('duty-board', 'Lich_truc_nhat')"
@@ -9927,25 +9928,31 @@
         tbody.innerHTML = "";
         const schedule = data?.days?.length ? data : buildDutySchedule([]);
         schedule.days.forEach((dayData, index) => {
+          if (dayData.isDayOff && !dayOffMode) return;
+
           const tr = document.createElement("tr");
           tr.dataset.dutyDay = dayData.day;
           
-          // Them class canh bao neu la ngay nghi
           if (dayData.isDayOff) {
-            tr.classList.add("bg-gray-100", "opacity-60");
+            tr.classList.add("day-off", "bg-gray-100", "opacity-60");
+            tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">
+                              <span class="text-red-600 font-bold"><i class="fas fa-ban mr-1"></i>T${dayData.day}</span>
+                            </td>
+                            <td colspan="8" class="text-center py-4 text-gray-500 font-medium italic">
+                              (Nghỉ) – Không học
+                            </td>`;
+          } else {
+            const dayLabel = `T${dayData.day}`;
+            tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">${dayLabel}</td>
+                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
+                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
+                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
+                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
+                      ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
+                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
+                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
+                      <td><div class="editable-cell" contenteditable="true"></div></td>`;
           }
-          
-          const dayLabel = dayData.isDayOff ? `<span class="text-red-600 font-bold"><i class="fas fa-ban mr-1"></i>T${dayData.day}</span>` : `T${dayData.day}`;
-          
-          tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">${dayLabel}</td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.sweep || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.trash || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.board || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.area || ""}</div></td>
-                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="${!dayData.isDayOff}">${dayData.roles.closeDoor || ""}</div></td>` : ""}
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.monitorClass || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.monitorArea || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true"></div></td>`;
           tbody.appendChild(tr);
         });
 
@@ -9972,9 +9979,12 @@
 
       function toggleDayOffMode() {
         dayOffMode = !dayOffMode;
+        const btnText = document.getElementById("day-off-btn-text");
         if (dayOffMode) {
+          if (btnText) btnText.innerText = "Ẩn Ngày Nghỉ";
           showToast("Chế độ Ngày nghỉ: Bật (Click vào Thứ để đánh dấu)");
         } else {
+          if (btnText) btnText.innerText = "Hiện Ngày Nghỉ";
           showToast("Chế độ Ngày nghỉ: Tắt");
         }
         renderDutyTable(currentSchedule);
