@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.62.0...v1.63.0) (2026-04-03)
+
+### Features
+
+- implement calculateAdvancedDutySchedule algorithm as per spec 3.3.3 ([f4876ae](https://github.com/daiminhdzchimto-arch/CAP/commit/f4876ae8245f4aed2df2e39672080a5a63821017))
+- thêm tính năng hiển thị ngày nghỉ trên bảng lịch trực nhật ([1ed4d47](https://github.com/daiminhdzchimto-arch/CAP/commit/1ed4d478f6a92e043d206ecb44b6f40a1c4486dc))
+
 # [1.62.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.61.0...v1.62.0) (2026-04-03)
 
 ### Features
