@@ -23,15 +23,18 @@ const server = createServer(async (req, res) => {
 });
 
 async function run() {
-  await new Promise((r) => server.listen(0, host, r));
-  const address = server.address();
-  const port = address && typeof address === 'object' ? address.port : 0;
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
-  const page = await context.newPage();
-  page.on('pageerror', (err) => console.error(`[pageerror] ${err.message}`));
-
+  let browser;
+  let context;
+  let page;
   try {
+    await new Promise((r) => server.listen(0, host, r));
+    const address = server.address();
+    const port = address && typeof address === 'object' ? address.port : 0;
+    browser = await chromium.launch({ headless: true });
+    context = await browser.newContext({ ignoreHTTPSErrors: true });
+    page = await context.newPage();
+    page.on('pageerror', (err) => console.error(`[pageerror] ${err.message}`));
+
     const url = `http://${host}:${port}/index.html`;
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     const seatInput = page.locator('#left-rows-container .desk-box[data-side="left"][data-r="0"][data-c="0"] .desk-input').first();
@@ -58,9 +61,11 @@ async function run() {
     }
     console.log(`PASS: Đã lưu và tải lại đúng tên "${testName}".`);
   } finally {
-    await context.close();
-    await browser.close();
-    await new Promise((r) => server.close(r));
+    if (context) await context.close();
+    if (browser) await browser.close();
+    if (server.listening) {
+      await new Promise((r) => server.close(r));
+    }
   }
 }
 
