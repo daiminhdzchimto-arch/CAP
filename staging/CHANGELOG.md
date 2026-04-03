@@ -1,3 +1,9 @@
+## [1.70.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.1...v1.70.2) (2026-04-03)
+
+### Bug Fixes
+
+- sync help tooltip colors in dark mode ([09985cb](https://github.com/daiminhdzchimto-arch/CAP/commit/09985cb249b494603642202e3a97d839961af4b7))
+
 ## [1.70.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.0...v1.70.1) (2026-04-03)
 
 ### Bug Fixes
