@@ -1,3 +1,9 @@
+# [1.68.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.67.0...v1.68.0) (2026-04-03)
+
+### Features
+
+- **competition:** support distinguishing name suffix markers ([1274ba4](https://github.com/daiminhdzchimto-arch/CAP/commit/1274ba4e9fd7f5322f4e0ab54e892887bc4bd19d))
+
 # [1.67.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.66.0...v1.67.0) (2026-04-03)
 
 ### Features
