@@ -1,7 +1,3 @@
 #!/usr/bin/env sh
-node scripts/update-version-json.mjs --bump
-
-git add version.json
-
 npx lint-staged
 npm run lint
