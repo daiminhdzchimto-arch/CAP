@@ -1,9 +1,9 @@
 {
-  "commit": "6544edd641846e3381e918774b2339c3302b7359",
-  "shortCommit": "6544edd",
-  "builtAt": "2026-04-03T18:04:44Z",
+  "commit": "b501391763e2954a2c5dbb3d658ede0411522227",
+  "shortCommit": "b501391",
+  "builtAt": "2026-04-03T18:05:10Z",
   "firstVersionCommit": "e1a38a31f688230c08d8f69e65caab37ea53e7bc",
   "firstVersionDate": "2026-03-22T15:04:16+07:00",
-  "versionSequence": 306,
-  "displayVersion": "v2.5.0306-6544edd"
+  "versionSequence": 308,
+  "displayVersion": "v2.5.0308-b501391"
 }

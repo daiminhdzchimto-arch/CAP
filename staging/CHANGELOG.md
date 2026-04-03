@@ -1,3 +1,9 @@
+# [1.73.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.72.1...v1.73.0) (2026-04-03)
+
+### Features
+
+- **ui:** make logo icon return to home tab ([4a59e36](https://github.com/daiminhdzchimto-arch/CAP/commit/4a59e36ad33ac56f36413c5217b3defff9eb9140))
+
 ## [1.72.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.72.0...v1.72.1) (2026-04-03)
 
 ### Bug Fixes
