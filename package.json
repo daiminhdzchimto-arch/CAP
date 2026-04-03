@@ -5,7 +5,7 @@
   "description": "CAP pre-commit and commit lint tooling",
   "scripts": {
     "prepare": "husky",
-    "version:update": "node scripts/update-version-json.mjs --bump",
+    "version:update": "node scripts/update-version-json.mjs",
     "precommit": "lint-staged",
     "lint:staged": "lint-staged",
     "lint": "prettier --check README.md package.json commitlint.config.cjs .github/workflows/*.yml",
