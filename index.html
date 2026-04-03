@@ -579,6 +579,78 @@
       .modal-close-btn:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
       .modal-close-btn:active { background: rgba(239,68,68,0.14); }
       #duty-modal .modal-content { width: 95%; max-width: 1100px; }
+      .version-history-trigger {
+          transition: all 0.2s ease;
+          cursor: pointer;
+      }
+      .version-history-trigger:hover {
+          border-color: #bfdbfe;
+          background: #eff6ff;
+      }
+      .version-history-trigger:focus-visible {
+          outline: 2px solid #2563eb;
+          outline-offset: 2px;
+      }
+      .version-history-modal-content {
+          width: min(92vw, 700px);
+          max-height: min(88vh, 760px);
+      }
+      .version-history-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          max-height: min(62vh, 520px);
+          overflow-y: auto;
+          padding-right: 0.2rem;
+      }
+      .version-history-item {
+          border: 1px solid #dbeafe;
+          border-radius: 0.85rem;
+          padding: 0.9rem;
+          background: #f8fbff;
+      }
+      .version-history-item.is-latest {
+          border-color: #2563eb;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+          background: #eff6ff;
+      }
+      .version-history-caption {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #1d4ed8;
+          letter-spacing: 0.01em;
+      }
+      .version-history-description {
+          margin-top: 0.45rem;
+          color: #1f2937;
+          font-size: 0.86rem;
+          line-height: 1.45;
+          white-space: pre-wrap;
+      }
+      .version-history-date {
+          margin-top: 0.45rem;
+          font-size: 0.72rem;
+          color: #6b7280;
+          font-weight: 600;
+      }
+      body.dark-mode .version-history-trigger:hover {
+          background: #1e3a8a !important;
+          border-color: #3b82f6 !important;
+      }
+      body.dark-mode .version-history-item {
+          background: #0f172a;
+          border-color: #334155;
+      }
+      body.dark-mode .version-history-item.is-latest {
+          background: #172554;
+          border-color: #3b82f6;
+      }
+      body.dark-mode .version-history-description {
+          color: #dbeafe;
+      }
+      body.dark-mode .version-history-date {
+          color: #bfdbfe;
+      }
       .mini-row { cursor: pointer; padding: 4px; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; }
       .mini-row:hover { background-color: #f3f4f6; border-color: #d1d5db; }
       .duty-selected-class { background-color: #dcfce7 !important; border-color: #22c55e !important; }
@@ -1977,8 +2049,11 @@
               >
                 Dữ liệu & Phiên bản
               </h3>
-              <div
-                class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center"
+              <button
+                id="app-version-trigger"
+                type="button"
+                aria-label="Mở lịch sử phiên bản ứng dụng"
+                class="w-full bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center text-left version-history-trigger"
               >
                 <span class="text-xs font-bold text-gray-600"
                   >Phiên bản ứng dụng</span
@@ -1988,7 +2063,7 @@
                   class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md"
                   >v2.5.0-FINAL</span
                 >
-              </div>
+              </button>
               <p
                 id="app-version-meta"
                 class="mt-2 text-[11px] text-gray-500 font-semibold tracking-wide"
@@ -2001,6 +2076,45 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div
+        id="version-history-modal"
+        class="modal-overlay"
+        data-close-modal="true"
+        aria-hidden="true"
+      >
+        <div
+          class="modal-content version-history-modal-content"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="version-history-title"
+        >
+          <div
+            class="flex items-center justify-between gap-3 border-b pb-3 mb-4"
+          >
+            <div>
+              <h2
+                id="version-history-title"
+                class="text-lg font-black text-blue-800"
+              >
+                Lịch sử phiên bản ứng dụng
+              </h2>
+              <p class="text-xs text-gray-500 font-semibold mt-1">
+                Bản mới nhất hiển thị ở đầu danh sách
+              </p>
+            </div>
+            <button
+              type="button"
+              onclick="closeVersionHistoryModal()"
+              class="modal-close-btn"
+              aria-label="Đóng cửa sổ lịch sử phiên bản"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <div id="version-history-list" class="version-history-list"></div>
         </div>
       </div>
 
@@ -3407,6 +3521,33 @@
           .querySelector("meta[name='app-version']")
           ?.getAttribute("content") ?? "";
       let currentDeployCommit = "";
+      const APP_VERSION_HISTORY = [
+        {
+          version: "v2.5.0-FINAL",
+          tieuDe: "Bản hoàn thiện ổn định",
+          moTa: "Hoàn thiện luồng quản lý lớp học, tăng độ ổn định khi tự động lưu dữ liệu và đồng bộ các bảng điều khiển chính.",
+          ngayPhatHanh: "2026-03-29",
+        },
+        {
+          version: "v2.4.0",
+          tieuDe: "Nâng cấp trải nghiệm trực nhật",
+          moTa: "Mở rộng phần cài đặt trực nhật, cải thiện hiển thị bảng trực và bổ sung cảnh báo nợ trực để giáo viên theo dõi nhanh hơn.",
+          ngayPhatHanh: "2026-03-18",
+        },
+        {
+          version: "v2.3.0",
+          tieuDe: "Tối ưu đồng bộ giao diện",
+          moTa: "Điều chỉnh chế độ giao diện sáng/tối, tối ưu lớp phủ thời tiết và giảm giật khi thao tác trên thiết bị di động.",
+          ngayPhatHanh: "2026-03-02",
+        },
+        {
+          version: "v2.2.0",
+          tieuDe: "Mở rộng quản trị dữ liệu",
+          moTa: "Bổ sung thêm tùy chọn sao lưu, khôi phục và dọn dữ liệu; cải thiện thông báo trạng thái để tránh mất thao tác quan trọng.",
+          ngayPhatHanh: "2026-02-17",
+        },
+      ];
+      let versionHistoryLastActiveElement = null;
 
       function setVersionBadgeText(versionLabel, metadataLabel = "") {
         const versionBadge = document.getElementById("app-version-badge");
@@ -3458,6 +3599,126 @@
           versionMetaParts.push(`Theo dõi từ ${firstVersionDate} (UTC)`);
 
         setVersionBadgeText(versionLabel, versionMetaParts.join(" • "));
+        renderVersionHistoryList();
+      }
+
+      function normalizeVersionHistory() {
+        const fallbackVersion =
+          document.getElementById("app-version-badge")?.textContent?.trim() ||
+          "v2.5.0-FINAL";
+        const baseHistory = Array.isArray(APP_VERSION_HISTORY)
+          ? APP_VERSION_HISTORY
+          : [];
+        const normalized = baseHistory
+          .map((item, index) => {
+            const version =
+              typeof item?.version === "string" ? item.version.trim() : "";
+            if (!version) return null;
+            const releaseDate =
+              typeof item?.ngayPhatHanh === "string"
+                ? item.ngayPhatHanh.trim()
+                : "";
+            const releaseTimestamp = releaseDate
+              ? new Date(releaseDate).getTime()
+              : Number.NaN;
+            return {
+              version,
+              tieuDe:
+                typeof item?.tieuDe === "string" && item.tieuDe.trim()
+                  ? item.tieuDe.trim()
+                  : "Bản cập nhật ứng dụng",
+              moTa:
+                typeof item?.moTa === "string" && item.moTa.trim()
+                  ? item.moTa.trim()
+                  : "Cập nhật và cải thiện độ ổn định của hệ thống.",
+              ngayPhatHanh: releaseDate,
+              releaseTimestamp,
+              originalIndex: index,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => {
+            const aHasDate = Number.isFinite(a.releaseTimestamp);
+            const bHasDate = Number.isFinite(b.releaseTimestamp);
+            if (aHasDate && bHasDate)
+              return b.releaseTimestamp - a.releaseTimestamp;
+            if (aHasDate) return -1;
+            if (bHasDate) return 1;
+            return a.originalIndex - b.originalIndex;
+          });
+
+        if (!normalized.some((item) => item.version === fallbackVersion)) {
+          normalized.unshift({
+            version: fallbackVersion,
+            tieuDe: "Phiên bản hiện tại",
+            moTa: "Đang được áp dụng trên thiết bị của bạn.",
+            ngayPhatHanh: "",
+            releaseTimestamp: Number.NaN,
+            originalIndex: -1,
+          });
+        }
+        return normalized;
+      }
+
+      function renderVersionHistoryList() {
+        const historyContainer = document.getElementById(
+          "version-history-list",
+        );
+        if (!historyContainer) return;
+        const normalizedHistory = normalizeVersionHistory();
+        const currentVersionLabel =
+          document.getElementById("app-version-badge")?.textContent?.trim() ||
+          "";
+        historyContainer.innerHTML = "";
+
+        normalizedHistory.forEach((item, index) => {
+          const itemEl = document.createElement("article");
+          const isCurrentVersion =
+            currentVersionLabel && item.version === currentVersionLabel;
+          itemEl.className = `version-history-item${index === 0 ? " is-latest" : ""}`;
+          itemEl.setAttribute("aria-label", `Thông tin ${item.version}`);
+
+          const dateLabel = formatVersionDate(item.ngayPhatHanh);
+          itemEl.innerHTML = `
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <p class="text-sm font-black text-gray-800">${item.version}</p>
+              ${
+                isCurrentVersion
+                  ? '<span class="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full">Đang dùng</span>'
+                  : ""
+              }
+            </div>
+            <p class="version-history-caption">${item.tieuDe}</p>
+            <p class="version-history-description">${item.moTa}</p>
+            ${
+              dateLabel
+                ? `<p class="version-history-date">Ngày phát hành: ${dateLabel}</p>`
+                : '<p class="version-history-date">Ngày phát hành: Chưa có thông tin</p>'
+            }
+          `;
+          historyContainer.appendChild(itemEl);
+        });
+      }
+
+      function openVersionHistoryModal() {
+        const modal = document.getElementById("version-history-modal");
+        if (!modal) return;
+        versionHistoryLastActiveElement = document.activeElement;
+        renderVersionHistoryList();
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        const closeBtn = modal.querySelector("button[aria-label]");
+        closeBtn?.focus();
+      }
+
+      function closeVersionHistoryModal() {
+        const modal = document.getElementById("version-history-modal");
+        if (!modal) return;
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        if (versionHistoryLastActiveElement instanceof HTMLElement) {
+          versionHistoryLastActiveElement.focus();
+        }
       }
 
       async function syncRuntimeVersionBadge() {
@@ -11797,6 +12058,7 @@
         loadBlackboardData();
         syncOverlays();
         await syncRuntimeVersionBadge();
+        renderVersionHistoryList();
         const savedConfig = localStorage.getItem("classApp_config");
         if (savedConfig) {
           config = JSON.parse(savedConfig);
@@ -11918,12 +12180,23 @@
           .forEach((overlay) => {
             overlay.addEventListener("click", (event) => {
               if (event.target !== overlay) return;
+              if (overlay.id === "version-history-modal") {
+                closeVersionHistoryModal();
+                return;
+              }
               overlay.classList.remove("open");
             });
           });
       }
 
+      function setupVersionHistoryTrigger() {
+        const trigger = document.getElementById("app-version-trigger");
+        if (!trigger) return;
+        trigger.addEventListener("click", openVersionHistoryModal);
+      }
+
       setupModalOverlayClose();
+      setupVersionHistoryTrigger();
 
       document.addEventListener("click", (e) => {
         if (swapSource && !e.target.closest(".desk-input")) cancelSwapMode();
@@ -11949,6 +12222,13 @@
         }
         if (e.key === "Escape" && seat3DState.active) closeSeat3DView();
         if (e.key === "Escape") {
+          const versionHistoryModal = document.getElementById(
+            "version-history-modal",
+          );
+          if (versionHistoryModal?.classList.contains("open")) {
+            closeVersionHistoryModal();
+            return;
+          }
           hideDeskContextMenu();
           clearDeskSelection();
         }
