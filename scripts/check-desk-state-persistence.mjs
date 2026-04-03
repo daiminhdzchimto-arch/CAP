@@ -38,16 +38,20 @@ const server = createServer(async (req, res) => {
 });
 
 async function run() {
-  await new Promise((resolveListen) => server.listen(0, host, resolveListen));
-  const address = server.address();
-  const port = address && typeof address === 'object' ? address.port : 0;
+  let browser;
+  let context;
 
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
-  const page = await context.newPage();
-  page.on('pageerror', (err) => console.error(`[pageerror] ${err.message}`));
+  await new Promise((resolveListen) => server.listen(0, host, resolveListen));
 
   try {
+    const address = server.address();
+    const port = address && typeof address === 'object' ? address.port : 0;
+
+    browser = await chromium.launch({ headless: true });
+    context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const page = await context.newPage();
+    page.on('pageerror', (err) => console.error(`[pageerror] ${err.message}`));
+
     const url = `http://${host}:${port}/index.html`;
     await page.goto(url, { waitUntil: 'domcontentloaded' });
 
@@ -86,8 +90,8 @@ async function run() {
 
     console.log(`PASS: Trạng thái ghim đã được lưu và khôi phục cho ô có id ${seatId}.`);
   } finally {
-    await context.close();
-    await browser.close();
+    if (context) await context.close();
+    if (browser) await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));
   }
 }
