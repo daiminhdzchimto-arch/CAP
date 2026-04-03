@@ -1,3 +1,9 @@
+## [1.71.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.3...v1.71.4) (2026-04-03)
+
+### Bug Fixes
+
+- **ui:** sync student detail sidebar with dark mode ([a4776b8](https://github.com/daiminhdzchimto-arch/CAP/commit/a4776b89b22ee83be5b82bf274f0b76131700471))
+
 ## [1.71.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.2...v1.71.3) (2026-04-03)
 
 ### Bug Fixes
