@@ -992,15 +992,21 @@
       >
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between h-16 items-center">
-            <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick="navigateHomeFromBrand()"
+              class="flex items-center gap-2 rounded-xl p-1 -m-1 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              title="Về trang chủ"
+              aria-label="Về trang chủ"
+            >
               <div
                 class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200"
               >
                 <i class="fas fa-graduation-cap text-white text-xl"></i>
               </div>
-              <div>
+              <div class="text-left">
                 <h1 class="text-lg font-bold text-gray-900 leading-tight">
-                  CAP <span class="text-blue-600">Classroom</span>
+                  CAP
                 </h1>
                 <p
                   class="text-[10px] text-gray-500 font-medium uppercase tracking-wider"
@@ -1008,7 +1014,7 @@
                   Management System
                 </p>
               </div>
-            </div>
+            </button>
             <div
               id="top-tab-switcher"
               class="tab-switcher hidden md:flex items-center bg-gray-100 p-1 rounded-lg"
@@ -9131,6 +9137,12 @@
           };
         }
         return { tab: "seating", subView: "main" };
+      }
+
+      function navigateHomeFromBrand() {
+        if (seat3DState.active) closeSeat3DView();
+        switchTab("seating");
+        setCompetitionSubView("main");
       }
 
       function applyRouteFromHash() {
