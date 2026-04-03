@@ -113,11 +113,27 @@
           background-color: #0f172a;
           border-color: #475569;
       }
+      body.dark-mode #classroom-area {
+          background-image: radial-gradient(rgba(226, 232, 240, 0.7) 1px, transparent 1px);
+          background-color: #0b1220;
+      }
+      body.dark-mode #classroom-area .desk-box {
+          background: linear-gradient(180deg, #0f213f 0%, #0b1a33 100%);
+          border-color: #93c5fd;
+          box-shadow:
+              0 6px 14px rgba(2, 6, 23, 0.65),
+              0 1px 0 rgba(255, 255, 255, 0.18) inset,
+              0 -1px 0 rgba(15, 23, 42, 0.75) inset;
+      }
       body.dark-mode #classroom-area .desk-input {
-          color: #1f2937 !important;
+          color: #e2e8f0 !important;
+          text-shadow: 0 1px 2px rgba(2, 6, 23, 0.85);
+      }
+      body.dark-mode #classroom-area .desk-input:focus {
+          background-color: rgba(148, 163, 184, 0.14);
       }
       body.dark-mode #classroom-area .desk-box.is-fixed {
-          background-color: rgba(139, 92, 246, 0.32) !important;
+          background: linear-gradient(180deg, rgba(109, 40, 217, 0.48) 0%, rgba(76, 29, 149, 0.58) 100%) !important;
       }
       body.dark-mode #classroom-area .desk-box.is-fixed .desk-input {
           color: #f5f3ff !important;
