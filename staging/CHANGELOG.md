@@ -1,3 +1,9 @@
+## [1.69.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.2...v1.69.3) (2026-04-03)
+
+### Bug Fixes
+
+- improve dark mode text contrast across UI views ([315434d](https://github.com/daiminhdzchimto-arch/CAP/commit/315434d5fb9d59bf3cdcd4c7d3f0a0e944ac5370))
+
 ## [1.69.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.1...v1.69.2) (2026-04-03)
 
 ### Bug Fixes

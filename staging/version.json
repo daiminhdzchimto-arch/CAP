@@ -1,9 +1,9 @@
 {
-  "commit": "adb396c8d78079e2cc76ea6799a3efbf171d7979",
-  "shortCommit": "adb396c",
-  "builtAt": "2026-04-03T15:49:21Z",
+  "commit": "22c2be4f55fdf41ae972a246408a30b7058e124d",
+  "shortCommit": "22c2be4",
+  "builtAt": "2026-04-03T15:59:52Z",
   "firstVersionCommit": "e1a38a31f688230c08d8f69e65caab37ea53e7bc",
   "firstVersionDate": "2026-03-22T15:04:16+07:00",
-  "versionSequence": 257,
-  "displayVersion": "v2.5.0257-adb396c"
+  "versionSequence": 260,
+  "displayVersion": "v2.5.0260-22c2be4"
 }
