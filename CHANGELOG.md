@@ -1,3 +1,9 @@
+## [1.69.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.1...v1.69.2) (2026-04-03)
+
+### Bug Fixes
+
+- bootstrap runtime version badge and add version metadata file ([3a55821](https://github.com/daiminhdzchimto-arch/CAP/commit/3a55821f05796f8d7ede98184514f528a2732976))
+
 ## [1.69.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.0...v1.69.1) (2026-04-03)
 
 ### Bug Fixes
