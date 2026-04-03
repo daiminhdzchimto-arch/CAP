@@ -1,3 +1,9 @@
+# [1.72.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.4...v1.72.0) (2026-04-03)
+
+### Features
+
+- thêm tính năng xem lịch sử phiên bản ứng dụng (tiếng Việt) ([efc6028](https://github.com/daiminhdzchimto-arch/CAP/commit/efc6028e8b2e11a3b061ae14da6c30670b944736))
+
 ## [1.71.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.3...v1.71.4) (2026-04-03)
 
 ### Bug Fixes
