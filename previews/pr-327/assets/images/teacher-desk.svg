@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" role="img" aria-labelledby="title desc">
+  <title id="title">Bàn giáo viên</title>
+  <desc id="desc">Minh họa bàn giáo viên với sách, máy tính và sổ theo dõi.</desc>
+  <rect width="1000" height="700" fill="#f8fafc"/>
+  <rect x="120" y="290" width="760" height="240" rx="18" fill="#8b5e34"/>
+  <rect x="140" y="320" width="720" height="170" rx="10" fill="#a47148"/>
+  <rect x="200" y="130" width="280" height="170" rx="12" fill="#0f172a"/>
+  <rect x="220" y="150" width="240" height="130" rx="8" fill="#1e293b"/>
+  <rect x="540" y="170" width="240" height="38" rx="8" fill="#2563eb"/>
+  <rect x="540" y="216" width="210" height="24" rx="6" fill="#93c5fd"/>
+  <rect x="540" y="248" width="178" height="24" rx="6" fill="#bfdbfe"/>
+  <rect x="260" y="530" width="40" height="100" fill="#6b4423"/>
+  <rect x="700" y="530" width="40" height="100" fill="#6b4423"/>
+  <text x="660" y="193" font-size="18" fill="#dbeafe" font-family="'Segoe UI', sans-serif">SỔ THEO DÕI</text>
+</svg>
