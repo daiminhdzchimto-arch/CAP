@@ -1,3 +1,9 @@
+## [1.69.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.3...v1.69.4) (2026-04-03)
+
+### Bug Fixes
+
+- improve 2D dark mode seat contrast ([5aef568](https://github.com/daiminhdzchimto-arch/CAP/commit/5aef568d0f2f82fe8f6d7fddab1e059c90fc3ef7))
+
 ## [1.69.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.2...v1.69.3) (2026-04-03)
 
 ### Bug Fixes
