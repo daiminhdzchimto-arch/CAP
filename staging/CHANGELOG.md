@@ -1,3 +1,9 @@
+# [1.65.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.64.0...v1.65.0) (2026-04-03)
+
+### Features
+
+- Thêm tính năng Hiển thị lịch trực (3.4.3) - Cập nhật ngày nghỉ và hiển thị linh hoạt ([12a9ff6](https://github.com/daiminhdzchimto-arch/CAP/commit/12a9ff60b5bccdc6d19bae33d81f9578f2c2918c))
+
 # [1.64.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.63.0...v1.64.0) (2026-04-03)
 
 ### Features
