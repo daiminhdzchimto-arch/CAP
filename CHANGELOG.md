@@ -1,3 +1,9 @@
+## [1.72.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.72.0...v1.72.1) (2026-04-03)
+
+### Bug Fixes
+
+- harden image rendering and export error handling ([58a0bec](https://github.com/daiminhdzchimto-arch/CAP/commit/58a0bec637589dfa6e67942150cddcfd41a64b8f))
+
 # [1.72.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.4...v1.72.0) (2026-04-03)
 
 ### Features
