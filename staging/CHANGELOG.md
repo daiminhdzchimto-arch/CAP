@@ -1,3 +1,9 @@
+## [1.70.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.0...v1.70.1) (2026-04-03)
+
+### Bug Fixes
+
+- improve dark mode contrast in duty and input modals ([2d6b38f](https://github.com/daiminhdzchimto-arch/CAP/commit/2d6b38fb542d649724fdf5424994eeab9b70efa2))
+
 # [1.70.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.6...v1.70.0) (2026-04-03)
 
 ### Features
