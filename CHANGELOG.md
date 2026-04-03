@@ -1,3 +1,9 @@
+## [1.69.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.4...v1.69.5) (2026-04-03)
+
+### Bug Fixes
+
+- **classroom:** remove desk right-click context popup ([750b471](https://github.com/daiminhdzchimto-arch/CAP/commit/750b471ca40494bbb574c6727119f9569690d5c4))
+
 ## [1.69.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.3...v1.69.4) (2026-04-03)
 
 ### Bug Fixes
