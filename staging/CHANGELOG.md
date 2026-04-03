@@ -1,3 +1,9 @@
+## [1.69.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.0...v1.69.1) (2026-04-03)
+
+### Bug Fixes
+
+- improve dark mode input contrast ([4917771](https://github.com/daiminhdzchimto-arch/CAP/commit/4917771e1fa0c85a3bc4b68b08e969c1dc743225))
+
 # [1.69.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.4...v1.69.0) (2026-04-03)
 
 ### Features

@@ -1986,7 +1986,7 @@
                 <span
                   id="app-version-badge"
                   class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md"
-                  >v2.5.0-FINAL</span
+                  >v2.5.0-LOCAL</span
                 >
               </div>
               <p
@@ -3473,6 +3473,17 @@
           console.warn("Unable to sync version badge:", error);
         }
       }
+
+      (function bootstrapVersionBadgeSync() {
+        const runSync = () => void syncRuntimeVersionBadge();
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", runSync, {
+            once: true,
+          });
+          return;
+        }
+        runSync();
+      })();
 
       function animateActionFeedback(
         selector,
@@ -11796,7 +11807,6 @@
         applyBlackboardFromShareLinkIfAvailable();
         loadBlackboardData();
         syncOverlays();
-        await syncRuntimeVersionBadge();
         const savedConfig = localStorage.getItem("classApp_config");
         if (savedConfig) {
           config = JSON.parse(savedConfig);
