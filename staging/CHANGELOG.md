@@ -1,3 +1,9 @@
+## [1.68.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.0...v1.68.1) (2026-04-03)
+
+### Bug Fixes
+
+- ensure server cleanup when playwright launch fails ([dbcd141](https://github.com/daiminhdzchimto-arch/CAP/commit/dbcd141f3f278e15635467aa105dea933ae7b73d))
+
 # [1.68.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.67.0...v1.68.0) (2026-04-03)
 
 ### Features
