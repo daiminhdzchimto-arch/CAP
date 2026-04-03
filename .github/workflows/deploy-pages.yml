@@ -52,10 +52,9 @@ jobs:
             FIRST_VERSION_COMMIT="$(git rev-list --max-parents=0 HEAD | tail -n 1)"
           fi
 
-          VERSION_SEQUENCE="$(git rev-list --count "${FIRST_VERSION_COMMIT}"..HEAD)"
-          VERSION_SEQUENCE=$((VERSION_SEQUENCE + 1))
+          VERSION_SEQUENCE="$(date -u +%Y%m%d.%H%M%S)"
           FIRST_VERSION_DATE="$(git show -s --format=%cI "${FIRST_VERSION_COMMIT}")"
-          DISPLAY_VERSION="v2.5.$(printf '%04d' "${VERSION_SEQUENCE}")-${GITHUB_SHA::7}"
+          DISPLAY_VERSION="v2.5.${VERSION_SEQUENCE}-${GITHUB_SHA::7}"
 
           cat > version.json <<EOF
           {
@@ -64,7 +63,7 @@ jobs:
             "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "firstVersionCommit": "${FIRST_VERSION_COMMIT}",
             "firstVersionDate": "${FIRST_VERSION_DATE}",
-            "versionSequence": ${VERSION_SEQUENCE},
+            "versionSequence": "${VERSION_SEQUENCE}",
             "displayVersion": "${DISPLAY_VERSION}"
           }
           EOF

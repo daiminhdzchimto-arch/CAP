@@ -3590,10 +3590,13 @@
       }
 
       function applyRuntimeVersion(versionPayload = {}) {
-        const normalizedSequence = Number(versionPayload?.versionSequence);
-        const versionSequence = Number.isFinite(normalizedSequence)
-          ? Math.max(1, Math.floor(normalizedSequence))
-          : null;
+        const rawSequence = versionPayload?.versionSequence;
+        const versionSequence =
+          typeof rawSequence === "string" && rawSequence.trim()
+            ? rawSequence.trim()
+            : Number.isFinite(Number(rawSequence))
+              ? String(Math.max(1, Math.floor(Number(rawSequence))))
+              : "";
         const shortCommit =
           typeof versionPayload?.shortCommit === "string"
             ? versionPayload.shortCommit.trim()
@@ -3605,7 +3608,7 @@
         const versionLabel =
           displayVersion ||
           (versionSequence
-            ? `v2.5.${versionSequence.toString().padStart(4, "0")}-${shortCommit || "LOCAL"}`
+            ? `v2.5.${versionSequence}-${shortCommit || "LOCAL"}`
             : `v2.5.0-${shortCommit || "LOCAL"}`);
 
         const firstVersionDate = formatVersionDate(
