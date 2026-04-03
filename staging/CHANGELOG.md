@@ -1,3 +1,9 @@
+## [1.68.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.3...v1.68.4) (2026-04-03)
+
+### Bug Fixes
+
+- remove summary text and keep error-rule icon ([8582d9e](https://github.com/daiminhdzchimto-arch/CAP/commit/8582d9edc4c6e34d2865887d6db5a8510f7a59c1))
+
 ## [1.68.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.2...v1.68.3) (2026-04-03)
 
 ### Bug Fixes
