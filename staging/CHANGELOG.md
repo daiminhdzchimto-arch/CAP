@@ -1,3 +1,9 @@
+## [1.71.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.1...v1.71.2) (2026-04-03)
+
+### Bug Fixes
+
+- **version:** make version sequence deterministic per git history ([01b892d](https://github.com/daiminhdzchimto-arch/CAP/commit/01b892d592d845a0b7178e55c72389da0763ace5))
+
 ## [1.71.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.0...v1.71.1) (2026-04-03)
 
 ### Bug Fixes
