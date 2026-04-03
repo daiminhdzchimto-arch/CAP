@@ -1,3 +1,9 @@
+## [1.69.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.5...v1.69.6) (2026-04-03)
+
+### Bug Fixes
+
+- **version:** bump app build number on every commit ([1543ee8](https://github.com/daiminhdzchimto-arch/CAP/commit/1543ee8a467a7d16dbb8e6f8bf14ddd959d2fcde))
+
 ## [1.69.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.4...v1.69.5) (2026-04-03)
 
 ### Bug Fixes
