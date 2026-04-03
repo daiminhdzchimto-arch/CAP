@@ -1,3 +1,9 @@
+# [1.61.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.60.0...v1.61.0) (2026-04-03)
+
+### Features
+
+- add input-modal for competition board details (section 2.4.2) ([da0907f](https://github.com/daiminhdzchimto-arch/CAP/commit/da0907fd9d079ac8665d7030d780aba91aa3bb28))
+
 # [1.60.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.59.3...v1.60.0) (2026-04-02)
 
 ### Features
