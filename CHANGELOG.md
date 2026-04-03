@@ -1,3 +1,9 @@
+# [1.67.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.66.0...v1.67.0) (2026-04-03)
+
+### Features
+
+- add missing duty scenario, debt, import, and v24.1 algorithm APIs ([51a528a](https://github.com/daiminhdzchimto-arch/CAP/commit/51a528afa083979ff36409e4ef122dc37056450a))
+
 # [1.66.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.65.0...v1.66.0) (2026-04-03)
 
 ### Features
