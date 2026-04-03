@@ -555,6 +555,10 @@
       .duty-preview-table th { background: #dbeafe; font-weight: 700; color: #1e3a8a; }
       .duty-preview-table td { background: #fff; color: #1f2937; }
       .points-badge { font-size: 0.7rem; font-weight: bold; color: white; background-color: #ef4444; padding: 1px 4px; border-radius: 4px; margin-left: 4px; display: inline-block; white-space: nowrap; }
+      .competition-name-cell { padding-left: 12px !important; font-weight: 600; color: #374151; }
+      .competition-name-content { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+      .competition-name-main { min-width: 0; }
+      .competition-suffix-badge { display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; line-height: 1; color: #1e3a8a; background: #dbeafe; border: 1px solid #93c5fd; border-radius: 9999px; padding: 2px 6px; white-space: nowrap; }
       .day-off { background-color: #f3f4f6 !important; color: #9ca3af; font-style: italic; }
       .day-off .editable-cell { cursor: not-allowed; background-color: #f3f4f6 !important; color: #9ca3af; }
       .member-excluded { text-decoration: line-through; color: #9ca3af; opacity: 0.6; }
@@ -9033,6 +9037,153 @@
         );
       }
 
+      const COMPETITION_NAME_COLLATOR = new Intl.Collator("vi", {
+        sensitivity: "base",
+        numeric: true,
+        ignorePunctuation: true,
+      });
+
+      const COMPETITION_NAME_STRICT_COLLATOR = new Intl.Collator("vi", {
+        sensitivity: "variant",
+        numeric: true,
+      });
+
+      function extractCompetitionNameSuffix(fullName = "") {
+        const normalizedFullName = String(fullName).trim().replace(/\s+/g, " ");
+        if (!normalizedFullName) return { mainName: "", suffix: "" };
+
+        const suffixPatterns = [
+          /\s*[\(\[\{]\s*((?:\p{Lu})|\d+)\s*[\)\]\}]\s*$/u,
+          /\s*[-–—]\s*((?:\p{Lu})|\d+)\s*$/u,
+          /\s+((?:\p{Lu})|\d+)\s*$/u,
+        ];
+
+        for (const pattern of suffixPatterns) {
+          const match = normalizedFullName.match(pattern);
+          if (!match) continue;
+          const suffix = String(match[1] || "").trim();
+          const mainName = normalizedFullName
+            .slice(0, match.index)
+            .trim()
+            .replace(/[-–—\s]+$/g, "")
+            .trim();
+          if (!mainName || !suffix) continue;
+          return { mainName, suffix };
+        }
+
+        return { mainName: normalizedFullName, suffix: "" };
+      }
+
+      function getCompetitionSortTokens(fullName = "") {
+        const normalizedFullName = String(fullName).trim().replace(/\s+/g, " ");
+        const { mainName, suffix } =
+          extractCompetitionNameSuffix(normalizedFullName);
+        const effectiveMainName = mainName || normalizedFullName;
+        const mainParts = effectiveMainName.split(/\s+/).filter(Boolean);
+        const givenName = mainParts[mainParts.length - 1] || "";
+        const numericSuffix =
+          suffix && /^\d+$/.test(suffix) ? Number.parseInt(suffix, 10) : null;
+        return {
+          fullName: normalizedFullName,
+          mainName: effectiveMainName,
+          givenName,
+          suffix,
+          numericSuffix,
+        };
+      }
+
+      function compareCompetitionSuffix(aSuffix = "", bSuffix = "") {
+        const left = String(aSuffix || "").trim();
+        const right = String(bSuffix || "").trim();
+        if (!left && !right) return 0;
+        if (!left) return -1;
+        if (!right) return 1;
+
+        const leftIsNumeric = /^\d+$/.test(left);
+        const rightIsNumeric = /^\d+$/.test(right);
+        if (leftIsNumeric && rightIsNumeric) {
+          const numericDiff =
+            Number.parseInt(left, 10) - Number.parseInt(right, 10);
+          if (numericDiff !== 0) return numericDiff;
+        } else if (leftIsNumeric !== rightIsNumeric) {
+          return leftIsNumeric ? -1 : 1;
+        }
+
+        const localeDiff = COMPETITION_NAME_COLLATOR.compare(left, right);
+        if (localeDiff !== 0) return localeDiff;
+        return COMPETITION_NAME_STRICT_COLLATOR.compare(left, right);
+      }
+
+      function compareCompetitionStudentNames(a = "", b = "") {
+        const left = getCompetitionSortTokens(a);
+        const right = getCompetitionSortTokens(b);
+
+        const givenNameDiff = COMPETITION_NAME_COLLATOR.compare(
+          left.givenName,
+          right.givenName,
+        );
+        if (givenNameDiff !== 0) return givenNameDiff;
+
+        const mainNameDiff = COMPETITION_NAME_COLLATOR.compare(
+          left.mainName,
+          right.mainName,
+        );
+        if (mainNameDiff !== 0) return mainNameDiff;
+
+        const suffixDiff = compareCompetitionSuffix(left.suffix, right.suffix);
+        if (suffixDiff !== 0) return suffixDiff;
+
+        const fullNameDiff = COMPETITION_NAME_STRICT_COLLATOR.compare(
+          left.fullName,
+          right.fullName,
+        );
+        if (fullNameDiff !== 0) return fullNameDiff;
+
+        return 0;
+      }
+
+      function renderCompetitionStudentNameCell(nameTd, fullName) {
+        const normalizedFullName = String(fullName || "").trim();
+        const { mainName, suffix } =
+          extractCompetitionNameSuffix(normalizedFullName);
+        nameTd.innerHTML = "";
+        nameTd.dataset.competitionFullName = normalizedFullName;
+        nameTd.className = "competition-name-cell";
+
+        const contentWrap = document.createElement("div");
+        contentWrap.className = "competition-name-content";
+
+        const mainNameSpan = document.createElement("span");
+        mainNameSpan.className = "competition-name-main";
+        mainNameSpan.textContent = mainName || normalizedFullName;
+        contentWrap.appendChild(mainNameSpan);
+
+        if (suffix) {
+          const badge = document.createElement("span");
+          badge.className = "competition-suffix-badge";
+          badge.textContent = suffix;
+          badge.title = `Hậu tố phân biệt học sinh trùng tên: ${suffix}`;
+          badge.setAttribute(
+            "aria-label",
+            `Hậu tố phân biệt học sinh trùng tên ${suffix}`,
+          );
+          contentWrap.appendChild(badge);
+        }
+
+        nameTd.appendChild(contentWrap);
+      }
+
+      function getCompetitionFullNameFromCell(nameCell) {
+        if (!nameCell) return "";
+        const dataName = String(nameCell.dataset?.competitionFullName || "")
+          .trim()
+          .replace(/\s+/g, " ");
+        if (dataName) return dataName;
+        return String(nameCell.innerText || "")
+          .trim()
+          .replace(/\s+/g, " ");
+      }
+
       function generateTable() {
         let input = document.getElementById("student-list-input").value.trim();
 
@@ -9055,10 +9206,7 @@
           .split("\n")
           .map((n) => n.trim())
           .filter((n) => n !== "")
-          .sort((a, b) => {
-            const getLastName = (n) => n.split(" ").pop();
-            return getLastName(a).localeCompare(getLastName(b), "vi");
-          });
+          .sort((a, b) => compareCompetitionStudentNames(a, b));
         const tbody = document.getElementById("competition-tbody");
         tbody.innerHTML = "";
         if (!names.length) {
@@ -9075,8 +9223,7 @@
           indexTd.textContent = String(i + 1);
 
           const nameTd = document.createElement("td");
-          nameTd.className = "pl-4 font-semibold text-gray-700";
-          nameTd.textContent = n;
+          renderCompetitionStudentNameCell(nameTd, n);
 
           const point1Td = document.createElement("td");
           const point1Input = document.createElement("div");
@@ -9479,7 +9626,7 @@
           .map((row) => {
             const cells = row.querySelectorAll("td");
             if (cells.length < 4) return null;
-            const name = cells[1]?.innerText?.trim() || "";
+            const name = getCompetitionFullNameFromCell(cells[1]);
             if (!name) return null;
             const achievement = cells[2]?.querySelector(".editable-cell");
             const violation = cells[3]?.querySelector(".editable-cell");
@@ -10060,7 +10207,7 @@
         generateTable();
         const rows = document.querySelectorAll("#competition-tbody tr");
         rows.forEach((tr) => {
-          const name = tr?.cells?.[1]?.innerText?.trim();
+          const name = getCompetitionFullNameFromCell(tr?.cells?.[1]);
           const editableCells = tr.querySelectorAll(".editable-cell");
           if (editableCells.length < 2 || !name) return;
           editableCells[0].innerText = preset.achievements?.[name] || "";
@@ -10298,7 +10445,7 @@
       function getStatsFromRow(tr) {
         const cells = tr.querySelectorAll("td");
         if (cells.length < 4) return null;
-        const name = cells[1].innerText.trim();
+        const name = getCompetitionFullNameFromCell(cells[1]);
         const achievementText = cells[2].innerText.trim();
         const violationText = cells[3].innerText.trim();
 
@@ -11035,7 +11182,7 @@
         if (Object.keys(competitionData).length > 0) {
           const rows = document.querySelectorAll("#competition-tbody tr");
           rows.forEach((tr) => {
-            const name = tr.cells[1].innerText.trim();
+            const name = getCompetitionFullNameFromCell(tr.cells[1]);
             if (competitionData[name]) {
               const cells = tr.querySelectorAll(".editable-cell");
               if (cells.length >= 2) {
