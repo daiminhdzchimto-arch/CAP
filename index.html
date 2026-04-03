@@ -3135,6 +3135,14 @@
         "monitorClass",
         "monitorArea",
       ];
+      const DUTY_CLEANING_ROLE_KEYS = [
+        "sweep",
+        "trash",
+        "board",
+        "area",
+        "closeDoor",
+      ];
+      const DUTY_MONITOR_ROLE_KEYS = ["monitorClass", "monitorArea"];
       const DUTY_DEBT_SCHEMA_VERSION = 1;
       const DUTY_SCENARIO_PRESETS = {
         balanced_week: {
@@ -9667,13 +9675,7 @@
 
       function openDutyModal() {
         document.getElementById("duty-modal").classList.add("open");
-        document.getElementById("excluded-members").value =
-          excludedMembers.join("\n");
-        document
-          .querySelectorAll(".day-off-check")
-          .forEach((cb) => (cb.checked = dayOffs.includes(cb.value)));
-        document.getElementById("morning-off").checked = morningOff;
-        document.getElementById("afternoon-off").checked = afternoonOff;
+        syncDutySettingsUI();
         renderMiniMapDuty("mini-map-left", leftSideData, "left");
         renderMiniMapDuty("mini-map-right", rightSideData, "right");
         renderGenderList();
@@ -9685,9 +9687,34 @@
         document.getElementById("duty-modal").classList.remove("open");
       }
 
+      function syncDutySettingsUI() {
+        const excludedInput = document.getElementById("excluded-members");
+        if (excludedInput) excludedInput.value = excludedMembers.join("\n");
+        document
+          .querySelectorAll(".day-off-check")
+          .forEach((cb) => (cb.checked = dayOffs.includes(cb.value)));
+        const morningCheckbox = document.getElementById("morning-off");
+        const afternoonCheckbox = document.getElementById("afternoon-off");
+        if (morningCheckbox) morningCheckbox.checked = morningOff;
+        if (afternoonCheckbox) afternoonCheckbox.checked = afternoonOff;
+      }
+
+      function getExcludedMemberSet() {
+        return new Set(
+          (excludedMembers || [])
+            .map((name) => normalizeNameToken(name))
+            .filter(Boolean),
+        );
+      }
+
+      function isMemberExcluded(name, excludedSet = getExcludedMemberSet()) {
+        return excludedSet.has(normalizeNameToken(name));
+      }
+
       function renderMiniMapDuty(cid, data, side) {
         const c = document.getElementById(cid);
         c.innerHTML = "";
+        const excludedSet = getExcludedMemberSet();
         data.forEach((row, ri) => {
           const k = `${side}-${ri}`;
           const sel = dutySelection[k];
@@ -9705,6 +9732,10 @@
           makeElementKeyboardClickable(d);
           row.forEach((s) => {
             const sd = document.createElement("div");
+            const seatMembers = getSeatEntityNames(s);
+            const hasExcludedMember = seatMembers.some((name) =>
+              isMemberExcluded(name, excludedSet),
+            );
             sd.style.width =
               s.width === 1
                 ? "25%"
@@ -9713,7 +9744,10 @@
                   : s.width === 3
                     ? "75%"
                     : "100%";
-            sd.className = `h-6 border border-gray-300 rounded text-[8px] flex items-center justify-center overflow-hidden select-none bg-gray-100 text-gray-500`;
+            sd.className = `h-6 border border-gray-300 rounded text-[8px] flex items-center justify-center overflow-hidden select-none bg-gray-100 text-gray-500 ${hasExcludedMember ? "member-excluded" : ""}`;
+            if (hasExcludedMember) {
+              sd.title = "Có học sinh được loại khỏi trực nhật";
+            }
             sd.innerText = s.name ? s.name.substring(0, 3) : "";
             d.appendChild(sd);
           });
@@ -9737,6 +9771,7 @@
       function renderGenderList() {
         const c = document.getElementById("gender-list-container");
         c.innerHTML = "";
+        const excludedSet = getExcludedMemberSet();
         let s = [];
         [leftSideData, rightSideData].forEach((side, si) => {
           side.forEach((row, ri) => {
@@ -9755,12 +9790,13 @@
         }
         s.forEach((n) => {
           const d = document.createElement("div");
-          d.className = `gender-item`;
+          const excluded = isMemberExcluded(n, excludedSet);
+          d.className = `gender-item ${excluded ? "member-excluded" : ""}`;
           const m = isMaleName(n);
           const detected = detectGenderFromVietnameseName(n);
           const nameSpan = document.createElement("span");
           nameSpan.className = "text-xs font-bold text-gray-600";
-          nameSpan.textContent = n;
+          nameSpan.textContent = excluded ? `${n} (Excluded)` : n;
           const l = document.createElement("span");
           l.className = `gender-label ${m ? "is-male" : "is-female"}`;
           l.innerHTML = m
@@ -10116,11 +10152,9 @@
             );
           });
         });
-        const excludedSet = new Set(
-          excludedMembers.map((name) => normalizeNameToken(name)),
-        );
+        const excludedSet = getExcludedMemberSet();
         return [...new Set(selectedNames)].filter(
-          (name) => !excludedSet.has(normalizeNameToken(name)),
+          (name) => !isMemberExcluded(name, excludedSet),
         );
       }
 
@@ -10316,11 +10350,7 @@
         return { name, actualFaults, faultPoints };
       }
 
-      function calculatePenaltyLogic(
-        studentsData,
-        eligibleStudents,
-        mode = "penalty",
-      ) {
+      function calculatePriorityQueues(studentsData, eligibleStudents) {
         const eligibleSet = new Set(
           (eligibleStudents || []).map((name) => normalizeNameToken(name)),
         );
@@ -10347,26 +10377,53 @@
               eligibleSet.has(normalizeNameToken(s.name)),
           )
           .map((s) => s.name);
+        return { debtQ, heavyQ, lightQ, eligibleSet };
+      }
 
-        const assignedCount = {};
-        const pickFromQueue = () => {
-          const queues =
-            mode === "hybrid"
-              ? [debtQ, heavyQ, lightQ]
-              : [debtQ, heavyQ, lightQ];
+      function createPriorityPicker(queues, eligibleSet) {
+        return () => {
           for (const q of queues) {
             while (q.length) {
               const candidate = q.shift();
-              const norm = normalizeNameToken(candidate);
-              if (!eligibleSet.has(norm)) continue;
-              assignedCount[norm] = (assignedCount[norm] || 0) + 1;
+              if (!eligibleSet.has(normalizeNameToken(candidate))) continue;
               return candidate;
             }
           }
           return "";
         };
+      }
 
-        return { pickFromQueue };
+      function createMonitorDistributor(
+        eligibleStudents = [],
+        studentsData = [],
+      ) {
+        const eligibleSet = new Set(
+          eligibleStudents.map((name) => normalizeNameToken(name)),
+        );
+        const prioritized = studentsData
+          .filter(
+            (s) =>
+              s.actualFaults > 0 && eligibleSet.has(normalizeNameToken(s.name)),
+          )
+          .sort((a, b) => b.actualFaults - a.actualFaults)
+          .map((s) => s.name);
+        const fallback = eligibleStudents.filter(
+          (name) =>
+            !prioritized.some(
+              (prioritizedName) =>
+                normalizeNameToken(prioritizedName) ===
+                normalizeNameToken(name),
+            ),
+        );
+        const monitorPool = [...prioritized, ...fallback];
+        let cursor = 0;
+        return (dayIndex, roleIndex) => {
+          if (!monitorPool.length) return "";
+          const picked =
+            monitorPool[(cursor + dayIndex + roleIndex) % monitorPool.length];
+          cursor += 1;
+          return picked;
+        };
       }
 
       function calculateZeroFaultSchedule(eligibleStudents) {
@@ -10398,10 +10455,17 @@
         }
 
         const mode = totalFaults <= 12 ? "hybrid" : "penalty";
-        const { pickFromQueue } = calculatePenaltyLogic(
+        const { debtQ, heavyQ, lightQ, eligibleSet } = calculatePriorityQueues(
           studentsData,
           eligibleStudents,
-          mode,
+        );
+        const pickPriorityName = createPriorityPicker(
+          [debtQ, heavyQ, lightQ],
+          eligibleSet,
+        );
+        const distributeMonitor = createMonitorDistributor(
+          eligibleStudents,
+          studentsData,
         );
 
         const days = DUTY_DAYS.map((day, dIdx) => {
@@ -10411,13 +10475,28 @@
             DUTY_ROLE_KEYS.forEach((key) => (roles[key] = "Nghỉ"));
             return { day, roles, isDayOff };
           }
-          DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
-            const prioritized = pickFromQueue();
-            roles[roleKey] =
-              prioritized ||
+
+          DUTY_CLEANING_ROLE_KEYS.forEach((roleKey, rIdx) => {
+            const prioritized = pickPriorityName();
+            const fallbackName =
               eligibleStudents[
-                (dIdx * DUTY_ROLE_KEYS.length + rIdx) % eligibleStudents.length
-              ] ||
+                (dIdx * DUTY_CLEANING_ROLE_KEYS.length + rIdx) %
+                  eligibleStudents.length
+              ] || "Trống";
+            if (mode === "penalty") {
+              roles[roleKey] = prioritized || fallbackName;
+            } else {
+              roles[roleKey] =
+                (rIdx % 2 === 0 ? prioritized : "") ||
+                fallbackName ||
+                prioritized;
+            }
+          });
+          DUTY_MONITOR_ROLE_KEYS.forEach((roleKey, monitorIdx) => {
+            const pickedMonitor = distributeMonitor(dIdx, monitorIdx);
+            roles[roleKey] =
+              pickedMonitor ||
+              eligibleStudents[(dIdx + monitorIdx) % eligibleStudents.length] ||
               "Trống";
           });
           return { day, roles, isDayOff };
@@ -10855,64 +10934,124 @@
         showToast("Đã xuất file thành công!");
       }
 
-      function applyImportedData(data) {
-        if (!data) throw new Error("Dữ liệu rỗng");
-        const importedMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+      function normalizeImportedData(rawData) {
+        if (!rawData || typeof rawData !== "object")
+          throw new Error("Dữ liệu rỗng");
+        const importedMeta = sanitizeLayoutMeta(rawData.layoutMeta || {});
         const restoredFixed = [];
         const left = normalizeImportedSide(
-          data.seating?.left,
+          rawData.seating?.left,
           restoredFixed,
           importedMeta.leftRows,
           importedMeta.leftCols,
         );
         const right = normalizeImportedSide(
-          data.seating?.right,
+          rawData.seating?.right,
           restoredFixed,
           importedMeta.rightRows,
           importedMeta.rightCols,
         );
+        const normalizedDutySettings = rawData.dutySettings || {};
+        return {
+          layoutMeta: importedMeta,
+          seating: { left, right },
+          specialDesks: Array.isArray(rawData.specialDesks)
+            ? rawData.specialDesks
+            : [],
+          fixedMembers:
+            Array.isArray(rawData.fixedMembers) && rawData.fixedMembers.length
+              ? rawData.fixedMembers
+              : restoredFixed,
+          conflictGraph: normalizeConflictGraphEntities(
+            rawData.conflictGraph || {},
+          ),
+          titles: {
+            classroomTitle: rawData.titles?.classroomTitle || "",
+            schoolYear: rawData.titles?.schoolYear || "",
+          },
+          studentList: rawData.studentList || "",
+          genderMap:
+            rawData.genderMap && typeof rawData.genderMap === "object"
+              ? rawData.genderMap
+              : {},
+          dutySettings: {
+            dayOffs: Array.isArray(normalizedDutySettings.dayOffs)
+              ? normalizedDutySettings.dayOffs
+              : [],
+            excludedMembers: Array.isArray(
+              normalizedDutySettings.excludedMembers,
+            )
+              ? normalizedDutySettings.excludedMembers
+              : [],
+            morningOff: !!normalizedDutySettings.morningOff,
+            afternoonOff: !!normalizedDutySettings.afternoonOff,
+          },
+          dutySchedule: rawData.dutySchedule || null,
+          shuffleHistory: Array.isArray(rawData.shuffleHistory)
+            ? rawData.shuffleHistory
+            : [],
+          shuffleHistoryCounter: Number.isFinite(rawData.shuffleHistoryCounter)
+            ? rawData.shuffleHistoryCounter
+            : null,
+          compData:
+            rawData.compData && typeof rawData.compData === "object"
+              ? rawData.compData
+              : {},
+        };
+      }
 
-        layoutMeta = importedMeta;
-        leftSideData = left;
-        rightSideData = right;
-        specialDesks = Array.isArray(data.specialDesks)
-          ? data.specialDesks
-          : [];
-        fixedMembers =
-          data.fixedMembers && data.fixedMembers.length
-            ? data.fixedMembers
-            : restoredFixed;
-        conflictGraph = normalizeConflictGraphEntities(
-          data.conflictGraph || {},
-        );
+      function restoreCompetitionData(competitionData = {}) {
+        if (!Object.keys(competitionData).length) return;
+        const rows = document.querySelectorAll("#competition-tbody tr");
+        rows.forEach((tr) => {
+          const name = tr.cells[1].innerText.trim();
+          if (competitionData[name]) {
+            const cells = tr.querySelectorAll(".editable-cell");
+            if (cells.length >= 2) {
+              cells[0].innerText = competitionData[name].ach || "";
+              cells[1].innerText = competitionData[name].viol || "";
+              updatePoints(cells[0], "achievement");
+              updatePoints(cells[1], "violation");
+            }
+          }
+        });
+      }
 
-        if (data.titles) {
-          document.getElementById("classroom-title").value =
-            data.titles.classroomTitle || "";
-          document.getElementById("school-year").value =
-            data.titles.schoolYear || "";
-        }
+      function applyImportedData(data, options = {}) {
+        const normalized = normalizeImportedData(data);
+        const { save = true, render = true } = options;
+
+        layoutMeta = normalized.layoutMeta;
+        leftSideData = normalized.seating.left;
+        rightSideData = normalized.seating.right;
+        specialDesks = normalized.specialDesks;
+        fixedMembers = normalized.fixedMembers;
+        conflictGraph = normalized.conflictGraph;
+        document.getElementById("classroom-title").value =
+          normalized.titles.classroomTitle;
+        document.getElementById("school-year").value =
+          normalized.titles.schoolYear;
         document.getElementById("student-list-input").value =
-          data.studentList || "";
-        genderMap = data.genderMap || {};
-        if (data.dutySettings) {
-          dayOffs = data.dutySettings.dayOffs || [];
-          excludedMembers = data.dutySettings.excludedMembers || [];
-          morningOff = data.dutySettings.morningOff || false;
-          afternoonOff = data.dutySettings.afternoonOff || false;
-        }
-        currentSchedule = data.dutySchedule || null;
-        shuffleHistory = Array.isArray(data.shuffleHistory)
-          ? data.shuffleHistory
-          : [];
-        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
-          ? data.shuffleHistoryCounter
-          : shuffleHistory.length;
+          normalized.studentList;
+        genderMap = normalized.genderMap;
+        dayOffs = normalized.dutySettings.dayOffs;
+        excludedMembers = normalized.dutySettings.excludedMembers;
+        morningOff = normalized.dutySettings.morningOff;
+        afternoonOff = normalized.dutySettings.afternoonOff;
+        currentSchedule = normalized.dutySchedule;
+        shuffleHistory = normalized.shuffleHistory;
+        shuffleHistoryCounter =
+          normalized.shuffleHistoryCounter ?? shuffleHistory.length;
 
         syncOverlays();
         syncLayoutConfigUI();
-        renderAll();
-        saveData({ notify: false, animate: false });
+        syncDutySettingsUI();
+        if (render) {
+          renderAll();
+          restoreCompetitionData(normalized.compData);
+        }
+        if (save) saveData({ notify: false, animate: false });
+        return normalized;
       }
 
       function parseOptimizedShareCodeData(shortCode) {
@@ -10984,68 +11123,14 @@
           specialDesks = [];
           return;
         }
-        layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
-        leftSideData = normalizeImportedSide(
-          data.seating?.left,
-          [],
-          layoutMeta.leftRows,
-          layoutMeta.leftCols,
-        );
-        rightSideData = normalizeImportedSide(
-          data.seating?.right,
-          [],
-          layoutMeta.rightRows,
-          layoutMeta.rightCols,
-        );
-        specialDesks = Array.isArray(data.specialDesks)
-          ? data.specialDesks
-          : [];
-        fixedMembers = data.fixedMembers || [];
-        conflictGraph = normalizeConflictGraphEntities(
-          data.conflictGraph || {},
-        );
-        if (data.titles) {
-          document.getElementById("classroom-title").value =
-            data.titles.classroomTitle;
-          document.getElementById("school-year").value = data.titles.schoolYear;
-        }
-        document.getElementById("student-list-input").value =
-          data.studentList || "";
-        const competitionData = data.compData || {};
-        genderMap = data.genderMap || {};
-        if (data.dutySettings) {
-          dayOffs = data.dutySettings.dayOffs || [];
-          excludedMembers = data.dutySettings.excludedMembers || [];
-          morningOff = data.dutySettings.morningOff || false;
-          afternoonOff = data.dutySettings.afternoonOff || false;
-        }
-        currentSchedule = data.dutySchedule || null;
-        shuffleHistory = Array.isArray(data.shuffleHistory)
-          ? data.shuffleHistory
-          : [];
-        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
-          ? data.shuffleHistoryCounter
-          : shuffleHistory.length;
+        const normalized = applyImportedData(data, {
+          save: false,
+          render: false,
+        });
+        restoreCompetitionData(normalized.compData);
 
         if (key !== PRIMARY_STORAGE_KEY) {
           saveData({ notify: false, animate: false });
-        }
-
-        // Khôi phục dữ liệu bảng thi đua
-        if (Object.keys(competitionData).length > 0) {
-          const rows = document.querySelectorAll("#competition-tbody tr");
-          rows.forEach((tr) => {
-            const name = tr.cells[1].innerText.trim();
-            if (competitionData[name]) {
-              const cells = tr.querySelectorAll(".editable-cell");
-              if (cells.length >= 2) {
-                cells[0].innerText = competitionData[name].ach || "";
-                cells[1].innerText = competitionData[name].viol || "";
-                updatePoints(cells[0], "achievement");
-                updatePoints(cells[1], "violation");
-              }
-            }
-          });
         }
       }
 
