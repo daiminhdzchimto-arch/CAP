@@ -591,11 +591,6 @@
       .desk-box.has-conflict { border-color: var(--warning) !important; }
       .fixed-badge { position: absolute; top: -8px; left: -8px; background: var(--fixed); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
       .conflict-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--warning); border-radius: 50%; z-index: 30; }
-      .desk-context-menu { position: fixed; z-index: 140; min-width: 170px; background: rgba(17, 24, 39, 0.96); color: #f9fafb; border-radius: 12px; padding: 6px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); display: none; }
-      .desk-context-menu.open { display: block; }
-      .desk-context-menu button { width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: transparent; color: inherit; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
-      .desk-context-menu button:hover { background: rgba(255, 255, 255, 0.12); }
-
       /* TABLES */
       .comp-table, .duty-table { width: 100%; border-collapse: collapse; background: white; }
       .comp-table th { background: #1e40af; color: white; padding: 12px; border: 1px solid #1e3a8a; }
@@ -2918,8 +2913,6 @@
       </div>
     </div>
 
-    <div id="desk-context-menu" class="desk-context-menu" role="menu"></div>
-
     <script>
       // =================================================================
       // CONSTANTS & STATE
@@ -3364,8 +3357,6 @@
       let selectedStudentSeat = null,
         isEditMode = false;
       let selectedDeskKey = null;
-      let deskLongPressTimer = null;
-      let deskLongPressTriggered = false;
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboard3DTexture = null;
@@ -4429,40 +4420,6 @@
         });
       }
 
-      function hideDeskContextMenu() {
-        const menu = document.getElementById("desk-context-menu");
-        if (!menu) return;
-        menu.classList.remove("open");
-        menu.innerHTML = "";
-      }
-
-      function showDeskContextMenu(clientX, clientY, actions = []) {
-        const menu = document.getElementById("desk-context-menu");
-        if (!menu || !actions.length) return;
-        menu.innerHTML = "";
-        actions.forEach((action) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.innerHTML = action.icon
-            ? `${action.icon}<span>${action.label}</span>`
-            : `<span>${action.label}</span>`;
-          btn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            hideDeskContextMenu();
-            action.onClick();
-          };
-          menu.appendChild(btn);
-        });
-        menu.classList.add("open");
-        const { innerWidth, innerHeight } = window;
-        const menuRect = menu.getBoundingClientRect();
-        const maxX = innerWidth - menuRect.width - 10;
-        const maxY = innerHeight - menuRect.height - 10;
-        menu.style.left = `${Math.max(10, Math.min(clientX, maxX))}px`;
-        menu.style.top = `${Math.max(10, Math.min(clientY, maxY))}px`;
-      }
-
       function renderSide(cid, data, side) {
         const c = document.getElementById(cid);
         c.innerHTML = "";
@@ -4550,12 +4507,7 @@
             const seatKey = buildDeskKey(side, ri, si);
             const click = (e) => {
               if (e.target.closest('[data-action-button="true"]')) return;
-              if (deskLongPressTriggered) {
-                deskLongPressTriggered = false;
-                return;
-              }
               selectDeskCell(side, ri, si);
-              hideDeskContextMenu();
               if (swapSource) {
                 if (isSrc) cancelSwapMode();
                 else {
@@ -4589,81 +4541,6 @@
               onClick: (e) => handleSwapButtonClick(e, side, ri, si),
             });
             cell.appendChild(swapBtn);
-
-            const buildCellContextActions = () => {
-              const actions = [
-                {
-                  label: "Hoán đổi chỗ",
-                  icon: '<i class="fas fa-exchange-alt"></i>',
-                  onClick: () => handleSwapButtonClick(null, side, ri, si),
-                },
-              ];
-              if (seat.name.trim()) {
-                actions.push({
-                  label: "Xem chi tiết",
-                  icon: '<i class="fas fa-circle-info"></i>',
-                  onClick: () => selectStudent(side, ri, si),
-                });
-              }
-              if (seat.width > 1) {
-                actions.push({
-                  label: "Tách bàn",
-                  icon: '<i class="fas fa-unlink"></i>',
-                  onClick: () => splitCell(side, ri, si),
-                });
-              }
-              return actions;
-            };
-
-            const clearLongPressTimer = () => {
-              if (!deskLongPressTimer) return;
-              clearTimeout(deskLongPressTimer);
-              deskLongPressTimer = null;
-            };
-
-            cell.addEventListener(
-              "touchstart",
-              (e) => {
-                if (e.target.closest('[data-action-button="true"]')) return;
-                deskLongPressTriggered = false;
-                clearLongPressTimer();
-                const touch = e.touches && e.touches[0];
-                if (!touch) return;
-                deskLongPressTimer = setTimeout(() => {
-                  deskLongPressTriggered = true;
-                  selectDeskCell(side, ri, si);
-                  showDeskContextMenu(
-                    touch.clientX,
-                    touch.clientY,
-                    buildCellContextActions(),
-                  );
-                }, 520);
-              },
-              { passive: true },
-            );
-            ["touchend", "touchcancel", "touchmove"].forEach((eventName) => {
-              cell.addEventListener(
-                eventName,
-                () => {
-                  clearLongPressTimer();
-                  if (eventName !== "touchmove") {
-                    setTimeout(() => {
-                      deskLongPressTriggered = false;
-                    }, 0);
-                  }
-                },
-                { passive: true },
-              );
-            });
-            cell.addEventListener("contextmenu", (e) => {
-              e.preventDefault();
-              selectDeskCell(side, ri, si);
-              showDeskContextMenu(
-                e.clientX,
-                e.clientY,
-                buildCellContextActions(),
-              );
-            });
 
             let hasActions = false;
             if (seat.name.trim()) {
@@ -12013,11 +11890,7 @@
         if (!e.target.closest(".desk-box")) {
           clearDeskSelection();
         }
-        if (!e.target.closest("#desk-context-menu")) {
-          hideDeskContextMenu();
-        }
       });
-      document.addEventListener("scroll", hideDeskContextMenu, true);
       document.addEventListener("keydown", (e) => {
         const blackboardModal = document.getElementById("blackboard-modal");
         const isBlackboardOpen = blackboardModal?.classList.contains("open");
@@ -12032,7 +11905,6 @@
         }
         if (e.key === "Escape" && seat3DState.active) closeSeat3DView();
         if (e.key === "Escape") {
-          hideDeskContextMenu();
           clearDeskSelection();
         }
       });
