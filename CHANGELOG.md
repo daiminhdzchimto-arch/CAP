@@ -1,3 +1,9 @@
+## [1.68.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.1...v1.68.2) (2026-04-03)
+
+### Bug Fixes
+
+- remove Cơm chiều option from violation tags ([8824b51](https://github.com/daiminhdzchimto-arch/CAP/commit/8824b51307a194bc6b63c0d79c0cbab092832a87))
+
 ## [1.68.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.0...v1.68.1) (2026-04-03)
 
 ### Bug Fixes
