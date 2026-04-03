@@ -1,3 +1,9 @@
+# [1.64.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.63.0...v1.64.0) (2026-04-03)
+
+### Features
+
+- thêm badge điểm lỗi trên ô vi phạm (mục 3.7) ([239fe84](https://github.com/daiminhdzchimto-arch/CAP/commit/239fe844519c78e06990e49737993ec52599e3df))
+
 # [1.63.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.62.0...v1.63.0) (2026-04-03)
 
 ### Features
