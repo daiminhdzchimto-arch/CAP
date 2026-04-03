@@ -1,3 +1,9 @@
+## [1.71.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.2...v1.71.3) (2026-04-03)
+
+### Bug Fixes
+
+- lighten classroom seats in exported snapshot ([19b0ee8](https://github.com/daiminhdzchimto-arch/CAP/commit/19b0ee8c00212ddb62cf13def8d2f1ad9bf9a445))
+
 ## [1.71.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.1...v1.71.2) (2026-04-03)
 
 ### Bug Fixes
