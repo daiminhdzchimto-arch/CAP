@@ -5212,11 +5212,63 @@
         };
       }
 
-      function createImagePlane(imagePath, width, height, options = {}) {
-        const texture = new THREE.TextureLoader().load(imagePath);
+      function buildFallbackPortraitTexture(label = "Ảnh lỗi") {
+        const fallbackCanvas = document.createElement("canvas");
+        fallbackCanvas.width = 512;
+        fallbackCanvas.height = 512;
+        const ctx = fallbackCanvas.getContext("2d");
+        if (!ctx) return null;
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 12;
+        ctx.strokeRect(
+          18,
+          18,
+          fallbackCanvas.width - 36,
+          fallbackCanvas.height - 36,
+        );
+        ctx.fillStyle = "#334155";
+        ctx.font = "700 34px 'Inter', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(
+          label,
+          fallbackCanvas.width / 2,
+          fallbackCanvas.height / 2,
+        );
+        const texture = new THREE.CanvasTexture(fallbackCanvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
+        return texture;
+      }
+
+      function createImagePlane(imagePath, width, height, options = {}) {
+        const textureLoader = new THREE.TextureLoader();
+        let texture = null;
+        const fallbackTexture =
+          buildFallbackPortraitTexture("Ảnh chưa sẵn sàng");
+        const photoMaterial = new THREE.MeshStandardMaterial({
+          map: fallbackTexture || null,
+          side: THREE.DoubleSide,
+        });
+
+        textureLoader.load(
+          imagePath,
+          (loadedTexture) => {
+            loadedTexture.colorSpace = THREE.SRGBColorSpace;
+            loadedTexture.minFilter = THREE.LinearFilter;
+            loadedTexture.magFilter = THREE.LinearFilter;
+            texture = loadedTexture;
+            photoMaterial.map = loadedTexture;
+            photoMaterial.needsUpdate = true;
+          },
+          undefined,
+          (error) => {
+            console.error(`[CAP] Không tải được ảnh 3D: ${imagePath}`, error);
+          },
+        );
 
         const frameDepth = options.frameDepth || 0.08;
         const group = new THREE.Group();
@@ -5244,10 +5296,7 @@
 
         const photo = new THREE.Mesh(
           new THREE.PlaneGeometry(width, height),
-          new THREE.MeshStandardMaterial({
-            map: texture,
-            side: THREE.DoubleSide,
-          }),
+          photoMaterial,
         );
         photo.position.z = frameDepth * 0.57;
         group.add(photo);
@@ -5261,7 +5310,8 @@
             frame.material.dispose();
             border.material.dispose();
             photo.material.dispose();
-            texture.dispose();
+            texture?.dispose();
+            fallbackTexture?.dispose();
           },
         };
       }
@@ -11097,6 +11147,16 @@
         const flash = document.getElementById("camera-flash");
         if (flash) animateActionFeedback(flash, "animate-camera-flash", 620);
         const area = document.getElementById(id);
+        if (!area) {
+          showToast("Không tìm thấy khu vực cần xuất ảnh.");
+          console.warn(`[CAP] downloadImage: missing area #${id}`);
+          return;
+        }
+        if (typeof html2canvas !== "function") {
+          showToast("Thư viện html2canvas chưa tải xong. Vui lòng thử lại.");
+          console.warn("[CAP] downloadImage: html2canvas unavailable");
+          return;
+        }
         const fixedSeats = area.querySelectorAll(".is-fixed");
         const conflictSeats = area.querySelectorAll(".has-conflict");
         const deskInputs = area.querySelectorAll(".desk-input");
@@ -11167,6 +11227,10 @@
             l.download = `${pre}_${randomID}.png`;
             l.href = c.toDataURL("image/png");
             l.click();
+          })
+          .catch((error) => {
+            console.error(`[CAP] Không thể xuất ảnh cho #${id}`, error);
+            showToast("Xuất ảnh thất bại. Vui lòng thử lại.");
           })
           .finally(() => {
             fixedSeats.forEach((s) => s.classList.remove("is-fixed-hidden"));
