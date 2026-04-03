@@ -1,2 +1,0 @@
-# Avoid frequent merge conflicts on auto-generated release metadata.
-version.json merge=ours
