@@ -9653,10 +9653,23 @@
           students.length > 0 ? students : ["(chưa có)", "(chưa có)"];
         const days = DUTY_DAYS.map((day, dayIndex) => {
           const roles = {};
-          DUTY_ROLE_KEYS.forEach((roleKey, roleIndex) => {
-            roles[roleKey] = safeList[(dayIndex + roleIndex) % safeList.length];
-          });
-          return { day, roles };
+          
+          // Kiểm tra xem ngày này có phải là ngày nghỉ không
+          const isDayOff = dayOffs && dayOffs.includes(day);
+          
+          if (isDayOff) {
+            // Nếu là ngày nghỉ, gán "Nghỉ" cho tất cả các nhiệm vụ
+            DUTY_ROLE_KEYS.forEach((roleKey) => {
+              roles[roleKey] = "Nghỉ";
+            });
+          } else {
+            // Nếu không phải ngày nghỉ, phân công xoay vòng như bình thường
+            DUTY_ROLE_KEYS.forEach((roleKey, roleIndex) => {
+              roles[roleKey] = safeList[(dayIndex + roleIndex) % safeList.length];
+            });
+          }
+          
+          return { day, roles, isDayOff };
         });
         return { days };
       }
@@ -9668,8 +9681,12 @@
         const days = schedule?.days || [];
         days.forEach((dayData) => {
           const row = document.createElement("tr");
+          if (dayData.isDayOff) {
+            row.classList.add("bg-gray-100", "opacity-60");
+          }
+          const dayLabel = dayData.isDayOff ? `<strong><i class="fas fa-ban text-red-500 mr-1"></i>T${dayData.day}</strong>` : `<strong>T${dayData.day}</strong>`;
           row.innerHTML = `
-            <td><strong>T${dayData.day}</strong></td>
+            <td>${dayLabel}</td>
             <td>${dayData.roles.sweep || ""}</td>
             <td>${dayData.roles.trash || ""}</td>
             <td>${dayData.roles.board || ""}</td>
@@ -9774,14 +9791,22 @@
         schedule.days.forEach((dayData, index) => {
           const tr = document.createElement("tr");
           tr.dataset.dutyDay = dayData.day;
-          tr.innerHTML = `<td class="text-xl">${dayData.day}</td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
-                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
+          
+          // Them class canh bao neu la ngay nghi
+          if (dayData.isDayOff) {
+            tr.classList.add("bg-gray-100", "opacity-60");
+          }
+          
+          const dayLabel = dayData.isDayOff ? `<span class="text-red-600 font-bold"><i class="fas fa-ban mr-1"></i>T${dayData.day}</span>` : `T${dayData.day}`;
+          
+          tr.innerHTML = `<td class="text-xl font-bold">${dayLabel}</td>
+                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.sweep || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.trash || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.board || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.area || ""}</div></td>
+                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="${!dayData.isDayOff}">${dayData.roles.closeDoor || ""}</div></td>` : ""}
+                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.monitorClass || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.monitorArea || ""}</div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>`;
           tbody.appendChild(tr);
         });
