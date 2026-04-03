@@ -8844,7 +8844,7 @@
           const point1Input = document.createElement("div");
           point1Input.className = "editable-cell";
           point1Input.contentEditable = "true";
-          point1Input.addEventListener("blur", () => updatePoints(point1Input));
+          point1Input.addEventListener("blur", () => updatePoints(point1Input, "achievement"));
           point1Input.addEventListener("click", () => openInputModal(point1Input, "achievement", n));
           point1Td.appendChild(point1Input);
 
@@ -8852,7 +8852,7 @@
           const point2Input = document.createElement("div");
           point2Input.className = "editable-cell";
           point2Input.contentEditable = "true";
-          point2Input.addEventListener("blur", () => updatePoints(point2Input));
+          point2Input.addEventListener("blur", () => updatePoints(point2Input, "violation"));
           point2Input.addEventListener("click", () => openInputModal(point2Input, "violation", n));
           point2Td.appendChild(point2Input);
 
@@ -9185,17 +9185,29 @@
         }
       }
 
-      function updatePoints(el) {
+      function updatePoints(el, type) {
         const text = el.innerText;
         const cell = el.parentElement;
+        // Xóa tất cả badge cũ trong ô (bao gồm cả badge điểm lỗi)
         cell.querySelectorAll(".points-badge").forEach((b) => b.remove());
-        const matches = text.match(/\d+/g);
-        if (matches) {
-          const total = matches.reduce((a, b) => a + parseInt(b), 0);
-          const badge = document.createElement("span");
-          badge.className = "points-badge";
-          badge.innerText = total + "đ";
-          cell.appendChild(badge);
+        
+        if (type === "achievement") {
+          const matches = text.match(/\d+/g);
+          if (matches) {
+            const total = matches.reduce((a, b) => a + parseInt(b), 0);
+            const badge = document.createElement("span");
+            badge.className = "points-badge";
+            badge.innerText = total + "đ";
+            cell.appendChild(badge);
+          }
+        } else if (type === "violation") {
+          const faultPoints = calculateFaultPoints(text);
+          if (faultPoints > 0) {
+            const badge = document.createElement("span");
+            badge.className = "points-badge bg-red-500";
+            badge.innerText = faultPoints + "đ";
+            cell.appendChild(badge);
+          }
         }
       }
 
@@ -10381,8 +10393,17 @@
         reader.readAsText(file);
       }
 
-      function loadData() {
-        const { data, key } = readStoredClassData();
+      function loadData(externalData = null) {
+        let data, key;
+        if (externalData) {
+          data = externalData;
+          key = PRIMARY_STORAGE_KEY;
+        } else {
+          const res = readStoredClassData();
+          data = res.data;
+          key = res.key;
+        }
+        
         if (!data) {
           layoutMeta = { ...DEFAULT_LAYOUT_META };
           leftSideData = createDefaultArray(
@@ -10423,6 +10444,7 @@
         }
         document.getElementById("student-list-input").value =
           data.studentList || "";
+        const competitionData = data.compData || {};
         genderMap = data.genderMap || {};
         if (data.dutySettings) {
           dayOffs = data.dutySettings.dayOffs || [];
@@ -10440,6 +10462,23 @@
 
         if (key !== PRIMARY_STORAGE_KEY) {
           saveData({ notify: false, animate: false });
+        }
+
+        // Khôi phục dữ liệu bảng thi đua
+        if (Object.keys(competitionData).length > 0) {
+          const rows = document.querySelectorAll("#competition-tbody tr");
+          rows.forEach((tr) => {
+            const name = tr.cells[1].innerText.trim();
+            if (competitionData[name]) {
+              const cells = tr.querySelectorAll(".editable-cell");
+              if (cells.length >= 2) {
+                cells[0].innerText = competitionData[name].ach || "";
+                cells[1].innerText = competitionData[name].viol || "";
+                updatePoints(cells[0], "achievement");
+                updatePoints(cells[1], "violation");
+              }
+            }
+          });
         }
       }
 
@@ -11028,7 +11067,14 @@
 
       // INITIALIZATION
       window.onload = async () => {
-        loadData();
+        const { data } = readStoredClassData();
+        loadData(data);
+        // Nếu đã có danh sách học sinh thì tạo bảng
+        if (document.getElementById("student-list-input").value.trim()) {
+          generateTable();
+          // Cần gọi lại loadData để điền dữ liệu vào bảng vừa tạo
+          loadData(data);
+        }
         syncLayoutConfigUI();
         fillCurrentCompetitionPeriod();
         applyBlackboardFromShareLinkIfAvailable();
