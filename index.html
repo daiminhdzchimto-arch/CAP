@@ -9640,6 +9640,22 @@
           .filter(Boolean);
       }
 
+      function restoreCompetitionDataToRows(competitionData = {}) {
+        if (!competitionData || Object.keys(competitionData).length <= 0)
+          return;
+        const rows = document.querySelectorAll("#competition-tbody tr");
+        rows.forEach((tr) => {
+          const name = getCompetitionFullNameFromCell(tr.cells[1]);
+          if (!competitionData[name]) return;
+          const cells = tr.querySelectorAll(".editable-cell");
+          if (cells.length < 2) return;
+          cells[0].innerText = competitionData[name].ach || "";
+          cells[1].innerText = competitionData[name].viol || "";
+          updatePoints(cells[0], "achievement");
+          updatePoints(cells[1], "violation");
+        });
+      }
+
       function getCompetitionReportMeta() {
         const period = getCompetitionReportPeriod();
         const classroomTitle =
@@ -11179,21 +11195,7 @@
         }
 
         // Khôi phục dữ liệu bảng thi đua
-        if (Object.keys(competitionData).length > 0) {
-          const rows = document.querySelectorAll("#competition-tbody tr");
-          rows.forEach((tr) => {
-            const name = getCompetitionFullNameFromCell(tr.cells[1]);
-            if (competitionData[name]) {
-              const cells = tr.querySelectorAll(".editable-cell");
-              if (cells.length >= 2) {
-                cells[0].innerText = competitionData[name].ach || "";
-                cells[1].innerText = competitionData[name].viol || "";
-                updatePoints(cells[0], "achievement");
-                updatePoints(cells[1], "violation");
-              }
-            }
-          });
-        }
+        restoreCompetitionDataToRows(competitionData);
       }
 
       function getISOWeekNumber(date) {
