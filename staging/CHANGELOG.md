@@ -1,3 +1,9 @@
+## [1.71.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.0...v1.71.1) (2026-04-03)
+
+### Bug Fixes
+
+- improve settings icon visuals in dark mode ([0fe9ae3](https://github.com/daiminhdzchimto-arch/CAP/commit/0fe9ae3298155b359d98424e84768255feea22af))
+
 # [1.71.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.2...v1.71.0) (2026-04-03)
 
 ### Features
