@@ -58,20 +58,10 @@ const firstVersionDate =
     : tryRunGit(`git show -s --format=%cI ${firstVersionCommit}`) ||
       new Date().toISOString();
 
-const previousSequence = toPositiveInt(existing.versionSequence);
 const headCount = countSince(firstVersionCommit, headCommit);
-const existingCount = existing.commit
-  ? countSince(firstVersionCommit, existing.commit)
-  : Math.max(1, headCount - 1);
-
-const sequenceOffset = previousSequence > 0 ? previousSequence - existingCount : 0;
-let nextSequence = Math.max(1, headCount + sequenceOffset);
-
-if (existing.commit === headCommit && previousSequence > 0) {
-  nextSequence = shouldBumpForNextCommit
-    ? previousSequence + 1
-    : previousSequence;
-}
+const nextSequence = shouldBumpForNextCommit
+  ? headCount + 1
+  : headCount;
 
 const payload = {
   commit: headCommit,
