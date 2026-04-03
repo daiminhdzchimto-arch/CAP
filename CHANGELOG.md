@@ -1,3 +1,9 @@
+# [1.66.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.65.0...v1.66.0) (2026-04-03)
+
+### Features
+
+- Auto-populate student names from seating chart in competition table ([124ccc3](https://github.com/daiminhdzchimto-arch/CAP/commit/124ccc3b53921a9fa95fa1da24288b62bd74bf2b))
+
 # [1.65.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.64.0...v1.65.0) (2026-04-03)
 
 ### Features
