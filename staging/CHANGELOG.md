@@ -1,3 +1,9 @@
+# [1.70.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.6...v1.70.0) (2026-04-03)
+
+### Features
+
+- **ui:** restyle competition help icon as edge 3D ([b29f8d5](https://github.com/daiminhdzchimto-arch/CAP/commit/b29f8d5191449e793c164100ca602c9f9a20e4fe))
+
 ## [1.69.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.5...v1.69.6) (2026-04-03)
 
 ### Bug Fixes
