@@ -9072,9 +9072,72 @@
       // =================================================================
       // COMPETITION & DUTY (PRESERVED)
       // =================================================================
+      const APP_ROUTE_PREFIX = "#/";
+      const ROUTE_SEGMENTS = {
+        seating: "so-do-lop",
+        competition: "thi-dua",
+        competitionMain: "bang-chinh",
+        competitionDuty: "lich-truc",
+      };
       let currentTopTab = "seating";
+      let currentCompetitionSubView = "main";
       let tabTouchStartX = null;
       let tabTouchStartY = null;
+      let isUpdatingRouteHash = false;
+
+      function setCompetitionSubView(view, { syncHash = true } = {}) {
+        const nextView = view === "duty" ? "duty" : "main";
+        currentCompetitionSubView = nextView;
+        document
+          .getElementById("view-duty-schedule")
+          .classList.toggle("hidden", nextView !== "duty");
+        document
+          .getElementById("view-competition-main")
+          .classList.toggle("hidden", nextView !== "main");
+        if (syncHash) {
+          syncRouteHash();
+        }
+      }
+
+      function buildRouteHash(
+        tab = currentTopTab,
+        subView = currentCompetitionSubView,
+      ) {
+        if (tab === "competition") {
+          const childSegment =
+            subView === "duty"
+              ? ROUTE_SEGMENTS.competitionDuty
+              : ROUTE_SEGMENTS.competitionMain;
+          return `${APP_ROUTE_PREFIX}${ROUTE_SEGMENTS.competition}/${childSegment}`;
+        }
+        return `${APP_ROUTE_PREFIX}${ROUTE_SEGMENTS.seating}`;
+      }
+
+      function syncRouteHash() {
+        const nextHash = buildRouteHash();
+        if (window.location.hash === nextHash) return;
+        isUpdatingRouteHash = true;
+        window.location.hash = nextHash;
+      }
+
+      function parseRouteHash(hashValue = window.location.hash) {
+        const normalized = (hashValue || "").replace(/^#\/?/, "");
+        const segments = normalized.split("/").filter(Boolean);
+        const [root, child] = segments;
+        if (root === ROUTE_SEGMENTS.competition) {
+          return {
+            tab: "competition",
+            subView: child === ROUTE_SEGMENTS.competitionDuty ? "duty" : "main",
+          };
+        }
+        return { tab: "seating", subView: "main" };
+      }
+
+      function applyRouteFromHash() {
+        const route = parseRouteHash();
+        switchTab(route.tab, { syncHash: false });
+        setCompetitionSubView(route.subView, { syncHash: false });
+      }
 
       function moveTopTabIndicator(tab) {
         const switcher = document.getElementById("top-tab-switcher");
@@ -9087,7 +9150,7 @@
         indicator.style.transform = `translateX(${left}px)`;
       }
 
-      function switchTab(t) {
+      function switchTab(t, { syncHash = true } = {}) {
         if (currentTopTab === t) return;
         autoSaveAllData(`tab-switch:${currentTopTab}->${t}`);
         animateActionFeedback("#tab-" + t, "animate-pulse-highlight", 450);
@@ -9121,6 +9184,7 @@
         currentTopTab = t;
         moveTopTabIndicator(t);
         syncWindEffectsForActiveTab();
+        if (syncHash) syncRouteHash();
       }
 
       function shouldRunWindEffects() {
@@ -10700,12 +10764,7 @@
         updateDutyDebtFromViolations();
         currentSchedule = calculateAdvancedDutySchedule();
         closeDutyModal();
-        document
-          .getElementById("view-competition-main")
-          .classList.add("hidden");
-        document
-          .getElementById("view-duty-schedule")
-          .classList.remove("hidden");
+        setCompetitionSubView("duty");
         renderDutyTable(currentSchedule);
         const assignedNames = new Set();
         currentSchedule?.days?.forEach((dayData) => {
@@ -10768,10 +10827,7 @@
       }
 
       function backToCompetition() {
-        document.getElementById("view-duty-schedule").classList.add("hidden");
-        document
-          .getElementById("view-competition-main")
-          .classList.remove("hidden");
+        setCompetitionSubView("main");
       }
 
       function toggleDayOffMode() {
@@ -11054,6 +11110,11 @@
 
         window.addEventListener("hashchange", () => {
           autoSaveAllData("hashchange");
+          if (isUpdatingRouteHash) {
+            isUpdatingRouteHash = false;
+            return;
+          }
+          applyRouteFromHash();
         });
 
         window.addEventListener("popstate", () => {
@@ -11884,6 +11945,11 @@
         applyWeatherOverlayPosition();
         initWeatherOverlayDrag();
         renderAll();
+        applyRouteFromHash();
+        if (!window.location.hash) {
+          syncRouteHash();
+          isUpdatingRouteHash = false;
+        }
         syncWindEffectsForActiveTab();
         WeatherAdapter.init();
         await registerServiceWorker();
