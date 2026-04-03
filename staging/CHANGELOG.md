@@ -1,3 +1,9 @@
+# [1.62.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.61.0...v1.62.0) (2026-04-03)
+
+### Features
+
+- implement day off handling in duty assignment (section 3.3) ([730433e](https://github.com/daiminhdzchimto-arch/CAP/commit/730433efbab182c7908282ddc2add91b11643b84))
+
 # [1.61.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.60.0...v1.61.0) (2026-04-03)
 
 ### Features
