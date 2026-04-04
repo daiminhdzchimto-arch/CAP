@@ -1,3 +1,9 @@
+# [1.76.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.75.0...v1.76.0) (2026-04-04)
+
+### Features
+
+- implement advanced duty schedule algorithm (calculateAdvancedDutySchedule) as per specification 3.4.2 ([b965183](https://github.com/daiminhdzchimto-arch/CAP/commit/b965183deee864311e65316ad14523cbe873adbc))
+
 # [1.75.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.74.0...v1.75.0) (2026-04-04)
 
 ### Features
