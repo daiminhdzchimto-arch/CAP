@@ -1,3 +1,9 @@
+# [1.75.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.74.0...v1.75.0) (2026-04-04)
+
+### Features
+
+- implement day-off and excluded members logic for duty schedule ([0cc3408](https://github.com/daiminhdzchimto-arch/CAP/commit/0cc3408e5fa5e6c41fb377c553b3940a1c15ca9c))
+
 # [1.74.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.73.0...v1.74.0) (2026-04-03)
 
 ### Features
