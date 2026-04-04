@@ -38,3 +38,7 @@ Công cụ quản lý lớp học hiệu quả: Sắp xếp chỗ ngồi, bảng
 - Sử dụng **Husky + lint-staged** để format file trước mỗi commit.
 - Sử dụng **commitlint** với chuẩn **Conventional Commits** để kiểm tra message commit.
 - Mục tiêu: giữ repo sạch và nhất quán trước khi push, hỗ trợ tự động hóa changelog.
+
+## Multi-agent collaboration safety
+
+Để tránh mất thay đổi khi Codex/Manus cùng làm việc trên nhiều tài khoản, xem playbook tại `docs/MULTI_AGENT_COLLAB_PLAYBOOK.md`.
