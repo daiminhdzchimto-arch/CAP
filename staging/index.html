@@ -16,9 +16,9 @@
       name="keywords"
       content="quản lý lớp học, sắp xếp chỗ ngồi, bảng thi đua, phân công trực nhật, CAP"
     />
-    <meta name="author" content="CAP" />
+    <meta name="author" content="CAP - Classroom Management System" />
     <meta name="robots" content="index, follow" />
-    <meta name="app-version" content="2026-04-03-01" />
+    <meta name="app-version" content="2026-04-02-01" />
     <meta property="og:title" content="Quản Lý Lớp Học - Công Cụ Miễn Phí" />
     <meta
       property="og:description"
@@ -41,7 +41,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="CAP" />
+    <meta name="apple-mobile-web-app-title" content="CAP Classroom" />
     <script src="https://cdn.tailwindcss.com?v=3.4.17"></script>
     <link
       rel="stylesheet"
@@ -52,7 +52,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
-    <link rel="stylesheet" href="./animation-enhancements.css" />
     <style>
       :root {
           --primary: #3b82f6;
@@ -91,34 +90,12 @@
       body.dark-mode .text-gray-500,
       body.dark-mode .text-gray-600,
       body.dark-mode .text-gray-700,
-      body.dark-mode .text-gray-800,
-      body.dark-mode .text-gray-900,
-      body.dark-mode .text-slate-700 {
+      body.dark-mode .text-gray-800 {
           color: #d1d5db !important;
-      }
-      body.dark-mode .text-gray-900 {
-          color: #f3f4f6 !important;
       }
       body.dark-mode .modal-content {
           background: #111827;
           color: #e5e7eb;
-      }
-      body.dark-mode #sidebar {
-          background: #111827;
-          border-left: 1px solid #374151;
-          box-shadow: -8px 0 24px rgba(0, 0, 0, 0.45);
-      }
-      body.dark-mode .sidebar-header {
-          border-bottom-color: #374151;
-      }
-      body.dark-mode #mini-map-container {
-          background: #1f2937;
-          border-color: #374151;
-      }
-      body.dark-mode .mini-seat {
-          background: #0f172a;
-          border-color: #334155;
-          color: #e2e8f0;
       }
       body.dark-mode .tab-indicator {
           background: #1f2937;
@@ -128,30 +105,12 @@
       body.dark-mode textarea,
       body.dark-mode select {
           color: #e5e7eb;
-          background-color: #0f172a;
-          border-color: #475569;
-      }
-      body.dark-mode #classroom-area {
-          background-image: radial-gradient(rgba(226, 232, 240, 0.7) 1px, transparent 1px);
-          background-color: #0b1220;
-      }
-      body.dark-mode #classroom-area .desk-box {
-          background: linear-gradient(180deg, #0f213f 0%, #0b1a33 100%);
-          border-color: #93c5fd;
-          box-shadow:
-              0 6px 14px rgba(2, 6, 23, 0.65),
-              0 1px 0 rgba(255, 255, 255, 0.18) inset,
-              0 -1px 0 rgba(15, 23, 42, 0.75) inset;
       }
       body.dark-mode #classroom-area .desk-input {
-          color: #e2e8f0 !important;
-          text-shadow: 0 1px 2px rgba(2, 6, 23, 0.85);
-      }
-      body.dark-mode #classroom-area .desk-input:focus {
-          background-color: rgba(148, 163, 184, 0.14);
+          color: #1f2937 !important;
       }
       body.dark-mode #classroom-area .desk-box.is-fixed {
-          background: linear-gradient(180deg, rgba(109, 40, 217, 0.48) 0%, rgba(76, 29, 149, 0.58) 100%) !important;
+          background-color: rgba(139, 92, 246, 0.32) !important;
       }
       body.dark-mode #classroom-area .desk-box.is-fixed .desk-input {
           color: #f5f3ff !important;
@@ -166,131 +125,6 @@
       body.dark-mode input::placeholder,
       body.dark-mode textarea::placeholder {
           color: #9ca3af;
-      }
-      body.dark-mode .comp-table,
-      body.dark-mode .duty-table {
-          background: #0f172a;
-          color: #e5e7eb;
-      }
-      body.dark-mode .comp-table td,
-      body.dark-mode .duty-table td {
-          border-color: #475569;
-      }
-      body.dark-mode .duty-table th {
-          background: #1e293b;
-          color: #f8fafc;
-          border-color: #64748b;
-      }
-      body.dark-mode .header-input,
-      body.dark-mode .header-date-input,
-      body.dark-mode .date-input,
-      body.dark-mode .footer-editable,
-      body.dark-mode .spider-web-line,
-      body.dark-mode .duty-note-outside,
-      body.dark-mode .role-section label {
-          color: #e2e8f0;
-      }
-      body.dark-mode .header-input,
-      body.dark-mode .header-date-input,
-      body.dark-mode .date-input {
-          border-bottom-color: #94a3b8;
-      }
-      body.dark-mode .footer-editable:focus {
-          background-color: rgba(30, 64, 175, 0.2);
-      }
-      body.dark-mode .editable-cell:hover {
-          background-color: rgba(56, 189, 248, 0.18);
-      }
-      body.dark-mode .day-off,
-      body.dark-mode .day-off .editable-cell {
-          background-color: #1e293b !important;
-          color: #94a3b8;
-      }
-      body.dark-mode .duty-preview-table th {
-          background: #1e3a8a;
-          color: #e0f2fe;
-      }
-      body.dark-mode .duty-preview-table td {
-          background: #0f172a;
-          color: #e2e8f0;
-          border-color: #475569;
-      }
-      body.dark-mode .bg-blue-50 {
-          background-color: #172554 !important;
-      }
-      body.dark-mode .bg-orange-50 {
-          background-color: #3a260f !important;
-      }
-      body.dark-mode [class*="border-orange-"] {
-          border-color: #9a3412 !important;
-      }
-      body.dark-mode .text-blue-800 {
-          color: #bfdbfe !important;
-      }
-      body.dark-mode .text-orange-800 {
-          color: #fdba74 !important;
-      }
-      body.dark-mode .custom-checkbox {
-          color: #e5e7eb !important;
-      }
-      body.dark-mode .custom-checkbox input[type="checkbox"] {
-          accent-color: #60a5fa;
-          filter: brightness(1.15);
-      }
-      body.dark-mode .day-btn,
-      body.dark-mode .session-btn,
-      body.dark-mode .score-tag,
-      body.dark-mode .subject-tag,
-      body.dark-mode .violation-tag {
-          background-color: #0f172a;
-          color: #e5e7eb;
-          border-color: #64748b !important;
-      }
-      body.dark-mode .day-btn:hover,
-      body.dark-mode .score-tag:hover,
-      body.dark-mode .subject-tag:hover,
-      body.dark-mode .violation-tag:hover {
-          background-color: #1e3a8a !important;
-      }
-      body.dark-mode .session-btn:hover {
-          background-color: #9a3412 !important;
-      }
-      body.dark-mode .shuffle-option-btn:hover,
-      body.dark-mode .mini-row:hover {
-          background-color: #1f2937;
-      }
-      .settings-feature-icon {
-          border: 1px solid transparent;
-          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-          transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      }
-      body.dark-mode .settings-feature-icon {
-          box-shadow: 0 8px 18px rgba(2, 6, 23, 0.4);
-      }
-      body.dark-mode .settings-feature-icon--wind {
-          background-color: #0b2a4a !important;
-          border-color: #1d4ed8;
-          color: #7dd3fc !important;
-      }
-      body.dark-mode .settings-feature-icon--power {
-          background-color: #3a230f !important;
-          border-color: #c2410c;
-          color: #fdba74 !important;
-      }
-      body.dark-mode .settings-feature-icon--teacher {
-          background-color: #2b1f4d !important;
-          border-color: #7c3aed;
-          color: #c4b5fd !important;
-      }
-      body.dark-mode .settings-feature-icon--overlay {
-          background-color: #123545 !important;
-          border-color: #0891b2;
-          color: #67e8f9 !important;
-      }
-      body.dark-mode .settings-feature-icon--dark {
-          background-color: #1f2937 !important;
-          border-color: #6b7280;
-          color: #e5e7eb !important;
       }
       button,
       label.cursor-pointer {
@@ -444,60 +278,6 @@
           height: 42px;
           padding: 0;
           font-size: 1rem;
-      }
-      .help-details {
-          position: relative;
-          margin-left: 0.1rem;
-      }
-      .help-summary-icon {
-          list-style: none;
-          cursor: pointer;
-          color: #93c5fd;
-          font-size: 1rem;
-          line-height: 1;
-          text-shadow:
-            0 1px 0 #1e3a8a,
-            0 2px 0 #1d4ed8,
-            0 3px 0 #1e40af,
-            0 8px 12px rgba(30, 64, 175, 0.45);
-          transition: transform 0.16s ease, text-shadow 0.16s ease, color 0.16s ease;
-        }
-      .help-summary-icon::-webkit-details-marker {
-          display: none;
-      }
-      .help-summary-icon:hover {
-          transform: translateY(-1px) scale(1.04);
-          color: #bfdbfe;
-          text-shadow:
-            0 1px 0 #1e3a8a,
-            0 2px 0 #1d4ed8,
-            0 4px 0 #1e40af,
-            0 10px 14px rgba(30, 64, 175, 0.55);
-      }
-      .help-summary-icon:active {
-          transform: translateY(1px) scale(0.96);
-      }
-      .help-details[open] .help-tooltip {
-          display: block;
-      }
-      .help-tooltip {
-          display: none;
-          position: absolute;
-          top: calc(100% + 10px);
-          right: 0;
-          width: min(22rem, 80vw);
-          z-index: 40;
-          background: #f8fafc;
-          border: 1px solid #cbd5e1;
-          border-radius: 0.75rem;
-          padding: 0.65rem 0.75rem;
-          box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
-      }
-      body.dark-mode .help-tooltip {
-          background: #0f172a;
-          border-color: #334155;
-          color: #e5e7eb;
-          box-shadow: 0 16px 32px rgba(2, 6, 23, 0.5);
       }
       .tab-switcher {
           position: relative;
@@ -736,6 +516,11 @@
       .desk-box.has-conflict { border-color: var(--warning) !important; }
       .fixed-badge { position: absolute; top: -8px; left: -8px; background: var(--fixed); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 30; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
       .conflict-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--warning); border-radius: 50%; z-index: 30; }
+      .desk-context-menu { position: fixed; z-index: 140; min-width: 170px; background: rgba(17, 24, 39, 0.96); color: #f9fafb; border-radius: 12px; padding: 6px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); display: none; }
+      .desk-context-menu.open { display: block; }
+      .desk-context-menu button { width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: transparent; color: inherit; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+      .desk-context-menu button:hover { background: rgba(255, 255, 255, 0.12); }
+
       /* TABLES */
       .comp-table, .duty-table { width: 100%; border-collapse: collapse; background: white; }
       .comp-table th { background: #1e40af; color: white; padding: 12px; border: 1px solid #1e3a8a; }
@@ -1044,19 +829,20 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between h-16 items-center">
             <div class="flex items-center gap-2">
-              <button
-                type="button"
-                onclick="goToHomeFromLogo()"
-                class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 hover:scale-105 active:scale-95 transition-transform"
-                title="Quay lại trang chủ (Sơ đồ lớp)"
-                aria-label="Quay lại trang chủ"
+              <div
+                class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200"
               >
                 <i class="fas fa-graduation-cap text-white text-xl"></i>
-              </button>
+              </div>
               <div>
                 <h1 class="text-lg font-bold text-gray-900 leading-tight">
-                  CAP
+                  CAP <span class="text-blue-600">Classroom</span>
                 </h1>
+                <p
+                  class="text-[10px] text-gray-500 font-medium uppercase tracking-wider"
+                >
+                  Management System
+                </p>
               </div>
             </div>
             <div
@@ -1450,15 +1236,18 @@
                 >
                   <i class="fas fa-file-pdf"></i>
                 </button>
-                <details class="help-details text-xs text-gray-600">
+                <details
+                  class="text-xs text-gray-600 border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-50 max-w-xl"
+                >
                   <summary
-                    class="help-summary-icon"
-                    aria-label="Mở quy ước lỗi"
-                    title="Mở quy ước lỗi"
+                    class="cursor-pointer list-none flex items-center gap-1 font-semibold"
                   >
                     <i class="fas fa-question-circle"></i>
+                    <span>Quy ước lỗi (bấm để mở)</span>
                   </summary>
-                  <div class="help-tooltip leading-relaxed text-[12px]">
+                  <div
+                    class="mt-2 pt-2 border-t border-gray-200 leading-relaxed text-[12px]"
+                  >
                     <div>
                       <strong>Lỗi Nặng (2đ):</strong> Vắng/Muộn kp, SĐB, SCĐ,
                       Đánh nhau, Quay cóp, Ăn trong giờ, Nhuộm tóc, ĐT...
@@ -1572,59 +1361,7 @@
                     title="Bật/tắt ngày nghỉ"
                   >
                     <i class="fas fa-calendar-times"></i>
-                    <span id="day-off-btn-text" class="sr-only"
-                      >Hiện Ngày Nghỉ</span
-                    >
                   </button>
-                  <details class="relative">
-                    <summary
-                      class="btn-3d btn-3d-purple duty-action-btn list-none cursor-pointer"
-                      aria-label="Mẫu kịch bản"
-                      title="Mẫu kịch bản"
-                    >
-                      <i class="fas fa-layer-group"></i>
-                    </summary>
-                    <div
-                      class="absolute right-0 top-12 z-30 min-w-[210px] rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
-                    >
-                      <button
-                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
-                        onclick="loadScenario('balanced_week')"
-                      >
-                        Mẫu 1 - Tuần cân bằng
-                      </button>
-                      <button
-                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
-                        onclick="loadScenario('zero_fault')"
-                      >
-                        Mẫu 2 - Không vi phạm
-                      </button>
-                      <button
-                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
-                        onclick="loadScenario('penalty_peak')"
-                      >
-                        Mẫu 3 - Vi phạm cao
-                      </button>
-                      <button
-                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
-                        onclick="loadScenario('hybrid_mix')"
-                      >
-                        Mẫu 4 - Kết hợp
-                      </button>
-                      <button
-                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
-                        onclick="loadScenario('monitor_focus')"
-                      >
-                        Mẫu 5 - Tập trung cán sự
-                      </button>
-                      <button
-                        class="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-blue-50"
-                        onclick="loadScenario('holiday_week')"
-                      >
-                        Mẫu 6 - Có ngày nghỉ
-                      </button>
-                    </div>
-                  </details>
                   <button
                     onclick="downloadImage('duty-board', 'Lich_truc_nhat')"
                     class="btn-3d btn-3d-blue duty-action-btn"
@@ -1912,7 +1649,7 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
-                      class="settings-feature-icon settings-feature-icon--wind w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500"
+                      class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500"
                     >
                       <i class="fas fa-wind"></i>
                     </div>
@@ -1954,7 +1691,7 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
-                      class="settings-feature-icon settings-feature-icon--power w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-500"
+                      class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-500"
                     >
                       <i class="fas fa-battery-half"></i>
                     </div>
@@ -1981,7 +1718,7 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
-                      class="settings-feature-icon settings-feature-icon--teacher w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500"
+                      class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500"
                     >
                       <i class="fas fa-chalkboard-teacher"></i>
                     </div>
@@ -2004,7 +1741,7 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
-                      class="settings-feature-icon settings-feature-icon--overlay w-8 h-8 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600"
+                      class="w-8 h-8 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600"
                     >
                       <i class="fas fa-eye"></i>
                     </div>
@@ -2031,7 +1768,7 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div
-                      class="settings-feature-icon settings-feature-icon--dark w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-700"
+                      class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-700"
                     >
                       <i class="fas fa-moon"></i>
                     </div>
@@ -2186,29 +1923,16 @@
                 Dữ liệu & Phiên bản
               </h3>
               <div
-                onclick="openVersionHistoryModal()"
-                class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors group"
-                title="Xem lịch sử phiên bản"
+                class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center"
               >
                 <span class="text-xs font-bold text-gray-600"
                   >Phiên bản ứng dụng</span
                 >
-                <div class="flex items-center gap-2">
-                  <span
-                    id="app-version-badge"
-                    class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md group-hover:bg-blue-100 transition-colors"
-                    >v2.5.0-LOCAL</span
-                  >
-                  <i
-                    class="fas fa-chevron-right text-[10px] text-gray-400 group-hover:text-gray-600 transition-colors"
-                  ></i>
-                </div>
+                <span
+                  class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md"
+                  >v2.5.0-FINAL</span
+                >
               </div>
-              <p
-                id="app-version-meta"
-                onclick="openVersionHistoryModal()"
-                class="mt-2 text-[11px] text-gray-500 font-semibold tracking-wide cursor-pointer hover:text-gray-700 transition-colors"
-              ></p>
               <button
                 onclick="clearAllData()"
                 class="w-full mt-4 p-3 text-red-500 text-xs font-bold hover:bg-red-50 rounded-xl transition flex items-center justify-center gap-2"
@@ -2216,47 +1940,6 @@
                 <i class="fas fa-trash-alt"></i> Xóa toàn bộ dữ liệu
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Version History Modal -->
-      <div
-        id="version-history-modal"
-        class="modal-overlay"
-        data-close-modal="true"
-      >
-        <div class="modal-content w-[95%] max-w-lg">
-          <div class="flex justify-between items-center border-b pb-3 mb-4">
-            <h2 class="text-xl font-bold text-blue-800">
-              <i class="fas fa-history mr-2"></i>Lịch sử Phiên bản
-            </h2>
-            <button
-              onclick="closeVersionHistoryModal()"
-              class="modal-close-btn"
-              title="Đóng (Esc)"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div
-            id="version-history-list"
-            class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"
-          >
-            <!-- Danh sách phiên bản sẽ được render tại đây -->
-            <div class="flex justify-center py-8">
-              <div
-                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-              ></div>
-            </div>
-          </div>
-          <div class="mt-6 pt-4 border-t flex justify-end">
-            <button
-              onclick="closeVersionHistoryModal()"
-              class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors"
-            >
-              Đóng
-            </button>
           </div>
         </div>
       </div>
@@ -2697,65 +2380,21 @@
             <h3 class="font-bold text-gray-700 mb-3">Chọn Thời Gian</h3>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-2"
-                  >Thứ</label
-                >
+                <label class="block text-sm font-semibold text-gray-600 mb-2">Thứ</label>
                 <div class="flex flex-wrap gap-2">
-                  <button
-                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
-                    data-day="2"
-                  >
-                    T2
-                  </button>
-                  <button
-                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
-                    data-day="3"
-                  >
-                    T3
-                  </button>
-                  <button
-                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
-                    data-day="4"
-                  >
-                    T4
-                  </button>
-                  <button
-                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
-                    data-day="5"
-                  >
-                    T5
-                  </button>
-                  <button
-                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
-                    data-day="6"
-                  >
-                    T6
-                  </button>
-                  <button
-                    class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium"
-                    data-day="7"
-                  >
-                    T7
-                  </button>
+                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="2">T2</button>
+                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="3">T3</button>
+                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="4">T4</button>
+                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="5">T5</button>
+                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="6">T6</button>
+                  <button class="day-btn px-3 py-2 rounded border border-gray-300 hover:bg-blue-100 text-sm font-medium" data-day="7">T7</button>
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-2"
-                  >Buổi</label
-                >
+                <label class="block text-sm font-semibold text-gray-600 mb-2">Buổi</label>
                 <div class="flex gap-2">
-                  <button
-                    class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium"
-                    data-session="morning"
-                  >
-                    Sáng
-                  </button>
-                  <button
-                    class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium"
-                    data-session="afternoon"
-                  >
-                    Chiều
-                  </button>
+                  <button class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium" data-session="morning">Sáng</button>
+                  <button class="session-btn px-3 py-2 rounded border border-gray-300 hover:bg-orange-100 text-sm font-medium" data-session="afternoon">Chiều</button>
                 </div>
               </div>
             </div>
@@ -2766,9 +2405,7 @@
 
           <!-- Ô nhập tay -->
           <div class="mb-6">
-            <label class="block text-sm font-semibold text-gray-700 mb-2"
-              >Nội Dung</label
-            >
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Nội Dung</label>
             <textarea
               id="input-modal-textarea"
               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -2794,6 +2431,7 @@
           </div>
         </div>
       </div>
+
 
       <!-- MODAL BẢNG ĐEN -->
       <div id="blackboard-modal" class="modal-overlay" data-close-modal="true">
@@ -3102,6 +2740,8 @@
       </div>
     </div>
 
+    <div id="desk-context-menu" class="desk-context-menu" role="menu"></div>
+
     <script>
       // =================================================================
       // CONSTANTS & STATE
@@ -3400,152 +3040,11 @@
         "monitorClass",
         "monitorArea",
       ];
-      const DUTY_CLEANING_ROLE_KEYS = [
-        "sweep",
-        "trash",
-        "board",
-        "area",
-        "closeDoor",
-      ];
-      const DUTY_MONITOR_ROLE_KEYS = ["monitorClass", "monitorArea"];
-      const DUTY_DEBT_SCHEMA_VERSION = 1;
-      const DUTY_SCENARIO_PRESETS = {
-        balanced_week: {
-          title: "Mẫu 1 - Tuần cân bằng",
-          students: [
-            "Nguyễn An",
-            "Trần Bình",
-            "Lê Chi",
-            "Phạm Dũng",
-            "Vũ Hạnh",
-            "Đỗ Khang",
-            "Bùi Linh",
-            "Mai Nam",
-          ],
-          violations: {
-            "Nguyễn An": "Muộn",
-            "Phạm Dũng": "VS bẩn",
-            "Mai Nam": "Nhắc nhở",
-          },
-          achievements: { "Lê Chi": "9 Toán", "Bùi Linh": "10 Văn" },
-          dayOffs: [],
-        },
-        zero_fault: {
-          title: "Mẫu 2 - Không vi phạm",
-          students: [
-            "Đinh Anh",
-            "Cao Bảo",
-            "Tạ Châu",
-            "Hoàng Đức",
-            "Trịnh Giang",
-            "Lý Hương",
-          ],
-          violations: {},
-          achievements: { "Đinh Anh": "10 Toán", "Cao Bảo": "9 Anh" },
-          dayOffs: [],
-        },
-        penalty_peak: {
-          title: "Mẫu 3 - Vi phạm cao",
-          students: [
-            "Hà Long",
-            "Ngô Minh",
-            "Trần Ngọc",
-            "Lưu Phúc",
-            "Đặng Quân",
-            "Đỗ Sơn",
-            "Phan Trang",
-            "Võ Uy",
-          ],
-          violations: {
-            "Hà Long": "Vắng không phép, ĐT",
-            "Ngô Minh": "SĐB, SCĐ",
-            "Trần Ngọc": "Đánh nhau",
-            "Lưu Phúc": "Muộn, VS bẩn",
-          },
-          achievements: {},
-          dayOffs: [],
-        },
-        hybrid_mix: {
-          title: "Mẫu 4 - Kết hợp",
-          students: [
-            "Nguyễn Vy",
-            "Đặng Xuân",
-            "Bùi Yến",
-            "Phạm Đức",
-            "Trần Khôi",
-            "Lê My",
-            "Vũ Nhi",
-            "Đào Quỳnh",
-          ],
-          violations: {
-            "Phạm Đức": "Muộn",
-            "Trần Khôi": "VS bẩn",
-            "Lê My": "Nhắc nhở",
-          },
-          achievements: { "Nguyễn Vy": "10 Văn", "Bùi Yến": "9 Toán" },
-          dayOffs: ["7"],
-        },
-        monitor_focus: {
-          title: "Mẫu 5 - Tập trung cán sự",
-          students: [
-            "Lâm Anh",
-            "Phùng Bình",
-            "Quách Cường",
-            "Đoàn Duyên",
-            "Trịnh Em",
-            "Tống Phát",
-          ],
-          violations: { "Quách Cường": "Muộn" },
-          achievements: { "Lâm Anh": "10 Lý", "Phùng Bình": "10 Hóa" },
-          dayOffs: [],
-          excludedMembers: ["Lâm Anh"],
-        },
-        holiday_week: {
-          title: "Mẫu 6 - Có ngày nghỉ",
-          students: [
-            "Khánh",
-            "Lan",
-            "Minh",
-            "Ngân",
-            "Phong",
-            "Quỳnh",
-            "Trang",
-            "Việt",
-          ],
-          violations: { Phong: "VS bẩn", Việt: "Muộn" },
-          achievements: { Khánh: "9 Toán", Lan: "10 Văn" },
-          dayOffs: ["3", "5"],
-        },
-      };
-
-      // --- New Constants for Duty Algorithm ---
-      const HEAVY_FAULT_PATTERNS = [
-        /vắng/i,
-        /muộn/i,
-        /kp/i,
-        /không phép/i,
-        /sđb/i,
-        /scđ/i,
-        /cờ đỏ/i,
-        /đánh nhau/i,
-        /quay cóp/i,
-        /điện thoại/i,
-        /đt/i,
-        /nói tục/i,
-      ];
-      const LIGHT_FAULT_PATTERNS = [
-        /mtt/i,
-        /mặt tối tối/i,
-        /vs bẩn/i,
-        /vệ sinh bẩn/i,
-        /nhắc nhở/i,
-        /không chép bài/i,
-        /ăn trong giờ/i,
-        /nhuộm tóc/i,
-      ];
       let selectedStudentSeat = null,
         isEditMode = false;
       let selectedDeskKey = null;
+      let deskLongPressTimer = null;
+      let deskLongPressTriggered = false;
       let blackboardCanvas = null;
       let blackboardFabric = null;
       let blackboard3DTexture = null;
@@ -3660,193 +3159,6 @@
           .querySelector("meta[name='app-version']")
           ?.getAttribute("content") ?? "";
       let currentDeployCommit = "";
-
-      function setVersionBadgeText(versionLabel, metadataLabel = "") {
-        const versionBadge = document.getElementById("app-version-badge");
-        if (versionBadge && versionLabel)
-          versionBadge.textContent = versionLabel;
-
-        const versionMeta = document.getElementById("app-version-meta");
-        if (versionMeta) versionMeta.textContent = metadataLabel;
-      }
-
-      function formatVersionDate(dateInput) {
-        if (!dateInput) return "";
-        const parsedDate = new Date(dateInput);
-        if (Number.isNaN(parsedDate.getTime())) return "";
-        return new Intl.DateTimeFormat("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          timeZone: "UTC",
-        }).format(parsedDate);
-      }
-
-      // Dữ liệu lịch sử phiên bản (Tiếng Việt)
-      const APP_VERSION_HISTORY = [
-        {
-          version: "v2.5.0",
-          title: "Cập nhật Giao diện & Trải nghiệm",
-          date: "2026-04-03",
-          changes: [
-            "Thêm tính năng xem lịch sử phiên bản ứng dụng trực tiếp trên giao diện.",
-            "Tối ưu hóa hiển thị thanh bên (sidebar) trong chế độ tối (dark mode).",
-            "Cải thiện độ tương phản văn bản trên toàn bộ ứng dụng.",
-            "Đồng bộ hóa màu sắc tooltip trợ giúp trong chế độ tối.",
-          ],
-          isLatest: true,
-        },
-        {
-          version: "v2.4.2",
-          title: "Cải tiến Hệ thống & Hiệu năng",
-          date: "2026-04-02",
-          changes: [
-            "Tự động cập nhật số hiệu bản dựng (build number) theo mỗi lần thay đổi.",
-            "Cải thiện hiệu ứng thời tiết: hỗ trợ kéo thả và điều chỉnh độ trong suốt.",
-            "Tối ưu hóa tốc độ tải trang bằng cách giảm các yêu cầu tài nguyên bên thứ ba.",
-            "Sửa lỗi hiển thị tên thành phố tiếng Việt trong module thời tiết.",
-          ],
-        },
-        {
-          version: "v2.4.1",
-          title: "Tính năng Trực nhật & Thi đua",
-          date: "2026-04-01",
-          changes: [
-            "Triển khai thuật toán tính lịch trực nhật nâng cao (mục 3.3.3).",
-            "Thêm badge hiển thị điểm lỗi trực tiếp trên ô vi phạm thi đua.",
-            "Hỗ trợ tự động điền tên học sinh từ sơ đồ lớp vào bảng thi đua.",
-            "Thêm tính năng hiển thị ngày nghỉ linh hoạt trên lịch trực.",
-          ],
-        },
-        {
-          version: "v2.4.0",
-          title: "Khởi tạo Nền tảng v2.4",
-          date: "2026-03-22",
-          changes: [
-            "Thiết lập cơ chế theo dõi phiên bản runtime tự động.",
-            "Cập nhật cấu trúc dữ liệu localStorage để tăng tính ổn định.",
-            "Bổ sung các API kịch bản trực nhật và quản lý nợ trực nhật.",
-          ],
-        },
-      ];
-
-      function openVersionHistoryModal() {
-        renderVersionHistoryList();
-        document.getElementById("version-history-modal").classList.add("open");
-      }
-
-      function closeVersionHistoryModal() {
-        document
-          .getElementById("version-history-modal")
-          .classList.remove("open");
-      }
-
-      function renderVersionHistoryList() {
-        const container = document.getElementById("version-history-list");
-        if (!container) return;
-
-        container.innerHTML = APP_VERSION_HISTORY.map(
-          (item) => `
-          <div class="p-4 rounded-xl border ${
-            item.isLatest
-              ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800"
-              : "bg-gray-50 border-gray-100 dark:bg-gray-800/40 dark:border-gray-700"
-          } transition-all">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <span class="text-xs font-black ${
-                  item.isLatest ? "text-blue-600" : "text-gray-500"
-                } uppercase tracking-wider">
-                  ${item.version} ${item.isLatest ? "• MỚI NHẤT" : ""}
-                </span>
-                <h4 class="font-bold text-gray-800 dark:text-gray-100 mt-0.5">${
-                  item.title
-                }</h4>
-              </div>
-              <span class="text-[10px] font-bold text-gray-400 uppercase bg-white dark:bg-gray-800 px-2 py-1 rounded-md border border-gray-100 dark:border-gray-700">
-                ${formatVersionDate(item.date)}
-              </span>
-            </div>
-            <ul class="mt-3 space-y-2">
-              ${item.changes
-                .map(
-                  (change) => `
-                <li class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                  <i class="fas fa-check-circle text-blue-500 mt-1 text-[10px]"></i>
-                  <span>${change}</span>
-                </li>
-              `,
-                )
-                .join("")}
-            </ul>
-          </div>
-        `,
-        ).join("");
-      }
-
-      function applyRuntimeVersion(versionPayload = {}) {
-        const normalizedSequence = Number(versionPayload?.versionSequence);
-        const versionSequence = Number.isFinite(normalizedSequence)
-          ? Math.max(1, Math.floor(normalizedSequence))
-          : null;
-        const shortCommit =
-          typeof versionPayload?.shortCommit === "string"
-            ? versionPayload.shortCommit.trim()
-            : "";
-        const displayVersion =
-          typeof versionPayload?.displayVersion === "string"
-            ? versionPayload.displayVersion.trim()
-            : "";
-        const versionLabel =
-          displayVersion ||
-          (versionSequence
-            ? `v2.5.${versionSequence.toString().padStart(4, "0")}-${shortCommit || "LOCAL"}`
-            : `v2.5.0-${shortCommit || "LOCAL"}`);
-
-        const firstVersionDate = formatVersionDate(
-          versionPayload?.firstVersionDate,
-        );
-        const versionMetaParts = [];
-        if (versionSequence)
-          versionMetaParts.push(`Bản cập nhật #${versionSequence}`);
-        if (firstVersionDate)
-          versionMetaParts.push(`Theo dõi từ ${firstVersionDate} (UTC)`);
-
-        setVersionBadgeText(versionLabel, versionMetaParts.join(" • "));
-
-        // Cập nhật số phiên bản cho mục mới nhất trong lịch sử nếu cần
-        if (versionLabel && APP_VERSION_HISTORY.length > 0) {
-          // Chỉ cập nhật nếu là bản build thực tế (không phải LOCAL)
-          if (!versionLabel.includes("LOCAL")) {
-            APP_VERSION_HISTORY[0].version = versionLabel.split("-")[0];
-          }
-        }
-      }
-
-      async function syncRuntimeVersionBadge() {
-        try {
-          const response = await fetch(
-            `${APP_VERSION_ENDPOINT.toString()}?_appVersionBadge=${Date.now()}`,
-            { cache: "no-store" },
-          );
-          if (!response.ok) return;
-          const payload = await response.json();
-          applyRuntimeVersion(payload);
-        } catch (error) {
-          console.warn("Unable to sync version badge:", error);
-        }
-      }
-
-      (function bootstrapVersionBadgeSync() {
-        const runSync = () => void syncRuntimeVersionBadge();
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", runSync, {
-            once: true,
-          });
-          return;
-        }
-        runSync();
-      })();
 
       function animateActionFeedback(
         selector,
@@ -4719,6 +4031,40 @@
         });
       }
 
+      function hideDeskContextMenu() {
+        const menu = document.getElementById("desk-context-menu");
+        if (!menu) return;
+        menu.classList.remove("open");
+        menu.innerHTML = "";
+      }
+
+      function showDeskContextMenu(clientX, clientY, actions = []) {
+        const menu = document.getElementById("desk-context-menu");
+        if (!menu || !actions.length) return;
+        menu.innerHTML = "";
+        actions.forEach((action) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.innerHTML = action.icon
+            ? `${action.icon}<span>${action.label}</span>`
+            : `<span>${action.label}</span>`;
+          btn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hideDeskContextMenu();
+            action.onClick();
+          };
+          menu.appendChild(btn);
+        });
+        menu.classList.add("open");
+        const { innerWidth, innerHeight } = window;
+        const menuRect = menu.getBoundingClientRect();
+        const maxX = innerWidth - menuRect.width - 10;
+        const maxY = innerHeight - menuRect.height - 10;
+        menu.style.left = `${Math.max(10, Math.min(clientX, maxX))}px`;
+        menu.style.top = `${Math.max(10, Math.min(clientY, maxY))}px`;
+      }
+
       function renderSide(cid, data, side) {
         const c = document.getElementById(cid);
         c.innerHTML = "";
@@ -4806,7 +4152,12 @@
             const seatKey = buildDeskKey(side, ri, si);
             const click = (e) => {
               if (e.target.closest('[data-action-button="true"]')) return;
+              if (deskLongPressTriggered) {
+                deskLongPressTriggered = false;
+                return;
+              }
               selectDeskCell(side, ri, si);
+              hideDeskContextMenu();
               if (swapSource) {
                 if (isSrc) cancelSwapMode();
                 else {
@@ -4840,6 +4191,81 @@
               onClick: (e) => handleSwapButtonClick(e, side, ri, si),
             });
             cell.appendChild(swapBtn);
+
+            const buildCellContextActions = () => {
+              const actions = [
+                {
+                  label: "Hoán đổi chỗ",
+                  icon: '<i class="fas fa-exchange-alt"></i>',
+                  onClick: () => handleSwapButtonClick(null, side, ri, si),
+                },
+              ];
+              if (seat.name.trim()) {
+                actions.push({
+                  label: "Xem chi tiết",
+                  icon: '<i class="fas fa-circle-info"></i>',
+                  onClick: () => selectStudent(side, ri, si),
+                });
+              }
+              if (seat.width > 1) {
+                actions.push({
+                  label: "Tách bàn",
+                  icon: '<i class="fas fa-unlink"></i>',
+                  onClick: () => splitCell(side, ri, si),
+                });
+              }
+              return actions;
+            };
+
+            const clearLongPressTimer = () => {
+              if (!deskLongPressTimer) return;
+              clearTimeout(deskLongPressTimer);
+              deskLongPressTimer = null;
+            };
+
+            cell.addEventListener(
+              "touchstart",
+              (e) => {
+                if (e.target.closest('[data-action-button="true"]')) return;
+                deskLongPressTriggered = false;
+                clearLongPressTimer();
+                const touch = e.touches && e.touches[0];
+                if (!touch) return;
+                deskLongPressTimer = setTimeout(() => {
+                  deskLongPressTriggered = true;
+                  selectDeskCell(side, ri, si);
+                  showDeskContextMenu(
+                    touch.clientX,
+                    touch.clientY,
+                    buildCellContextActions(),
+                  );
+                }, 520);
+              },
+              { passive: true },
+            );
+            ["touchend", "touchcancel", "touchmove"].forEach((eventName) => {
+              cell.addEventListener(
+                eventName,
+                () => {
+                  clearLongPressTimer();
+                  if (eventName !== "touchmove") {
+                    setTimeout(() => {
+                      deskLongPressTriggered = false;
+                    }, 0);
+                  }
+                },
+                { passive: true },
+              );
+            });
+            cell.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              selectDeskCell(side, ri, si);
+              showDeskContextMenu(
+                e.clientX,
+                e.clientY,
+                buildCellContextActions(),
+              );
+            });
 
             let hasActions = false;
             if (seat.name.trim()) {
@@ -5223,63 +4649,11 @@
         };
       }
 
-      function buildFallbackPortraitTexture(label = "Ảnh lỗi") {
-        const fallbackCanvas = document.createElement("canvas");
-        fallbackCanvas.width = 512;
-        fallbackCanvas.height = 512;
-        const ctx = fallbackCanvas.getContext("2d");
-        if (!ctx) return null;
-        ctx.fillStyle = "#e2e8f0";
-        ctx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
-        ctx.strokeStyle = "#94a3b8";
-        ctx.lineWidth = 12;
-        ctx.strokeRect(
-          18,
-          18,
-          fallbackCanvas.width - 36,
-          fallbackCanvas.height - 36,
-        );
-        ctx.fillStyle = "#334155";
-        ctx.font = "700 34px 'Inter', sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(
-          label,
-          fallbackCanvas.width / 2,
-          fallbackCanvas.height / 2,
-        );
-        const texture = new THREE.CanvasTexture(fallbackCanvas);
+      function createImagePlane(imagePath, width, height, options = {}) {
+        const texture = new THREE.TextureLoader().load(imagePath);
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
-        return texture;
-      }
-
-      function createImagePlane(imagePath, width, height, options = {}) {
-        const textureLoader = new THREE.TextureLoader();
-        let texture = null;
-        const fallbackTexture =
-          buildFallbackPortraitTexture("Ảnh chưa sẵn sàng");
-        const photoMaterial = new THREE.MeshStandardMaterial({
-          map: fallbackTexture || null,
-          side: THREE.DoubleSide,
-        });
-
-        textureLoader.load(
-          imagePath,
-          (loadedTexture) => {
-            loadedTexture.colorSpace = THREE.SRGBColorSpace;
-            loadedTexture.minFilter = THREE.LinearFilter;
-            loadedTexture.magFilter = THREE.LinearFilter;
-            texture = loadedTexture;
-            photoMaterial.map = loadedTexture;
-            photoMaterial.needsUpdate = true;
-          },
-          undefined,
-          (error) => {
-            console.error(`[CAP] Không tải được ảnh 3D: ${imagePath}`, error);
-          },
-        );
 
         const frameDepth = options.frameDepth || 0.08;
         const group = new THREE.Group();
@@ -5307,7 +4681,10 @@
 
         const photo = new THREE.Mesh(
           new THREE.PlaneGeometry(width, height),
-          photoMaterial,
+          new THREE.MeshStandardMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+          }),
         );
         photo.position.z = frameDepth * 0.57;
         group.add(photo);
@@ -5321,8 +4698,7 @@
             frame.material.dispose();
             border.material.dispose();
             photo.material.dispose();
-            texture?.dispose();
-            fallbackTexture?.dispose();
+            texture.dispose();
           },
         };
       }
@@ -9331,82 +8707,9 @@
       // =================================================================
       // COMPETITION & DUTY (PRESERVED)
       // =================================================================
-      const APP_ROUTE_PREFIX = "#/";
-      const ROUTE_SEGMENTS = {
-        seating: "so-do-lop",
-        competition: "thi-dua",
-        competitionMain: "bang-chinh",
-        competitionDuty: "lich-truc",
-      };
       let currentTopTab = "seating";
-      let currentCompetitionSubView = "main";
       let tabTouchStartX = null;
       let tabTouchStartY = null;
-      let isUpdatingRouteHash = false;
-
-      function setCompetitionSubView(view, { syncHash = true } = {}) {
-        const nextView = view === "duty" ? "duty" : "main";
-        currentCompetitionSubView = nextView;
-        document
-          .getElementById("view-duty-schedule")
-          .classList.toggle("hidden", nextView !== "duty");
-        document
-          .getElementById("view-competition-main")
-          .classList.toggle("hidden", nextView !== "main");
-        if (syncHash) {
-          syncRouteHash();
-        }
-      }
-
-      function buildRouteHash(
-        tab = currentTopTab,
-        subView = currentCompetitionSubView,
-      ) {
-        if (tab === "competition") {
-          const childSegment =
-            subView === "duty"
-              ? ROUTE_SEGMENTS.competitionDuty
-              : ROUTE_SEGMENTS.competitionMain;
-          return `${APP_ROUTE_PREFIX}${ROUTE_SEGMENTS.competition}/${childSegment}`;
-        }
-        return `${APP_ROUTE_PREFIX}${ROUTE_SEGMENTS.seating}`;
-      }
-
-      function syncRouteHash() {
-        const nextHash = buildRouteHash();
-        if (window.location.hash === nextHash) return;
-        isUpdatingRouteHash = true;
-        window.location.hash = nextHash;
-      }
-
-      function parseRouteHash(hashValue = window.location.hash) {
-        const normalized = (hashValue || "").replace(/^#\/?/, "");
-        const segments = normalized.split("/").filter(Boolean);
-        const [root, child] = segments;
-        if (root === ROUTE_SEGMENTS.competition) {
-          return {
-            tab: "competition",
-            subView: child === ROUTE_SEGMENTS.competitionDuty ? "duty" : "main",
-          };
-        }
-        return { tab: "seating", subView: "main" };
-      }
-
-      function applyRouteFromHash() {
-        const route = parseRouteHash();
-        switchTab(route.tab, { syncHash: false });
-        setCompetitionSubView(route.subView, { syncHash: false });
-      }
-
-      function goToHomeFromLogo() {
-        if (currentTopTab !== "seating") {
-          switchTab("seating");
-          return;
-        }
-        if (window.location.hash !== buildRouteHash("seating", "main")) {
-          syncRouteHash();
-        }
-      }
 
       function moveTopTabIndicator(tab) {
         const switcher = document.getElementById("top-tab-switcher");
@@ -9419,7 +8722,7 @@
         indicator.style.transform = `translateX(${left}px)`;
       }
 
-      function switchTab(t, { syncHash = true } = {}) {
+      function switchTab(t) {
         if (currentTopTab === t) return;
         autoSaveAllData(`tab-switch:${currentTopTab}->${t}`);
         animateActionFeedback("#tab-" + t, "animate-pulse-highlight", 450);
@@ -9453,7 +8756,6 @@
         currentTopTab = t;
         moveTopTabIndicator(t);
         syncWindEffectsForActiveTab();
-        if (syncHash) syncRouteHash();
       }
 
       function shouldRunWindEffects() {
@@ -9502,45 +8804,14 @@
       }
 
       function generateTable() {
-        let input = document.getElementById("student-list-input").value.trim();
-
-        // Nếu textarea trống, tự động lấy danh sách tên từ sơ đồ
-        if (!input) {
-          const allNames = getAllStudentNames();
-          if (!allNames.length) {
-            const tbody = document.getElementById("competition-tbody");
-            tbody.innerHTML = "";
-            tbody.innerHTML =
-              '<tr><td colspan="4" class="text-center py-12 text-gray-400 italic">Chưa có dữ liệu. Vui lòng nhập danh sách hoặc tạo sơ đồ lớp.</td></tr>';
-            return;
-          }
-          input = allNames.join("\n");
-          // Cập nhật textarea để người dùng thấy danh sách đã được lấy
-          document.getElementById("student-list-input").value = input;
-        }
-
+        const input = document.getElementById("student-list-input").value;
         const names = input
           .split("\n")
           .map((n) => n.trim())
           .filter((n) => n !== "")
           .sort((a, b) => {
-            const nameA = parseStudentNameIdentity(a);
-            const nameB = parseStudentNameIdentity(b);
-            const getLastName = (n) =>
-              n.trim().split(/\s+/).filter(Boolean).pop() || "";
-            const lastNameCompare = getLastName(nameA.baseName).localeCompare(
-              getLastName(nameB.baseName),
-              "vi",
-            );
-            if (lastNameCompare !== 0) return lastNameCompare;
-            const fullBaseCompare = nameA.baseName.localeCompare(
-              nameB.baseName,
-              "vi",
-            );
-            if (fullBaseCompare !== 0) return fullBaseCompare;
-            return nameA.suffixTag.localeCompare(nameB.suffixTag, "vi", {
-              numeric: true,
-            });
+            const getLastName = (n) => n.split(" ").pop();
+            return getLastName(a).localeCompare(getLastName(b), "vi");
           });
         const tbody = document.getElementById("competition-tbody");
         tbody.innerHTML = "";
@@ -9565,24 +8836,16 @@
           const point1Input = document.createElement("div");
           point1Input.className = "editable-cell";
           point1Input.contentEditable = "true";
-          point1Input.addEventListener("blur", () =>
-            updatePoints(point1Input, "achievement"),
-          );
-          point1Input.addEventListener("click", () =>
-            openInputModal(point1Input, "achievement", n),
-          );
+          point1Input.addEventListener("blur", () => updatePoints(point1Input));
+          point1Input.addEventListener("click", () => openInputModal(point1Input, "achievement", n));
           point1Td.appendChild(point1Input);
 
           const point2Td = document.createElement("td");
           const point2Input = document.createElement("div");
           point2Input.className = "editable-cell";
           point2Input.contentEditable = "true";
-          point2Input.addEventListener("blur", () =>
-            updatePoints(point2Input, "violation"),
-          );
-          point2Input.addEventListener("click", () =>
-            openInputModal(point2Input, "violation", n),
-          );
+          point2Input.addEventListener("blur", () => updatePoints(point2Input));
+          point2Input.addEventListener("click", () => openInputModal(point2Input, "violation", n));
           point2Td.appendChild(point2Input);
 
           tr.appendChild(indexTd);
@@ -9914,29 +9177,17 @@
         }
       }
 
-      function updatePoints(el, type) {
+      function updatePoints(el) {
         const text = el.innerText;
         const cell = el.parentElement;
-        // Xóa tất cả badge cũ trong ô (bao gồm cả badge điểm lỗi)
         cell.querySelectorAll(".points-badge").forEach((b) => b.remove());
-
-        if (type === "achievement") {
-          const matches = text.match(/\d+/g);
-          if (matches) {
-            const total = matches.reduce((a, b) => a + parseInt(b), 0);
-            const badge = document.createElement("span");
-            badge.className = "points-badge";
-            badge.innerText = total + "đ";
-            cell.appendChild(badge);
-          }
-        } else if (type === "violation") {
-          const faultPoints = calculateFaultPoints(text);
-          if (faultPoints > 0) {
-            const badge = document.createElement("span");
-            badge.className = "points-badge bg-red-500";
-            badge.innerText = faultPoints + "đ";
-            cell.appendChild(badge);
-          }
+        const matches = text.match(/\d+/g);
+        if (matches) {
+          const total = matches.reduce((a, b) => a + parseInt(b), 0);
+          const badge = document.createElement("span");
+          badge.className = "points-badge";
+          badge.innerText = total + "đ";
+          cell.appendChild(badge);
         }
       }
 
@@ -10085,7 +9336,7 @@
               <td>${violationPoints}</td>
             </tr>`;
           })
-          .join("\n");
+          .join("");
 
         reportWindow.document.write(`
           <!doctype html>
@@ -10150,7 +9401,13 @@
 
       function openDutyModal() {
         document.getElementById("duty-modal").classList.add("open");
-        syncDutySettingsUI();
+        document.getElementById("excluded-members").value =
+          excludedMembers.join("\n");
+        document
+          .querySelectorAll(".day-off-check")
+          .forEach((cb) => (cb.checked = dayOffs.includes(cb.value)));
+        document.getElementById("morning-off").checked = morningOff;
+        document.getElementById("afternoon-off").checked = afternoonOff;
         renderMiniMapDuty("mini-map-left", leftSideData, "left");
         renderMiniMapDuty("mini-map-right", rightSideData, "right");
         renderGenderList();
@@ -10162,34 +9419,9 @@
         document.getElementById("duty-modal").classList.remove("open");
       }
 
-      function syncDutySettingsUI() {
-        const excludedInput = document.getElementById("excluded-members");
-        if (excludedInput) excludedInput.value = excludedMembers.join("\n");
-        document
-          .querySelectorAll(".day-off-check")
-          .forEach((cb) => (cb.checked = dayOffs.includes(cb.value)));
-        const morningCheckbox = document.getElementById("morning-off");
-        const afternoonCheckbox = document.getElementById("afternoon-off");
-        if (morningCheckbox) morningCheckbox.checked = morningOff;
-        if (afternoonCheckbox) afternoonCheckbox.checked = afternoonOff;
-      }
-
-      function getExcludedMemberSet() {
-        return new Set(
-          (excludedMembers || [])
-            .map((name) => normalizeNameToken(name))
-            .filter(Boolean),
-        );
-      }
-
-      function isMemberExcluded(name, excludedSet = getExcludedMemberSet()) {
-        return excludedSet.has(normalizeNameToken(name));
-      }
-
       function renderMiniMapDuty(cid, data, side) {
         const c = document.getElementById(cid);
         c.innerHTML = "";
-        const excludedSet = getExcludedMemberSet();
         data.forEach((row, ri) => {
           const k = `${side}-${ri}`;
           const sel = dutySelection[k];
@@ -10207,10 +9439,6 @@
           makeElementKeyboardClickable(d);
           row.forEach((s) => {
             const sd = document.createElement("div");
-            const seatMembers = getSeatEntityNames(s);
-            const hasExcludedMember = seatMembers.some((name) =>
-              isMemberExcluded(name, excludedSet),
-            );
             sd.style.width =
               s.width === 1
                 ? "25%"
@@ -10219,10 +9447,7 @@
                   : s.width === 3
                     ? "75%"
                     : "100%";
-            sd.className = `h-6 border border-gray-300 rounded text-[8px] flex items-center justify-center overflow-hidden select-none bg-gray-100 text-gray-500 ${hasExcludedMember ? "member-excluded" : ""}`;
-            if (hasExcludedMember) {
-              sd.title = "Có học sinh được loại khỏi trực nhật";
-            }
+            sd.className = `h-6 border border-gray-300 rounded text-[8px] flex items-center justify-center overflow-hidden select-none bg-gray-100 text-gray-500`;
             sd.innerText = s.name ? s.name.substring(0, 3) : "";
             d.appendChild(sd);
           });
@@ -10246,7 +9471,6 @@
       function renderGenderList() {
         const c = document.getElementById("gender-list-container");
         c.innerHTML = "";
-        const excludedSet = getExcludedMemberSet();
         let s = [];
         [leftSideData, rightSideData].forEach((side, si) => {
           side.forEach((row, ri) => {
@@ -10265,13 +9489,12 @@
         }
         s.forEach((n) => {
           const d = document.createElement("div");
-          const excluded = isMemberExcluded(n, excludedSet);
-          d.className = `gender-item ${excluded ? "member-excluded" : ""}`;
+          d.className = `gender-item`;
           const m = isMaleName(n);
           const detected = detectGenderFromVietnameseName(n);
           const nameSpan = document.createElement("span");
           nameSpan.className = "text-xs font-bold text-gray-600";
-          nameSpan.textContent = excluded ? `${n} (Excluded)` : n;
+          nameSpan.textContent = n;
           const l = document.createElement("span");
           l.className = `gender-label ${m ? "is-male" : "is-female"}`;
           l.innerHTML = m
@@ -10293,54 +9516,13 @@
         });
       }
 
-      function parseStudentNameIdentity(token) {
-        const displayName = String(token || "").trim();
-        if (!displayName) {
-          return {
-            displayName: "",
-            baseName: "",
-            suffixTag: "",
-          };
-        }
-        const parts = displayName.split(/\s+/).filter(Boolean);
-        if (parts.length < 2) {
-          return {
-            displayName,
-            baseName: displayName,
-            suffixTag: "",
-          };
-        }
-        const rawSuffix = (parts[parts.length - 1] || "").replace(
-          /^[()[\]{}#._-]+|[()[\]{}#._-]+$/g,
-          "",
-        );
-        const isVariantSuffix =
-          /^[a-zA-Z]$/.test(rawSuffix) || /^\d{1,3}$/.test(rawSuffix);
-        if (!isVariantSuffix) {
-          return {
-            displayName,
-            baseName: displayName,
-            suffixTag: "",
-          };
-        }
-        return {
-          displayName,
-          baseName: parts.slice(0, -1).join(" "),
-          suffixTag: rawSuffix.toUpperCase(),
-        };
-      }
-
       function normalizeNameToken(token) {
-        const parsed = parseStudentNameIdentity(token);
-        const normalizedBase = (parsed.baseName || "")
+        return (token || "")
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/đ/g, "d")
           .trim();
-        return parsed.suffixTag
-          ? `${normalizedBase}::${parsed.suffixTag}`
-          : normalizedBase;
       }
 
       function hasToken(nameSet, token) {
@@ -10357,11 +9539,7 @@
       }
 
       function detectGenderFromVietnameseName(fullName) {
-        const nameIdentity = parseStudentNameIdentity(fullName);
-        const parts = (nameIdentity.baseName || "")
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean);
+        const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
         if (!parts.length)
           return { gender: "unknown", confidence: 0, based_on: "none" };
 
@@ -10431,216 +9609,6 @@
         return true;
       }
 
-      function normalizeDutyDebtItem(name, raw = {}) {
-        const debt = Math.max(0, Number(raw.debt) || 0);
-        return {
-          name: String(name || raw.name || "").trim(),
-          debt,
-          updatedAt: Number(raw.updatedAt) || Date.now(),
-          lastReason: String(raw.lastReason || "").trim(),
-        };
-      }
-
-      function loadDutyDebtData() {
-        try {
-          const parsed = JSON.parse(
-            localStorage.getItem(DUTY_DEBT_KEY) || "{}",
-          );
-          const sourceItems =
-            parsed?.items && typeof parsed.items === "object"
-              ? parsed.items
-              : parsed;
-          const normalizedItems = {};
-          Object.entries(sourceItems || {}).forEach(([name, raw]) => {
-            const item = normalizeDutyDebtItem(name, raw);
-            if (item.name && item.debt > 0) normalizedItems[item.name] = item;
-          });
-          dutyDebtData = normalizedItems;
-          persistDutyDebtData();
-        } catch (_) {
-          dutyDebtData = {};
-        }
-      }
-
-      function persistDutyDebtData() {
-        const payload = {
-          version: DUTY_DEBT_SCHEMA_VERSION,
-          updatedAt: Date.now(),
-          items: dutyDebtData,
-        };
-        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(payload));
-      }
-
-      function renderDutyDebtRows() {
-        const tbody = document.getElementById("duty-debt-tbody");
-        if (!tbody) return;
-        const rows = Object.values(dutyDebtData).sort(
-          (a, b) => b.debt - a.debt || a.name.localeCompare(b.name, "vi"),
-        );
-        tbody.innerHTML = "";
-        if (!rows.length) {
-          tbody.innerHTML =
-            '<tr><td colspan="4" class="px-3 py-4 text-center text-gray-400 text-xs italic">Chưa có nợ trực nhật.</td></tr>';
-          return;
-        }
-        rows.forEach((item) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td class="border px-2 py-1 text-sm">${item.name}</td>
-            <td class="border px-2 py-1 text-center font-bold">${item.debt}</td>
-            <td class="border px-2 py-1 text-[11px] text-gray-500">${item.lastReason || "-"}</td>
-            <td class="border px-2 py-1 text-center">
-              <button class="text-xs px-2 py-1 rounded bg-green-100 hover:bg-green-200" onclick="reduceDutyDebt('${item.name.replace(/'/g, "\'")}')">-1</button>
-            </td>`;
-          tbody.appendChild(tr);
-        });
-      }
-
-      function addDutyDebtManagementUI() {
-        const actionWrap = document.querySelector(
-          "#view-duty-schedule .w-full.flex.justify-between.mb-6 .flex.gap-3",
-        );
-        if (actionWrap && !document.getElementById("open-duty-debt-btn")) {
-          const btn = document.createElement("button");
-          btn.id = "open-duty-debt-btn";
-          btn.className = "btn-3d btn-3d-orange duty-action-btn";
-          btn.title = "Quản lý nợ trực nhật";
-          btn.setAttribute("aria-label", "Quản lý nợ trực nhật");
-          btn.innerHTML = '<i class="fas fa-wallet"></i>';
-          btn.onclick = showDutyDebtModal;
-          actionWrap.prepend(btn);
-        }
-
-        if (document.getElementById("duty-debt-modal")) return;
-        const modal = document.createElement("div");
-        modal.id = "duty-debt-modal";
-        modal.className = "modal-overlay";
-        modal.innerHTML = `<div class="modal-content max-w-3xl">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-bold text-gray-700"><i class="fas fa-wallet mr-2 text-orange-500"></i>Quản lý nợ trực nhật</h3>
-            <button class="text-gray-500 hover:text-red-500" onclick="document.getElementById('duty-debt-modal').classList.remove('open')"><i class="fas fa-times"></i></button>
-          </div>
-          <div class="grid gap-3 md:grid-cols-[1fr_auto_auto_auto] mb-3">
-            <input id="duty-debt-name" class="border rounded px-3 py-2 text-sm" placeholder="Tên học sinh" />
-            <input id="duty-debt-amount" type="number" min="1" value="1" class="border rounded px-3 py-2 text-sm w-24" />
-            <input id="duty-debt-reason" class="border rounded px-3 py-2 text-sm" placeholder="Lý do" />
-            <button class="px-3 py-2 rounded bg-orange-500 text-white text-sm" onclick="addManualDebt()">Thêm nợ</button>
-          </div>
-          <div class="flex gap-2 mb-3">
-            <button class="px-3 py-2 rounded bg-blue-600 text-white text-sm" onclick="updateDutyDebtFromViolations()">Cập nhật từ vi phạm</button>
-            <button class="px-3 py-2 rounded bg-gray-100 text-sm" onclick="renderDutyDebtRows()">Làm mới</button>
-          </div>
-          <div class="max-h-[50vh] overflow-auto">
-            <table class="w-full border-collapse text-xs">
-              <thead><tr><th class="border px-2 py-1">Học sinh</th><th class="border px-2 py-1">Nợ</th><th class="border px-2 py-1">Lý do</th><th class="border px-2 py-1">Giảm</th></tr></thead>
-              <tbody id="duty-debt-tbody"></tbody>
-            </table>
-          </div>
-        </div>`;
-        document.body.appendChild(modal);
-      }
-
-      function showDutyDebtModal() {
-        addDutyDebtManagementUI();
-        renderDutyDebtRows();
-        document.getElementById("duty-debt-modal")?.classList.add("open");
-      }
-
-      function addOrUpdateDebt(name, delta = 0, reason = "") {
-        const key = String(name || "").trim();
-        if (!key) return;
-        const current = normalizeDutyDebtItem(
-          key,
-          dutyDebtData[key] || { name: key, debt: 0 },
-        );
-        current.debt = Math.max(0, current.debt + delta);
-        current.updatedAt = Date.now();
-        if (reason) current.lastReason = reason;
-        if (current.debt <= 0) delete dutyDebtData[key];
-        else dutyDebtData[key] = current;
-      }
-
-      function updateDutyDebtFromViolations() {
-        const tbody = document.getElementById("competition-tbody");
-        if (!tbody) return;
-        tbody.querySelectorAll("tr").forEach((tr) => {
-          const stats = getStatsFromRow(tr);
-          if (!stats || !stats.name || stats.actualFaults <= 0) return;
-          addOrUpdateDebt(
-            stats.name,
-            stats.actualFaults,
-            "Tự động từ vi phạm thi đua",
-          );
-        });
-        persistDutyDebtData();
-        renderDutyDebtRows();
-        showToast("Đã cập nhật nợ trực nhật từ vi phạm.");
-      }
-
-      function reduceDutyDebt(name, amount = 1) {
-        addOrUpdateDebt(
-          name,
-          -Math.max(1, Number(amount) || 1),
-          "Giảm nợ sau phân công",
-        );
-        persistDutyDebtData();
-        renderDutyDebtRows();
-      }
-
-      function addManualDebt() {
-        const nameInput = document.getElementById("duty-debt-name");
-        const amountInput = document.getElementById("duty-debt-amount");
-        const reasonInput = document.getElementById("duty-debt-reason");
-        const name = (nameInput?.value || "").trim();
-        const amount = Math.max(1, Number(amountInput?.value) || 1);
-        const reason = (reasonInput?.value || "").trim() || "Thêm tay";
-        if (!name) {
-          showToast("Vui lòng nhập tên học sinh.");
-          return;
-        }
-        addOrUpdateDebt(name, amount, reason);
-        persistDutyDebtData();
-        renderDutyDebtRows();
-        nameInput.value = "";
-        reasonInput.value = "";
-      }
-
-      function loadScenario(scenarioId) {
-        const preset = DUTY_SCENARIO_PRESETS[scenarioId];
-        if (!preset) {
-          showToast("Không tìm thấy mẫu kịch bản.");
-          return;
-        }
-        document.getElementById("student-list-input").value = (
-          preset.students || []
-        ).join("\n");
-        generateTable();
-        const rows = document.querySelectorAll("#competition-tbody tr");
-        rows.forEach((tr) => {
-          const name = tr?.cells?.[1]?.innerText?.trim();
-          const editableCells = tr.querySelectorAll(".editable-cell");
-          if (editableCells.length < 2 || !name) return;
-          editableCells[0].innerText = preset.achievements?.[name] || "";
-          editableCells[1].innerText = preset.violations?.[name] || "";
-          updatePoints(editableCells[0], "achievement");
-          updatePoints(editableCells[1], "violation");
-        });
-
-        dayOffs = [...(preset.dayOffs || [])];
-        excludedMembers = [...(preset.excludedMembers || [])];
-        dutySelection = {};
-        [leftSideData, rightSideData].forEach((side, sideIndex) => {
-          side.forEach((_, rowIndex) => {
-            dutySelection[`${sideIndex === 0 ? "left" : "right"}-${rowIndex}`] =
-              "class";
-          });
-        });
-
-        currentSchedule = calculateAdvancedDutySchedule();
-        renderDutyTable(currentSchedule);
-        saveData({ notify: false, animate: false });
-        showToast(`Đã nạp ${preset.title}.`);
-      }
-
       function saveDutySettings() {
         dayOffs = Array.from(
           document.querySelectorAll(".day-off-check:checked"),
@@ -10672,9 +9640,11 @@
             );
           });
         });
-        const excludedSet = getExcludedMemberSet();
+        const excludedSet = new Set(
+          excludedMembers.map((name) => normalizeNameToken(name)),
+        );
         return [...new Set(selectedNames)].filter(
-          (name) => !isMemberExcluded(name, excludedSet),
+          (name) => !excludedSet.has(normalizeNameToken(name)),
         );
       }
 
@@ -10682,25 +9652,14 @@
         const safeList =
           students.length > 0 ? students : ["(chưa có)", "(chưa có)"];
         const days = DUTY_DAYS.map((day, dayIndex) => {
+          const isOff = dayOffs.includes(day);
           const roles = {};
-
-          // Kiểm tra xem ngày này có phải là ngày nghỉ không
-          const isDayOff = dayOffs && dayOffs.includes(day);
-
-          if (isDayOff) {
-            // Nếu là ngày nghỉ, gán "Nghỉ" cho tất cả các nhiệm vụ
-            DUTY_ROLE_KEYS.forEach((roleKey) => {
-              roles[roleKey] = "Nghỉ";
-            });
-          } else {
-            // Nếu không phải ngày nghỉ, phân công xoay vòng như bình thường
+          if (!isOff) {
             DUTY_ROLE_KEYS.forEach((roleKey, roleIndex) => {
-              roles[roleKey] =
-                safeList[(dayIndex + roleIndex) % safeList.length];
+              roles[roleKey] = safeList[(dayIndex + roleIndex) % safeList.length];
             });
           }
-
-          return { day, roles, isDayOff };
+          return { day, roles, isOff };
         });
         return { days };
       }
@@ -10712,14 +9671,8 @@
         const days = schedule?.days || [];
         days.forEach((dayData) => {
           const row = document.createElement("tr");
-          if (dayData.isDayOff) {
-            row.classList.add("bg-gray-100", "opacity-60");
-          }
-          const dayLabel = dayData.isDayOff
-            ? `<strong><i class="fas fa-ban text-red-500 mr-1"></i>T${dayData.day}</strong>`
-            : `<strong>T${dayData.day}</strong>`;
           row.innerHTML = `
-            <td>${dayLabel}</td>
+            <td><strong>T${dayData.day}</strong></td>
             <td>${dayData.roles.sweep || ""}</td>
             <td>${dayData.roles.trash || ""}</td>
             <td>${dayData.roles.board || ""}</td>
@@ -10803,247 +9756,18 @@
         showToast(`Đã đổi lịch nhanh giữa ${firstName} và ${secondName}.`);
       }
 
-      function expandText(text) {
-        if (!text) return "";
-        const mapping = {
-          kp: "không phép",
-          "ko phép": "không phép",
-          sđb: "sổ đầu bài",
-          scđ: "sổ cờ đỏ",
-          vs: "vệ sinh",
-          mtt: "mặt tối tối",
-          đt: "điện thoại",
-        };
-        let expanded = text;
-        Object.keys(mapping).forEach((key) => {
-          const regex = new RegExp(`\\b${key}\\b`, "gi");
-          expanded = expanded.replace(regex, mapping[key]);
-        });
-        return expanded;
-      }
-
-      function calculateFaultPoints(text) {
-        if (!text) return 0;
-        const expanded = expandText(text);
-        const parts = expanded
-          .split(/[,;\n]/)
-          .map((p) => p.trim())
-          .filter(Boolean);
-        let points = 0;
-        parts.forEach((part) => {
-          let matched = false;
-          HEAVY_FAULT_PATTERNS.forEach((pattern) => {
-            if (pattern.test(part)) {
-              points += 2;
-              matched = true;
-            }
-          });
-          if (!matched) {
-            LIGHT_FAULT_PATTERNS.forEach((pattern) => {
-              if (pattern.test(part)) {
-                points += 1;
-              }
-            });
-          }
-        });
-        return points;
-      }
-
-      function getStatsFromRow(tr) {
-        const cells = tr.querySelectorAll("td");
-        if (cells.length < 4) return null;
-        const name = cells[1].innerText.trim();
-        const achievementText = cells[2].innerText.trim();
-        const violationText = cells[3].innerText.trim();
-
-        // Tính điểm tốt (8-10đ)
-        const achMatches = achievementText.match(/\d+/g) || [];
-        const goodPoints = achMatches.filter((p) => parseInt(p) >= 8).length;
-
-        // Tính điểm lỗi
-        let faultPoints = calculateFaultPoints(violationText);
-
-        // Bù trừ: 2 điểm tốt trừ 1 lỗi (ưu tiên lỗi nặng trước)
-        const deductible = Math.floor(goodPoints / 2);
-        const actualFaults = Math.max(0, faultPoints - deductible);
-
-        return { name, actualFaults, faultPoints };
-      }
-
-      function calculatePriorityQueues(studentsData, eligibleStudents) {
-        const eligibleSet = new Set(
-          (eligibleStudents || []).map((name) => normalizeNameToken(name)),
-        );
-        const debtQ = Object.values(dutyDebtData || {})
-          .filter(
-            (item) =>
-              item?.debt > 0 && eligibleSet.has(normalizeNameToken(item.name)),
-          )
-          .sort((a, b) => b.debt - a.debt)
-          .map((item) => item.name);
-        const heavyQ = studentsData
-          .filter(
-            (s) =>
-              s.actualFaults >= 2 &&
-              eligibleSet.has(normalizeNameToken(s.name)),
-          )
-          .sort((a, b) => b.actualFaults - a.actualFaults)
-          .map((s) => s.name);
-        const lightQ = studentsData
-          .filter(
-            (s) =>
-              s.actualFaults > 0 &&
-              s.actualFaults < 2 &&
-              eligibleSet.has(normalizeNameToken(s.name)),
-          )
-          .map((s) => s.name);
-        return { debtQ, heavyQ, lightQ, eligibleSet };
-      }
-
-      function createPriorityPicker(queues, eligibleSet) {
-        return () => {
-          for (const q of queues) {
-            while (q.length) {
-              const candidate = q.shift();
-              if (!eligibleSet.has(normalizeNameToken(candidate))) continue;
-              return candidate;
-            }
-          }
-          return "";
-        };
-      }
-
-      function createMonitorDistributor(
-        eligibleStudents = [],
-        studentsData = [],
-      ) {
-        const eligibleSet = new Set(
-          eligibleStudents.map((name) => normalizeNameToken(name)),
-        );
-        const prioritized = studentsData
-          .filter(
-            (s) =>
-              s.actualFaults > 0 && eligibleSet.has(normalizeNameToken(s.name)),
-          )
-          .sort((a, b) => b.actualFaults - a.actualFaults)
-          .map((s) => s.name);
-        const fallback = eligibleStudents.filter(
-          (name) =>
-            !prioritized.some(
-              (prioritizedName) =>
-                normalizeNameToken(prioritizedName) ===
-                normalizeNameToken(name),
-            ),
-        );
-        const monitorPool = [...prioritized, ...fallback];
-        let cursor = 0;
-        return (dayIndex, roleIndex) => {
-          if (!monitorPool.length) return "";
-          const picked =
-            monitorPool[(cursor + dayIndex + roleIndex) % monitorPool.length];
-          cursor += 1;
-          return picked;
-        };
-      }
-
-      function calculateZeroFaultSchedule(eligibleStudents) {
-        const fallback = eligibleStudents?.length
-          ? eligibleStudents
-          : collectEligibleDutyStudents();
-        return buildDutySchedule(fallback);
-      }
-
-      function calculateAdvancedDutySchedule() {
-        const tbody = document.getElementById("competition-tbody");
-        const eligibleStudents = collectEligibleDutyStudents();
-        if (!tbody || !eligibleStudents.length)
-          return buildDutySchedule(eligibleStudents);
-
-        const studentsData = [];
-        tbody.querySelectorAll("tr").forEach((tr) => {
-          const stats = getStatsFromRow(tr);
-          if (stats) studentsData.push(stats);
-        });
-
-        const totalFaults = studentsData.reduce(
-          (sum, s) => sum + s.actualFaults,
-          0,
-        );
-        if (totalFaults === 0) {
-          const zeroSchedule = calculateZeroFaultSchedule(eligibleStudents);
-          return { ...zeroSchedule, mode: "zero", cleaners: [] };
-        }
-
-        const mode = totalFaults <= 12 ? "hybrid" : "penalty";
-        const { debtQ, heavyQ, lightQ, eligibleSet } = calculatePriorityQueues(
-          studentsData,
-          eligibleStudents,
-        );
-        const pickPriorityName = createPriorityPicker(
-          [debtQ, heavyQ, lightQ],
-          eligibleSet,
-        );
-        const distributeMonitor = createMonitorDistributor(
-          eligibleStudents,
-          studentsData,
-        );
-
-        const days = DUTY_DAYS.map((day, dIdx) => {
-          const roles = {};
-          const isDayOff = dayOffs.includes(day);
-          if (isDayOff) {
-            DUTY_ROLE_KEYS.forEach((key) => (roles[key] = "Nghỉ"));
-            return { day, roles, isDayOff };
-          }
-
-          DUTY_CLEANING_ROLE_KEYS.forEach((roleKey, rIdx) => {
-            const prioritized = pickPriorityName();
-            const fallbackName =
-              eligibleStudents[
-                (dIdx * DUTY_CLEANING_ROLE_KEYS.length + rIdx) %
-                  eligibleStudents.length
-              ] || "Trống";
-            if (mode === "penalty") {
-              roles[roleKey] = prioritized || fallbackName;
-            } else {
-              roles[roleKey] =
-                (rIdx % 2 === 0 ? prioritized : "") ||
-                fallbackName ||
-                prioritized;
-            }
-          });
-          DUTY_MONITOR_ROLE_KEYS.forEach((roleKey, monitorIdx) => {
-            const pickedMonitor = distributeMonitor(dIdx, monitorIdx);
-            roles[roleKey] =
-              pickedMonitor ||
-              eligibleStudents[(dIdx + monitorIdx) % eligibleStudents.length] ||
-              "Trống";
-          });
-          return { day, roles, isDayOff };
-        });
-
-        const cleaners = studentsData
-          .filter((s) => s.actualFaults >= 4)
-          .map((s) => s.name);
-        return { days, cleaners, mode };
-      }
-
       function confirmDutyAssignment() {
         saveDutySettings();
-        updateDutyDebtFromViolations();
-        currentSchedule = calculateAdvancedDutySchedule();
+        const students = collectEligibleDutyStudents();
+        currentSchedule = buildDutySchedule(students);
         closeDutyModal();
-        setCompetitionSubView("duty");
+        document
+          .getElementById("view-competition-main")
+          .classList.add("hidden");
+        document
+          .getElementById("view-duty-schedule")
+          .classList.remove("hidden");
         renderDutyTable(currentSchedule);
-        const assignedNames = new Set();
-        currentSchedule?.days?.forEach((dayData) => {
-          if (dayData?.isDayOff) return;
-          Object.values(dayData.roles || {}).forEach((name) => {
-            if (name && name !== "Nghỉ" && name !== "Trống")
-              assignedNames.add(name);
-          });
-        });
-        assignedNames.forEach((name) => reduceDutyDebt(name, 1));
       }
 
       function renderDutyTable(data = currentSchedule) {
@@ -11051,44 +9775,19 @@
         tbody.innerHTML = "";
         const schedule = data?.days?.length ? data : buildDutySchedule([]);
         schedule.days.forEach((dayData, index) => {
-          if (dayData.isDayOff && !dayOffMode) return;
-
           const tr = document.createElement("tr");
           tr.dataset.dutyDay = dayData.day;
-
-          if (dayData.isDayOff) {
-            tr.classList.add("day-off", "bg-gray-100", "opacity-60");
-            tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">
-                              <span class="text-red-600 font-bold"><i class="fas fa-ban mr-1"></i>T${dayData.day}</span>
-                            </td>
-                            <td colspan="8" class="text-center py-4 text-gray-500 font-medium italic">
-                              (Nghỉ) – Không học
-                            </td>`;
-          } else {
-            const dayLabel = `T${dayData.day}`;
-            tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">${dayLabel}</td>
-                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
-                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
-                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
-                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
-                      ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
-                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
-                      <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
-                      <td><div class="editable-cell" contenteditable="true"></div></td>`;
-          }
+          tr.innerHTML = `<td class="text-xl">${dayData.day}</td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
+                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true"></div></td>`;
           tbody.appendChild(tr);
         });
-
-        // Update cleaners list in footer if available
-        if (data.cleaners && data.cleaners.length > 0) {
-          const footerCells = document.querySelectorAll(
-            "#duty-board tfoot .footer-editable",
-          );
-          if (footerCells.length > 0) {
-            footerCells[0].innerText = data.cleaners.join(", ");
-          }
-        }
-
         tbody.querySelectorAll(".editable-cell").forEach((cell) => {
           cell.addEventListener("input", updateDutyHomeAlert);
         });
@@ -11096,49 +9795,14 @@
       }
 
       function backToCompetition() {
-        setCompetitionSubView("main");
+        document.getElementById("view-duty-schedule").classList.add("hidden");
+        document
+          .getElementById("view-competition-main")
+          .classList.remove("hidden");
       }
 
       function toggleDayOffMode() {
         dayOffMode = !dayOffMode;
-        const btnText = document.getElementById("day-off-btn-text");
-        if (dayOffMode) {
-          if (btnText) btnText.innerText = "Ẩn Ngày Nghỉ";
-          showToast("Chế độ Ngày nghỉ: Bật (Click vào Thứ để đánh dấu)");
-        } else {
-          if (btnText) btnText.innerText = "Hiện Ngày Nghỉ";
-          showToast("Chế độ Ngày nghỉ: Tắt");
-        }
-        renderDutyTable(currentSchedule);
-      }
-
-      function handleDutyDayClick(day) {
-        if (!dayOffMode) return;
-
-        if (dayOffs.includes(day)) {
-          dayOffs = dayOffs.filter((d) => d !== day);
-        } else {
-          dayOffs.push(day);
-        }
-
-        // Cập nhật lại schedule
-        if (currentSchedule && currentSchedule.days) {
-          currentSchedule.days.forEach((d) => {
-            if (d.day === day) {
-              d.isDayOff = dayOffs.includes(day);
-              // Nếu chuyển thành ngày nghỉ, xóa nội dung cũ
-              if (d.isDayOff) {
-                DUTY_ROLE_KEYS.forEach((role) => (d.roles[role] = "Nghỉ"));
-              } else {
-                // Nếu bỏ ngày nghỉ, có thể để trống hoặc giữ nguyên "Nghỉ" để người dùng tự sửa
-                // Ở đây ta giữ nguyên để tránh mất dữ liệu nếu lỡ tay
-              }
-            }
-          });
-        }
-
-        renderDutyTable(currentSchedule);
-        saveData(); // Lưu trạng thái mới
       }
 
       // =================================================================
@@ -11168,16 +9832,6 @@
         const flash = document.getElementById("camera-flash");
         if (flash) animateActionFeedback(flash, "animate-camera-flash", 620);
         const area = document.getElementById(id);
-        if (!area) {
-          showToast("Không tìm thấy khu vực cần xuất ảnh.");
-          console.warn(`[CAP] downloadImage: missing area #${id}`);
-          return;
-        }
-        if (typeof html2canvas !== "function") {
-          showToast("Thư viện html2canvas chưa tải xong. Vui lòng thử lại.");
-          console.warn("[CAP] downloadImage: html2canvas unavailable");
-          return;
-        }
         const fixedSeats = area.querySelectorAll(".is-fixed");
         const conflictSeats = area.querySelectorAll(".has-conflict");
         const deskInputs = area.querySelectorAll(".desk-input");
@@ -11196,21 +9850,6 @@
           onclone: (clonedDocument) => {
             const clonedArea = clonedDocument.getElementById(id);
             if (!clonedArea) return;
-
-            if (id === "classroom-area") {
-              clonedArea.querySelectorAll(".desk-box").forEach((deskCell) => {
-                deskCell.style.backgroundColor = "#d5e5f2";
-                deskCell.style.borderColor = "#475569";
-                deskCell.style.boxShadow = "2px 2px 0 rgba(0, 0, 0, 0.12)";
-              });
-
-              clonedArea
-                .querySelectorAll(".desk-input")
-                .forEach((deskInput) => {
-                  deskInput.style.color = "#1f2937";
-                  deskInput.style.backgroundColor = "transparent";
-                });
-            }
 
             clonedArea.querySelectorAll(".desk-input").forEach((input) => {
               const textLayer = clonedDocument.createElement("div");
@@ -11248,10 +9887,6 @@
             l.download = `${pre}_${randomID}.png`;
             l.href = c.toDataURL("image/png");
             l.click();
-          })
-          .catch((error) => {
-            console.error(`[CAP] Không thể xuất ảnh cho #${id}`, error);
-            showToast("Xuất ảnh thất bại. Vui lòng thử lại.");
           })
           .finally(() => {
             fixedSeats.forEach((s) => s.classList.remove("is-fixed-hidden"));
@@ -11408,11 +10043,6 @@
 
         window.addEventListener("hashchange", () => {
           autoSaveAllData("hashchange");
-          if (isUpdatingRouteHash) {
-            isUpdatingRouteHash = false;
-            return;
-          }
-          applyRouteFromHash();
         });
 
         window.addEventListener("popstate", () => {
@@ -11480,154 +10110,6 @@
         showToast("Đã xuất file thành công!");
       }
 
-      function normalizeImportedData(rawData) {
-        if (!rawData || typeof rawData !== "object")
-          throw new Error("Dữ liệu rỗng");
-        const importedMeta = sanitizeLayoutMeta(rawData.layoutMeta || {});
-        const restoredFixed = [];
-        const left = normalizeImportedSide(
-          rawData.seating?.left,
-          restoredFixed,
-          importedMeta.leftRows,
-          importedMeta.leftCols,
-        );
-        const right = normalizeImportedSide(
-          rawData.seating?.right,
-          restoredFixed,
-          importedMeta.rightRows,
-          importedMeta.rightCols,
-        );
-        const normalizedDutySettings = rawData.dutySettings || {};
-        return {
-          layoutMeta: importedMeta,
-          seating: { left, right },
-          specialDesks: Array.isArray(rawData.specialDesks)
-            ? rawData.specialDesks
-            : [],
-          fixedMembers:
-            Array.isArray(rawData.fixedMembers) && rawData.fixedMembers.length
-              ? rawData.fixedMembers
-              : restoredFixed,
-          conflictGraph: normalizeConflictGraphEntities(
-            rawData.conflictGraph || {},
-          ),
-          titles: {
-            classroomTitle: rawData.titles?.classroomTitle || "",
-            schoolYear: rawData.titles?.schoolYear || "",
-          },
-          studentList: rawData.studentList || "",
-          genderMap:
-            rawData.genderMap && typeof rawData.genderMap === "object"
-              ? rawData.genderMap
-              : {},
-          dutySettings: {
-            dayOffs: Array.isArray(normalizedDutySettings.dayOffs)
-              ? normalizedDutySettings.dayOffs
-              : [],
-            excludedMembers: Array.isArray(
-              normalizedDutySettings.excludedMembers,
-            )
-              ? normalizedDutySettings.excludedMembers
-              : [],
-            morningOff: !!normalizedDutySettings.morningOff,
-            afternoonOff: !!normalizedDutySettings.afternoonOff,
-          },
-          dutySchedule: rawData.dutySchedule || null,
-          shuffleHistory: Array.isArray(rawData.shuffleHistory)
-            ? rawData.shuffleHistory
-            : [],
-          shuffleHistoryCounter: Number.isFinite(rawData.shuffleHistoryCounter)
-            ? rawData.shuffleHistoryCounter
-            : null,
-          compData:
-            rawData.compData && typeof rawData.compData === "object"
-              ? rawData.compData
-              : {},
-        };
-      }
-
-      function restoreCompetitionData(competitionData = {}) {
-        if (!Object.keys(competitionData).length) return;
-        const rows = document.querySelectorAll("#competition-tbody tr");
-        rows.forEach((tr) => {
-          const name = tr.cells[1].innerText.trim();
-          if (competitionData[name]) {
-            const cells = tr.querySelectorAll(".editable-cell");
-            if (cells.length >= 2) {
-              cells[0].innerText = competitionData[name].ach || "";
-              cells[1].innerText = competitionData[name].viol || "";
-              updatePoints(cells[0], "achievement");
-              updatePoints(cells[1], "violation");
-            }
-          }
-        });
-      }
-
-      function applyImportedData(data, options = {}) {
-        const normalized = normalizeImportedData(data);
-        const { save = true, render = true } = options;
-
-        layoutMeta = normalized.layoutMeta;
-        leftSideData = normalized.seating.left;
-        rightSideData = normalized.seating.right;
-        specialDesks = normalized.specialDesks;
-        fixedMembers = normalized.fixedMembers;
-        conflictGraph = normalized.conflictGraph;
-        document.getElementById("classroom-title").value =
-          normalized.titles.classroomTitle;
-        document.getElementById("school-year").value =
-          normalized.titles.schoolYear;
-        document.getElementById("student-list-input").value =
-          normalized.studentList;
-        genderMap = normalized.genderMap;
-        dayOffs = normalized.dutySettings.dayOffs;
-        excludedMembers = normalized.dutySettings.excludedMembers;
-        morningOff = normalized.dutySettings.morningOff;
-        afternoonOff = normalized.dutySettings.afternoonOff;
-        currentSchedule = normalized.dutySchedule;
-        shuffleHistory = normalized.shuffleHistory;
-        shuffleHistoryCounter =
-          normalized.shuffleHistoryCounter ?? shuffleHistory.length;
-
-        syncOverlays();
-        syncLayoutConfigUI();
-        syncDutySettingsUI();
-        if (render) {
-          renderAll();
-          restoreCompetitionData(normalized.compData);
-        }
-        if (save) saveData({ notify: false, animate: false });
-        return normalized;
-      }
-
-      function parseOptimizedShareCodeData(shortCode) {
-        const usesFallbackCodec = shortCode.startsWith(
-          SHARE_CODE_FALLBACK_PREFIX,
-        );
-        const rawCode = usesFallbackCodec
-          ? shortCode.slice(SHARE_CODE_FALLBACK_PREFIX.length)
-          : shortCode.startsWith(SHARE_CODE_PREFIX)
-            ? shortCode.slice(SHARE_CODE_PREFIX.length)
-            : shortCode;
-        const decompressed = usesFallbackCodec
-          ? decodeBase64Utf8(rawCode)
-          : hasLZStringSupport()
-            ? LZString.decompressFromBase64(rawCode)
-            : null;
-        if (!decompressed) throw new Error("Mã không hợp lệ hoặc bị hỏng");
-        const payload = JSON.parse(decompressed);
-        if (!payload || !Array.isArray(payload.s) || payload.s.length < 2)
-          throw new Error("Sai định dạng dữ liệu");
-        return {
-          seating: { left: payload.s[0], right: payload.s[1] },
-          layoutMeta: payload.lm || {},
-          specialDesks: Array.isArray(payload.sd) ? payload.sd : [],
-          conflictGraph: payload.c || {},
-          dutySettings: payload.d || {},
-          fixedMembers: [],
-        };
-      }
-
       function importFromFile(input) {
         const file = input.files[0];
         if (!file) return;
@@ -11635,27 +10117,80 @@
         reader.onload = (e) => {
           try {
             const data = JSON.parse(e.target.result);
-            applyImportedData(data);
+            const importedMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+            const isValidRowWidth = (side = []) =>
+              Array.isArray(side) &&
+              side.every((row) => {
+                if (!Array.isArray(row)) return false;
+                const expectedWidth =
+                  side === data.seating.left
+                    ? importedMeta.leftCols
+                    : importedMeta.rightCols;
+                const totalWidth = row.reduce(
+                  (sum, seat) => sum + (Number(seat?.width) || 0),
+                  0,
+                );
+                return totalWidth === expectedWidth;
+              });
+
+            if (
+              !data?.seating ||
+              !isValidRowWidth(data.seating.left) ||
+              !isValidRowWidth(data.seating.right)
+            ) {
+              showToast(
+                "File không hợp lệ: tổng width mỗi hàng phải khớp số cột cấu hình!",
+              );
+              return;
+            }
+
+            layoutMeta = importedMeta;
+            leftSideData = data.seating.left;
+            rightSideData = data.seating.right;
+            specialDesks = Array.isArray(data.specialDesks)
+              ? data.specialDesks
+              : [];
+            fixedMembers = data.fixedMembers || [];
+            conflictGraph = normalizeConflictGraphEntities(
+              data.conflictGraph || {},
+            );
+            if (data.titles) {
+              document.getElementById("classroom-title").value =
+                data.titles.classroomTitle;
+              document.getElementById("school-year").value =
+                data.titles.schoolYear;
+            }
+            document.getElementById("student-list-input").value =
+              data.studentList || "";
+            genderMap = data.genderMap || {};
+            if (data.dutySettings) {
+              dayOffs = data.dutySettings.dayOffs || [];
+              excludedMembers = data.dutySettings.excludedMembers || [];
+              morningOff = data.dutySettings.morningOff || false;
+              afternoonOff = data.dutySettings.afternoonOff || false;
+            }
+            currentSchedule = data.dutySchedule || null;
+            shuffleHistory = Array.isArray(data.shuffleHistory)
+              ? data.shuffleHistory
+              : [];
+            shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+              ? data.shuffleHistoryCounter
+              : shuffleHistory.length;
+            syncOverlays();
+            syncLayoutConfigUI();
+            renderAll();
+            saveData({ notify: false, animate: false });
             closeShareModal();
             showToast("Đã nhập dữ liệu thành công!");
-          } catch (_) {
+          } catch (err) {
             showToast("File không hợp lệ!");
           }
         };
         reader.readAsText(file);
       }
 
-      function loadData(externalData = null) {
-        let data, key;
-        if (externalData) {
-          data = externalData;
-          key = PRIMARY_STORAGE_KEY;
-        } else {
-          const res = readStoredClassData();
-          data = res.data;
-          key = res.key;
-        }
-
+      function loadData() {
+        const { data, key } = readStoredClassData();
         if (!data) {
           layoutMeta = { ...DEFAULT_LAYOUT_META };
           leftSideData = createDefaultArray(
@@ -11669,11 +10204,47 @@
           specialDesks = [];
           return;
         }
-        const normalized = applyImportedData(data, {
-          save: false,
-          render: false,
-        });
-        restoreCompetitionData(normalized.compData);
+        layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+        leftSideData = normalizeImportedSide(
+          data.seating?.left,
+          [],
+          layoutMeta.leftRows,
+          layoutMeta.leftCols,
+        );
+        rightSideData = normalizeImportedSide(
+          data.seating?.right,
+          [],
+          layoutMeta.rightRows,
+          layoutMeta.rightCols,
+        );
+        specialDesks = Array.isArray(data.specialDesks)
+          ? data.specialDesks
+          : [];
+        fixedMembers = data.fixedMembers || [];
+        conflictGraph = normalizeConflictGraphEntities(
+          data.conflictGraph || {},
+        );
+        if (data.titles) {
+          document.getElementById("classroom-title").value =
+            data.titles.classroomTitle;
+          document.getElementById("school-year").value = data.titles.schoolYear;
+        }
+        document.getElementById("student-list-input").value =
+          data.studentList || "";
+        genderMap = data.genderMap || {};
+        if (data.dutySettings) {
+          dayOffs = data.dutySettings.dayOffs || [];
+          excludedMembers = data.dutySettings.excludedMembers || [];
+          morningOff = data.dutySettings.morningOff || false;
+          afternoonOff = data.dutySettings.afternoonOff || false;
+        }
+        currentSchedule = data.dutySchedule || null;
+        shuffleHistory = Array.isArray(data.shuffleHistory)
+          ? data.shuffleHistory
+          : [];
+        shuffleHistoryCounter = Number.isFinite(data.shuffleHistoryCounter)
+          ? data.shuffleHistoryCounter
+          : shuffleHistory.length;
 
         if (key !== PRIMARY_STORAGE_KEY) {
           saveData({ notify: false, animate: false });
@@ -11891,8 +10462,56 @@
       // ==========================================
       function parseOptimizedShareCode(shortCode) {
         try {
-          const parsedData = parseOptimizedShareCodeData(shortCode);
-          applyImportedData(parsedData);
+          const usesFallbackCodec = shortCode.startsWith(
+            SHARE_CODE_FALLBACK_PREFIX,
+          );
+          const rawCode = usesFallbackCodec
+            ? shortCode.slice(SHARE_CODE_FALLBACK_PREFIX.length)
+            : shortCode.startsWith(SHARE_CODE_PREFIX)
+              ? shortCode.slice(SHARE_CODE_PREFIX.length)
+              : shortCode;
+
+          const decompressed = usesFallbackCodec
+            ? decodeBase64Utf8(rawCode)
+            : hasLZStringSupport()
+              ? LZString.decompressFromBase64(rawCode)
+              : null;
+          if (!decompressed) throw new Error("Mã không hợp lệ hoặc bị hỏng");
+
+          const payload = JSON.parse(decompressed);
+          if (!payload || !Array.isArray(payload.s) || payload.s.length < 2)
+            throw new Error("Sai định dạng dữ liệu");
+
+          const restoredFixed = [];
+          layoutMeta = sanitizeLayoutMeta(payload.lm || {});
+          leftSideData = normalizeImportedSide(
+            payload.s[0],
+            restoredFixed,
+            layoutMeta.leftRows,
+            layoutMeta.leftCols,
+          );
+          rightSideData = normalizeImportedSide(
+            payload.s[1],
+            restoredFixed,
+            layoutMeta.rightRows,
+            layoutMeta.rightCols,
+          );
+          specialDesks = Array.isArray(payload.sd) ? payload.sd : [];
+          fixedMembers = restoredFixed;
+
+          conflictGraph = Object.fromEntries(
+            Object.entries(payload.c || {}).map(([k, v]) => [k, new Set(v)]),
+          );
+          if (payload.d) {
+            dayOffs = payload.d.dayOffs || [];
+            excludedMembers = payload.d.excludedMembers || [];
+            morningOff = payload.d.morningOff || false;
+            afternoonOff = payload.d.afternoonOff || false;
+          }
+
+          saveData();
+          syncLayoutConfigUI();
+          renderAll();
           return true;
         } catch (error) {
           console.error("Lỗi Import:", error);
@@ -12001,23 +10620,47 @@
       function importFromCode() {
         const code = document.getElementById("import-code-input").value.trim();
         try {
-          let importedData = null;
           if (
             code.startsWith(SHARE_CODE_PREFIX) ||
             code.startsWith(SHARE_CODE_FALLBACK_PREFIX)
           ) {
-            importedData = parseOptimizedShareCodeData(code);
+            if (!parseOptimizedShareCode(code))
+              throw new Error("Mã không hợp lệ!");
           } else {
-            try {
-              importedData = parseOptimizedShareCodeData(code);
-            } catch (_) {
-              importedData = decodeLegacyShareCode(code);
+            const parsedOptimized = parseOptimizedShareCode(code);
+            if (!parsedOptimized) {
+              const data = decodeLegacyShareCode(code);
+              layoutMeta = sanitizeLayoutMeta(data.layoutMeta || {});
+              leftSideData = normalizeImportedSide(
+                data.seating.left,
+                [],
+                layoutMeta.leftRows,
+                layoutMeta.leftCols,
+              );
+              rightSideData = normalizeImportedSide(
+                data.seating.right,
+                [],
+                layoutMeta.rightRows,
+                layoutMeta.rightCols,
+              );
+              specialDesks = Array.isArray(data.specialDesks)
+                ? data.specialDesks
+                : [];
+              fixedMembers = data.fixedMembers || [];
+              conflictGraph = Object.fromEntries(
+                Object.entries(data.conflictGraph || {}).map(([k, v]) => [
+                  k,
+                  new Set(v),
+                ]),
+              );
+              syncLayoutConfigUI();
+              saveData();
+              renderAll();
             }
           }
-          applyImportedData(importedData);
           closeShareModal();
           showToast("Đã nhập dữ liệu thành công!");
-        } catch (_) {
+        } catch (e) {
           showToast("Mã không hợp lệ!");
         }
       }
@@ -12193,14 +10836,7 @@
 
       // INITIALIZATION
       window.onload = async () => {
-        const { data } = readStoredClassData();
-        loadData(data);
-        // Nếu đã có danh sách học sinh thì tạo bảng
-        if (document.getElementById("student-list-input").value.trim()) {
-          generateTable();
-          // Cần gọi lại loadData để điền dữ liệu vào bảng vừa tạo
-          loadData(data);
-        }
+        loadData();
         syncLayoutConfigUI();
         fillCurrentCompetitionPeriod();
         applyBlackboardFromShareLinkIfAvailable();
@@ -12243,11 +10879,6 @@
         applyWeatherOverlayPosition();
         initWeatherOverlayDrag();
         renderAll();
-        applyRouteFromHash();
-        if (!window.location.hash) {
-          syncRouteHash();
-          isUpdatingRouteHash = false;
-        }
         syncWindEffectsForActiveTab();
         WeatherAdapter.init();
         await registerServiceWorker();
@@ -12310,8 +10941,6 @@
         }
         await applyMobileLandscapeMode();
         runPostFixChecks();
-        loadDutyDebtData();
-        addDutyDebtManagementUI();
         updateDutyHomeAlert();
         setupAutoSaveOnPageLifecycle();
         setupContinuousAutoSave();
@@ -12344,7 +10973,11 @@
         if (!e.target.closest(".desk-box")) {
           clearDeskSelection();
         }
+        if (!e.target.closest("#desk-context-menu")) {
+          hideDeskContextMenu();
+        }
       });
+      document.addEventListener("scroll", hideDeskContextMenu, true);
       document.addEventListener("keydown", (e) => {
         const blackboardModal = document.getElementById("blackboard-modal");
         const isBlackboardOpen = blackboardModal?.classList.contains("open");
@@ -12359,7 +10992,7 @@
         }
         if (e.key === "Escape" && seat3DState.active) closeSeat3DView();
         if (e.key === "Escape") {
-          closeVersionHistoryModal();
+          hideDeskContextMenu();
           clearDeskSelection();
         }
       });
@@ -12369,49 +11002,23 @@
         type: null,
         studentName: null,
         selectedDay: null,
-        selectedSession: null,
+        selectedSession: null
       };
 
       // Achievement tags (điểm số và môn học)
       const ACHIEVEMENT_TAGS = {
-        scores: ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1", "0"],
-        subjects: [
-          "Toán",
-          "Văn",
-          "Anh",
-          "Lý",
-          "Hóa",
-          "Sinh",
-          "Sử",
-          "Địa",
-          "GDCD",
-          "Tin",
-          "Thể dục",
-          "Âm nhạc",
-          "Mỹ thuật",
-        ],
+        scores: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1', '0'],
+        subjects: ['Toán', 'Văn', 'Anh', 'Lý', 'Hóa', 'Sinh', 'Sử', 'Địa', 'GDCD', 'Tin', 'Thể dục', 'Âm nhạc', 'Mỹ thuật']
       };
 
       // Violation tags (các nhóm lỗi)
       const VIOLATION_TAGS = {
-        "Vắng & Muộn": ["Vắng", "Muộn", "Kp (không phép)"],
-        "Sổ Đầu Bài": ["SĐB", "Quên sổ", "Không làm bài"],
-        "Sổ Cờ Đỏ": ["SCĐ", "Cờ đỏ"],
-        "Kỷ Luật Chung": [
-          "Đánh nhau",
-          "Quay cóp",
-          "Ăn trong giờ",
-          "Nhuộm tóc",
-          "ĐT (dùng điện thoại)",
-          "Nói tục",
-        ],
-        "Lỗi Nhẹ": [
-          "MTT (mặt tối tối)",
-          "VS bẩn (vệ sinh bẩn)",
-          "Nhắc nhở",
-          "Không chép bài",
-        ],
-        "GV Nhắc Nhở": ["GV nhắc nhở"],
+        'Vắng & Muộn': ['Vắng', 'Muộn', 'Kp (không phép)', 'Cơm chiều'],
+        'Sổ Đầu Bài': ['SĐB', 'Quên sổ', 'Không làm bài'],
+        'Sổ Cờ Đỏ': ['SCĐ', 'Cờ đỏ'],
+        'Kỷ Luật Chung': ['Đánh nhau', 'Quay cóp', 'Ăn trong giờ', 'Nhuộm tóc', 'ĐT (dùng điện thoại)', 'Nói tục'],
+        'Lỗi Nhẹ': ['MTT (mặt tối tối)', 'VS bẩn (vệ sinh bẩn)', 'Nhắc nhở', 'Không chép bài'],
+        'GV Nhắc Nhở': ['GV nhắc nhở']
       };
 
       function openInputModal(cell, type, studentName) {
@@ -12422,73 +11029,60 @@
         inputModalState.selectedSession = null;
 
         // Update title
-        const title =
-          type === "achievement" ? "Nhập Thành Tích" : "Nhập Vi Phạm";
-        document.getElementById("input-modal-title").innerHTML =
-          (type === "achievement"
-            ? '<i class="fas fa-star mr-2"></i>'
-            : '<i class="fas fa-exclamation-triangle mr-2"></i>') + title;
+        const title = type === 'achievement' ? 'Nhập Thành Tích' : 'Nhập Vi Phạm';
+        document.getElementById('input-modal-title').innerHTML = 
+          (type === 'achievement' ? '<i class="fas fa-star mr-2"></i>' : '<i class="fas fa-exclamation-triangle mr-2"></i>') + title;
 
         // Clear previous state
-        document
-          .querySelectorAll(".day-btn, .session-btn")
-          .forEach((btn) =>
-            btn.classList.remove(
-              "bg-blue-500",
-              "text-white",
-              "border-blue-500",
-            ),
-          );
-        document.getElementById("input-modal-textarea").value = "";
+        document.querySelectorAll('.day-btn, .session-btn').forEach(btn => btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500'));
+        document.getElementById('input-modal-textarea').value = '';
 
         // Render content based on type
         renderInputModalContent(type);
 
         // Open modal
-        document.getElementById("input-modal").classList.add("open");
+        document.getElementById('input-modal').classList.add('open');
       }
 
       function renderInputModalContent(type) {
-        const contentDiv = document.getElementById("input-modal-content");
-        contentDiv.innerHTML = "";
+        const contentDiv = document.getElementById('input-modal-content');
+        contentDiv.innerHTML = '';
 
-        if (type === "achievement") {
+        if (type === 'achievement') {
           // Render achievement content
           let html = '<div class="mb-4">';
-
+          
           // Điểm số
           html += '<div class="mb-4">';
-          html +=
-            '<h4 class="text-sm font-semibold text-gray-700 mb-2">Điểm Số</h4>';
+          html += '<h4 class="text-sm font-semibold text-gray-700 mb-2">Điểm Số</h4>';
           html += '<div class="flex flex-wrap gap-2">';
-          ACHIEVEMENT_TAGS.scores.forEach((score) => {
+          ACHIEVEMENT_TAGS.scores.forEach(score => {
             html += `<button class="score-tag px-3 py-2 rounded border border-gray-300 hover:bg-green-100 text-sm font-medium" data-score="${score}">${score}</button>`;
           });
-          html += "</div></div>";
+          html += '</div></div>';
 
           // Môn học
-          html += "<div>";
-          html +=
-            '<h4 class="text-sm font-semibold text-gray-700 mb-2">Môn Học</h4>';
+          html += '<div>';
+          html += '<h4 class="text-sm font-semibold text-gray-700 mb-2">Môn Học</h4>';
           html += '<div class="flex flex-wrap gap-2">';
-          ACHIEVEMENT_TAGS.subjects.forEach((subject) => {
+          ACHIEVEMENT_TAGS.subjects.forEach(subject => {
             html += `<button class="subject-tag px-3 py-2 rounded border border-gray-300 hover:bg-purple-100 text-sm font-medium" data-subject="${subject}">${subject}</button>`;
           });
-          html += "</div></div>";
-
-          html += "</div>";
+          html += '</div></div>';
+          
+          html += '</div>';
           contentDiv.innerHTML = html;
 
           // Add event listeners for achievement tags
-          contentDiv.querySelectorAll(".score-tag").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
+          contentDiv.querySelectorAll('.score-tag').forEach(btn => {
+            btn.addEventListener('click', (e) => {
               e.preventDefault();
               addToTextarea(btn.dataset.score);
             });
           });
 
-          contentDiv.querySelectorAll(".subject-tag").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
+          contentDiv.querySelectorAll('.subject-tag').forEach(btn => {
+            btn.addEventListener('click', (e) => {
               e.preventDefault();
               addToTextarea(btn.dataset.subject);
             });
@@ -12496,23 +11090,23 @@
         } else {
           // Render violation content
           let html = '<div class="mb-4">';
-
+          
           Object.entries(VIOLATION_TAGS).forEach(([group, tags]) => {
             html += `<div class="mb-4">`;
             html += `<h4 class="text-sm font-semibold text-gray-700 mb-2">${group}</h4>`;
             html += `<div class="flex flex-wrap gap-2">`;
-            tags.forEach((tag) => {
+            tags.forEach(tag => {
               html += `<button class="violation-tag px-3 py-2 rounded border border-gray-300 hover:bg-red-100 text-sm font-medium" data-tag="${tag}">${tag}</button>`;
             });
             html += `</div></div>`;
           });
-
-          html += "</div>";
+          
+          html += '</div>';
           contentDiv.innerHTML = html;
 
           // Add event listeners for violation tags
-          contentDiv.querySelectorAll(".violation-tag").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
+          contentDiv.querySelectorAll('.violation-tag').forEach(btn => {
+            btn.addEventListener('click', (e) => {
               e.preventDefault();
               addToTextarea(btn.dataset.tag);
             });
@@ -12521,107 +11115,89 @@
       }
 
       function addToTextarea(text) {
-        const textarea = document.getElementById("input-modal-textarea");
+        const textarea = document.getElementById('input-modal-textarea');
         const currentText = textarea.value.trim();
-
+        
         if (currentText) {
-          textarea.value = currentText + ", " + text;
+          textarea.value = currentText + ', ' + text;
         } else {
           textarea.value = text;
         }
-
+        
         textarea.focus();
       }
 
       function closeInputModal() {
-        document.getElementById("input-modal").classList.remove("open");
+        document.getElementById('input-modal').classList.remove('open');
         inputModalState = {
           cell: null,
           type: null,
           studentName: null,
           selectedDay: null,
-          selectedSession: null,
+          selectedSession: null
         };
       }
 
       function saveInputModal() {
-        const textarea = document.getElementById("input-modal-textarea");
+        const textarea = document.getElementById('input-modal-textarea');
         const content = textarea.value.trim();
 
         if (!content) {
-          showToast("Vui lòng nhập nội dung");
+          showToast('Vui lòng nhập nội dung');
           return;
         }
 
         if (!inputModalState.selectedDay || !inputModalState.selectedSession) {
-          showToast("Vui lòng chọn thứ và buổi");
+          showToast('Vui lòng chọn thứ và buổi');
           return;
         }
 
         // Format: [T2-Sáng] content
-        const dayLabel = "T" + inputModalState.selectedDay;
-        const sessionLabel =
-          inputModalState.selectedSession === "morning" ? "Sáng" : "Chiều";
+        const dayLabel = 'T' + inputModalState.selectedDay;
+        const sessionLabel = inputModalState.selectedSession === 'morning' ? 'Sáng' : 'Chiều';
         const formattedContent = `[${dayLabel}-${sessionLabel}] ${content}`;
 
         // Add to cell
         if (inputModalState.cell) {
           const currentText = inputModalState.cell.innerText.trim();
           if (currentText) {
-            inputModalState.cell.innerText =
-              currentText + "\n" + formattedContent;
+            inputModalState.cell.innerText = currentText + '\n' + formattedContent;
           } else {
             inputModalState.cell.innerText = formattedContent;
           }
-
+          
           // Trigger blur event to update points
-          inputModalState.cell.dispatchEvent(new Event("blur"));
+          inputModalState.cell.dispatchEvent(new Event('blur'));
         }
 
         closeInputModal();
-        showToast("Đã thêm vào ô");
+        showToast('Đã thêm vào ô');
       }
 
       // Add event listeners for day and session buttons
-      document.addEventListener("DOMContentLoaded", function () {
+      document.addEventListener('DOMContentLoaded', function() {
         // Day buttons
-        document.addEventListener("click", function (e) {
-          if (e.target.classList.contains("day-btn")) {
-            document.querySelectorAll(".day-btn").forEach((btn) => {
-              btn.classList.remove(
-                "bg-blue-500",
-                "text-white",
-                "border-blue-500",
-              );
+        document.addEventListener('click', function(e) {
+          if (e.target.classList.contains('day-btn')) {
+            document.querySelectorAll('.day-btn').forEach(btn => {
+              btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
             });
-            e.target.classList.add(
-              "bg-blue-500",
-              "text-white",
-              "border-blue-500",
-            );
+            e.target.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
             inputModalState.selectedDay = e.target.dataset.day;
           }
 
           // Session buttons
-          if (e.target.classList.contains("session-btn")) {
-            document.querySelectorAll(".session-btn").forEach((btn) => {
-              btn.classList.remove(
-                "bg-orange-500",
-                "text-white",
-                "border-orange-500",
-              );
+          if (e.target.classList.contains('session-btn')) {
+            document.querySelectorAll('.session-btn').forEach(btn => {
+              btn.classList.remove('bg-orange-500', 'text-white', 'border-orange-500');
             });
-            e.target.classList.add(
-              "bg-orange-500",
-              "text-white",
-              "border-orange-500",
-            );
+            e.target.classList.add('bg-orange-500', 'text-white', 'border-orange-500');
             inputModalState.selectedSession = e.target.dataset.session;
           }
         });
       });
+
     </script>
     <script src="./scripts/weather.js"></script>
-    <script src="./animation-enhancements.js"></script>
   </body>
 </html>
