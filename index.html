@@ -3040,14 +3040,6 @@
         "monitorClass",
         "monitorArea",
       ];
-
-      // --- New Constants for Duty Algorithm ---
-      const HEAVY_FAULT_PATTERNS = [
-        /vắng/i, /muộn/i, /kp/i, /không phép/i, /sđb/i, /scđ/i, /cờ đỏ/i, /đánh nhau/i, /quay cóp/i, /điện thoại/i, /đt/i, /nói tục/i
-      ];
-      const LIGHT_FAULT_PATTERNS = [
-        /mtt/i, /mặt tối tối/i, /vs bẩn/i, /vệ sinh bẩn/i, /nhắc nhở/i, /không chép bài/i, /ăn trong giờ/i, /nhuộm tóc/i
-      ];
       let selectedStudentSeat = null,
         isEditMode = false;
       let selectedDeskKey = null;
@@ -8844,7 +8836,7 @@
           const point1Input = document.createElement("div");
           point1Input.className = "editable-cell";
           point1Input.contentEditable = "true";
-          point1Input.addEventListener("blur", () => updatePoints(point1Input, "achievement"));
+          point1Input.addEventListener("blur", () => updatePoints(point1Input));
           point1Input.addEventListener("click", () => openInputModal(point1Input, "achievement", n));
           point1Td.appendChild(point1Input);
 
@@ -8852,7 +8844,7 @@
           const point2Input = document.createElement("div");
           point2Input.className = "editable-cell";
           point2Input.contentEditable = "true";
-          point2Input.addEventListener("blur", () => updatePoints(point2Input, "violation"));
+          point2Input.addEventListener("blur", () => updatePoints(point2Input));
           point2Input.addEventListener("click", () => openInputModal(point2Input, "violation", n));
           point2Td.appendChild(point2Input);
 
@@ -9185,29 +9177,17 @@
         }
       }
 
-      function updatePoints(el, type) {
+      function updatePoints(el) {
         const text = el.innerText;
         const cell = el.parentElement;
-        // Xóa tất cả badge cũ trong ô (bao gồm cả badge điểm lỗi)
         cell.querySelectorAll(".points-badge").forEach((b) => b.remove());
-        
-        if (type === "achievement") {
-          const matches = text.match(/\d+/g);
-          if (matches) {
-            const total = matches.reduce((a, b) => a + parseInt(b), 0);
-            const badge = document.createElement("span");
-            badge.className = "points-badge";
-            badge.innerText = total + "đ";
-            cell.appendChild(badge);
-          }
-        } else if (type === "violation") {
-          const faultPoints = calculateFaultPoints(text);
-          if (faultPoints > 0) {
-            const badge = document.createElement("span");
-            badge.className = "points-badge bg-red-500";
-            badge.innerText = faultPoints + "đ";
-            cell.appendChild(badge);
-          }
+        const matches = text.match(/\d+/g);
+        if (matches) {
+          const total = matches.reduce((a, b) => a + parseInt(b), 0);
+          const badge = document.createElement("span");
+          badge.className = "points-badge";
+          badge.innerText = total + "đ";
+          cell.appendChild(badge);
         }
       }
 
@@ -9672,24 +9652,14 @@
         const safeList =
           students.length > 0 ? students : ["(chưa có)", "(chưa có)"];
         const days = DUTY_DAYS.map((day, dayIndex) => {
+          const isOff = dayOffs.includes(day);
           const roles = {};
-          
-          // Kiểm tra xem ngày này có phải là ngày nghỉ không
-          const isDayOff = dayOffs && dayOffs.includes(day);
-          
-          if (isDayOff) {
-            // Nếu là ngày nghỉ, gán "Nghỉ" cho tất cả các nhiệm vụ
-            DUTY_ROLE_KEYS.forEach((roleKey) => {
-              roles[roleKey] = "Nghỉ";
-            });
-          } else {
-            // Nếu không phải ngày nghỉ, phân công xoay vòng như bình thường
+          if (!isOff) {
             DUTY_ROLE_KEYS.forEach((roleKey, roleIndex) => {
               roles[roleKey] = safeList[(dayIndex + roleIndex) % safeList.length];
             });
           }
-          
-          return { day, roles, isDayOff };
+          return { day, roles, isOff };
         });
         return { days };
       }
@@ -9701,12 +9671,8 @@
         const days = schedule?.days || [];
         days.forEach((dayData) => {
           const row = document.createElement("tr");
-          if (dayData.isDayOff) {
-            row.classList.add("bg-gray-100", "opacity-60");
-          }
-          const dayLabel = dayData.isDayOff ? `<strong><i class="fas fa-ban text-red-500 mr-1"></i>T${dayData.day}</strong>` : `<strong>T${dayData.day}</strong>`;
           row.innerHTML = `
-            <td>${dayLabel}</td>
+            <td><strong>T${dayData.day}</strong></td>
             <td>${dayData.roles.sweep || ""}</td>
             <td>${dayData.roles.trash || ""}</td>
             <td>${dayData.roles.board || ""}</td>
@@ -10060,7 +10026,8 @@
 
       function confirmDutyAssignment() {
         saveDutySettings();
-        currentSchedule = calculateAdvancedDutySchedule();
+        const students = collectEligibleDutyStudents();
+        currentSchedule = buildDutySchedule(students);
         closeDutyModal();
         document
           .getElementById("view-competition-main")
@@ -10078,34 +10045,17 @@
         schedule.days.forEach((dayData, index) => {
           const tr = document.createElement("tr");
           tr.dataset.dutyDay = dayData.day;
-          
-          // Them class canh bao neu la ngay nghi
-          if (dayData.isDayOff) {
-            tr.classList.add("bg-gray-100", "opacity-60");
-          }
-          
-          const dayLabel = dayData.isDayOff ? `<span class="text-red-600 font-bold"><i class="fas fa-ban mr-1"></i>T${dayData.day}</span>` : `T${dayData.day}`;
-          
-          tr.innerHTML = `<td class="text-xl font-bold cursor-pointer hover:bg-gray-200 transition-colors" onclick="handleDutyDayClick('${dayData.day}')">${dayLabel}</td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.sweep || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.trash || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.board || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.area || ""}</div></td>
-                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="${!dayData.isDayOff}">${dayData.roles.closeDoor || ""}</div></td>` : ""}
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.monitorClass || ""}</div></td>
-                    <td><div class="editable-cell" contenteditable="${!dayData.isDayOff}">${dayData.roles.monitorArea || ""}</div></td>
+          tr.innerHTML = `<td class="text-xl">${dayData.day}</td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.sweep || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.trash || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.board || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.area || ""}</div></td>
+                    ${index % 2 === 0 ? `<td rowspan="2"><div class="editable-cell h-full" contenteditable="true">${dayData.roles.closeDoor || ""}</div></td>` : ""}
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorClass || ""}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">${dayData.roles.monitorArea || ""}</div></td>
                     <td><div class="editable-cell" contenteditable="true"></div></td>`;
           tbody.appendChild(tr);
         });
-
-        // Update cleaners list in footer if available
-        if (data.cleaners && data.cleaners.length > 0) {
-          const footerCells = document.querySelectorAll("#duty-board tfoot .footer-editable");
-          if (footerCells.length > 0) {
-            footerCells[0].innerText = data.cleaners.join(", ");
-          }
-        }
-
         tbody.querySelectorAll(".editable-cell").forEach((cell) => {
           cell.addEventListener("input", updateDutyHomeAlert);
         });
@@ -10121,41 +10071,6 @@
 
       function toggleDayOffMode() {
         dayOffMode = !dayOffMode;
-        if (dayOffMode) {
-          showToast("Chế độ Ngày nghỉ: Bật (Click vào Thứ để đánh dấu)");
-        } else {
-          showToast("Chế độ Ngày nghỉ: Tắt");
-        }
-        renderDutyTable(currentSchedule);
-      }
-
-      function handleDutyDayClick(day) {
-        if (!dayOffMode) return;
-        
-        if (dayOffs.includes(day)) {
-          dayOffs = dayOffs.filter(d => d !== day);
-        } else {
-          dayOffs.push(day);
-        }
-        
-        // Cập nhật lại schedule
-        if (currentSchedule && currentSchedule.days) {
-          currentSchedule.days.forEach(d => {
-            if (d.day === day) {
-              d.isDayOff = dayOffs.includes(day);
-              // Nếu chuyển thành ngày nghỉ, xóa nội dung cũ
-              if (d.isDayOff) {
-                DUTY_ROLE_KEYS.forEach(role => d.roles[role] = "Nghỉ");
-              } else {
-                // Nếu bỏ ngày nghỉ, có thể để trống hoặc giữ nguyên "Nghỉ" để người dùng tự sửa
-                // Ở đây ta giữ nguyên để tránh mất dữ liệu nếu lỡ tay
-              }
-            }
-          });
-        }
-        
-        renderDutyTable(currentSchedule);
-        saveData(); // Lưu trạng thái mới
       }
 
       // =================================================================
@@ -10542,17 +10457,8 @@
         reader.readAsText(file);
       }
 
-      function loadData(externalData = null) {
-        let data, key;
-        if (externalData) {
-          data = externalData;
-          key = PRIMARY_STORAGE_KEY;
-        } else {
-          const res = readStoredClassData();
-          data = res.data;
-          key = res.key;
-        }
-        
+      function loadData() {
+        const { data, key } = readStoredClassData();
         if (!data) {
           layoutMeta = { ...DEFAULT_LAYOUT_META };
           leftSideData = createDefaultArray(
@@ -10593,7 +10499,6 @@
         }
         document.getElementById("student-list-input").value =
           data.studentList || "";
-        const competitionData = data.compData || {};
         genderMap = data.genderMap || {};
         if (data.dutySettings) {
           dayOffs = data.dutySettings.dayOffs || [];
@@ -10611,23 +10516,6 @@
 
         if (key !== PRIMARY_STORAGE_KEY) {
           saveData({ notify: false, animate: false });
-        }
-
-        // Khôi phục dữ liệu bảng thi đua
-        if (Object.keys(competitionData).length > 0) {
-          const rows = document.querySelectorAll("#competition-tbody tr");
-          rows.forEach((tr) => {
-            const name = tr.cells[1].innerText.trim();
-            if (competitionData[name]) {
-              const cells = tr.querySelectorAll(".editable-cell");
-              if (cells.length >= 2) {
-                cells[0].innerText = competitionData[name].ach || "";
-                cells[1].innerText = competitionData[name].viol || "";
-                updatePoints(cells[0], "achievement");
-                updatePoints(cells[1], "violation");
-              }
-            }
-          });
         }
       }
 
@@ -11216,14 +11104,7 @@
 
       // INITIALIZATION
       window.onload = async () => {
-        const { data } = readStoredClassData();
-        loadData(data);
-        // Nếu đã có danh sách học sinh thì tạo bảng
-        if (document.getElementById("student-list-input").value.trim()) {
-          generateTable();
-          // Cần gọi lại loadData để điền dữ liệu vào bảng vừa tạo
-          loadData(data);
-        }
+        loadData();
         syncLayoutConfigUI();
         fillCurrentCompetitionPeriod();
         applyBlackboardFromShareLinkIfAvailable();

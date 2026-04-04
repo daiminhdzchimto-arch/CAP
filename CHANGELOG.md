@@ -1,3 +1,171 @@
+# [1.75.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.74.0...v1.75.0) (2026-04-04)
+
+### Features
+
+- implement day-off and excluded members logic for duty schedule ([0cc3408](https://github.com/daiminhdzchimto-arch/CAP/commit/0cc3408e5fa5e6c41fb377c553b3940a1c15ca9c))
+
+# [1.74.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.73.0...v1.74.0) (2026-04-03)
+
+### Features
+
+- enhance animations for rotate, flip and sort operations ([b501391](https://github.com/daiminhdzchimto-arch/CAP/commit/b501391763e2954a2c5dbb3d658ede0411522227))
+
+# [1.73.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.72.1...v1.73.0) (2026-04-03)
+
+### Features
+
+- **ui:** make logo icon return to home tab ([4a59e36](https://github.com/daiminhdzchimto-arch/CAP/commit/4a59e36ad33ac56f36413c5217b3defff9eb9140))
+
+## [1.72.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.72.0...v1.72.1) (2026-04-03)
+
+### Bug Fixes
+
+- harden image rendering and export error handling ([58a0bec](https://github.com/daiminhdzchimto-arch/CAP/commit/58a0bec637589dfa6e67942150cddcfd41a64b8f))
+
+# [1.72.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.4...v1.72.0) (2026-04-03)
+
+### Features
+
+- thêm tính năng xem lịch sử phiên bản ứng dụng (tiếng Việt) ([efc6028](https://github.com/daiminhdzchimto-arch/CAP/commit/efc6028e8b2e11a3b061ae14da6c30670b944736))
+
+## [1.71.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.3...v1.71.4) (2026-04-03)
+
+### Bug Fixes
+
+- **ui:** sync student detail sidebar with dark mode ([a4776b8](https://github.com/daiminhdzchimto-arch/CAP/commit/a4776b89b22ee83be5b82bf274f0b76131700471))
+
+## [1.71.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.2...v1.71.3) (2026-04-03)
+
+### Bug Fixes
+
+- lighten classroom seats in exported snapshot ([19b0ee8](https://github.com/daiminhdzchimto-arch/CAP/commit/19b0ee8c00212ddb62cf13def8d2f1ad9bf9a445))
+
+## [1.71.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.1...v1.71.2) (2026-04-03)
+
+### Bug Fixes
+
+- **version:** make version sequence deterministic per git history ([01b892d](https://github.com/daiminhdzchimto-arch/CAP/commit/01b892d592d845a0b7178e55c72389da0763ace5))
+
+## [1.71.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.71.0...v1.71.1) (2026-04-03)
+
+### Bug Fixes
+
+- improve settings icon visuals in dark mode ([0fe9ae3](https://github.com/daiminhdzchimto-arch/CAP/commit/0fe9ae3298155b359d98424e84768255feea22af))
+
+# [1.71.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.2...v1.71.0) (2026-04-03)
+
+### Features
+
+- **routing:** dùng hash path phân cấp cho các phần liên quan ([b0c9efd](https://github.com/daiminhdzchimto-arch/CAP/commit/b0c9efd07d06611524de617912fa424646c34921))
+
+## [1.70.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.1...v1.70.2) (2026-04-03)
+
+### Bug Fixes
+
+- sync help tooltip colors in dark mode ([09985cb](https://github.com/daiminhdzchimto-arch/CAP/commit/09985cb249b494603642202e3a97d839961af4b7))
+
+## [1.70.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.70.0...v1.70.1) (2026-04-03)
+
+### Bug Fixes
+
+- improve dark mode contrast in duty and input modals ([2d6b38f](https://github.com/daiminhdzchimto-arch/CAP/commit/2d6b38fb542d649724fdf5424994eeab9b70efa2))
+
+# [1.70.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.6...v1.70.0) (2026-04-03)
+
+### Features
+
+- **ui:** restyle competition help icon as edge 3D ([b29f8d5](https://github.com/daiminhdzchimto-arch/CAP/commit/b29f8d5191449e793c164100ca602c9f9a20e4fe))
+
+## [1.69.6](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.5...v1.69.6) (2026-04-03)
+
+### Bug Fixes
+
+- **version:** bump app build number on every commit ([1543ee8](https://github.com/daiminhdzchimto-arch/CAP/commit/1543ee8a467a7d16dbb8e6f8bf14ddd959d2fcde))
+
+## [1.69.5](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.4...v1.69.5) (2026-04-03)
+
+### Bug Fixes
+
+- **classroom:** remove desk right-click context popup ([750b471](https://github.com/daiminhdzchimto-arch/CAP/commit/750b471ca40494bbb574c6727119f9569690d5c4))
+
+## [1.69.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.3...v1.69.4) (2026-04-03)
+
+### Bug Fixes
+
+- improve 2D dark mode seat contrast ([5aef568](https://github.com/daiminhdzchimto-arch/CAP/commit/5aef568d0f2f82fe8f6d7fddab1e059c90fc3ef7))
+
+## [1.69.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.2...v1.69.3) (2026-04-03)
+
+### Bug Fixes
+
+- improve dark mode text contrast across UI views ([315434d](https://github.com/daiminhdzchimto-arch/CAP/commit/315434d5fb9d59bf3cdcd4c7d3f0a0e944ac5370))
+
+## [1.69.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.1...v1.69.2) (2026-04-03)
+
+### Bug Fixes
+
+- bootstrap runtime version badge and add version metadata file ([3a55821](https://github.com/daiminhdzchimto-arch/CAP/commit/3a55821f05796f8d7ede98184514f528a2732976))
+
+## [1.69.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.69.0...v1.69.1) (2026-04-03)
+
+### Bug Fixes
+
+- improve dark mode input contrast ([4917771](https://github.com/daiminhdzchimto-arch/CAP/commit/4917771e1fa0c85a3bc4b68b08e969c1dc743225))
+
+# [1.69.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.4...v1.69.0) (2026-04-03)
+
+### Features
+
+- auto-update app version per commit ([97cf575](https://github.com/daiminhdzchimto-arch/CAP/commit/97cf575eee6f2e1fa8eb52ff19f849ef468b6718))
+
+## [1.68.4](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.3...v1.68.4) (2026-04-03)
+
+### Bug Fixes
+
+- remove summary text and keep error-rule icon ([8582d9e](https://github.com/daiminhdzchimto-arch/CAP/commit/8582d9edc4c6e34d2865887d6db5a8510f7a59c1))
+
+## [1.68.3](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.2...v1.68.3) (2026-04-03)
+
+### Bug Fixes
+
+- **ui:** remove duty action text labels and keep icons only ([266e26b](https://github.com/daiminhdzchimto-arch/CAP/commit/266e26b6bc3bf25718ad4297c3b7c619485f66dd))
+
+## [1.68.2](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.1...v1.68.2) (2026-04-03)
+
+### Bug Fixes
+
+- remove Cơm chiều option from violation tags ([8824b51](https://github.com/daiminhdzchimto-arch/CAP/commit/8824b51307a194bc6b63c0d79c0cbab092832a87))
+
+## [1.68.1](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.68.0...v1.68.1) (2026-04-03)
+
+### Bug Fixes
+
+- ensure server cleanup when playwright launch fails ([dbcd141](https://github.com/daiminhdzchimto-arch/CAP/commit/dbcd141f3f278e15635467aa105dea933ae7b73d))
+
+# [1.68.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.67.0...v1.68.0) (2026-04-03)
+
+### Features
+
+- **competition:** support distinguishing name suffix markers ([1274ba4](https://github.com/daiminhdzchimto-arch/CAP/commit/1274ba4e9fd7f5322f4e0ab54e892887bc4bd19d))
+
+# [1.67.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.66.0...v1.67.0) (2026-04-03)
+
+### Features
+
+- add missing duty scenario, debt, import, and v24.1 algorithm APIs ([51a528a](https://github.com/daiminhdzchimto-arch/CAP/commit/51a528afa083979ff36409e4ef122dc37056450a))
+
+# [1.66.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.65.0...v1.66.0) (2026-04-03)
+
+### Features
+
+- Auto-populate student names from seating chart in competition table ([124ccc3](https://github.com/daiminhdzchimto-arch/CAP/commit/124ccc3b53921a9fa95fa1da24288b62bd74bf2b))
+
+# [1.65.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.64.0...v1.65.0) (2026-04-03)
+
+### Features
+
+- Thêm tính năng Hiển thị lịch trực (3.4.3) - Cập nhật ngày nghỉ và hiển thị linh hoạt ([12a9ff6](https://github.com/daiminhdzchimto-arch/CAP/commit/12a9ff60b5bccdc6d19bae33d81f9578f2c2918c))
+
 # [1.64.0](https://github.com/daiminhdzchimto-arch/CAP/compare/v1.63.0...v1.64.0) (2026-04-03)
 
 ### Features

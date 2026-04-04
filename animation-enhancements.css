@@ -1,0 +1,353 @@
+/* ========================================
+   CREATIVE ANIMATION ENHANCEMENTS FOR CAP
+   Rotate Up/Down, Flip/Rotate Vertical, Sort
+   ======================================== */
+
+/* ========================================
+   1. ROTATE UP ANIMATION - Spiral & Fade
+   ======================================== */
+@keyframes rotateUpSpiral {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) rotateX(90deg) rotateZ(-15deg) scale(0.85);
+  }
+  50% {
+    transform: translateY(8px) rotateX(45deg) rotateZ(-7deg) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg) rotateZ(0deg) scale(1);
+  }
+}
+
+@keyframes rotateUpWave {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) skewY(5deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-4px) skewY(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) skewY(0deg);
+  }
+}
+
+@keyframes rotateUpBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.8);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-rotate-up-spiral {
+  animation: rotateUpSpiral 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-rotate-up-wave {
+  animation: rotateUpWave 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-rotate-up-bounce {
+  animation: rotateUpBounce 0.65s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ========================================
+   2. ROTATE DOWN ANIMATION - Sink & Expand
+   ======================================== */
+@keyframes rotateDownSink {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px) rotateX(-90deg) rotateZ(15deg) scale(0.85);
+  }
+  50% {
+    transform: translateY(-8px) rotateX(-45deg) rotateZ(7deg) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg) rotateZ(0deg) scale(1);
+  }
+}
+
+@keyframes rotateDownRipple {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scaleY(0.6);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(4px) scaleY(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes rotateDownDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.8) rotateX(45deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(8px) scale(1.05) rotateX(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+  }
+}
+
+.animate-rotate-down-sink {
+  animation: rotateDownSink 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-rotate-down-ripple {
+  animation: rotateDownRipple 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-rotate-down-drop {
+  animation: rotateDownDrop 0.65s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ========================================
+   3. FLIP VERTICAL ANIMATION - 3D Flip
+   ======================================== */
+@keyframes flipVerticalSmoothX {
+  0% {
+    opacity: 0.4;
+    transform: rotateX(0deg) scaleY(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: rotateX(90deg) scaleY(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0deg) scaleY(1);
+  }
+}
+
+@keyframes flipVerticalPerspective {
+  0% {
+    opacity: 0.3;
+    transform: perspective(1200px) rotateX(0deg) translateZ(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: perspective(1200px) rotateX(90deg) translateZ(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0deg) translateZ(0);
+  }
+}
+
+@keyframes flipVerticalCascade {
+  0% {
+    opacity: 0;
+    transform: rotateX(0deg) rotateZ(15deg) scale(0.9);
+  }
+  50% {
+    opacity: 0.6;
+    transform: rotateX(90deg) rotateZ(0deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0deg) rotateZ(-15deg) scale(0.9);
+  }
+}
+
+@keyframes flipVerticalGlitch {
+  0% {
+    opacity: 0.2;
+    transform: rotateX(0deg) skewX(-5deg);
+  }
+  25% {
+    opacity: 0.4;
+    transform: rotateX(45deg) skewX(2deg);
+  }
+  50% {
+    opacity: 0.3;
+    transform: rotateX(90deg) skewX(-2deg);
+  }
+  75% {
+    opacity: 0.6;
+    transform: rotateX(45deg) skewX(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0deg) skewX(0deg);
+  }
+}
+
+.animate-flip-vertical-smooth {
+  animation: flipVerticalSmoothX 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transform-style: preserve-3d;
+}
+
+.animate-flip-vertical-perspective {
+  animation: flipVerticalPerspective 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+.animate-flip-vertical-cascade {
+  animation: flipVerticalCascade 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+
+.animate-flip-vertical-glitch {
+  animation: flipVerticalGlitch 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+/* ========================================
+   4. SORT ANIMATION - Staggered Reordering
+   ======================================== */
+@keyframes sortFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-12px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sortSwirl {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg) scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-15px) rotate(180deg) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+}
+
+@keyframes sortShuffleX {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) translateY(0) scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(10px) translateY(-8px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes sortPulseExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes sortBounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.3);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-8px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-sort-float {
+  animation: sortFloat 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-sort-swirl {
+  animation: sortSwirl 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-sort-shuffle {
+  animation: sortShuffleX 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-sort-pulse-expand {
+  animation: sortPulseExpand 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-sort-bounce-in {
+  animation: sortBounceIn 0.65s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ========================================
+   5. STAGGER DELAY HELPERS
+   ======================================== */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+.stagger-9 { animation-delay: 0.45s; }
+.stagger-10 { animation-delay: 0.5s; }
+
+/* ========================================
+   6. ACCESSIBILITY - Respect prefers-reduced-motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  .animate-rotate-up-spiral,
+  .animate-rotate-up-wave,
+  .animate-rotate-up-bounce,
+  .animate-rotate-down-sink,
+  .animate-rotate-down-ripple,
+  .animate-rotate-down-drop,
+  .animate-flip-vertical-smooth,
+  .animate-flip-vertical-perspective,
+  .animate-flip-vertical-cascade,
+  .animate-flip-vertical-glitch,
+  .animate-sort-float,
+  .animate-sort-swirl,
+  .animate-sort-shuffle,
+  .animate-sort-pulse-expand,
+  .animate-sort-bounce-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
