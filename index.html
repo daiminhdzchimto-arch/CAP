@@ -9854,6 +9854,156 @@
         return { name, actualFaults, faultPoints };
       }
 
+      // ===== Hàm Phân Công Khi Không Có Lỗi (Chế độ Zero) =====
+      function calculateZeroFaultSchedule(activeDays = DUTY_DAYS) {
+        const eligibleStudents = collectEligibleDutyStudents();
+        if (eligibleStudents.length === 0) {
+          return { days: buildDutySchedule([]).days, cleaners: [], mode: 'zero' };
+        }
+
+        // Phân công cán bộ lớp cho các nhiệm vụ giám sát
+        const officers = document.getElementById('role-officer-list')?.value
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean) || [];
+        const monitorAssignments = distributeMonitors(officers, activeDays);
+
+        const days = activeDays.map((day, dIdx) => {
+          const roles = {};
+          const isDayOff = dayOffs.includes(day);
+
+          if (isDayOff) {
+            DUTY_ROLE_KEYS.forEach(k => roles[k] = "Nghỉ");
+          } else {
+            // Phân công xoay vòng từ danh sách học sinh
+            DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
+              if (roleKey === 'monitorClass' || roleKey === 'monitorArea') {
+                // Dùng cán bộ nếu có
+                roles[roleKey] = monitorAssignments[roleKey]?.[dIdx] || 
+                  eligibleStudents[(dIdx + rIdx) % eligibleStudents.length] || "Trống";
+              } else {
+                roles[roleKey] = eligibleStudents[(dIdx * DUTY_ROLE_KEYS.length + rIdx) % eligibleStudents.length] || "Trống";
+              }
+            });
+          }
+          return { day, roles, isDayOff };
+        });
+
+        return { days, cleaners: [], mode: 'zero' };
+      }
+
+      // ===== Hàm Phân Công Dựa Trên Lỗi (Chế độ Hybrid/Penalty) =====
+      function calculatePenaltyLogic(mode = 'hybrid', studentsData = [], activeDays = DUTY_DAYS) {
+        const eligibleStudents = collectEligibleDutyStudents();
+        if (eligibleStudents.length === 0) {
+          return { days: buildDutySchedule([]).days, cleaners: [], mode };
+        }
+
+        // Tạo hàng đợi từ nợ trực nhật
+        const debtQ = [];
+        Object.entries(dutyDebtData || {}).forEach(([name, debt]) => {
+          if (debt > 0 && eligibleStudents.includes(name)) {
+            for (let i = 0; i < debt; i++) {
+              debtQ.push(name);
+            }
+          }
+        });
+
+        // Tạo hàng đợi từ lỗi
+        const heavyQ = studentsData
+          .filter(s => s.actualFaults >= 2)
+          .sort((a, b) => b.actualFaults - a.actualFaults)
+          .map(s => s.name);
+        const lightQ = studentsData
+          .filter(s => s.actualFaults > 0 && s.actualFaults < 2)
+          .map(s => s.name);
+
+        // Phân công cán bộ
+        const officers = document.getElementById('role-officer-list')?.value
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean) || [];
+        const monitorAssignments = distributeMonitors(officers, activeDays);
+
+        let debtQCopy = [...debtQ];
+        let heavyQCopy = [...heavyQ];
+        let lightQCopy = [...lightQ];
+        let roundRobinIdx = 0;
+
+        const days = activeDays.map((day, dIdx) => {
+          const roles = {};
+          const isDayOff = dayOffs.includes(day);
+
+          if (isDayOff) {
+            DUTY_ROLE_KEYS.forEach(k => roles[k] = "Nghỉ");
+          } else {
+            DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
+              let assigned = "";
+
+              if (roleKey === 'monitorClass' || roleKey === 'monitorArea') {
+                // Dùng cán bộ nếu có
+                assigned = monitorAssignments[roleKey]?.[dIdx] || "";
+              } else {
+                // Ưu tiên nợ trực nhật
+                if (debtQCopy.length > 0) {
+                  assigned = debtQCopy.shift();
+                }
+                // Sau đó ưu tiên lỗi nặng
+                else if (mode === 'penalty' && heavyQCopy.length > 0) {
+                  assigned = heavyQCopy.shift();
+                }
+                // Rồi lỗi nhẹ
+                else if (heavyQCopy.length > 0) {
+                  assigned = heavyQCopy.shift();
+                } else if (lightQCopy.length > 0) {
+                  assigned = lightQCopy.shift();
+                }
+              }
+
+              // Nếu vẫn chưa có, lấy từ danh sách xoay vòng
+              if (!assigned) {
+                assigned = eligibleStudents[roundRobinIdx % eligibleStudents.length] || "Trống";
+                roundRobinIdx++;
+              }
+              roles[roleKey] = assigned;
+            });
+          }
+          return { day, roles, isDayOff };
+        });
+
+        // Danh sách lau lớp: những người có lỗi >= 4 điểm
+        const cleaners = studentsData
+          .filter(s => s.actualFaults >= 4)
+          .map(s => s.name);
+
+        return { days, cleaners, mode };
+      }
+
+      // ===== Hàm Phân Công Cán Bộ Theo Dõi Lớp/Khu Vực =====
+      function distributeMonitors(officers = [], activeDays = DUTY_DAYS) {
+        const result = {
+          monitorClass: [],
+          monitorArea: []
+        };
+
+        if (officers.length === 0) {
+          // Nếu không có cán bộ, để trống
+          activeDays.forEach(() => {
+            result.monitorClass.push("");
+            result.monitorArea.push("");
+          });
+          return result;
+        }
+
+        // Phân công luân phiên: cán bộ 1 theo dõi lớp, cán bộ 2 theo dõi khu vực, v.v.
+        activeDays.forEach((day, idx) => {
+          result.monitorClass.push(officers[idx % officers.length]);
+          result.monitorArea.push(officers[(idx + 1) % officers.length]);
+        });
+
+        return result;
+      }
+
       function calculateAdvancedDutySchedule() {
         // Bước 1: Thu thập điểm lỗi
         const tbody = document.getElementById("competition-tbody");
@@ -9869,44 +10019,43 @@
         // Bước 2: Tính tổng điểm lỗi
         const totalFaults = studentsData.reduce((sum, s) => sum + s.actualFaults, 0);
 
-        // Bước 3: Xác định chế độ
+        // Bước 3: Xác định các ngày hoạt động (loại bỏ ngày nghỉ)
+        const activeDays = DUTY_DAYS.filter(day => !dayOffs.includes(day));
+        if (activeDays.length === 0) {
+          showToast('Lỗi: Tất cả các ngày đều là ngày nghỉ!');
+          return null;
+        }
+
+        // Bước 4: Xác định chế độ phân công
         let mode = 'normal';
         if (totalFaults === 0) mode = 'zero';
         else if (totalFaults <= 12) mode = 'hybrid';
         else mode = 'penalty';
 
-        // Lấy danh sách học sinh từ dãy được chọn
-        const eligibleStudents = collectEligibleDutyStudents();
-        
-        // Hàng đợi lỗi
-        const heavyQ = studentsData.filter(s => s.actualFaults >= 2).sort((a, b) => b.actualFaults - a.actualFaults).map(s => s.name);
-        const lightQ = studentsData.filter(s => s.actualFaults > 0 && s.actualFaults < 2).map(s => s.name);
+        // Bước 5: Gọi hàm phân công phù hợp
+        let result;
+        if (mode === 'zero') {
+          result = calculateZeroFaultSchedule(activeDays);
+        } else {
+          result = calculatePenaltyLogic(mode, studentsData, activeDays);
+        }
 
-        const days = DUTY_DAYS.map((day, dIdx) => {
-          const roles = {};
-          const isDayOff = dayOffs.includes(day);
-
-          if (isDayOff) {
-            DUTY_ROLE_KEYS.forEach(k => roles[k] = "Nghỉ");
-          } else {
-            DUTY_ROLE_KEYS.forEach((roleKey, rIdx) => {
-              let assigned = "";
-              if (mode === 'penalty' || mode === 'hybrid') {
-                if (heavyQ.length > 0) assigned = heavyQ.shift();
-                else if (lightQ.length > 0) assigned = lightQ.shift();
-              }
-              
-              if (!assigned) {
-                assigned = eligibleStudents[(dIdx * DUTY_ROLE_KEYS.length + rIdx) % eligibleStudents.length] || "Trống";
-              }
-              roles[roleKey] = assigned;
-            });
-          }
-          return { day, roles, isDayOff };
+        // Bước 6: Đánh dấu các ngày nghỉ trong lịch
+        result.days.forEach(dayData => {
+          dayData.isDayOff = dayOffs.includes(dayData.day);
         });
 
-        const cleaners = studentsData.filter(s => s.actualFaults >= 4).map(s => s.name);
-        return { days, cleaners, mode };
+        // Thêm tất cả các ngày (kể cả ngày nghỉ) vào lịch
+        const fullSchedule = DUTY_DAYS.map(day => {
+          const existing = result.days.find(d => d.day === day);
+          if (existing) return existing;
+          
+          const roles = {};
+          DUTY_ROLE_KEYS.forEach(k => roles[k] = "Nghỉ");
+          return { day, roles, isDayOff: true };
+        });
+
+        return { days: fullSchedule, cleaners: result.cleaners, mode };
       }
 
       function confirmDutyAssignment() {
