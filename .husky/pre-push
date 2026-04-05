@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# ANSI color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+BRANCH_TO_CHECK="main"
+
+# Fetch latest changes from the remote main branch
+echo "${GREEN}Fetching latest changes from origin/${BRANCH_TO_CHECK}...${NC}"
+git fetch origin ${BRANCH_TO_CHECK}
+
+# Get the current branch name
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Only apply this hook if pushing to the main branch or a branch tracking main
+if [ "$CURRENT_BRANCH" != "$BRANCH_TO_CHECK" ]; then
+  echo "${YELLOW}Not pushing to ${BRANCH_TO_CHECK} branch. Skipping pre-push sync check.${NC}"
+  exit 0
+fi
+
+# Check if the local branch is behind the remote
+UPSTREAM="origin/${BRANCH_TO_CHECK}"
+LOCAL=$(git rev-parse HEAD)
+REMOTE=$(git rev-parse "$UPSTREAM")
+BASE=$(git merge-base HEAD "$UPSTREAM")
+
+if [ "$LOCAL" = "$REMOTE" ]; then
+    echo "${GREEN}✓ Local branch is up-to-date with remote. Proceeding with push.${NC}"
+elif [ "$LOCAL" = "$BASE" ]; then
+    echo "${RED}✗ ERROR: Your branch is BEHIND the remote ${BRANCH_TO_CHECK} branch.${NC}"
+    echo "${YELLOW}Please pull latest changes (git pull --rebase origin ${BRANCH_TO_CHECK}) before pushing to avoid overwriting others' work.${NC}"
+    exit 1
+elif [ "$REMOTE" = "$BASE" ]; then
+    echo "${GREEN}✓ Local branch is AHEAD of remote. Proceeding with push.${NC}"
+else
+    echo "${RED}✗ ERROR: Your branch has DIVERGED from the remote ${BRANCH_TO_CHECK} branch.${NC}"
+    echo "${YELLOW}Please rebase (git pull --rebase origin ${BRANCH_TO_CHECK}) to resolve conflicts before pushing.${NC}"
+    exit 1
+fi
+
+exit 0
