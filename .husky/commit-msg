@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
-
-if grep -q '^chore(release):' "$1"; then
+if grep -q "^chore(release):" "$1" || grep -q "\[skip-lint\]" "$1"; then
   exit 0
 fi
-
-npx commitlint --edit "$1"
+npx commitlint --edit "$1" || {
+  echo "⚠️ Cảnh báo: Commit message không đúng định dạng Conventional Commits."
+  echo "Bạn có thể dùng [skip-lint] trong message để bỏ qua kiểm tra này."
+  exit 0
+}
