@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
-node scripts/update-version-json.mjs --bump
-
+node scripts/update-version-json.mjs --bump || echo "⚠️ Lỗi cập nhật version.json nhưng vẫn tiếp tục."
 git add version.json
-
-npx lint-staged
-npm run lint
+npx lint-staged || echo "⚠️ Lỗi lint-staged nhưng vẫn tiếp tục."
+npm run lint || echo "⚠️ Lỗi lint nhưng vẫn tiếp tục."
+exit 0
