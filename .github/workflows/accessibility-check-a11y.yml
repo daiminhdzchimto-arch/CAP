@@ -1,0 +1,317 @@
+name: Accessibility Check (a11y)
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+  workflow_dispatch:
+
+concurrency:
+  group: accessibility-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  a11y-audit:
+    name: Axe + Pa11y + Lighthouse audits
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve pages to scan
+        id: urls
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const defaultUrls = ['http://127.0.0.1:4173/', 'http://127.0.0.1:4173/index.html'];
+          const sitemapFiles = ['sitemap.xml', 'sitemap-index.xml'];
+          const urls = new Set(defaultUrls);
+
+          for (const file of sitemapFiles) {
+            if (!fs.existsSync(file)) continue;
+            const content = fs.readFileSync(file, 'utf8');
+            const matches = content.match(/<loc>(.*?)<\/loc>/g) || [];
+            for (const loc of matches) {
+              const value = loc.replace('<loc>', '').replace('</loc>', '').trim();
+              if (!value) continue;
+              if (value.startsWith('http://') || value.startsWith('https://')) {
+                try {
+                  const url = new URL(value);
+                  urls.add(`http://127.0.0.1:4173${url.pathname}${url.search}`);
+                } catch {
+                  // ignore malformed URL
+                }
+              }
+            }
+          }
+
+          const normalized = [...urls].map((u) => u.replace(/\/$/, '') || 'http://127.0.0.1:4173').sort();
+          const output = JSON.stringify(normalized);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `list=${output}\n`);
+          console.log(`Pages to audit: ${output}`);
+          NODE
+
+      - name: Start local static server
+        run: |
+          npx http-server . -p 4173 --silent &
+          echo $! > .http-server.pid
+          npx wait-on http://127.0.0.1:4173
+
+      - name: Filter reachable target URLs
+        id: reachable
+        env:
+          TARGET_URLS: ${{ steps.urls.outputs.list }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+          const reachable = [];
+
+          for (const url of urls) {
+            try {
+              execSync(`curl -fsSL --max-time 20 "${url}" > /dev/null`, { stdio: 'inherit' });
+              console.log(`Reachable: ${url}`);
+              reachable.push(url);
+            } catch {
+              console.warn(`Skipping unreachable URL: ${url}`);
+            }
+          }
+
+          if (reachable.length === 0) {
+            throw new Error('No reachable URLs found for accessibility audits.');
+          }
+
+          const output = JSON.stringify(reachable);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `list=${output}\n`);
+          console.log(`Reachable URLs to audit: ${output}`);
+          NODE
+
+      - name: Create Pa11y CI config
+        run: |
+          cat > .github/pa11y-ci.json <<'JSON'
+          {
+            "chromeLaunchConfig": {
+              "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+            }
+          }
+          JSON
+
+      - name: Run Pa11y (per-page report)
+        env:
+          TARGET_URLS: ${{ steps.reachable.outputs.list }}
+        run: |
+          mkdir -p reports/pa11y
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+
+          for (const [index, url] of urls.entries()) {
+            const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
+            const reportPath = `reports/pa11y/${slug}.json`;
+
+            try {
+              const output = execSync(`npx pa11y "${url}" --reporter json --config .github/pa11y-ci.json`, {
+                encoding: 'utf8',
+                stdio: ['pipe', 'pipe', 'inherit']
+              });
+              fs.writeFileSync(reportPath, output);
+            } catch (error) {
+              const output = error.stdout ? String(error.stdout) : '[]';
+              fs.writeFileSync(reportPath, output);
+            }
+          }
+          NODE
+
+      - name: Install compatible Chrome + ChromeDriver (Chrome for Testing)
+        run: |
+          node <<'NODE'
+          const { execSync } = require('child_process');
+          const fs = require('fs');
+
+          const maxBuffer = 1024 * 1024 * 20;
+          const run = (command, options = {}) =>
+            execSync(command, {
+              encoding: 'utf8',
+              maxBuffer,
+              ...options
+            });
+
+          const targetPlatform = process.arch === 'arm64' ? 'linux-arm64' : 'linux64';
+          const fallbackPlatforms = ['linux64', 'linux-arm64'].filter((platform) => platform !== targetPlatform);
+          const platforms = [targetPlatform, ...fallbackPlatforms];
+
+          const manifestUrl = 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json';
+          const manifest = JSON.parse(run(`curl -sSL ${manifestUrl}`));
+          const versions = [...(manifest.versions || [])].reverse();
+
+          let selected = null;
+          for (const version of versions) {
+            for (const platform of platforms) {
+              const chromeDownload = (version.downloads?.chrome || []).find((item) => item.platform === platform);
+              const chromedriverDownload = (version.downloads?.chromedriver || []).find((item) => item.platform === platform);
+              if (chromeDownload && chromedriverDownload) {
+                selected = { version: version.version, platform, chromeDownload, chromedriverDownload };
+                break;
+              }
+            }
+            if (selected) break;
+          }
+
+          if (!selected) {
+            throw new Error(`No compatible Chrome/ChromeDriver pair found for platforms: ${platforms.join(', ')}`);
+          }
+
+          run(`curl -sSL "${selected.chromeDownload.url}" -o /tmp/chrome-linux.zip`, { stdio: 'inherit' });
+          run(`curl -sSL "${selected.chromedriverDownload.url}" -o /tmp/chromedriver-linux.zip`, { stdio: 'inherit' });
+          run('rm -rf /tmp/chrome-linux /tmp/chromedriver-linux /opt/chrome-for-testing', { stdio: 'inherit' });
+          run('unzip -o /tmp/chrome-linux.zip -d /tmp/chrome-linux', { stdio: 'inherit' });
+          run('unzip -o /tmp/chromedriver-linux.zip -d /tmp/chromedriver-linux', { stdio: 'inherit' });
+          run('sudo mkdir -p /opt/chrome-for-testing', { stdio: 'inherit' });
+          run('sudo cp -r /tmp/chrome-linux/chrome-* /opt/chrome-for-testing/', { stdio: 'inherit' });
+          run('sudo install -m 0755 /tmp/chromedriver-linux/chromedriver-*/chromedriver /usr/local/bin/chromedriver', {
+            stdio: 'inherit'
+          });
+
+          const chromeBin = run('find /opt/chrome-for-testing -type f -name chrome | head -n 1').trim();
+          if (!chromeBin) {
+            throw new Error('Unable to locate Chrome binary after extracting Chrome for Testing.');
+          }
+
+          fs.appendFileSync(process.env.GITHUB_ENV, `CHROME_BIN=${chromeBin}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, 'CHROMEDRIVER_BIN=/usr/local/bin/chromedriver\n');
+
+          run(`${chromeBin} --version`, { stdio: 'inherit' });
+          run('/usr/local/bin/chromedriver --version', { stdio: 'inherit' });
+          NODE
+
+      - name: Run axe-core (fail on critical violations)
+        env:
+          TARGET_URLS: ${{ steps.reachable.outputs.list }}
+          CHROME_BIN: ${{ env.CHROME_BIN }}
+          CHROMEDRIVER_BIN: ${{ env.CHROMEDRIVER_BIN }}
+        run: |
+          mkdir -p reports/axe
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+          let criticalCount = 0;
+          let infraErrorCount = 0;
+          const chromePath = process.env.CHROME_BIN;
+          const chromedriverPath = process.env.CHROMEDRIVER_BIN;
+
+          for (const [index, url] of urls.entries()) {
+            const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
+            const reportPath = `reports/axe/${slug}.json`;
+
+            let generated = false;
+
+            for (let attempt = 1; attempt <= 2; attempt += 1) {
+              try {
+                execSync(`npx --yes @axe-core/cli "${url}" --save "${reportPath}" --stdout --chromedriver-path "${chromedriverPath}" --chrome-path "${chromePath}" --chrome-options="no-sandbox,disable-dev-shm-usage"`, {
+                  stdio: ['pipe', 'inherit', 'inherit']
+                });
+              } catch (error) {
+                console.error(`axe-core command failed for ${url} (attempt ${attempt}/2): ${error.message}`);
+              }
+
+              if (fs.existsSync(reportPath)) {
+                generated = true;
+                break;
+              }
+
+              console.warn(`Accessibility report not found at ${reportPath} (attempt ${attempt}/2).`);
+            }
+
+            if (!generated) {
+              infraErrorCount += 1;
+              continue;
+            }
+
+            const result = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            if ((result.url || '').startsWith('chrome-error://')) {
+              infraErrorCount += 1;
+              console.error(`axe-core loaded chrome error page for ${url}: ${result.url}`);
+              continue;
+            }
+
+            const critical = (result.violations || []).filter((violation) => violation.impact === 'critical');
+            criticalCount += critical.length;
+
+            if (critical.length > 0) {
+              console.error(`Critical violations in ${url}: ${critical.length}`);
+            }
+          }
+
+          if (infraErrorCount > 0) {
+            console.error(`Accessibility check failed: ${infraErrorCount} infrastructure/report generation error(s) occurred.`);
+            process.exit(1);
+          }
+
+          if (criticalCount > 0) {
+            console.error(`Accessibility check failed: ${criticalCount} critical axe-core violation(s) found.`);
+            process.exit(1);
+          }
+
+          console.log('No critical axe-core violations found.');
+          NODE
+
+      - name: Run Lighthouse accessibility audit
+        env:
+          TARGET_URLS: ${{ steps.reachable.outputs.list }}
+          CHROME_BIN: ${{ env.CHROME_BIN }}
+        run: |
+          mkdir -p reports/lighthouse
+          node <<'NODE'
+          const { execSync } = require('child_process');
+
+          const urls = JSON.parse(process.env.TARGET_URLS || '[]');
+          const chromePath = process.env.CHROME_BIN;
+
+          for (const [index, url] of urls.entries()) {
+            const slug = `${String(index + 1).padStart(2, '0')}-${new URL(url).pathname.replace(/\//g, '_').replace(/^_$/, 'root') || 'root'}`;
+            const outputBase = `reports/lighthouse/${slug}`;
+
+            execSync(
+              `npx --yes lighthouse "${url}" --only-categories=accessibility --output=json --output=html --output-path="${outputBase}" --chrome-path="${chromePath}" --chrome-flags="--headless --no-sandbox" --quiet`,
+              { stdio: ['pipe', 'inherit', 'inherit'] }
+            );
+          }
+          NODE
+
+      - name: Upload accessibility reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-reports
+          path: reports/
+          if-no-files-found: warn
+
+      - name: Stop static server
+        if: always()
+        run: |
+          if [ -f .http-server.pid ]; then
+            kill "$(cat .http-server.pid)" || true
+          fi
