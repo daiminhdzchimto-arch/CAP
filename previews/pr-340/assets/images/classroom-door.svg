@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200" viewBox="0 0 800 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Cửa ra vào lớp học</title>
+  <desc id="desc">Hình minh họa cửa lớp học với biển chỉ dẫn Cửa ra vào.</desc>
+  <rect width="800" height="1200" fill="#e2e8f0"/>
+  <rect x="100" y="80" width="600" height="1040" fill="#78350f"/>
+  <rect x="140" y="120" width="520" height="960" fill="#92400e"/>
+  <rect x="190" y="250" width="420" height="300" rx="10" fill="#bfdbfe"/>
+  <rect x="190" y="590" width="420" height="430" rx="8" fill="#a16207" opacity="0.35"/>
+  <circle cx="560" cy="710" r="16" fill="#fde68a"/>
+  <rect x="220" y="150" width="360" height="64" rx="10" fill="#1d4ed8"/>
+  <text x="400" y="192" text-anchor="middle" font-size="30" fill="#eff6ff" font-family="'Segoe UI', sans-serif" font-weight="700">CỬA RA VÀO</text>
+</svg>
