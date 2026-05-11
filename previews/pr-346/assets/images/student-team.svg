@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800" role="img" aria-labelledby="title desc">
+  <title id="title">Nhóm học sinh</title>
+  <desc id="desc">Minh họa ba học sinh đại diện tinh thần hợp tác trong lớp.</desc>
+  <rect width="1000" height="800" fill="#ecfeff"/>
+  <circle cx="320" cy="270" r="86" fill="#fde68a"/>
+  <circle cx="500" cy="230" r="92" fill="#fecaca"/>
+  <circle cx="690" cy="270" r="86" fill="#bfdbfe"/>
+  <rect x="230" y="360" width="180" height="260" rx="28" fill="#16a34a"/>
+  <rect x="410" y="330" width="180" height="290" rx="28" fill="#2563eb"/>
+  <rect x="600" y="360" width="180" height="260" rx="28" fill="#db2777"/>
+  <rect x="300" y="460" width="400" height="120" rx="30" fill="#0f766e" opacity="0.18"/>
+  <text x="500" y="520" text-anchor="middle" font-size="42" fill="#0f172a" font-family="'Segoe UI', sans-serif" font-weight="700">LỚP ĐOÀN KẾT</text>
+</svg>
