@@ -21,7 +21,7 @@
     "@semantic-release/exec": "^7.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.6",
-    "@semantic-release/release-notes-generator": "^14.1.0",
+    "@semantic-release/release-notes-generator": "^14.1.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
     "papaparse": "^5.5.3",
