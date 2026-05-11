@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAP | Architectural Studio</title>
+    <script src="https://cdn.tailwindcss.com?v=3.4.17"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-primary: #00e5ff;
+        --color-background: #090d14;
+        --color-surface: #161c24;
+        --color-text: #f1f5f9;
+        --color-muted: #475569;
+        --color-border: #2a3441;
+        --color-accent: #ff2e93;
+        --font-display: "Space Grotesk", sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+        --radius: 0px;
+        --spacing-base: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+        border-radius: var(--radius) !important;
+      }
+
+      body {
+        margin: 0;
+        background: var(--color-background);
+        color: var(--color-text);
+        font-family: var(--font-display);
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #111a28 0%, #090d14 45%);
+      }
+
+      .tech-border {
+        border: 1px solid var(--color-border);
+      }
+
+      .mono {
+        font-family: var(--font-mono);
+      }
+
+      .heading {
+        font-family: var(--font-display);
+        font-weight: 700;
+      }
+
+      .glow-active {
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+      }
+
+      .screen {
+        display: none;
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .preview-canvas {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #090d14;
+      }
+
+      .room-outline {
+        position: absolute;
+        inset: 8%;
+        border: 2px solid var(--color-muted);
+      }
+
+      .furniture {
+        position: absolute;
+        width: 88px;
+        height: 56px;
+        border: 1px solid var(--color-primary);
+        color: var(--color-text);
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        background: rgba(0, 229, 255, 0.08);
+        transition:
+          left 150ms ease-out,
+          top 150ms ease-out,
+          transform 150ms ease-out;
+        transform-origin: center;
+      }
+
+      .furniture.selected {
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+        outline: 1px solid var(--color-primary);
+      }
+
+      .tab-btn.active {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+      }
+
+      .mini-map-dot {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border: 1px solid var(--color-primary);
+        background: rgba(0, 229, 255, 0.6);
+        cursor: grab;
+      }
+
+      .grid-paper {
+        background-image:
+          linear-gradient(#e2e8f0 1px, transparent 1px),
+          linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+        background-size: 10px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell p-4 md:p-6">
+      <header
+        class="tech-border mb-4 flex h-16 items-center justify-between bg-[#161C24] px-4 md:px-6"
+      >
+        <div>
+          <h1 class="heading text-xl md:text-2xl">CAP</h1>
+        </div>
+        <div class="flex items-center gap-2">
+          <select
+            id="arch-scenario-select"
+            class="tech-border bg-[#090D14] px-2 py-1 mono text-[11px] text-slate-300"
+            onchange="loadScenario(this.value)"
+          >
+            <option value="">Mẫu bố cục</option>
+            <option value="balanced_week">Mẫu 1</option>
+            <option value="zero_fault">Mẫu 2</option>
+            <option value="penalty_peak">Mẫu 3</option>
+            <option value="hybrid_mix">Mẫu 4</option>
+            <option value="monitor_focus">Mẫu 5</option>
+            <option value="holiday_week">Mẫu 6</option>
+          </select>
+          <div class="mono text-xs text-slate-400">
+            Desktop viewport optimized
+          </div>
+        </div>
+      </header>
+
+      <nav class="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+        <button
+          class="tab-btn tech-border mono active bg-[#161C24] px-3 py-3 text-xs"
+          data-target="hub"
+        >
+          Classroom Hub
+        </button>
+        <button
+          class="tab-btn tech-border mono bg-[#161C24] px-3 py-3 text-xs"
+          data-target="studio-empty"
+        >
+          Director's Studio (Empty)
+        </button>
+        <button
+          class="tab-btn tech-border mono bg-[#161C24] px-3 py-3 text-xs"
+          data-target="studio-active"
+        >
+          Director's Studio (Active)
+        </button>
+        <button
+          class="tab-btn tech-border mono bg-[#161C24] px-3 py-3 text-xs"
+          data-target="export"
+        >
+          Blueprint Export
+        </button>
+      </nav>
+
+      <main>
+        <section id="hub" class="screen active">
+          <div class="tech-border bg-[#161C24] p-4">
+            <div
+              class="tech-border mb-4 h-10 bg-[#090D14] px-3 py-2 mono text-sm text-slate-300"
+            >
+              Search blueprints by room name / wing / floor…
+            </div>
+            <div class="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
+              <article
+                class="tech-border overflow-hidden bg-[#090D14] transition hover:-translate-y-0.5 hover:border-[#00E5FF]"
+              >
+                <div
+                  class="h-40 bg-gradient-to-br from-[#0D1726] to-[#111827] p-3"
+                >
+                  <div
+                    class="h-full w-full border border-dashed border-slate-600"
+                  ></div>
+                </div>
+                <footer
+                  class="flex h-10 items-center justify-between border-t border-[#2A3441] px-3 mono text-[11px]"
+                >
+                  <span>West Wing - Grade 4A</span>
+                  <span class="text-slate-400">2h ago</span>
+                </footer>
+              </article>
+              <article
+                class="tech-border overflow-hidden bg-[#090D14] transition hover:-translate-y-0.5 hover:border-[#00E5FF]"
+              >
+                <div
+                  class="h-40 bg-gradient-to-br from-[#09121F] to-[#16243A] p-3"
+                >
+                  <div class="h-full w-full border border-slate-600"></div>
+                </div>
+                <footer
+                  class="flex h-10 items-center justify-between border-t border-[#2A3441] px-3 mono text-[11px]"
+                >
+                  <span>North Block - Lab 2</span>
+                  <span class="text-slate-400">yesterday</span>
+                </footer>
+              </article>
+              <button
+                class="tech-border flex h-[200px] flex-col items-center justify-center border-dashed bg-[#090D14] text-[#00E5FF] hover:glow-active"
+              >
+                <span class="mono text-3xl">+</span>
+                <span class="mono text-xs">Create New Blueprint</span>
+              </button>
+            </div>
+            <p class="mt-4 mono text-xs text-slate-500">
+              No blueprints found. Initialize a new grid.
+            </p>
+          </div>
+        </section>
+
+        <section id="studio-empty" class="screen">
+          <div class="tech-border overflow-hidden bg-[#161C24]">
+            <div id="studio-top" class="relative" style="height: 65vh">
+              <div class="preview-canvas">
+                <div class="room-outline"></div>
+              </div>
+            </div>
+            <div
+              id="divider"
+              class="h-[2px] cursor-row-resize bg-[#475569]"
+            ></div>
+            <div
+              id="studio-bottom"
+              class="border-t border-[#2A3441] bg-[#161C24] p-4"
+              style="height: 35vh"
+            >
+              <h2 class="heading mb-3 text-lg">Object Tray</h2>
+              <div class="flex gap-3 overflow-x-auto pb-2">
+                <button
+                  class="tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                >
+                  Student Desk
+                </button>
+                <button
+                  class="tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                >
+                  Teacher Desk
+                </button>
+                <button
+                  class="tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                >
+                  Door
+                </button>
+                <button
+                  class="tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                >
+                  Whiteboard
+                </button>
+                <button
+                  class="tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                >
+                  Window
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="studio-active" class="screen">
+          <div class="tech-border overflow-hidden bg-[#161C24]">
+            <div class="relative" style="height: 65vh">
+              <div id="active-canvas" class="preview-canvas">
+                <div class="room-outline"></div>
+              </div>
+            </div>
+            <div class="h-[2px] bg-[#475569]"></div>
+            <div
+              class="grid gap-4 bg-[#161C24] p-4 md:grid-cols-[1fr_220px_300px]"
+              style="min-height: 35vh"
+            >
+              <div>
+                <h3 class="heading mb-3 text-base">Object Tray</h3>
+                <div class="flex gap-2 overflow-x-auto">
+                  <button
+                    class="spawn-item tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                    data-item="Student Desk"
+                  >
+                    Student Desk
+                  </button>
+                  <button
+                    class="spawn-item tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                    data-item="Teacher Desk"
+                  >
+                    Teacher Desk
+                  </button>
+                  <button
+                    class="spawn-item tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                    data-item="Door"
+                  >
+                    Door
+                  </button>
+                  <button
+                    class="spawn-item tech-border mono h-20 min-w-20 bg-[#090D14] text-xs"
+                    data-item="Whiteboard"
+                  >
+                    Whiteboard
+                  </button>
+                </div>
+                <p
+                  id="collision-pill"
+                  class="mt-4 inline-block border border-[#FF2E93] px-3 py-1 mono text-xs text-[#FF2E93] hidden"
+                >
+                  Collision detected
+                </p>
+              </div>
+
+              <div>
+                <h3 class="heading mb-3 text-base">Local Mini-Map</h3>
+                <div
+                  id="mini-map"
+                  class="tech-border relative h-[200px] w-[200px] bg-[#090D14]"
+                >
+                  <div
+                    id="mini-dot"
+                    class="mini-map-dot"
+                    style="left: 94px; top: 94px"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <h3 class="heading text-base">Coordinate Inspector</h3>
+                <div class="flex items-center gap-3 mono text-xs">
+                  <label class="w-16">X</label>
+                  <input
+                    id="input-x"
+                    type="number"
+                    class="tech-border w-16 bg-[#090D14] px-2 py-2 text-[#F1F5F9]"
+                    value="120"
+                  />
+                </div>
+                <div class="flex items-center gap-3 mono text-xs">
+                  <label class="w-16">Y</label>
+                  <input
+                    id="input-y"
+                    type="number"
+                    class="tech-border w-16 bg-[#090D14] px-2 py-2 text-[#F1F5F9]"
+                    value="450"
+                  />
+                </div>
+                <div class="flex items-center gap-3 mono text-xs">
+                  <label class="w-16">R</label>
+                  <input
+                    id="input-r"
+                    type="number"
+                    class="tech-border w-16 bg-[#090D14] px-2 py-2 text-[#F1F5F9]"
+                    value="90"
+                  />
+                </div>
+                <button
+                  id="delete-selected"
+                  class="tech-border mono mt-6 w-[120px] border-[#FF2E93] py-2 text-xs text-[#FF2E93]"
+                >
+                  Delete Object
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="export" class="screen">
+          <div
+            class="relative flex min-h-[85vh] items-center justify-center bg-[#090D14] p-6"
+          >
+            <div
+              class="grid-paper tech-border aspect-[1/1.414] w-full max-w-[700px] bg-white p-8 text-black"
+            >
+              <h2 class="heading mb-4 text-2xl">Blueprint Export</h2>
+              <div class="relative h-[70vh] border border-black">
+                <div
+                  class="absolute left-16 top-16 h-16 w-24 border border-black"
+                ></div>
+                <div
+                  class="absolute left-56 top-16 h-16 w-24 border border-black"
+                ></div>
+                <div
+                  class="absolute left-16 top-40 h-64 w-[2px] bg-black"
+                ></div>
+                <div class="absolute left-20 top-44 mono text-[11px]">
+                  1200mm
+                </div>
+                <div
+                  class="absolute left-56 top-40 h-64 w-[2px] bg-black"
+                ></div>
+                <div class="absolute left-60 top-44 mono text-[11px]">
+                  1200mm
+                </div>
+              </div>
+            </div>
+            <button
+              class="glow-active absolute bottom-8 right-8 h-14 w-14 rounded-full border border-[#00E5FF] bg-[#00E5FF] text-sm font-bold text-[#090D14]"
+            >
+              Print
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const tabs = document.querySelectorAll(".tab-btn");
+      const screens = document.querySelectorAll(".screen");
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((item) => item.classList.remove("active"));
+          tab.classList.add("active");
+          const target = tab.dataset.target;
+          screens.forEach((screen) => {
+            screen.classList.toggle("active", screen.id === target);
+          });
+        });
+      });
+
+      const studioTop = document.getElementById("studio-top");
+      const studioBottom = document.getElementById("studio-bottom");
+      const divider = document.getElementById("divider");
+      let isResizing = false;
+
+      divider.addEventListener("mousedown", () => {
+        isResizing = true;
+      });
+
+      document.addEventListener("mouseup", () => {
+        isResizing = false;
+      });
+
+      document.addEventListener("mousemove", (event) => {
+        if (!isResizing) return;
+        const container = divider.parentElement.getBoundingClientRect();
+        const topHeight = Math.max(
+          40,
+          Math.min(
+            80,
+            ((event.clientY - container.top) / container.height) * 100,
+          ),
+        );
+        studioTop.style.height = `${topHeight}vh`;
+        studioBottom.style.height = `${100 - topHeight}vh`;
+      });
+
+      const canvas = document.getElementById("active-canvas");
+      const spawnButtons = document.querySelectorAll(".spawn-item");
+      const inputX = document.getElementById("input-x");
+      const inputY = document.getElementById("input-y");
+      const inputR = document.getElementById("input-r");
+      const miniMap = document.getElementById("mini-map");
+      const miniDot = document.getElementById("mini-dot");
+      const collisionPill = document.getElementById("collision-pill");
+      const deleteButton = document.getElementById("delete-selected");
+
+      let selectedFurniture = null;
+
+      const DUTY_DEBT_KEY = "classApp_duty_debt";
+      let dutyDebtData = {};
+      const DUTY_SCENARIO_PRESETS = {
+        balanced_week: { items: ["Student Desk", "Teacher Desk", "Door"] },
+        zero_fault: { items: ["Student Desk", "Whiteboard"] },
+        penalty_peak: {
+          items: ["Student Desk", "Student Desk", "Door", "Whiteboard"],
+        },
+        hybrid_mix: { items: ["Teacher Desk", "Student Desk", "Window"] },
+        monitor_focus: { items: ["Teacher Desk", "Door", "Whiteboard"] },
+        holiday_week: { items: ["Student Desk", "Window", "Window"] },
+      };
+
+      function addDutyDebtManagementUI() {
+        if (document.getElementById("arch-duty-debt-btn")) return;
+        const exportScreen = document.getElementById("export");
+        if (!exportScreen) return;
+        const btn = document.createElement("button");
+        btn.id = "arch-duty-debt-btn";
+        btn.className = "tech-border mono mt-3 bg-[#161C24] px-3 py-2 text-xs";
+        btn.textContent = "Debt Manager";
+        btn.onclick = showDutyDebtModal;
+        exportScreen.querySelector(".grid-paper")?.after(btn);
+      }
+
+      function showDutyDebtModal() {
+        const name = prompt("Tên học sinh cần thêm/giảm nợ:", "");
+        if (!name) return;
+        const delta = Number(prompt("Nhập số nợ (+/-):", "1")) || 0;
+        if (delta >= 0) addManualDebt(name, delta, "Architectural manual");
+        else reduceDutyDebt(name, Math.abs(delta));
+      }
+
+      function updateDutyDebtFromViolations() {
+        // Architectural demo does not have competition table; keep API stable.
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+      }
+
+      function reduceDutyDebt(name, amount = 1) {
+        const key = String(name || "").trim();
+        if (!key) return;
+        dutyDebtData[key] = Math.max(
+          0,
+          (Number(dutyDebtData[key]) || 0) - Math.max(1, Number(amount) || 1),
+        );
+        if (dutyDebtData[key] <= 0) delete dutyDebtData[key];
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+      }
+
+      function addManualDebt(name, amount = 1) {
+        const key = String(name || "").trim();
+        if (!key) return;
+        dutyDebtData[key] =
+          (Number(dutyDebtData[key]) || 0) + Math.max(1, Number(amount) || 1);
+        localStorage.setItem(DUTY_DEBT_KEY, JSON.stringify(dutyDebtData));
+      }
+
+      function calculatePenaltyLogic(items = []) {
+        return items.slice().reverse();
+      }
+
+      function calculateZeroFaultSchedule(items = []) {
+        return items.slice();
+      }
+
+      function applyImportedData(data) {
+        if (!data || !Array.isArray(data.furniture)) return;
+        canvas.querySelectorAll(".furniture").forEach((item) => item.remove());
+        data.furniture.forEach((entry) => {
+          const node = document.createElement("button");
+          node.className = "furniture";
+          node.textContent = entry.label || "Item";
+          canvas.appendChild(node);
+          node.addEventListener("click", () => selectFurniture(node));
+          selectFurniture(node);
+          setFurniturePosition(
+            Number(entry.x) || 0,
+            Number(entry.y) || 0,
+            Number(entry.r) || 0,
+          );
+        });
+      }
+
+      function importFromCode() {
+        const raw = prompt("Paste JSON import data:", "");
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        applyImportedData(data);
+      }
+
+      function importFromFile(input) {
+        const file = input?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) =>
+          applyImportedData(JSON.parse(e.target.result || "{}"));
+        reader.readAsText(file);
+      }
+
+      function loadScenario(scenarioId) {
+        const scenario = DUTY_SCENARIO_PRESETS[scenarioId];
+        if (!scenario) return;
+        const data = {
+          furniture: scenario.items.map((label, idx) => ({
+            label,
+            x: 40 + (idx % 4) * 100,
+            y: 60 + Math.floor(idx / 4) * 80,
+            r: 0,
+          })),
+        };
+        applyImportedData(data);
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function setFurniturePosition(x, y, r) {
+        if (!selectedFurniture) return;
+        const canvasRect = canvas.getBoundingClientRect();
+        const boundedX = clamp(x, 0, canvasRect.width - 88);
+        const boundedY = clamp(y, 0, canvasRect.height - 56);
+
+        selectedFurniture.style.left = `${boundedX}px`;
+        selectedFurniture.style.top = `${boundedY}px`;
+        selectedFurniture.style.transform = `rotate(${r}deg)`;
+
+        inputX.value = Math.round(boundedX);
+        inputY.value = Math.round(boundedY);
+        inputR.value = Math.round(r);
+
+        const dotX =
+          (boundedX / (canvasRect.width - 88)) * (miniMap.clientWidth - 12);
+        const dotY =
+          (boundedY / (canvasRect.height - 56)) * (miniMap.clientHeight - 12);
+        miniDot.style.left = `${clamp(dotX, 0, miniMap.clientWidth - 12)}px`;
+        miniDot.style.top = `${clamp(dotY, 0, miniMap.clientHeight - 12)}px`;
+
+        collisionPill.classList.toggle(
+          "hidden",
+          boundedX > 16 &&
+            boundedY > 16 &&
+            boundedX < canvasRect.width - 104 &&
+            boundedY < canvasRect.height - 72,
+        );
+      }
+
+      function selectFurniture(node) {
+        canvas
+          .querySelectorAll(".furniture")
+          .forEach((item) => item.classList.remove("selected"));
+        selectedFurniture = node;
+        if (selectedFurniture) {
+          selectedFurniture.classList.add("selected");
+          const x = parseFloat(selectedFurniture.style.left || "120");
+          const y = parseFloat(selectedFurniture.style.top || "120");
+          const angle = Number(
+            (selectedFurniture.style.transform.match(/-?\d+/) || [0])[0],
+          );
+          setFurniturePosition(x, y, angle);
+        }
+      }
+
+      spawnButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = document.createElement("button");
+          item.className = "furniture selected";
+          item.textContent = button.dataset.item;
+          canvas.appendChild(item);
+          selectFurniture(item);
+          const centerX = (canvas.clientWidth - 88) / 2;
+          const centerY = (canvas.clientHeight - 56) / 2;
+          setFurniturePosition(centerX, centerY, 0);
+          item.addEventListener("click", () => selectFurniture(item));
+        });
+      });
+
+      [inputX, inputY, inputR].forEach((input) => {
+        input.addEventListener("input", () => {
+          setFurniturePosition(
+            Number(inputX.value),
+            Number(inputY.value),
+            Number(inputR.value),
+          );
+        });
+      });
+
+      let draggingDot = false;
+      miniDot.addEventListener("mousedown", () => {
+        draggingDot = true;
+      });
+      document.addEventListener("mouseup", () => {
+        draggingDot = false;
+      });
+      document.addEventListener("mousemove", (event) => {
+        if (!draggingDot || !selectedFurniture) return;
+        const rect = miniMap.getBoundingClientRect();
+        const x = clamp(event.clientX - rect.left - 6, 0, rect.width - 12);
+        const y = clamp(event.clientY - rect.top - 6, 0, rect.height - 12);
+        const canvasRect = canvas.getBoundingClientRect();
+        const mappedX = (x / (rect.width - 12)) * (canvasRect.width - 88);
+        const mappedY = (y / (rect.height - 12)) * (canvasRect.height - 56);
+        setFurniturePosition(mappedX, mappedY, Number(inputR.value));
+      });
+
+      addDutyDebtManagementUI();
+
+      deleteButton.addEventListener("click", () => {
+        if (!selectedFurniture) return;
+        selectedFurniture.remove();
+        selectedFurniture = null;
+        collisionPill.classList.add("hidden");
+      });
+    </script>
+  </body>
+</html>
